@@ -20,6 +20,8 @@ All notable development changes to Echo Warrior are recorded here.
 - Moved mutual-gaze body correction to the end of the entity tick so vanilla body-rotation control cannot overwrite it.
 - Player-to-head visibility now uses a direct block ray to the model's measured head centre instead of the living-entity line-of-sight helper.
 - Added `/echo_warrior visual status` to expose gaze acquisition and suppression state during playtesting.
+- Mutual-gaze hold time now begins after the echo finishes facing the player, so a rear-facing turn cannot consume most of the visible eye-contact duration.
+- Owner-follow navigation pauses during mutual gaze, and body alignment now converges within five degrees instead of relying on a visibly offset head correction.
 
 ## 2026-08-07 - Legionary visual prototype baseline
 

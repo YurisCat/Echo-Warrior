@@ -45,13 +45,14 @@ The following behaviour was approved on 2026-08-07 and is the implementation con
 - Beyond 12 blocks, required acquisition time is `0.5 + (distance - 12) / 40` seconds. There is no artificial range cap beyond normal entity loading and tracking limits.
 - Up to two consecutive missed ticks are tolerated for ordinary mouse movement. A longer miss clears acquisition progress.
 - Acquisition is suppressed while the echo has an attack target, or while the echo or its owner has dealt or received damage within the previous three seconds.
-- On acquisition, the pupils lead, the head begins following roughly 0.1 seconds later, and the body begins a smooth turn roughly 0.2 seconds later when the player lies outside the body's forward 45-degree cone. The body stops correcting once the player is within roughly 20 degrees of forward.
-- The first mutual-gaze episode lasts a random 2-4 seconds. If the player is still looking when it ends, there is a 75% chance to renew for 1-3 seconds and a 25% chance to glance away for 0.5-1.5 seconds before reacquisition is allowed.
+- On acquisition, the pupils lead, the head begins following roughly 0.1 seconds later, and the body begins a smooth turn roughly 0.2 seconds later. The body corrects to within roughly five degrees so the face visibly points at the player.
+- The 2-4 second first mutual-gaze timer begins only after facing alignment is complete; time spent turning does not consume the eye-contact duration. If the player is still looking when it ends, there is a 75% chance to renew for 1-3 seconds and a 25% chance to glance away for 0.5-1.5 seconds before reacquisition is allowed.
 - Damage, an active combat target, creepers, and other genuine high-priority threats interrupt mutual gaze immediately.
 - When line of sight is lost during an active episode, the echo watches the player's last visible position for 0.5 seconds before returning to ordinary observation.
 - Any non-spectator player may trigger mutual gaze. When several players qualify, the owner has priority; otherwise the player with the longest valid gaze duration wins. Invisible players only qualify within four blocks.
 
 Mutual gaze must not leave SmartBrainLib and the renderer fighting over different facing directions. The presentation layer owns eyes and head, while deliberate mutual gaze may request a gentle body-facing correction without changing navigation or combat targeting.
+Ordinary owner-follow navigation pauses during an active mutual-gaze episode and resumes afterwards, preventing movement steering from immediately pulling the body away.
 
 ## Reactions
 

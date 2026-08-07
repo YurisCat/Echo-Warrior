@@ -27,6 +27,10 @@ public final class EchoFollowOwner extends FollowOwner<RomanLegionaryEchoEntity>
 
 	@Override
 	protected void tick(RomanLegionaryEchoEntity entity) {
+		if (entity.isMutualGazeActive()) {
+			entity.getNavigation().stop();
+			return;
+		}
 		super.tick(entity);
 		if (entity.tickCount % 5 == 0) {
 			refreshPath(entity);
@@ -40,7 +44,9 @@ public final class EchoFollowOwner extends FollowOwner<RomanLegionaryEchoEntity>
 	}
 
 	private void refreshPath(RomanLegionaryEchoEntity entity) {
-		if (this.followingEntity != null && this.followingEntity.isAlive()) {
+		if (entity.isMutualGazeActive()) {
+			entity.getNavigation().stop();
+		} else if (this.followingEntity != null && this.followingEntity.isAlive()) {
 			entity.getNavigation().moveTo(this.followingEntity, SPEED_MODIFIER);
 		}
 	}

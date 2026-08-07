@@ -98,10 +98,11 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private final Map<UUID, PlayerGazeProgress> playerGazeProgress = new HashMap<>();
 	private @Nullable UUID mutualGazePlayerUuid;
 	private Vec3 mutualGazeLastSeenPoint = Vec3.ZERO;
-	private long mutualGazeUntil;
+	private int mutualGazeHoldTicksRemaining;
 	private long mutualGazeLostSightAt = -1L;
 	private long mutualGazeCooldownUntil;
 	private boolean mutualGazeBodyTurning;
+	private boolean mutualGazeAligned;
 
 	public RomanLegionaryEchoEntity(EntityType<? extends RomanLegionaryEchoEntity> type, Level level) {
 		super(type, level);
@@ -349,12 +350,14 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private void beginMutualGaze(Player player, long now) {
 		this.mutualGazePlayerUuid = player.getUUID();
 		this.mutualGazeLastSeenPoint = player.getEyePosition();
-		this.mutualGazeUntil = now + 40 + this.random.nextInt(41);
+		this.mutualGazeHoldTicksRemaining = 40 + this.random.nextInt(41);
 		this.mutualGazeLostSightAt = -1L;
 		this.mutualGazeBodyTurning = false;
+		this.mutualGazeAligned = false;
 		this.playerGazeProgress.clear();
+		this.getNavigation().stop();
 		applyAttention(new AttentionCandidate(player, this.mutualGazeLastSeenPoint, MUTUAL_GAZE_PRIORITY,
-				VISUAL_MUTUAL_GAZE, (int)(this.mutualGazeUntil - now), false), now);
+				VISUAL_MUTUAL_GAZE, 20 * 60, false), now);
 	}
 
 	private boolean tickMutualGaze(ServerLevel level, long now) {
@@ -382,12 +385,11 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			setAttentionPoint(this.mutualGazeLastSeenPoint);
 		}
 
-		if (visible && now >= this.mutualGazeUntil) {
+		this.getNavigation().stop();
+		if (visible && this.mutualGazeAligned && --this.mutualGazeHoldTicksRemaining <= 0) {
 			boolean stillLooking = samplePlayerHeadGaze(player).state() == GazeState.VALID;
 			if (stillLooking && this.random.nextFloat() < 0.75F) {
-				this.mutualGazeUntil = now + 20 + this.random.nextInt(41);
-				this.attentionExpiresAt = this.mutualGazeUntil;
-				this.entityData.set(VISUAL_REACTION_UNTIL, this.mutualGazeUntil);
+				this.mutualGazeHoldTicksRemaining = 20 + this.random.nextInt(41);
 			} else {
 				endMutualGaze(now);
 				if (stillLooking) {
@@ -408,18 +410,21 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 		float desiredYaw = yawToward(this.getX(), this.getZ(), this.mutualGazeLastSeenPoint.x, this.mutualGazeLastSeenPoint.z);
 		float yawDifference = Math.abs(net.minecraft.util.Mth.wrapDegrees(desiredYaw - this.yBodyRot));
-		if (!this.mutualGazeBodyTurning && yawDifference > 45.0F) {
+		if (!this.mutualGazeBodyTurning && yawDifference > 5.0F) {
 			this.mutualGazeBodyTurning = true;
 		}
 		if (!this.mutualGazeBodyTurning) {
+			this.mutualGazeAligned = true;
 			return;
 		}
-		if (yawDifference <= 20.0F) {
+		if (yawDifference <= 5.0F) {
 			this.mutualGazeBodyTurning = false;
+			this.mutualGazeAligned = true;
 			return;
 		}
 
-		turnBodyToward(this.mutualGazeLastSeenPoint, 6.0F);
+		this.mutualGazeAligned = false;
+		turnBodyToward(this.mutualGazeLastSeenPoint, 8.0F);
 	}
 
 	private void startMutualGazeGlanceAway(long now) {
@@ -438,9 +443,10 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	private void endMutualGaze(long now) {
 		this.mutualGazePlayerUuid = null;
-		this.mutualGazeUntil = 0L;
+		this.mutualGazeHoldTicksRemaining = 0;
 		this.mutualGazeLostSightAt = -1L;
 		this.mutualGazeBodyTurning = false;
+		this.mutualGazeAligned = false;
 		this.playerGazeProgress.clear();
 		this.attentionTarget = null;
 		this.attentionPriority = 0;
@@ -667,7 +673,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		boolean combatSuppressed = owner != null && isMutualGazeCombatSuppressed(owner);
 		return String.format(
 				Locale.ROOT,
-				"sample=%s distance=%.2f progress=%d/%d missed=%d combat=%s mutual=%s reaction=%d bodyYaw=%.1f",
+				"sample=%s distance=%.2f progress=%d/%d missed=%d combat=%s mutual=%s aligned=%s hold=%d reaction=%d bodyYaw=%.1f",
 				sample.state().name().toLowerCase(Locale.ROOT),
 				sample.distance(),
 				validTicks,
@@ -675,9 +681,15 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 				missedTicks,
 				combatSuppressed,
 				this.mutualGazePlayerUuid != null,
+				this.mutualGazeAligned,
+				this.mutualGazeHoldTicksRemaining,
 				this.entityData.get(VISUAL_REACTION),
 				this.yBodyRot
 		);
+	}
+
+	public boolean isMutualGazeActive() {
+		return this.mutualGazePlayerUuid != null;
 	}
 
 	public enum VisualTestMode {
