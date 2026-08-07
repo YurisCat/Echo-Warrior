@@ -115,7 +115,9 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		float desiredEyeWorldPitch = eyeHorizontal < 1.0E-4 ? desiredHeadPitch : worldPitchToward(eyeDelta, eyeHorizontal);
 		float eyeTargetYaw = Mth.clamp(Mth.wrapDegrees(desiredEyeWorldYaw - bodyYaw - state.headYaw), -EYE_YAW_LIMIT, EYE_YAW_LIMIT);
 		float eyeTargetPitch = Mth.clamp(desiredEyeWorldPitch - state.headPitch, -EYE_PITCH_LIMIT, EYE_PITCH_LIMIT);
-		float unrolledEyeX = eyeTargetYaw / EYE_YAW_LIMIT * MAX_EYE_X;
+		// GeckoLib's model-space X runs opposite Minecraft's semantic look yaw for
+		// this model: a target on the echo's left needs a positive pupil translation.
+		float unrolledEyeX = -eyeTargetYaw / EYE_YAW_LIMIT * MAX_EYE_X;
 		float unrolledEyeY = -eyeTargetPitch / EYE_PITCH_LIMIT * MAX_EYE_Y;
 
 		// The eye bones inherit the curious head roll. Counter-rotate the pupil offset so the

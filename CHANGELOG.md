@@ -28,6 +28,7 @@ All notable development changes to Echo Warrior are recorded here.
 - Primed creepers and recent damage sources now override visual attention immediately; nearby unprimed creepers lead with the pupils, delay the head slightly, and only turn the non-combat body under close or rapidly approaching conditions.
 - Nearby unprimed creepers now pause mutual gaze for up to one second instead of causing alternating-frame target flicker; a cleared distraction resumes player eye contact, while a persistent one ends it.
 - `/echo_warrior visual status` now reports distraction state and the active eye, head, and body attention categories.
+- Corrected horizontal pupil translation so the eyes lead toward the target instead of briefly moving in the mirrored direction.
 
 ## 2026-08-07 - Legionary visual prototype baseline
 
