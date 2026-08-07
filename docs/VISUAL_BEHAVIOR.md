@@ -35,6 +35,8 @@ The server chooses one shared attention target so every client sees the same int
 
 Attention only changes presentation. Ordinary observation turns eyes and head; sustained high threats may also turn the body. Eyes lead the head slightly, and close targets receive subtle binocular convergence.
 
+Pupil position is recalculated every rendered frame from the attention point in the head's current local coordinate space. The eyes therefore remain locked to the same world-space target while the head and body move. As the face becomes aligned, the pupils naturally approach the centre because the target itself has moved to the centre of the local view; this is not treated as releasing attention. Curious head roll is compensated so a tilted head does not drag the pupils away from their target.
+
 ## Mutual gaze contract
 
 The following behaviour was approved on 2026-08-07 and is the implementation contract for player-initiated eye contact:
@@ -46,6 +48,7 @@ The following behaviour was approved on 2026-08-07 and is the implementation con
 - Up to two consecutive missed ticks are tolerated for ordinary mouse movement. A longer miss clears acquisition progress.
 - Acquisition is suppressed while the echo has an attack target, or while the echo or its owner has dealt or received damage within the previous three seconds.
 - On acquisition, the pupils lead, the head begins following roughly 0.1 seconds later, and the body begins a smooth turn roughly 0.2 seconds later. The body corrects to within roughly five degrees so the face visibly points at the player.
+- Pupil travel is intentionally more visible than the original prototype, using up to roughly 0.82 model units horizontally and 0.46 vertically while remaining inside the two-by-two eye area.
 - The 2-4 second first mutual-gaze timer begins only after facing alignment is complete; time spent turning does not consume the eye-contact duration. If the player is still looking when it ends, there is a 75% chance to renew for 1-3 seconds and a 25% chance to glance away for 0.5-1.5 seconds before reacquisition is allowed.
 - Damage, an active combat target, creepers, and other genuine high-priority threats interrupt mutual gaze immediately.
 - When line of sight is lost during an active episode, the echo watches the player's last visible position for 0.5 seconds before returning to ordinary observation.

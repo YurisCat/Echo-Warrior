@@ -16,6 +16,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLegionaryEchoEntity, EntityRenderState> {
+	private static final float EYE_YAW_LIMIT = 34.0F;
+	private static final float EYE_PITCH_LIMIT = 24.0F;
+	private static final float MAX_EYE_X = 0.82F;
+	private static final float MAX_EYE_Y = 0.46F;
+
 	private static final DataTicket<Integer> ENTITY_ID = DataTickets.create("echo_warrior_entity_id", Integer.class);
 	private static final DataTicket<Vec3> ENTITY_POSITION = DataTickets.create("echo_warrior_entity_position", Vec3.class);
 	private static final DataTicket<Vec3> ATTENTION_POINT = DataTickets.create("echo_warrior_attention_point", Vec3.class);
@@ -99,13 +104,23 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		state.headPitch = approach(state.headPitch, desiredHeadPitch, headResponsiveness, deltaTicks);
 		state.headTilt = approach(state.headTilt, desiredTilt, 0.16F, deltaTicks);
 
-		float residualYaw = Mth.clamp(desiredHeadYaw - state.headYaw, -25.0F, 25.0F);
-		float residualPitch = Mth.clamp(desiredHeadPitch - state.headPitch, -18.0F, 18.0F);
-		float desiredEyeX = residualYaw / 25.0F * 0.48F;
-		float desiredEyeY = -residualPitch / 18.0F * 0.28F;
+		// Recalculate the target in the head's current local space every frame. This keeps the
+		// pupils fixed on the same world target while the head and body rotate underneath them.
+		float eyeTargetYaw = Mth.clamp(Mth.wrapDegrees(desiredHeadYaw - state.headYaw), -EYE_YAW_LIMIT, EYE_YAW_LIMIT);
+		float eyeTargetPitch = Mth.clamp(desiredHeadPitch - state.headPitch, -EYE_PITCH_LIMIT, EYE_PITCH_LIMIT);
+		float unrolledEyeX = eyeTargetYaw / EYE_YAW_LIMIT * MAX_EYE_X;
+		float unrolledEyeY = -eyeTargetPitch / EYE_PITCH_LIMIT * MAX_EYE_Y;
+
+		// The eye bones inherit the curious head roll. Counter-rotate the pupil offset so the
+		// apparent gaze remains attached to the world-space target instead of rolling with the face.
+		float tiltRadians = toRadians(state.headTilt);
+		float tiltCos = Mth.cos(tiltRadians);
+		float tiltSin = Mth.sin(tiltRadians);
+		float desiredEyeX = unrolledEyeX * tiltCos + unrolledEyeY * tiltSin;
+		float desiredEyeY = -unrolledEyeX * tiltSin + unrolledEyeY * tiltCos;
 		float eyeResponsiveness = reaction == RomanLegionaryEchoEntity.VISUAL_STARTLED || reaction == RomanLegionaryEchoEntity.VISUAL_HURT
-				? 0.82F
-				: reaction == RomanLegionaryEchoEntity.VISUAL_MUTUAL_GAZE ? 0.68F : 0.42F;
+				? 0.92F
+				: reaction == RomanLegionaryEchoEntity.VISUAL_MUTUAL_GAZE ? 0.82F : 0.58F;
 		state.eyeX = approach(state.eyeX, desiredEyeX, eyeResponsiveness, deltaTicks);
 		state.eyeY = approach(state.eyeY, desiredEyeY, eyeResponsiveness, deltaTicks);
 
