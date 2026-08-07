@@ -167,9 +167,13 @@ MVP 必须先完成：
 ```text
 scripts/run-test-client.ps1
 scripts/run-test-client.bat
+scripts/playtest-now.ps1
+scripts/playtest-now.bat
 ```
 
 `run-test-client.bat` 是面向 CMD 和双击启动的入口，并转交给 PowerShell 主脚本；避免 Windows 将 `.ps1` 当作普通文件打开。
+
+`playtest-now.bat` 是日常人工测试的最短入口：编译并启动开发客户端，然后通过 Quick Play 直接进入现有的 `CATTEST` 世界。对应 PowerShell 脚本要求该世界已经存在，避免名称错误时静默停在主菜单。
 
 当用户说“测试”“启动 MC”“进测试世界”等表达时，Codex 应：
 
@@ -179,10 +183,10 @@ scripts/run-test-client.bat
 4. 通过 `--quickPlaySingleplayer` 自动进入固定测试世界。
 5. 保留控制台和游戏日志，崩溃后主动定位原因。
 
-固定测试世界目录名暂定：
+当前固定测试世界目录名：
 
 ```text
-CFMJ-Test-World
+CATTEST
 ```
 
 首次需要人工创建世界时，只做一次。之后启动脚本应直接进入该世界。
@@ -236,12 +240,13 @@ mod-project/
 ├─ gradlew.bat
 ├─ gradle/
 ├─ scripts/
-│  └─ run-test-client.ps1
+│  ├─ run-test-client.ps1
+│  └─ playtest-now.ps1
 ├─ src/
 │  ├─ main/
 │  └─ gametest/
 ├─ run/
-│  ├─ saves/CFMJ-Test-World/
+│  ├─ saves/CATTEST/
 │  └─ logs/latest.log
 └─ docs/
 ```
@@ -261,5 +266,9 @@ mod-project/
 - 军团兵英灵：`roman_legionary_echo` / Roman Legionary Echo / 罗马军团兵英灵。
 - 召唤器动画：`0,1,2,3,4` 循环，每帧 3 tick，总周期 0.75 秒。
 - 英灵属性：30 生命、8 护甲、6 攻击、0.28 移速、32 跟随距离、0.3 击退抗性，约 1 秒攻击间隔。
+- 跟随参数：距离超过 5 格开始步行跟随，接近至 3 格停止，超过 16 格安全传送；SBL 专用行为每 5 tick 刷新一次原版寻路路径。
+- 朝向反馈：首次召唤及手动召回时，英灵的身体和头部均朝向召唤者。
+- 视觉生命感：影子、注视目标、玩家对视、头部转向、瞳孔追踪与收缩、眉毛下压眨眼及安全状态下的偶发歪头由代码统一接管；详细约定见 `docs/VISUAL_BEHAVIOR.md`。
+- 玩家主动对视：看向英灵头部需要持续获取时间，12 格内为 0.5 秒，远距离按线性公式增加；战斗中抑制获取，对视时眼睛、头部和身体分阶段自然转向。完整参数以 `docs/VISUAL_BEHAVIOR.md` 为准。
 - 碰撞箱：宽 0.75、高 1.95，确保可通过常规一格宽、两格高通道。
 - 友军保护：不会伤害主人、同主人英灵、主人驯服生物、同队实体、创造或旁观玩家；主人不能伤害自己的英灵。

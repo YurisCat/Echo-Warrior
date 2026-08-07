@@ -1,5 +1,6 @@
 package com.yuriscat.echowarrior;
 
+import com.yuriscat.echowarrior.command.VisualDebugCommands;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ public final class EchoWarrior implements ModInitializer {
 		ModEntities.initialize();
 		ModItems.initialize();
 		ModCreativeTabs.initialize();
+		VisualDebugCommands.initialize();
 		LOGGER.info("Echo Warrior is awakening.");
 	}
 

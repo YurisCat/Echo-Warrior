@@ -44,6 +44,7 @@ Thumbs.db
 Desktop.ini
 
 # Temporary files
+temporary-delivery/
 *.log
 *.tmp
 *.temp

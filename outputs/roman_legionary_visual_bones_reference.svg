@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <rect width="1200" height="700" fill="#17191f"/>
+  <text x="54" y="64" fill="#f4f1e8" font-family="Segoe UI, sans-serif" font-size="34" font-weight="700">Roman Legionary — Code-Controlled Face Bones</text>
+  <text x="56" y="100" fill="#adb4c2" font-family="Segoe UI, sans-serif" font-size="18">These names are reserved. Continue all future animation work from roman_legionary_modeler_master.bbmodel.</text>
+
+  <g transform="translate(100 155)">
+    <rect x="80" y="0" width="360" height="400" rx="44" fill="#e7af9e" stroke="#f6dacb" stroke-width="6"/>
+    <rect x="112" y="64" width="296" height="88" fill="#362626"/>
+    <rect x="118" y="182" width="128" height="74" rx="12" fill="#f5f2e9"/>
+    <rect x="274" y="182" width="128" height="74" rx="12" fill="#f5f2e9"/>
+    <circle cx="198" cy="219" r="24" fill="#382824"/>
+    <circle cx="322" cy="219" r="24" fill="#382824"/>
+    <path d="M118 182 H246 V184 H118 Z" fill="#f2b7aa" stroke="#ffca68" stroke-width="4"/>
+    <path d="M274 182 H402 V184 H274 Z" fill="#f2b7aa" stroke="#ffca68" stroke-width="4"/>
+    <path d="M208 326 Q260 352 312 326" fill="none" stroke="#a4665d" stroke-width="7" stroke-linecap="round"/>
+
+    <path d="M56 196 C10 160 10 270 56 236" fill="none" stroke="#70c1ff" stroke-width="6" marker-end="url(#arrowBlue)"/>
+    <text x="0" y="306" fill="#70c1ff" font-family="Segoe UI, sans-serif" font-size="20">head</text>
+    <text x="0" y="332" fill="#adb4c2" font-family="Segoe UI, sans-serif" font-size="16">yaw ±65°</text>
+    <text x="0" y="354" fill="#adb4c2" font-family="Segoe UI, sans-serif" font-size="16">pitch −35°/+40°</text>
+    <text x="0" y="376" fill="#adb4c2" font-family="Segoe UI, sans-serif" font-size="16">curious roll ±10°</text>
+
+    <path d="M198 219 h56" stroke="#7ee0a3" stroke-width="5" marker-end="url(#arrowGreen)"/>
+    <path d="M322 219 h56" stroke="#7ee0a3" stroke-width="5" marker-end="url(#arrowGreen)"/>
+    <text x="465" y="206" fill="#7ee0a3" font-family="Segoe UI, sans-serif" font-size="20">left_eye / right_eye</text>
+    <text x="465" y="232" fill="#adb4c2" font-family="Segoe UI, sans-serif" font-size="16">Pupil translation, convergence</text>
+    <text x="465" y="254" fill="#adb4c2" font-family="Segoe UI, sans-serif" font-size="16">and surprise contraction</text>
+
+    <path d="M402 184 h76" stroke="#ffca68" stroke-width="5" marker-end="url(#arrowGold)"/>
+    <text x="500" y="126" fill="#ffca68" font-family="Segoe UI, sans-serif" font-size="20">eyebrows</text>
+    <text x="500" y="152" fill="#adb4c2" font-family="Segoe UI, sans-serif" font-size="16">Moves down 2 model units to blink</text>
+    <text x="500" y="174" fill="#adb4c2" font-family="Segoe UI, sans-serif" font-size="16">No separate eyelid bones or geometry</text>
+  </g>
+
+  <g transform="translate(655 475)">
+    <rect x="0" y="0" width="485" height="160" rx="20" fill="#222630" stroke="#343b49" stroke-width="2"/>
+    <text x="24" y="36" fill="#f4f1e8" font-family="Segoe UI, sans-serif" font-size="19" font-weight="700">Model artist rules</text>
+    <text x="24" y="68" fill="#cdd3df" font-family="Segoe UI, sans-serif" font-size="16">• Do not rename or delete the four reserved bones.</text>
+    <text x="24" y="94" fill="#cdd3df" font-family="Segoe UI, sans-serif" font-size="16">• Do not keyframe them in normal animation loops.</text>
+    <text x="24" y="120" fill="#cdd3df" font-family="Segoe UI, sans-serif" font-size="16">• Return the edited .bbmodel source, not only exported JSON.</text>
+    <text x="24" y="146" fill="#cdd3df" font-family="Segoe UI, sans-serif" font-size="16">• Run the validation script before handoff.</text>
+  </g>
+
+  <defs>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#70c1ff"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#7ee0a3"/></marker>
+    <marker id="arrowGold" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#ffca68"/></marker>
+  </defs>
+</svg>

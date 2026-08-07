@@ -1,0 +1,15 @@
+罗马军团兵模型师交接说明（2026-08-07）
+
+请使用 roman_legionary_modeler_master.bbmodel 作为后续唯一主文件，不要继续使用旧副本。
+
+本次修改：
+1. 已撤销 eyelids、left_eyelid、right_eyelid 骨骼及眼皮遮罩，不需要额外制作眼皮。
+2. 眨眼改为由代码控制现有 eyebrows 骨骼向下移动。
+3. head、left_eye、right_eye、eyebrows 现在由游戏代码统一控制。
+4. 游戏代码会实现转头、玩家对视、瞳孔追踪、近距离聚焦、受惊缩瞳、随机眨眼和偶发歪头。
+
+模型师注意事项：
+- 不要删除或改名上述四个保留骨骼。
+- 普通待机、行走、攻击和受伤动画不要给这些骨骼添加关键帧。
+- 修改后请回传完整 .bbmodel 源文件，不要只回传 GeckoLib JSON。
+- 直接查看 roman_legionary_visual_bones_reference.png；需要矢量版时使用同名 SVG。

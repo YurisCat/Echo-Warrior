@@ -1,12 +1,14 @@
 [CmdletBinding()]
-param()
+param(
+    [string]$TestWorldName = 'CFMJ-Test-World',
+    [switch]$RequireExistingWorld
+)
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $jdkRoot = Join-Path $projectRoot '.toolchains\jdk-25'
 $javaExecutable = Join-Path $jdkRoot 'bin\java.exe'
-$worldName = 'CFMJ-Test-World'
-$worldPath = Join-Path $projectRoot "run\saves\$worldName"
+$worldPath = Join-Path $projectRoot "run\saves\$TestWorldName"
 
 if (-not (Test-Path -LiteralPath $javaExecutable)) {
     throw "Project Java 25 runtime is missing: $javaExecutable"
@@ -31,10 +33,12 @@ $env:Path = "$(Join-Path $jdkRoot 'bin');$env:Path"
 
 $gradleArguments = @('runClient', '--console=plain')
 if (Test-Path -LiteralPath $worldPath) {
-    $gradleArguments += "-PquickPlayWorld=$worldName"
-    Write-Host "Launching Echo Warrior and entering $worldName..."
+    $gradleArguments += "-PquickPlayWorld=$TestWorldName"
+    Write-Host "Launching Echo Warrior and entering $TestWorldName..."
+} elseif ($RequireExistingWorld) {
+    throw "The requested test world does not exist: $worldPath"
 } else {
-    Write-Host "Launching Echo Warrior. Create the world '$worldName' once; later launches will enter it automatically."
+    Write-Host "Launching Echo Warrior. Create the world '$TestWorldName' once; later launches will enter it automatically."
 }
 
 Push-Location $projectRoot

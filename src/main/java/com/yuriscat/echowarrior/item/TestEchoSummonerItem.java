@@ -60,7 +60,12 @@ public final class TestEchoSummonerItem extends Item {
 		}
 
 		Vec3 forward = player.getLookAngle().multiply(2.0, 0.0, 2.0);
-		spirit.snapTo(player.getX() + forward.x, player.getY(), player.getZ() + forward.z, player.getYRot(), 0.0F);
+		double spawnX = player.getX() + forward.x;
+		double spawnZ = player.getZ() + forward.z;
+		float facingYaw = RomanLegionaryEchoEntity.yawToward(spawnX, spawnZ, player.getX(), player.getZ());
+		spirit.snapTo(spawnX, player.getY(), spawnZ, facingYaw, 0.0F);
+		spirit.setYBodyRot(facingYaw);
+		spirit.setYHeadRot(facingYaw);
 		spirit.bindTo(player, summonerId);
 		serverLevel.addFreshEntity(spirit);
 		setSpiritId(stack, spirit.getUUID());
