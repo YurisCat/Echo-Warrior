@@ -29,8 +29,10 @@ import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.tslat.smartbrainlib.api.SmartBrainOwner;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.attack.AnimatableMeleeAttack;
@@ -45,6 +47,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -72,6 +75,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	public static final int MAX_LIFETIME_TICKS = 20 * 120;
 	public static final int SUMMONER_GRACE_TICKS = 20 * 5;
 	private static final double HEAD_GAZE_RADIUS = 0.35;
+	private static final double VISUAL_HEAD_CENTER_HEIGHT = 27.5 / 16.0;
 	private static final double INVISIBLE_GAZE_RANGE = 4.0;
 	private static final int GAZE_MISS_TOLERANCE_TICKS = 2;
 	private static final int COMBAT_GAZE_SUPPRESSION_TICKS = 20 * 3;
@@ -192,6 +196,14 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		tickVisualAwareness(serverLevel, owner);
 	}
 
+	@Override
+	public void tick() {
+		super.tick();
+		if (!this.level().isClientSide() && this.mutualGazePlayerUuid != null) {
+			tickMutualGazeBodyFacing();
+		}
+	}
+
 	private void tickVisualAwareness(ServerLevel level, LivingEntity owner) {
 		long now = level.getGameTime();
 		tickBlinkClock(now);
@@ -290,10 +302,10 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	private GazeSample samplePlayerHeadGaze(Player player) {
 		Vec3 playerEye = player.getEyePosition();
-		Vec3 headCenter = this.getEyePosition();
+		Vec3 headCenter = getVisualHeadCenter();
 		Vec3 towardHead = headCenter.subtract(playerEye);
 		double distance = towardHead.length();
-		if (distance < 0.1 || player.isInvisible() && distance > INVISIBLE_GAZE_RANGE || !this.hasLineOfSight(player)) {
+		if (distance < 0.1 || player.isInvisible() && distance > INVISIBLE_GAZE_RANGE || !hasClearViewFromPlayer(player, headCenter)) {
 			return new GazeSample(GazeState.BLOCKED, distance);
 		}
 
@@ -305,6 +317,20 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 		double distanceFromRaySqr = Math.max(0.0, towardHead.lengthSqr() - projection * projection);
 		return new GazeSample(distanceFromRaySqr <= HEAD_GAZE_RADIUS * HEAD_GAZE_RADIUS ? GazeState.VALID : GazeState.MISSED, distance);
+	}
+
+	private Vec3 getVisualHeadCenter() {
+		return this.position().add(0.0, VISUAL_HEAD_CENTER_HEIGHT, 0.0);
+	}
+
+	private boolean hasClearViewFromPlayer(Player player, Vec3 headCenter) {
+		return this.level().clip(new ClipContext(
+				player.getEyePosition(),
+				headCenter,
+				ClipContext.Block.COLLIDER,
+				ClipContext.Fluid.NONE,
+				player
+		)).getType() == HitResult.Type.MISS;
 	}
 
 	private static int requiredGazeTicks(double distance) {
@@ -338,8 +364,9 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			return false;
 		}
 
-		double distance = player.getEyePosition().distanceTo(this.getEyePosition());
-		boolean visible = (!player.isInvisible() || distance <= INVISIBLE_GAZE_RANGE) && this.hasLineOfSight(player);
+		Vec3 headCenter = getVisualHeadCenter();
+		double distance = player.getEyePosition().distanceTo(headCenter);
+		boolean visible = (!player.isInvisible() || distance <= INVISIBLE_GAZE_RANGE) && hasClearViewFromPlayer(player, headCenter);
 		if (visible) {
 			this.mutualGazeLostSightAt = -1L;
 			this.mutualGazeLastSeenPoint = player.getEyePosition();
@@ -370,22 +397,29 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			}
 		}
 
-		if (now - this.attentionStartedAt >= 4) {
-			float desiredYaw = yawToward(this.getX(), this.getZ(), this.mutualGazeLastSeenPoint.x, this.mutualGazeLastSeenPoint.z);
-			float yawDifference = Math.abs(net.minecraft.util.Mth.wrapDegrees(desiredYaw - this.yBodyRot));
-			if (!this.mutualGazeBodyTurning && yawDifference > 45.0F) {
-				this.mutualGazeBodyTurning = true;
-			}
-			if (this.mutualGazeBodyTurning) {
-				if (yawDifference <= 20.0F) {
-					this.mutualGazeBodyTurning = false;
-				} else {
-					turnBodyToward(this.mutualGazeLastSeenPoint, 6.0F);
-				}
-			}
+		return true;
+	}
+
+	private void tickMutualGazeBodyFacing() {
+		long now = this.level().getGameTime();
+		if (now - this.attentionStartedAt < 4) {
+			return;
 		}
 
-		return true;
+		float desiredYaw = yawToward(this.getX(), this.getZ(), this.mutualGazeLastSeenPoint.x, this.mutualGazeLastSeenPoint.z);
+		float yawDifference = Math.abs(net.minecraft.util.Mth.wrapDegrees(desiredYaw - this.yBodyRot));
+		if (!this.mutualGazeBodyTurning && yawDifference > 45.0F) {
+			this.mutualGazeBodyTurning = true;
+		}
+		if (!this.mutualGazeBodyTurning) {
+			return;
+		}
+		if (yawDifference <= 20.0F) {
+			this.mutualGazeBodyTurning = false;
+			return;
+		}
+
+		turnBodyToward(this.mutualGazeLastSeenPoint, 6.0F);
 	}
 
 	private void startMutualGazeGlanceAway(long now) {
@@ -622,6 +656,28 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	public int getVisualSequence() {
 		return this.entityData.get(VISUAL_SEQUENCE);
+	}
+
+	public String describeGazeDebug(Player observer) {
+		GazeSample sample = samplePlayerHeadGaze(observer);
+		PlayerGazeProgress progress = this.playerGazeProgress.get(observer.getUUID());
+		int validTicks = progress == null ? 0 : progress.validTicks;
+		int missedTicks = progress == null ? 0 : progress.missedTicks;
+		LivingEntity owner = this.getOwner();
+		boolean combatSuppressed = owner != null && isMutualGazeCombatSuppressed(owner);
+		return String.format(
+				Locale.ROOT,
+				"sample=%s distance=%.2f progress=%d/%d missed=%d combat=%s mutual=%s reaction=%d bodyYaw=%.1f",
+				sample.state().name().toLowerCase(Locale.ROOT),
+				sample.distance(),
+				validTicks,
+				requiredGazeTicks(sample.distance()),
+				missedTicks,
+				combatSuppressed,
+				this.mutualGazePlayerUuid != null,
+				this.entityData.get(VISUAL_REACTION),
+				this.yBodyRot
+		);
 	}
 
 	public enum VisualTestMode {

@@ -78,9 +78,10 @@ The `/echo_warrior visual` command can force visual states on the nearest owned 
 /echo_warrior visual curious
 /echo_warrior visual startled
 /echo_warrior visual reset
+/echo_warrior visual status
 ```
 
-These commands are testing tools, not player-facing gameplay.
+`status` reports the observing player's current head-gaze sample, acquisition progress, required ticks, combat suppression, mutual-gaze state, reaction, and body yaw. These commands are testing tools, not player-facing gameplay.
 
 ## Asset pipeline
 

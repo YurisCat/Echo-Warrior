@@ -17,6 +17,9 @@ All notable development changes to Echo Warrior are recorded here.
 
 - Mutual gaze now moves pupils first, then the head, and gently aligns the body only when the player lies well outside the forward cone.
 - Removed SmartBrainLib's generic always-running look behaviour so it no longer competes with the code-owned visual-attention layer.
+- Moved mutual-gaze body correction to the end of the entity tick so vanilla body-rotation control cannot overwrite it.
+- Player-to-head visibility now uses a direct block ray to the model's measured head centre instead of the living-entity line-of-sight helper.
+- Added `/echo_warrior visual status` to expose gaze acquisition and suppression state during playtesting.
 
 ## 2026-08-07 - Legionary visual prototype baseline
 

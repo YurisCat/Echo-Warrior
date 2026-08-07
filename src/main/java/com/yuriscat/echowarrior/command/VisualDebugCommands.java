@@ -23,6 +23,7 @@ public final class VisualDebugCommands {
 		dispatcher.register(Commands.literal("echo_warrior")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
 				.then(Commands.literal("visual")
+						.then(Commands.literal("status").executes(context -> executeStatus(context.getSource())))
 						.then(visualCommand("blink", RomanLegionaryEchoEntity.VisualTestMode.BLINK))
 						.then(visualCommand("double_blink", RomanLegionaryEchoEntity.VisualTestMode.DOUBLE_BLINK))
 						.then(visualCommand("curious", RomanLegionaryEchoEntity.VisualTestMode.CURIOUS))
@@ -44,15 +45,7 @@ public final class VisualDebugCommands {
 			return 0;
 		}
 
-		RomanLegionaryEchoEntity echo = player.level()
-				.getEntitiesOfClass(
-						RomanLegionaryEchoEntity.class,
-						player.getBoundingBox().inflate(32.0),
-						entity -> player.getUUID().equals(entity.getOwnerUuid())
-				)
-				.stream()
-				.min(Comparator.comparingDouble(player::distanceToSqr))
-				.orElse(null);
+		RomanLegionaryEchoEntity echo = findNearestOwnedEcho(player);
 		if (echo == null) {
 			source.sendFailure(Component.literal("No owned Echo Warrior was found within 32 blocks."));
 			return 0;
@@ -61,5 +54,34 @@ public final class VisualDebugCommands {
 		echo.forceVisualState(mode);
 		source.sendSuccess(() -> Component.literal("Forced visual state " + mode.name().toLowerCase() + " on the nearest echo."), false);
 		return 1;
+	}
+
+	private static int executeStatus(CommandSourceStack source) {
+		ServerPlayer player = source.getPlayer();
+		if (player == null) {
+			source.sendFailure(Component.literal("This command must be used by a player."));
+			return 0;
+		}
+
+		RomanLegionaryEchoEntity echo = findNearestOwnedEcho(player);
+		if (echo == null) {
+			source.sendFailure(Component.literal("No owned Echo Warrior was found within 32 blocks."));
+			return 0;
+		}
+
+		source.sendSuccess(() -> Component.literal(echo.describeGazeDebug(player)), false);
+		return 1;
+	}
+
+	private static RomanLegionaryEchoEntity findNearestOwnedEcho(ServerPlayer player) {
+		return player.level()
+				.getEntitiesOfClass(
+						RomanLegionaryEchoEntity.class,
+						player.getBoundingBox().inflate(32.0),
+						entity -> player.getUUID().equals(entity.getOwnerUuid())
+				)
+				.stream()
+				.min(Comparator.comparingDouble(player::distanceToSqr))
+				.orElse(null);
 	}
 }
