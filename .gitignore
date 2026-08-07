@@ -1,0 +1,52 @@
+# Project-local toolchains
+.toolchains/
+
+# Gradle
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Minecraft development runtime
+run/
+logs/
+crash-reports/
+saves/
+screenshots/
+mods/
+config/
+resourcepacks/
+shaderpacks/
+options.txt
+optionsof.txt
+servers.dat
+usercache.json
+usernamecache.json
+
+# Fabric / Loom generated files
+.fabric/
+remappedSrc/
+
+# IDEs and editors
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*~

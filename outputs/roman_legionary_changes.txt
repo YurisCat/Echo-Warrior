@@ -1,0 +1,70 @@
+﻿Roman Legionary Blockbench 副本修改说明
+
+原文件：罗马.bbmodel（未修改）
+副本：roman_legionary_standardized.bbmodel
+目标：用于 Echo Warrior 的 GeckoLib Entity 模型
+
+已完成：
+1. 项目名称改为 Roman Legionary。
+2. Object ID 改为 roman_legionary。
+3. 暂定 Mod ID 填为 echo_warrior。正式 Mod ID 改变后需要同步修改。
+4. 模型类型设为 Entity。
+5. 所有骨骼名称统一为英文 snake_case。
+6. 所有立方体名称增加所属骨骼前缀并保证唯一。
+7. animation 改为 animation.roman_legionary.idle。
+8. animation2 改为 animation.roman_legionary.walk。
+9. 内嵌纹理名称改为 roman_legionary，并补充 echo_warrior/entity 元数据。
+
+未修改：
+- 几何体位置、尺寸和旋转。
+- 骨骼层级、枢轴点和 UUID。
+- UV、纹理像素和 128x128 分辨率。
+- 动画长度、循环方式和全部关键帧。
+
+后续模型师需要注意：
+- 请继续使用当前规范化骨骼名称，不要改回带空格或 bone/bone2 等默认名称。
+- 建议补充 attack、shield_block、shield_bash、hurt、summon、despawn 动画。
+- 当前有 11 个零厚度平面，请检查头盔羽毛、腰部装饰及武器在背面剔除时是否消失。
+- 纹理仍内嵌在 bbmodel 中；交付正式资源时请单独 Save As 导出 PNG。
+
+主要骨骼重命名：
+- Body -> body_root
+- Arm_Right -> right_arm
+- Head -> head
+- Upper Right Arm -> right_upper_arm
+- Hat -> helmet
+- Eyes_Right -> right_eye
+- Eyes_Left -> left_eye
+- Eyes -> eyes
+- Leg_Left -> left_leg
+- Upper_Body -> upper_body_root
+- Leg_Left_Upper -> left_upper_leg
+- Leg_Left_Lower -> left_lower_leg
+- Lower Right Arm -> right_lower_arm
+- Arm_Left -> left_arm
+- Upper Left Arm -> left_upper_arm
+- Lower Left Arm -> left_lower_arm
+- Arm -> arms
+- Leg_Right -> right_leg
+- Leg_Right_Upper -> right_upper_leg
+- Leg_Right_Lower -> right_lower_leg
+- Hip -> hips
+- DownBody -> lower_body
+- Leg -> legs
+- Upper_Body2 -> upper_body
+- Main -> root
+- Cloak -> cloak
+- Eyebrow_Left -> left_eyebrow
+- Eyebrow_Right -> right_eyebrow
+- Eyebrow -> eyebrows
+- Weapon -> weapon
+- Shield -> shield
+- bone -> waist_cloth_center
+- bone2 -> waist_cloth_right
+- bone3 -> waist_cloth_left
+
+动画重命名：
+- animation -> animation.roman_legionary.idle
+- animation2 -> animation.roman_legionary.walk
+
+验证：61 个立方体、34 个骨骼、2 段动画、144 个关键帧和内嵌纹理均保持不变。
