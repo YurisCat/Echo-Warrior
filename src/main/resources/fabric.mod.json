@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "echo_warrior",
+  "version": "${version}",
+  "name": "Echo Warrior",
+  "description": "Call echoes of warriors from the past to follow and defend you.",
+  "authors": [
+    "YurisCat"
+  ],
+  "contact": {
+    "sources": "https://github.com/YurisCat/Echo-Warrior"
+  },
+  "license": "All-Rights-Reserved",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.yuriscat.echowarrior.EchoWarrior"
+    ],
+    "client": [
+      "com.yuriscat.echowarrior.client.EchoWarriorClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.1.2",
+    "java": ">=25",
+    "fabric-api": ">=0.155.2+26.1.2",
+    "smartbrainlib": ">=2.0.0",
+    "geckolib": ">=5.5.2"
+  }
+}

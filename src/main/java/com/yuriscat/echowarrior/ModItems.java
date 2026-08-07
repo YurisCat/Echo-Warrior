@@ -1,0 +1,29 @@
+package com.yuriscat.echowarrior;
+
+import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.Item;
+
+public final class ModItems {
+	public static final TestEchoSummonerItem TEST_ECHO_SUMMONER = register(
+			"test_echo_summoner",
+			properties -> new TestEchoSummonerItem(properties.stacksTo(1))
+	);
+
+	private ModItems() {
+	}
+
+	public static void initialize() {
+	}
+
+	private static <T extends Item> T register(String path, java.util.function.Function<Item.Properties, T> factory) {
+		Identifier id = EchoWarrior.id(path);
+		ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, id);
+		T item = factory.apply(new Item.Properties().setId(key));
+		return Registry.register(BuiltInRegistries.ITEM, id, item);
+	}
+}

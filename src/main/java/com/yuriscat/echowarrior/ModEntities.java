@@ -1,0 +1,36 @@
+package com.yuriscat.echowarrior;
+
+import com.yuriscat.echowarrior.entity.RomanLegionaryEchoEntity;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+
+public final class ModEntities {
+	public static final EntityType<RomanLegionaryEchoEntity> ROMAN_LEGIONARY_ECHO = register(
+			"roman_legionary_echo",
+			EntityType.Builder.of(RomanLegionaryEchoEntity::new, MobCategory.CREATURE)
+					.sized(0.75F, 1.95F)
+					.eyeHeight(1.75F)
+					.noLootTable()
+					.noSave()
+					.clientTrackingRange(10)
+	);
+
+	private ModEntities() {
+	}
+
+	public static void initialize() {
+		FabricDefaultAttributeRegistry.register(ROMAN_LEGIONARY_ECHO, RomanLegionaryEchoEntity.createAttributes().build());
+	}
+
+	private static <T extends net.minecraft.world.entity.Entity> EntityType<T> register(String path, EntityType.Builder<T> builder) {
+		Identifier id = EchoWarrior.id(path);
+		ResourceKey<EntityType<?>> key = ResourceKey.create(Registries.ENTITY_TYPE, id);
+		return Registry.register(BuiltInRegistries.ENTITY_TYPE, id, builder.build(key));
+	}
+}
