@@ -6,8 +6,17 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Planned
 
-- Replace instant player-gaze detection with the approved head-target acquisition and mutual-gaze state flow documented in `docs/VISUAL_BEHAVIOR.md`.
-- Reconcile SmartBrainLib look behaviour, body facing, and client bone transforms so an echo does not appear to look away from a watching player.
+- Continue manual playtesting and tune the head-target radius, body-turn speed, and animation responsiveness if required.
+
+### Added
+
+- Head-centred player-gaze acquisition with distance-scaled timing, two-tick mouse tolerance, line-of-sight validation, multiplayer owner priority, and close-range handling for invisible players.
+- A mutual-gaze state with randomized hold and renewal durations, occasional glance-away breaks, last-seen-position persistence, combat suppression, and threat interruption.
+
+### Changed
+
+- Mutual gaze now moves pupils first, then the head, and gently aligns the body only when the player lies well outside the forward cone.
+- Removed SmartBrainLib's generic always-running look behaviour so it no longer competes with the code-owned visual-attention layer.
 
 ## 2026-08-07 - Legionary visual prototype baseline
 

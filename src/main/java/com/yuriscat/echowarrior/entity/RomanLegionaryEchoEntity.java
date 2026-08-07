@@ -34,7 +34,6 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import net.tslat.smartbrainlib.api.SmartBrainOwner;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.attack.AnimatableMeleeAttack;
-import net.tslat.smartbrainlib.api.core.behaviour.custom.look.LookAtTarget;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.move.MoveToWalkTarget;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.path.SetWalkTargetToAttackTarget;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.target.InvalidateAttackTarget;
@@ -43,7 +42,11 @@ import net.tslat.smartbrainlib.api.core.sensor.vanilla.NearbyLivingEntitySensor;
 import net.tslat.smartbrainlib.util.BrainUtil;
 import org.jspecify.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public final class RomanLegionaryEchoEntity extends PathfinderMob
@@ -53,6 +56,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	public static final byte VISUAL_STARTLED = 2;
 	public static final byte VISUAL_HURT = 3;
 	public static final byte VISUAL_CURIOUS = 4;
+	public static final byte VISUAL_MUTUAL_GAZE = 5;
 
 	private static final EntityDataAccessor<Float> ATTENTION_X = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> ATTENTION_Y = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.FLOAT);
@@ -63,9 +67,15 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final EntityDataAccessor<Byte> BLINK_COUNT = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.BYTE);
 	private static final EntityDataAccessor<Byte> CURIOUS_TILT = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.BYTE);
 	private static final EntityDataAccessor<Integer> VISUAL_SEQUENCE = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Long> ATTENTION_STARTED_AT = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.LONG);
 
 	public static final int MAX_LIFETIME_TICKS = 20 * 120;
 	public static final int SUMMONER_GRACE_TICKS = 20 * 5;
+	private static final double HEAD_GAZE_RADIUS = 0.35;
+	private static final double INVISIBLE_GAZE_RANGE = 4.0;
+	private static final int GAZE_MISS_TOLERANCE_TICKS = 2;
+	private static final int COMBAT_GAZE_SUPPRESSION_TICKS = 20 * 3;
+	private static final int MUTUAL_GAZE_PRIORITY = 790;
 	private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.roman_legionary.idle");
 	private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.roman_legionary.walk");
 
@@ -81,6 +91,13 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private long attentionExpiresAt;
 	private long nextBlinkAt;
 	private long forcedVisualUntil;
+	private final Map<UUID, PlayerGazeProgress> playerGazeProgress = new HashMap<>();
+	private @Nullable UUID mutualGazePlayerUuid;
+	private Vec3 mutualGazeLastSeenPoint = Vec3.ZERO;
+	private long mutualGazeUntil;
+	private long mutualGazeLostSightAt = -1L;
+	private long mutualGazeCooldownUntil;
+	private boolean mutualGazeBodyTurning;
 
 	public RomanLegionaryEchoEntity(EntityType<? extends RomanLegionaryEchoEntity> type, Level level) {
 		super(type, level);
@@ -109,6 +126,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		entityData.define(BLINK_COUNT, (byte)0);
 		entityData.define(CURIOUS_TILT, (byte)0);
 		entityData.define(VISUAL_SEQUENCE, 0);
+		entityData.define(ATTENTION_STARTED_AT, 0L);
 	}
 
 	@Override
@@ -122,7 +140,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	@Override
 	public List<? extends BehaviorControl<?>> getAlwaysRunningBehaviours(RomanLegionaryEchoEntity owner) {
-		return List.of(new LookAtTarget<>(), new MoveToWalkTarget<>());
+		return List.of(new MoveToWalkTarget<>());
 	}
 
 	@Override
@@ -187,11 +205,30 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			this.entityData.set(CURIOUS_TILT, (byte)0);
 		}
 
-		if (this.tickCount % 5 != 0) {
+		boolean combatSuppressed = isMutualGazeCombatSuppressed(owner);
+		Player acquiredPlayer = this.mutualGazePlayerUuid == null
+				? tickPlayerGazeAcquisition(level, owner, combatSuppressed, now)
+				: null;
+		AttentionCandidate candidate = this.tickCount % 5 == 0 ? findBestAttentionCandidate(level, owner, now) : null;
+
+		if (this.mutualGazePlayerUuid != null) {
+			if (combatSuppressed || candidate != null && isMutualGazeInterrupt(candidate)) {
+				endMutualGaze(now);
+			} else if (tickMutualGaze(level, now)) {
+				return;
+			}
+		}
+
+		if (acquiredPlayer != null && now >= this.mutualGazeCooldownUntil
+				&& !combatSuppressed && (candidate == null || !isMutualGazeInterrupt(candidate))) {
+			beginMutualGaze(acquiredPlayer, now);
 			return;
 		}
 
-		AttentionCandidate candidate = findBestAttentionCandidate(level, owner, now);
+		if (candidate == null) {
+			return;
+		}
+
 		boolean expired = now >= this.attentionExpiresAt || this.attentionTarget != null && !this.attentionTarget.isAlive();
 		if (candidate.priority() >= this.attentionPriority + 80 || expired) {
 			applyAttention(candidate, now);
@@ -203,6 +240,186 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		if ((reaction == VISUAL_STARTLED || reaction == VISUAL_HURT) && now - this.attentionStartedAt >= 8) {
 			turnBodyToward(this.attentionPoint, 8.0F);
 		}
+	}
+
+	private @Nullable Player tickPlayerGazeAcquisition(ServerLevel level, LivingEntity owner, boolean combatSuppressed, long now) {
+		if (combatSuppressed || now < this.mutualGazeCooldownUntil) {
+			this.playerGazeProgress.clear();
+			return null;
+		}
+
+		Set<UUID> presentPlayers = new HashSet<>();
+		Player qualifiedOwner = null;
+		Player longestGazePlayer = null;
+		int longestGazeTicks = -1;
+
+		for (Player player : level.players()) {
+			if (!player.isAlive() || player.isSpectator()) {
+				continue;
+			}
+
+			UUID playerUuid = player.getUUID();
+			presentPlayers.add(playerUuid);
+			PlayerGazeProgress progress = this.playerGazeProgress.computeIfAbsent(playerUuid, ignored -> new PlayerGazeProgress());
+			GazeSample sample = samplePlayerHeadGaze(player);
+
+			if (sample.state() == GazeState.VALID) {
+				progress.validTicks++;
+				progress.missedTicks = 0;
+			} else if (sample.state() == GazeState.MISSED && progress.missedTicks < GAZE_MISS_TOLERANCE_TICKS) {
+				progress.missedTicks++;
+			} else {
+				progress.reset();
+			}
+
+			if (progress.validTicks < requiredGazeTicks(sample.distance())) {
+				continue;
+			}
+
+			if (player == owner) {
+				qualifiedOwner = player;
+			} else if (progress.validTicks > longestGazeTicks) {
+				longestGazeTicks = progress.validTicks;
+				longestGazePlayer = player;
+			}
+		}
+
+		this.playerGazeProgress.keySet().removeIf(uuid -> !presentPlayers.contains(uuid));
+		return qualifiedOwner != null ? qualifiedOwner : longestGazePlayer;
+	}
+
+	private GazeSample samplePlayerHeadGaze(Player player) {
+		Vec3 playerEye = player.getEyePosition();
+		Vec3 headCenter = this.getEyePosition();
+		Vec3 towardHead = headCenter.subtract(playerEye);
+		double distance = towardHead.length();
+		if (distance < 0.1 || player.isInvisible() && distance > INVISIBLE_GAZE_RANGE || !this.hasLineOfSight(player)) {
+			return new GazeSample(GazeState.BLOCKED, distance);
+		}
+
+		Vec3 look = player.getLookAngle().normalize();
+		double projection = look.dot(towardHead);
+		if (projection <= 0.0) {
+			return new GazeSample(GazeState.MISSED, distance);
+		}
+
+		double distanceFromRaySqr = Math.max(0.0, towardHead.lengthSqr() - projection * projection);
+		return new GazeSample(distanceFromRaySqr <= HEAD_GAZE_RADIUS * HEAD_GAZE_RADIUS ? GazeState.VALID : GazeState.MISSED, distance);
+	}
+
+	private static int requiredGazeTicks(double distance) {
+		return 10 + (int)Math.ceil(Math.max(0.0, distance - 12.0) / 2.0);
+	}
+
+	private boolean isMutualGazeCombatSuppressed(LivingEntity owner) {
+		LivingEntity target = this.getTarget();
+		return target != null && target.isAlive()
+				|| isRecentWithin(this, this.getLastHurtByMobTimestamp(), COMBAT_GAZE_SUPPRESSION_TICKS)
+				|| isRecentWithin(this, this.getLastHurtMobTimestamp(), COMBAT_GAZE_SUPPRESSION_TICKS)
+				|| isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), COMBAT_GAZE_SUPPRESSION_TICKS)
+				|| isRecentWithin(owner, owner.getLastHurtMobTimestamp(), COMBAT_GAZE_SUPPRESSION_TICKS);
+	}
+
+	private void beginMutualGaze(Player player, long now) {
+		this.mutualGazePlayerUuid = player.getUUID();
+		this.mutualGazeLastSeenPoint = player.getEyePosition();
+		this.mutualGazeUntil = now + 40 + this.random.nextInt(41);
+		this.mutualGazeLostSightAt = -1L;
+		this.mutualGazeBodyTurning = false;
+		this.playerGazeProgress.clear();
+		applyAttention(new AttentionCandidate(player, this.mutualGazeLastSeenPoint, MUTUAL_GAZE_PRIORITY,
+				VISUAL_MUTUAL_GAZE, (int)(this.mutualGazeUntil - now), false), now);
+	}
+
+	private boolean tickMutualGaze(ServerLevel level, long now) {
+		Player player = level.getPlayerByUUID(this.mutualGazePlayerUuid);
+		if (player == null || !player.isAlive() || player.isSpectator()) {
+			endMutualGaze(now);
+			return false;
+		}
+
+		double distance = player.getEyePosition().distanceTo(this.getEyePosition());
+		boolean visible = (!player.isInvisible() || distance <= INVISIBLE_GAZE_RANGE) && this.hasLineOfSight(player);
+		if (visible) {
+			this.mutualGazeLostSightAt = -1L;
+			this.mutualGazeLastSeenPoint = player.getEyePosition();
+			setAttentionPoint(this.mutualGazeLastSeenPoint);
+		} else {
+			if (this.mutualGazeLostSightAt < 0L) {
+				this.mutualGazeLostSightAt = now;
+			}
+			if (now - this.mutualGazeLostSightAt > 10) {
+				endMutualGaze(now);
+				return false;
+			}
+			setAttentionPoint(this.mutualGazeLastSeenPoint);
+		}
+
+		if (visible && now >= this.mutualGazeUntil) {
+			boolean stillLooking = samplePlayerHeadGaze(player).state() == GazeState.VALID;
+			if (stillLooking && this.random.nextFloat() < 0.75F) {
+				this.mutualGazeUntil = now + 20 + this.random.nextInt(41);
+				this.attentionExpiresAt = this.mutualGazeUntil;
+				this.entityData.set(VISUAL_REACTION_UNTIL, this.mutualGazeUntil);
+			} else {
+				endMutualGaze(now);
+				if (stillLooking) {
+					startMutualGazeGlanceAway(now);
+				}
+				return false;
+			}
+		}
+
+		if (now - this.attentionStartedAt >= 4) {
+			float desiredYaw = yawToward(this.getX(), this.getZ(), this.mutualGazeLastSeenPoint.x, this.mutualGazeLastSeenPoint.z);
+			float yawDifference = Math.abs(net.minecraft.util.Mth.wrapDegrees(desiredYaw - this.yBodyRot));
+			if (!this.mutualGazeBodyTurning && yawDifference > 45.0F) {
+				this.mutualGazeBodyTurning = true;
+			}
+			if (this.mutualGazeBodyTurning) {
+				if (yawDifference <= 20.0F) {
+					this.mutualGazeBodyTurning = false;
+				} else {
+					turnBodyToward(this.mutualGazeLastSeenPoint, 6.0F);
+				}
+			}
+		}
+
+		return true;
+	}
+
+	private void startMutualGazeGlanceAway(long now) {
+		this.mutualGazeCooldownUntil = now + 10 + this.random.nextInt(21);
+		float offset = 35.0F + this.random.nextFloat() * 65.0F;
+		float yaw = (this.yBodyRot + (this.random.nextBoolean() ? offset : -offset)) * ((float)Math.PI / 180.0F);
+		double distance = 4.0 + this.random.nextDouble() * 3.0;
+		Vec3 point = new Vec3(
+				this.getX() - Math.sin(yaw) * distance,
+				this.getEyeY() + this.random.nextDouble() * 1.5 - 0.5,
+				this.getZ() + Math.cos(yaw) * distance
+		);
+		applyAttention(new AttentionCandidate(null, point, 235, VISUAL_NORMAL,
+				(int)(this.mutualGazeCooldownUntil - now), false), now);
+	}
+
+	private void endMutualGaze(long now) {
+		this.mutualGazePlayerUuid = null;
+		this.mutualGazeUntil = 0L;
+		this.mutualGazeLostSightAt = -1L;
+		this.mutualGazeBodyTurning = false;
+		this.playerGazeProgress.clear();
+		this.attentionTarget = null;
+		this.attentionPriority = 0;
+		this.attentionExpiresAt = now;
+		if (this.entityData.get(VISUAL_REACTION) == VISUAL_MUTUAL_GAZE) {
+			setReaction(VISUAL_NORMAL, now);
+			this.entityData.set(CURIOUS_TILT, (byte)0);
+		}
+	}
+
+	private static boolean isMutualGazeInterrupt(AttentionCandidate candidate) {
+		return candidate.reaction() == VISUAL_HURT || candidate.reaction() == VISUAL_STARTLED
+				|| candidate.target() instanceof Creeper || candidate.priority() >= 800;
 	}
 
 	private void tickBlinkClock(long now) {
@@ -245,10 +462,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			byte reaction = VISUAL_NORMAL;
 			int duration = 30 + this.random.nextInt(51);
 
-			if (entity instanceof Player player && isPlayerLookingAtEcho(player) && this.random.nextFloat() < 0.85F) {
-				score = 790;
-				duration = 50 + this.random.nextInt(51);
-			} else if (entity instanceof Creeper creeper) {
+			if (entity instanceof Creeper creeper) {
 				boolean primed = creeper.getSwellDir() > 0 || creeper.isIgnited();
 				score = primed ? 950 : distanceSqr <= 64.0 ? 720 : 540;
 				reaction = primed || distanceSqr <= 64.0 ? VISUAL_STARTLED : VISUAL_ALERT;
@@ -291,22 +505,6 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		return best;
 	}
 
-	private boolean isPlayerLookingAtEcho(Player player) {
-		if (!this.hasLineOfSight(player) || player.isSpectator()) {
-			return false;
-		}
-
-		Vec3 towardEcho = this.getEyePosition().subtract(player.getEyePosition());
-		double distance = towardEcho.length();
-		if (distance < 0.1 || distance > 12.0) {
-			return false;
-		}
-
-		double gazeAlignment = player.getLookAngle().normalize().dot(towardEcho.scale(1.0 / distance));
-		double requiredAlignment = distance < 4.0 ? 0.965 : 0.985;
-		return gazeAlignment >= requiredAlignment;
-	}
-
 	private boolean isVisibleAttentionTarget(@Nullable LivingEntity target) {
 		return target != null && target.isAlive() && target.level() == this.level() && this.distanceToSqr(target) <= 32.0 * 32.0 && this.hasLineOfSight(target);
 	}
@@ -327,6 +525,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.attentionPoint = candidate.point();
 		this.attentionPriority = candidate.priority();
 		this.attentionStartedAt = now;
+		this.entityData.set(ATTENTION_STARTED_AT, now);
 		this.attentionExpiresAt = now + candidate.durationTicks();
 		setAttentionPoint(candidate.point());
 		setReaction(candidate.reaction(), now + candidate.durationTicks());
@@ -405,6 +604,10 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		return this.entityData.get(VISUAL_REACTION_UNTIL);
 	}
 
+	public long getAttentionStartedAt() {
+		return this.entityData.get(ATTENTION_STARTED_AT);
+	}
+
 	public long getBlinkStart() {
 		return this.entityData.get(BLINK_START);
 	}
@@ -432,6 +635,25 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private record AttentionCandidate(@Nullable LivingEntity target, Vec3 point, int priority, byte reaction, int durationTicks, boolean curious) {
 	}
 
+	private enum GazeState {
+		VALID,
+		MISSED,
+		BLOCKED
+	}
+
+	private record GazeSample(GazeState state, double distance) {
+	}
+
+	private static final class PlayerGazeProgress {
+		private int validTicks;
+		private int missedTicks;
+
+		private void reset() {
+			this.validTicks = 0;
+			this.missedTicks = 0;
+		}
+	}
+
 	private @Nullable LivingEntity selectProtectiveTarget(LivingEntity owner) {
 		LivingEntity ownAttacker = this.getLastHurtByMob();
 		if (isRecent(this, this.getLastHurtByMobTimestamp()) && canProtectAgainst(ownAttacker)) {
@@ -449,6 +671,10 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	private static boolean isRecent(LivingEntity source, int timestamp) {
 		return timestamp > 0 && source.tickCount - timestamp <= 100;
+	}
+
+	private static boolean isRecentWithin(LivingEntity source, int timestamp, int ticks) {
+		return timestamp > 0 && source.tickCount - timestamp <= ticks;
 	}
 
 	private boolean canProtectAgainst(@Nullable LivingEntity target) {

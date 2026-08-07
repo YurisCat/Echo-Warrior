@@ -26,6 +26,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 	private static final DataTicket<Byte> BLINK_COUNT = DataTickets.create("echo_warrior_blink_count", Byte.class);
 	private static final DataTicket<Byte> CURIOUS_TILT = DataTickets.create("echo_warrior_curious_tilt", Byte.class);
 	private static final DataTicket<Integer> VISUAL_SEQUENCE = DataTickets.create("echo_warrior_visual_sequence", Integer.class);
+	private static final DataTicket<Long> ATTENTION_STARTED_AT = DataTickets.create("echo_warrior_attention_started_at", Long.class);
 
 	private final Map<Integer, VisualState> visualStates = new HashMap<>();
 
@@ -52,6 +53,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		renderState.addGeckolibData(BLINK_COUNT, entity.getBlinkCount());
 		renderState.addGeckolibData(CURIOUS_TILT, entity.getCuriousTilt());
 		renderState.addGeckolibData(VISUAL_SEQUENCE, entity.getVisualSequence());
+		renderState.addGeckolibData(ATTENTION_STARTED_AT, entity.getAttentionStartedAt());
 	}
 
 	@Override
@@ -66,6 +68,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		long gameTime = renderPass.getGeckolibData(GAME_TIME);
 		float partialTick = renderPass.renderState().getPartialTick();
 		int sequence = renderPass.getGeckolibData(VISUAL_SEQUENCE);
+		float attentionAge = gameTime + partialTick - renderPass.getGeckolibData(ATTENTION_STARTED_AT);
 
 		if (this.visualStates.size() > 256 && !this.visualStates.containsKey(entityId)) {
 			this.visualStates.clear();
@@ -84,7 +87,14 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 				? renderPass.getGeckolibData(CURIOUS_TILT) * 10.0F
 				: 0.0F;
 
-		float headResponsiveness = reaction == RomanLegionaryEchoEntity.VISUAL_STARTLED || reaction == RomanLegionaryEchoEntity.VISUAL_HURT ? 0.55F : 0.18F;
+		float headResponsiveness;
+		if (reaction == RomanLegionaryEchoEntity.VISUAL_STARTLED || reaction == RomanLegionaryEchoEntity.VISUAL_HURT) {
+			headResponsiveness = 0.55F;
+		} else if (reaction == RomanLegionaryEchoEntity.VISUAL_MUTUAL_GAZE) {
+			headResponsiveness = attentionAge < 2.0F ? 0.0F : 0.24F;
+		} else {
+			headResponsiveness = 0.18F;
+		}
 		state.headYaw = approach(state.headYaw, desiredHeadYaw, headResponsiveness, deltaTicks);
 		state.headPitch = approach(state.headPitch, desiredHeadPitch, headResponsiveness, deltaTicks);
 		state.headTilt = approach(state.headTilt, desiredTilt, 0.16F, deltaTicks);
@@ -93,7 +103,9 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		float residualPitch = Mth.clamp(desiredHeadPitch - state.headPitch, -18.0F, 18.0F);
 		float desiredEyeX = residualYaw / 25.0F * 0.48F;
 		float desiredEyeY = -residualPitch / 18.0F * 0.28F;
-		float eyeResponsiveness = reaction == RomanLegionaryEchoEntity.VISUAL_STARTLED || reaction == RomanLegionaryEchoEntity.VISUAL_HURT ? 0.82F : 0.42F;
+		float eyeResponsiveness = reaction == RomanLegionaryEchoEntity.VISUAL_STARTLED || reaction == RomanLegionaryEchoEntity.VISUAL_HURT
+				? 0.82F
+				: reaction == RomanLegionaryEchoEntity.VISUAL_MUTUAL_GAZE ? 0.68F : 0.42F;
 		state.eyeX = approach(state.eyeX, desiredEyeX, eyeResponsiveness, deltaTicks);
 		state.eyeY = approach(state.eyeY, desiredEyeY, eyeResponsiveness, deltaTicks);
 
