@@ -24,6 +24,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 	private static final DataTicket<Integer> ENTITY_ID = DataTickets.create("echo_warrior_entity_id", Integer.class);
 	private static final DataTicket<Vec3> ENTITY_POSITION = DataTickets.create("echo_warrior_entity_position", Vec3.class);
 	private static final DataTicket<Vec3> ATTENTION_POINT = DataTickets.create("echo_warrior_attention_point", Vec3.class);
+	private static final DataTicket<Vec3> EYE_ATTENTION_POINT = DataTickets.create("echo_warrior_eye_attention_point", Vec3.class);
 	private static final DataTicket<Float> BODY_YAW = DataTickets.create("echo_warrior_body_yaw", Float.class);
 	private static final DataTicket<Byte> REACTION = DataTickets.create("echo_warrior_reaction", Byte.class);
 	private static final DataTicket<Long> GAME_TIME = DataTickets.create("echo_warrior_game_time", Long.class);
@@ -51,6 +52,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 				Mth.lerp(partialTick, entity.zo, entity.getZ())
 		));
 		renderState.addGeckolibData(ATTENTION_POINT, entity.getSyncedAttentionPoint());
+		renderState.addGeckolibData(EYE_ATTENTION_POINT, entity.getSyncedEyeAttentionPoint());
 		renderState.addGeckolibData(BODY_YAW, Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot));
 		renderState.addGeckolibData(REACTION, entity.getVisualReaction());
 		renderState.addGeckolibData(GAME_TIME, entity.level().getGameTime());
@@ -68,6 +70,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		int entityId = renderPass.getGeckolibData(ENTITY_ID);
 		Vec3 entityPosition = renderPass.getGeckolibData(ENTITY_POSITION);
 		Vec3 attentionPoint = renderPass.getGeckolibData(ATTENTION_POINT);
+		Vec3 eyeAttentionPoint = renderPass.getGeckolibData(EYE_ATTENTION_POINT);
 		float bodyYaw = renderPass.getGeckolibData(BODY_YAW);
 		byte reaction = renderPass.getGeckolibData(REACTION);
 		long gameTime = renderPass.getGeckolibData(GAME_TIME);
@@ -83,11 +86,11 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		float deltaTicks = state.lastAge < 0.0F ? 1.0F : Mth.clamp(age - state.lastAge, 0.0F, 1.0F);
 		state.lastAge = age;
 
-		Vec3 delta = attentionPoint.subtract(entityPosition);
-		double horizontal = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
-		float desiredWorldYaw = horizontal < 1.0E-4 ? bodyYaw : (float)(Math.atan2(delta.z, delta.x) * 180.0 / Math.PI) - 90.0F;
-		float desiredHeadYaw = Mth.clamp(Mth.wrapDegrees(desiredWorldYaw - bodyYaw), -65.0F, 65.0F);
-		float desiredHeadPitch = horizontal < 1.0E-4 ? 0.0F : Mth.clamp((float)(-Math.atan2(delta.y, horizontal) * 180.0 / Math.PI), -35.0F, 40.0F);
+		Vec3 headDelta = attentionPoint.subtract(entityPosition);
+		double headHorizontal = Math.sqrt(headDelta.x * headDelta.x + headDelta.z * headDelta.z);
+		float desiredHeadWorldYaw = headHorizontal < 1.0E-4 ? bodyYaw : worldYawToward(headDelta);
+		float desiredHeadYaw = Mth.clamp(Mth.wrapDegrees(desiredHeadWorldYaw - bodyYaw), -75.0F, 75.0F);
+		float desiredHeadPitch = headHorizontal < 1.0E-4 ? 0.0F : Mth.clamp(worldPitchToward(headDelta, headHorizontal), -35.0F, 40.0F);
 		float desiredTilt = reaction == RomanLegionaryEchoEntity.VISUAL_CURIOUS
 				? renderPass.getGeckolibData(CURIOUS_TILT) * 10.0F
 				: 0.0F;
@@ -106,8 +109,12 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 
 		// Recalculate the target in the head's current local space every frame. This keeps the
 		// pupils fixed on the same world target while the head and body rotate underneath them.
-		float eyeTargetYaw = Mth.clamp(Mth.wrapDegrees(desiredHeadYaw - state.headYaw), -EYE_YAW_LIMIT, EYE_YAW_LIMIT);
-		float eyeTargetPitch = Mth.clamp(desiredHeadPitch - state.headPitch, -EYE_PITCH_LIMIT, EYE_PITCH_LIMIT);
+		Vec3 eyeDelta = eyeAttentionPoint.subtract(entityPosition);
+		double eyeHorizontal = Math.sqrt(eyeDelta.x * eyeDelta.x + eyeDelta.z * eyeDelta.z);
+		float desiredEyeWorldYaw = eyeHorizontal < 1.0E-4 ? desiredHeadWorldYaw : worldYawToward(eyeDelta);
+		float desiredEyeWorldPitch = eyeHorizontal < 1.0E-4 ? desiredHeadPitch : worldPitchToward(eyeDelta, eyeHorizontal);
+		float eyeTargetYaw = Mth.clamp(Mth.wrapDegrees(desiredEyeWorldYaw - bodyYaw - state.headYaw), -EYE_YAW_LIMIT, EYE_YAW_LIMIT);
+		float eyeTargetPitch = Mth.clamp(desiredEyeWorldPitch - state.headPitch, -EYE_PITCH_LIMIT, EYE_PITCH_LIMIT);
 		float unrolledEyeX = eyeTargetYaw / EYE_YAW_LIMIT * MAX_EYE_X;
 		float unrolledEyeY = -eyeTargetPitch / EYE_PITCH_LIMIT * MAX_EYE_Y;
 
@@ -131,12 +138,14 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		};
 		state.pupilScale = approach(state.pupilScale, desiredPupilScale, desiredPupilScale < state.pupilScale ? 0.8F : 0.18F, deltaTicks);
 
-		float convergence = horizontal < 3.0 && horizontal > 0.1 ? (float)((3.0 - horizontal) / 3.0) * 0.09F : 0.0F;
+		float convergence = eyeHorizontal < 3.0 && eyeHorizontal > 0.1 ? (float)((3.0 - eyeHorizontal) / 3.0) * 0.09F : 0.0F;
 		float blink = reaction == RomanLegionaryEchoEntity.VISUAL_HURT || reaction == RomanLegionaryEchoEntity.VISUAL_STARTLED
 				? 0.0F
 				: calculateBlink(gameTime + partialTick, renderPass.getGeckolibData(BLINK_START), renderPass.getGeckolibData(BLINK_COUNT));
 
-		snapshots.ifPresent("head", bone -> bone.setRotation(toRadians(state.headPitch), toRadians(state.headYaw), toRadians(state.headTilt)));
+		// This Blockbench model's yaw and pitch axes are opposite Minecraft's semantic head angles.
+		// Roll is already authored in the expected direction and remains unchanged.
+		snapshots.ifPresent("head", bone -> bone.setRotation(toRadians(-state.headPitch), toRadians(-state.headYaw), toRadians(state.headTilt)));
 		snapshots.ifPresent("left_eye", bone -> bone
 				.setTranslation(state.eyeX - convergence, state.eyeY, 0.0F)
 				.setScale(state.pupilScale, state.pupilScale, 1.0F));
@@ -176,6 +185,14 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 
 	private static float toRadians(float degrees) {
 		return degrees * ((float)Math.PI / 180.0F);
+	}
+
+	private static float worldYawToward(Vec3 delta) {
+		return (float)(Math.atan2(delta.z, delta.x) * 180.0 / Math.PI) - 90.0F;
+	}
+
+	private static float worldPitchToward(Vec3 delta, double horizontal) {
+		return Mth.clamp((float)(-Math.atan2(delta.y, horizontal) * 180.0 / Math.PI), -35.0F, 40.0F);
 	}
 
 	private static final class VisualState {

@@ -12,6 +12,7 @@ All notable development changes to Echo Warrior are recorded here.
 
 - Head-centred player-gaze acquisition with distance-scaled timing, two-tick mouse tolerance, line-of-sight validation, multiplayer owner priority, and close-range handling for invisible players.
 - A mutual-gaze state with randomized hold and renewal durations, occasional glance-away breaks, last-seen-position persistence, combat suppression, and threat interruption.
+- Independent pupil, head, and body attention layers with explicit threat priorities and minimum target-hold windows.
 
 ### Changed
 
@@ -23,6 +24,10 @@ All notable development changes to Echo Warrior are recorded here.
 - Mutual-gaze hold time now begins after the echo finishes facing the player, so a rear-facing turn cannot consume most of the visible eye-contact duration.
 - Owner-follow navigation pauses during mutual gaze, and body alignment now converges within five degrees instead of relying on a visibly offset head correction.
 - Pupil tracking now recalculates the target in head-local space every rendered frame, with larger safe travel, faster eye-leading response, and roll compensation during curious head tilts.
+- Corrected the Blockbench head-bone yaw and pitch mapping so left/right and up/down tracking match the target while preserving the intentional roll-based curious tilt.
+- Primed creepers and recent damage sources now override visual attention immediately; nearby unprimed creepers lead with the pupils, delay the head slightly, and only turn the non-combat body under close or rapidly approaching conditions.
+- Nearby unprimed creepers now pause mutual gaze for up to one second instead of causing alternating-frame target flicker; a cleared distraction resumes player eye contact, while a persistent one ends it.
+- `/echo_warrior visual status` now reports distraction state and the active eye, head, and body attention categories.
 
 ## 2026-08-07 - Legionary visual prototype baseline
 

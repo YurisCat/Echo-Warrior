@@ -64,6 +64,9 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final EntityDataAccessor<Float> ATTENTION_X = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> ATTENTION_Y = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> ATTENTION_Z = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_X = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_Y = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_Z = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Byte> VISUAL_REACTION = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.BYTE);
 	private static final EntityDataAccessor<Long> VISUAL_REACTION_UNTIL = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.LONG);
 	private static final EntityDataAccessor<Long> BLINK_START = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.LONG);
@@ -80,6 +83,8 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final int GAZE_MISS_TOLERANCE_TICKS = 2;
 	private static final int COMBAT_GAZE_SUPPRESSION_TICKS = 20 * 3;
 	private static final int MUTUAL_GAZE_PRIORITY = 790;
+	private static final int EYE_STICKY_TICKS = 5;
+	private static final int HEAD_STICKY_TICKS = 10;
 	private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.roman_legionary.idle");
 	private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.roman_legionary.walk");
 
@@ -93,6 +98,21 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private int attentionPriority;
 	private long attentionStartedAt;
 	private long attentionExpiresAt;
+	private @Nullable LivingEntity eyeAttentionTarget;
+	private Vec3 eyeAttentionPoint = Vec3.ZERO;
+	private int eyeAttentionPriority;
+	private long eyeAttentionExpiresAt;
+	private AttentionKind eyeAttentionKind = AttentionKind.NORMAL;
+	private long eyeStickyUntil;
+	private long headStickyUntil;
+	private AttentionKind headAttentionKind = AttentionKind.NORMAL;
+	private @Nullable LivingEntity pendingHeadTarget;
+	private AttentionKind pendingHeadKind = AttentionKind.NORMAL;
+	private long pendingHeadSince;
+	private @Nullable LivingEntity bodyAttentionTarget;
+	private AttentionKind bodyAttentionKind = AttentionKind.NORMAL;
+	private long bodyAttentionStartedAt;
+	private long bodyAttentionExpiresAt;
 	private long nextBlinkAt;
 	private long forcedVisualUntil;
 	private final Map<UUID, PlayerGazeProgress> playerGazeProgress = new HashMap<>();
@@ -103,6 +123,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private long mutualGazeCooldownUntil;
 	private boolean mutualGazeBodyTurning;
 	private boolean mutualGazeAligned;
+	private long mutualGazeDistractionStartedAt = -1L;
 
 	public RomanLegionaryEchoEntity(EntityType<? extends RomanLegionaryEchoEntity> type, Level level) {
 		super(type, level);
@@ -125,6 +146,9 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		entityData.define(ATTENTION_X, 0.0F);
 		entityData.define(ATTENTION_Y, 0.0F);
 		entityData.define(ATTENTION_Z, 0.0F);
+		entityData.define(EYE_ATTENTION_X, 0.0F);
+		entityData.define(EYE_ATTENTION_Y, 0.0F);
+		entityData.define(EYE_ATTENTION_Z, 0.0F);
 		entityData.define(VISUAL_REACTION, VISUAL_NORMAL);
 		entityData.define(VISUAL_REACTION_UNTIL, 0L);
 		entityData.define(BLINK_START, -100L);
@@ -200,8 +224,12 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	@Override
 	public void tick() {
 		super.tick();
-		if (!this.level().isClientSide() && this.mutualGazePlayerUuid != null) {
-			tickMutualGazeBodyFacing();
+		if (!this.level().isClientSide()) {
+			if (this.mutualGazePlayerUuid != null && this.mutualGazeDistractionStartedAt < 0L) {
+				tickMutualGazeBodyFacing();
+			} else {
+				tickThreatBodyFacing();
+			}
 		}
 	}
 
@@ -222,18 +250,19 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		Player acquiredPlayer = this.mutualGazePlayerUuid == null
 				? tickPlayerGazeAcquisition(level, owner, combatSuppressed, now)
 				: null;
-		AttentionCandidate candidate = this.tickCount % 5 == 0 ? findBestAttentionCandidate(level, owner, now) : null;
+		boolean attentionScanTick = this.tickCount % 2 == 0;
+		AttentionCandidate candidate = attentionScanTick ? findBestAttentionCandidate(level, owner, now) : null;
 
 		if (this.mutualGazePlayerUuid != null) {
-			if (combatSuppressed || candidate != null && isMutualGazeInterrupt(candidate)) {
+			if (combatSuppressed || candidate != null && isHardMutualGazeInterrupt(candidate)) {
 				endMutualGaze(now);
-			} else if (tickMutualGaze(level, now)) {
+			} else if (tickMutualGaze(level, now, candidate, attentionScanTick)) {
 				return;
 			}
 		}
 
 		if (acquiredPlayer != null && now >= this.mutualGazeCooldownUntil
-				&& !combatSuppressed && (candidate == null || !isMutualGazeInterrupt(candidate))) {
+				&& !combatSuppressed && (candidate == null || !isHardMutualGazeInterrupt(candidate))) {
 			beginMutualGaze(acquiredPlayer, now);
 			return;
 		}
@@ -242,17 +271,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			return;
 		}
 
-		boolean expired = now >= this.attentionExpiresAt || this.attentionTarget != null && !this.attentionTarget.isAlive();
-		if (candidate.priority() >= this.attentionPriority + 80 || expired) {
-			applyAttention(candidate, now);
-		} else if (this.attentionTarget != null && this.attentionTarget.isAlive()) {
-			setAttentionPoint(this.attentionTarget.getEyePosition());
-		}
-
-		byte reaction = this.entityData.get(VISUAL_REACTION);
-		if ((reaction == VISUAL_STARTLED || reaction == VISUAL_HURT) && now - this.attentionStartedAt >= 8) {
-			turnBodyToward(this.attentionPoint, 8.0F);
-		}
+		considerAttentionCandidate(candidate, now);
 	}
 
 	private @Nullable Player tickPlayerGazeAcquisition(ServerLevel level, LivingEntity owner, boolean combatSuppressed, long now) {
@@ -354,13 +373,14 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.mutualGazeLostSightAt = -1L;
 		this.mutualGazeBodyTurning = false;
 		this.mutualGazeAligned = false;
+		this.mutualGazeDistractionStartedAt = -1L;
 		this.playerGazeProgress.clear();
 		this.getNavigation().stop();
 		applyAttention(new AttentionCandidate(player, this.mutualGazeLastSeenPoint, MUTUAL_GAZE_PRIORITY,
-				VISUAL_MUTUAL_GAZE, 20 * 60, false), now);
+				VISUAL_MUTUAL_GAZE, 20 * 60, false, AttentionKind.MUTUAL_GAZE), now);
 	}
 
-	private boolean tickMutualGaze(ServerLevel level, long now) {
+	private boolean tickMutualGaze(ServerLevel level, long now, @Nullable AttentionCandidate candidate, boolean attentionScanTick) {
 		Player player = level.getPlayerByUUID(this.mutualGazePlayerUuid);
 		if (player == null || !player.isAlive() || player.isSpectator()) {
 			endMutualGaze(now);
@@ -386,6 +406,32 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		}
 
 		this.getNavigation().stop();
+		if (candidate != null && candidate.kind() == AttentionKind.CLOSE_CREEPER) {
+			if (this.mutualGazeDistractionStartedAt < 0L) {
+				this.mutualGazeDistractionStartedAt = now;
+			}
+			considerAttentionCandidate(candidate, now);
+			if (now - this.mutualGazeDistractionStartedAt > 20) {
+				endMutualGaze(now);
+				return false;
+			}
+			return true;
+		}
+
+		if (this.mutualGazeDistractionStartedAt >= 0L && !attentionScanTick) {
+			return true;
+		}
+
+		if (this.mutualGazeDistractionStartedAt >= 0L) {
+			this.mutualGazeDistractionStartedAt = -1L;
+			restoreMutualGazeAttention(player, now);
+		} else {
+			this.eyeAttentionTarget = player;
+			this.attentionTarget = player;
+			setEyeAttentionPoint(this.mutualGazeLastSeenPoint);
+			setAttentionPoint(this.mutualGazeLastSeenPoint);
+		}
+
 		if (visible && this.mutualGazeAligned && --this.mutualGazeHoldTicksRemaining <= 0) {
 			boolean stillLooking = samplePlayerHeadGaze(player).state() == GazeState.VALID;
 			if (stillLooking && this.random.nextFloat() < 0.75F) {
@@ -400,6 +446,24 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		}
 
 		return true;
+	}
+
+	private void restoreMutualGazeAttention(Player player, long now) {
+		this.eyeAttentionTarget = player;
+		this.eyeAttentionPriority = MUTUAL_GAZE_PRIORITY;
+		this.eyeAttentionExpiresAt = now + 20 * 60;
+		this.eyeAttentionKind = AttentionKind.MUTUAL_GAZE;
+		this.eyeStickyUntil = now + EYE_STICKY_TICKS;
+		this.attentionTarget = player;
+		this.attentionPriority = MUTUAL_GAZE_PRIORITY;
+		this.attentionExpiresAt = now + 20 * 60;
+		this.headAttentionKind = AttentionKind.MUTUAL_GAZE;
+		this.headStickyUntil = now + HEAD_STICKY_TICKS;
+		setEyeAttentionPoint(this.mutualGazeLastSeenPoint);
+		setAttentionPoint(this.mutualGazeLastSeenPoint);
+		setReaction(VISUAL_MUTUAL_GAZE, now + 20 * 60);
+		this.entityData.set(CURIOUS_TILT, (byte)0);
+		this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
 	}
 
 	private void tickMutualGazeBodyFacing() {
@@ -427,6 +491,39 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		turnBodyToward(this.mutualGazeLastSeenPoint, 8.0F);
 	}
 
+	private void tickThreatBodyFacing() {
+		long now = this.level().getGameTime();
+		LivingEntity target = this.bodyAttentionTarget;
+		if (target == null || !target.isAlive() || now >= this.bodyAttentionExpiresAt || isActivelyFighting()) {
+			return;
+		}
+
+		double distance = this.distanceTo(target);
+		float desiredYaw = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		float yawDifference = Math.abs(net.minecraft.util.Mth.wrapDegrees(desiredYaw - this.yBodyRot));
+		boolean shouldTurn = switch (this.bodyAttentionKind) {
+			case PRIMED_CREEPER -> distance <= 6.0 || yawDifference > 75.0F && now - this.bodyAttentionStartedAt >= 6;
+			case DAMAGE_SOURCE -> now - this.bodyAttentionStartedAt >= 3;
+			case CLOSE_CREEPER -> distance <= 4.0 || approachingSpeed(target) > 0.22;
+			case APPROACHING -> willApproachWithin(target, 3.0, 10.0);
+			default -> false;
+		};
+		if (shouldTurn) {
+			turnBodyToward(target.getEyePosition(), 10.0F);
+		}
+	}
+
+	private boolean isActivelyFighting() {
+		LivingEntity target = this.getTarget();
+		return target != null && target.isAlive();
+	}
+
+	private boolean willApproachWithin(LivingEntity target, double desiredDistance, double withinTicks) {
+		double closingSpeed = approachingSpeed(target);
+		double distanceToClose = Math.max(0.0, this.distanceTo(target) - desiredDistance);
+		return closingSpeed > 1.0E-4 && distanceToClose / closingSpeed <= withinTicks;
+	}
+
 	private void startMutualGazeGlanceAway(long now) {
 		this.mutualGazeCooldownUntil = now + 10 + this.random.nextInt(21);
 		float offset = 35.0F + this.random.nextFloat() * 65.0F;
@@ -438,7 +535,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 				this.getZ() + Math.cos(yaw) * distance
 		);
 		applyAttention(new AttentionCandidate(null, point, 235, VISUAL_NORMAL,
-				(int)(this.mutualGazeCooldownUntil - now), false), now);
+				(int)(this.mutualGazeCooldownUntil - now), false, AttentionKind.NORMAL), now);
 	}
 
 	private void endMutualGaze(long now) {
@@ -447,19 +544,26 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.mutualGazeLostSightAt = -1L;
 		this.mutualGazeBodyTurning = false;
 		this.mutualGazeAligned = false;
+		this.mutualGazeDistractionStartedAt = -1L;
 		this.playerGazeProgress.clear();
 		this.attentionTarget = null;
 		this.attentionPriority = 0;
 		this.attentionExpiresAt = now;
+		this.headAttentionKind = AttentionKind.NORMAL;
+		this.eyeAttentionTarget = null;
+		this.eyeAttentionPriority = 0;
+		this.eyeAttentionExpiresAt = now;
+		this.eyeAttentionKind = AttentionKind.NORMAL;
 		if (this.entityData.get(VISUAL_REACTION) == VISUAL_MUTUAL_GAZE) {
 			setReaction(VISUAL_NORMAL, now);
 			this.entityData.set(CURIOUS_TILT, (byte)0);
 		}
 	}
 
-	private static boolean isMutualGazeInterrupt(AttentionCandidate candidate) {
-		return candidate.reaction() == VISUAL_HURT || candidate.reaction() == VISUAL_STARTLED
-				|| candidate.target() instanceof Creeper || candidate.priority() >= 800;
+	private static boolean isHardMutualGazeInterrupt(AttentionCandidate candidate) {
+		return candidate.kind() == AttentionKind.PRIMED_CREEPER
+				|| candidate.kind() == AttentionKind.DAMAGE_SOURCE
+				|| candidate.kind() == AttentionKind.COMBAT_TARGET;
 	}
 
 	private void tickBlinkClock(long now) {
@@ -476,20 +580,20 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	}
 
 	private AttentionCandidate findBestAttentionCandidate(ServerLevel level, LivingEntity owner, long now) {
+		LivingEntity combatTarget = this.getTarget();
+		AttentionCandidate best = isVisibleAttentionTarget(combatTarget)
+				? new AttentionCandidate(combatTarget, combatTarget.getEyePosition(), 800, VISUAL_ALERT, 30, false, AttentionKind.COMBAT_TARGET)
+				: new AttentionCandidate(owner, owner.getEyePosition(), 220, VISUAL_NORMAL, 35 + this.random.nextInt(36), false, AttentionKind.NORMAL);
+
 		LivingEntity attacker = this.getLastHurtByMob();
-		if (isRecent(this, this.getLastHurtByMobTimestamp()) && isVisibleAttentionTarget(attacker)) {
-			return new AttentionCandidate(attacker, attacker.getEyePosition(), 1100, VISUAL_HURT, 16, false);
+		if (isRecentWithin(this, this.getLastHurtByMobTimestamp(), 20) && isVisibleAttentionTarget(attacker)) {
+			best = new AttentionCandidate(attacker, attacker.getEyePosition(), 1100, VISUAL_HURT, 16, false, AttentionKind.DAMAGE_SOURCE);
 		}
 
 		LivingEntity ownerAttacker = owner.getLastHurtByMob();
-		if (isRecent(owner, owner.getLastHurtByMobTimestamp()) && isVisibleAttentionTarget(ownerAttacker)) {
-			return new AttentionCandidate(ownerAttacker, ownerAttacker.getEyePosition(), 1000, VISUAL_ALERT, 24, false);
+		if (isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), 20) && isVisibleAttentionTarget(ownerAttacker) && best.priority() < 1050) {
+			best = new AttentionCandidate(ownerAttacker, ownerAttacker.getEyePosition(), 1050, VISUAL_ALERT, 24, false, AttentionKind.DAMAGE_SOURCE);
 		}
-
-		LivingEntity combatTarget = this.getTarget();
-		AttentionCandidate best = isVisibleAttentionTarget(combatTarget)
-				? new AttentionCandidate(combatTarget, combatTarget.getEyePosition(), 800, VISUAL_ALERT, 30, false)
-				: new AttentionCandidate(owner, owner.getEyePosition(), 220, VISUAL_NORMAL, 35 + this.random.nextInt(36), false);
 
 		List<LivingEntity> nearby = level.getEntitiesOfClass(
 				LivingEntity.class,
@@ -504,9 +608,15 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 			if (entity instanceof Creeper creeper) {
 				boolean primed = creeper.getSwellDir() > 0 || creeper.isIgnited();
-				score = primed ? 950 : distanceSqr <= 64.0 ? 720 : 540;
+				score = primed ? 1200 : distanceSqr <= 64.0 ? 900 : 540;
 				reaction = primed || distanceSqr <= 64.0 ? VISUAL_STARTLED : VISUAL_ALERT;
 				duration = primed ? 30 : 22;
+				AttentionKind kind = primed ? AttentionKind.PRIMED_CREEPER
+						: distanceSqr <= 64.0 ? AttentionKind.CLOSE_CREEPER : AttentionKind.NORMAL;
+				if (score > best.priority()) {
+					best = new AttentionCandidate(entity, entity.getEyePosition(), score, reaction, duration, false, kind);
+				}
+				continue;
 			} else {
 				double closingSpeed = approachingSpeed(entity);
 				if (distanceSqr <= 100.0 && closingSpeed > 0.22) {
@@ -526,7 +636,8 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 			if (score > best.priority()) {
 				boolean curious = reaction == VISUAL_NORMAL && this.isInSafeIdleState() && this.random.nextFloat() < 0.1F;
-				best = new AttentionCandidate(entity, entity.getEyePosition(), score, curious ? VISUAL_CURIOUS : reaction, duration, curious);
+				AttentionKind kind = reaction == VISUAL_STARTLED ? AttentionKind.APPROACHING : AttentionKind.NORMAL;
+				best = new AttentionCandidate(entity, entity.getEyePosition(), score, curious ? VISUAL_CURIOUS : reaction, duration, curious, kind);
 			}
 		}
 
@@ -539,10 +650,95 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 					this.getZ() + Math.cos(yaw) * distance
 			);
 			boolean curious = this.isInSafeIdleState() && this.random.nextFloat() < 0.1F;
-			return new AttentionCandidate(null, point, 230, curious ? VISUAL_CURIOUS : VISUAL_NORMAL, 30 + this.random.nextInt(51), curious);
+			return new AttentionCandidate(null, point, 230, curious ? VISUAL_CURIOUS : VISUAL_NORMAL,
+					30 + this.random.nextInt(51), curious, AttentionKind.NORMAL);
 		}
 
 		return best;
+	}
+
+	private void considerAttentionCandidate(AttentionCandidate candidate, long now) {
+		boolean urgent = isUrgentVisual(candidate.kind());
+		boolean sameEyeTarget = sameTarget(this.eyeAttentionTarget, candidate.target());
+		boolean eyeExpired = now >= this.eyeAttentionExpiresAt || this.eyeAttentionTarget != null && !this.eyeAttentionTarget.isAlive();
+		boolean switchEyes = sameEyeTarget || urgent || eyeExpired
+				|| candidate.priority() >= this.eyeAttentionPriority + 80 || now >= this.eyeStickyUntil;
+		if (switchEyes) {
+			boolean changed = !sameEyeTarget || candidate.kind() != this.eyeAttentionKind;
+			this.eyeAttentionTarget = candidate.target();
+			this.eyeAttentionPriority = candidate.priority();
+			this.eyeAttentionExpiresAt = now + candidate.durationTicks();
+			this.eyeAttentionKind = candidate.kind();
+			this.eyeStickyUntil = now + EYE_STICKY_TICKS;
+			setEyeAttentionPoint(candidate.point());
+			setReaction(candidate.reaction(), now + candidate.durationTicks());
+			if (changed) {
+				this.entityData.set(CURIOUS_TILT, (byte)0);
+				this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+			}
+		}
+
+		boolean samePending = sameTarget(this.pendingHeadTarget, candidate.target()) && this.pendingHeadKind == candidate.kind();
+		if (!samePending) {
+			this.pendingHeadTarget = candidate.target();
+			this.pendingHeadKind = candidate.kind();
+			this.pendingHeadSince = now;
+		}
+
+		boolean sameHeadTarget = sameTarget(this.attentionTarget, candidate.target());
+		boolean headExpired = now >= this.attentionExpiresAt || this.attentionTarget != null && !this.attentionTarget.isAlive();
+		boolean delayComplete = now - this.pendingHeadSince >= headDelayTicks(candidate.kind());
+		boolean switchHead = delayComplete && (sameHeadTarget || urgent || headExpired
+				|| candidate.priority() >= this.attentionPriority + 80 || now >= this.headStickyUntil);
+		if (switchHead) {
+			this.attentionTarget = candidate.target();
+			this.attentionPoint = candidate.point();
+			this.attentionPriority = candidate.priority();
+			this.attentionStartedAt = now;
+			this.attentionExpiresAt = now + candidate.durationTicks();
+			this.headAttentionKind = candidate.kind();
+			this.headStickyUntil = now + HEAD_STICKY_TICKS;
+			this.entityData.set(ATTENTION_STARTED_AT, now);
+			setAttentionPoint(candidate.point());
+			this.entityData.set(CURIOUS_TILT, candidate.curious() ? (byte)(this.random.nextBoolean() ? 1 : -1) : (byte)0);
+			this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+		} else if (sameHeadTarget && this.attentionTarget != null && this.attentionTarget.isAlive()) {
+			setAttentionPoint(this.attentionTarget.getEyePosition());
+		}
+
+		configureBodyAttention(candidate, now);
+	}
+
+	private static boolean sameTarget(@Nullable LivingEntity first, @Nullable LivingEntity second) {
+		return first == second;
+	}
+
+	private static boolean isUrgentVisual(AttentionKind kind) {
+		return kind == AttentionKind.PRIMED_CREEPER || kind == AttentionKind.DAMAGE_SOURCE;
+	}
+
+	private static int headDelayTicks(AttentionKind kind) {
+		return switch (kind) {
+			case CLOSE_CREEPER -> 4;
+			case APPROACHING -> 2;
+			default -> 0;
+		};
+	}
+
+	private void configureBodyAttention(AttentionCandidate candidate, long now) {
+		if (candidate.target() == null || candidate.kind() != AttentionKind.PRIMED_CREEPER
+				&& candidate.kind() != AttentionKind.DAMAGE_SOURCE
+				&& candidate.kind() != AttentionKind.CLOSE_CREEPER
+				&& candidate.kind() != AttentionKind.APPROACHING) {
+			return;
+		}
+
+		if (this.bodyAttentionTarget != candidate.target() || this.bodyAttentionKind != candidate.kind()) {
+			this.bodyAttentionStartedAt = now;
+		}
+		this.bodyAttentionTarget = candidate.target();
+		this.bodyAttentionKind = candidate.kind();
+		this.bodyAttentionExpiresAt = now + candidate.durationTicks();
 	}
 
 	private boolean isVisibleAttentionTarget(@Nullable LivingEntity target) {
@@ -561,16 +757,29 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	}
 
 	private void applyAttention(AttentionCandidate candidate, long now) {
+		this.eyeAttentionTarget = candidate.target();
+		this.eyeAttentionPoint = candidate.point();
+		this.eyeAttentionPriority = candidate.priority();
+		this.eyeAttentionExpiresAt = now + candidate.durationTicks();
+		this.eyeAttentionKind = candidate.kind();
+		this.eyeStickyUntil = now + EYE_STICKY_TICKS;
 		this.attentionTarget = candidate.target();
 		this.attentionPoint = candidate.point();
 		this.attentionPriority = candidate.priority();
 		this.attentionStartedAt = now;
 		this.entityData.set(ATTENTION_STARTED_AT, now);
 		this.attentionExpiresAt = now + candidate.durationTicks();
+		this.headAttentionKind = candidate.kind();
+		this.headStickyUntil = now + HEAD_STICKY_TICKS;
+		this.pendingHeadTarget = candidate.target();
+		this.pendingHeadKind = candidate.kind();
+		this.pendingHeadSince = now;
+		setEyeAttentionPoint(candidate.point());
 		setAttentionPoint(candidate.point());
 		setReaction(candidate.reaction(), now + candidate.durationTicks());
 		this.entityData.set(CURIOUS_TILT, candidate.curious() ? (byte)(this.random.nextBoolean() ? 1 : -1) : (byte)0);
 		this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+		configureBodyAttention(candidate, now);
 	}
 
 	private void setAttentionPoint(Vec3 point) {
@@ -578,6 +787,13 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.entityData.set(ATTENTION_X, (float)point.x);
 		this.entityData.set(ATTENTION_Y, (float)point.y);
 		this.entityData.set(ATTENTION_Z, (float)point.z);
+	}
+
+	private void setEyeAttentionPoint(Vec3 point) {
+		this.eyeAttentionPoint = point;
+		this.entityData.set(EYE_ATTENTION_X, (float)point.x);
+		this.entityData.set(EYE_ATTENTION_Y, (float)point.y);
+		this.entityData.set(EYE_ATTENTION_Z, (float)point.z);
 	}
 
 	private void setReaction(byte reaction, long until) {
@@ -611,20 +827,33 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			}
 			case CURIOUS -> {
 				LivingEntity owner = this.getOwner();
-				setAttentionPoint(owner == null ? this.position().add(0, 1.5, 4) : owner.getEyePosition());
+				Vec3 point = owner == null ? this.position().add(0, 1.5, 4) : owner.getEyePosition();
+				setEyeAttentionPoint(point);
+				setAttentionPoint(point);
 				setReaction(VISUAL_CURIOUS, now + 60);
 				this.entityData.set(CURIOUS_TILT, (byte)(this.random.nextBoolean() ? 1 : -1));
 			}
 			case STARTLED -> {
 				LivingEntity owner = this.getOwner();
-				setAttentionPoint(owner == null ? this.position().add(0, 1.5, 4) : owner.getEyePosition());
+				Vec3 point = owner == null ? this.position().add(0, 1.5, 4) : owner.getEyePosition();
+				setEyeAttentionPoint(point);
+				setAttentionPoint(point);
 				setReaction(VISUAL_STARTLED, now + 60);
 				this.entityData.set(CURIOUS_TILT, (byte)0);
 			}
 			case RESET -> {
 				this.forcedVisualUntil = 0L;
+				this.eyeAttentionTarget = null;
+				this.eyeAttentionExpiresAt = 0L;
+				this.eyeAttentionPriority = 0;
+				this.eyeAttentionKind = AttentionKind.NORMAL;
+				this.attentionTarget = null;
 				this.attentionExpiresAt = 0L;
 				this.attentionPriority = 0;
+				this.headAttentionKind = AttentionKind.NORMAL;
+				this.bodyAttentionTarget = null;
+				this.bodyAttentionExpiresAt = 0L;
+				this.bodyAttentionKind = AttentionKind.NORMAL;
 				setReaction(VISUAL_NORMAL, 0L);
 				this.entityData.set(CURIOUS_TILT, (byte)0);
 			}
@@ -634,6 +863,10 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	public Vec3 getSyncedAttentionPoint() {
 		return new Vec3(this.entityData.get(ATTENTION_X), this.entityData.get(ATTENTION_Y), this.entityData.get(ATTENTION_Z));
+	}
+
+	public Vec3 getSyncedEyeAttentionPoint() {
+		return new Vec3(this.entityData.get(EYE_ATTENTION_X), this.entityData.get(EYE_ATTENTION_Y), this.entityData.get(EYE_ATTENTION_Z));
 	}
 
 	public byte getVisualReaction() {
@@ -673,7 +906,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		boolean combatSuppressed = owner != null && isMutualGazeCombatSuppressed(owner);
 		return String.format(
 				Locale.ROOT,
-				"sample=%s distance=%.2f progress=%d/%d missed=%d combat=%s mutual=%s aligned=%s hold=%d reaction=%d bodyYaw=%.1f",
+				"sample=%s distance=%.2f progress=%d/%d missed=%d combat=%s mutual=%s distracted=%s aligned=%s hold=%d reaction=%d eye=%s head=%s body=%s bodyYaw=%.1f",
 				sample.state().name().toLowerCase(Locale.ROOT),
 				sample.distance(),
 				validTicks,
@@ -681,9 +914,13 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 				missedTicks,
 				combatSuppressed,
 				this.mutualGazePlayerUuid != null,
+				this.mutualGazeDistractionStartedAt >= 0L,
 				this.mutualGazeAligned,
 				this.mutualGazeHoldTicksRemaining,
 				this.entityData.get(VISUAL_REACTION),
+				this.eyeAttentionKind.name().toLowerCase(Locale.ROOT),
+				this.headAttentionKind.name().toLowerCase(Locale.ROOT),
+				this.bodyAttentionKind.name().toLowerCase(Locale.ROOT),
 				this.yBodyRot
 		);
 	}
@@ -700,7 +937,25 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		RESET
 	}
 
-	private record AttentionCandidate(@Nullable LivingEntity target, Vec3 point, int priority, byte reaction, int durationTicks, boolean curious) {
+	private enum AttentionKind {
+		PRIMED_CREEPER,
+		DAMAGE_SOURCE,
+		CLOSE_CREEPER,
+		COMBAT_TARGET,
+		MUTUAL_GAZE,
+		APPROACHING,
+		NORMAL
+	}
+
+	private record AttentionCandidate(
+			@Nullable LivingEntity target,
+			Vec3 point,
+			int priority,
+			byte reaction,
+			int durationTicks,
+			boolean curious,
+			AttentionKind kind
+	) {
 	}
 
 	private enum GazeState {
@@ -788,11 +1043,18 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		boolean hurt = super.hurtServer(level, source, damage);
 		if (hurt) {
 			Entity attackerEntity = source.getEntity();
-			Vec3 point = attackerEntity instanceof LivingEntity living ? living.getEyePosition() : this.position().add(this.getLookAngle().reverse());
-			setAttentionPoint(point);
-			setReaction(VISUAL_HURT, level.getGameTime() + 16);
-			this.entityData.set(CURIOUS_TILT, (byte)0);
-			this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+			long now = level.getGameTime();
+			if (attackerEntity instanceof LivingEntity living) {
+				applyAttention(new AttentionCandidate(living, living.getEyePosition(), 1100,
+						VISUAL_HURT, 16, false, AttentionKind.DAMAGE_SOURCE), now);
+			} else {
+				Vec3 point = this.position().add(this.getLookAngle().reverse());
+				setEyeAttentionPoint(point);
+				setAttentionPoint(point);
+				setReaction(VISUAL_HURT, now + 16);
+				this.entityData.set(CURIOUS_TILT, (byte)0);
+				this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+			}
 		}
 		return hurt;
 	}
@@ -802,6 +1064,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.summonerUuid = summonerUuid;
 		this.remainingLifetime = MAX_LIFETIME_TICKS;
 		this.missingSummonerTicks = 0;
+		setEyeAttentionPoint(owner.getEyePosition());
 		setAttentionPoint(owner.getEyePosition());
 	}
 

@@ -23,19 +23,35 @@ Model artists must continue from the latest copy of that file rather than an old
 
 ## Attention model
 
-The server chooses one shared attention target so every client sees the same intent. Selection is updated at low frequency and scored by salience:
+The server maintains three related but independent attention layers so every client sees the same intent without forcing the entire body to snap toward every interesting object:
 
-1. Recent attacker or damage source.
-2. Primed or nearby creeper.
-3. Current combat target.
-4. A player deliberately looking at the echo; this starts the mutual-gaze flow defined below.
-5. A living entity rapidly approaching the echo.
-6. Owner, players, and nearby living entities.
-7. A quiet random point when nothing else is interesting.
+- **Pupils:** react first and remain locked to the selected world-space target.
+- **Head:** follows the pupil target after the reaction-specific delay, clamped to roughly 75 degrees left or right.
+- **Body:** turns only for mutual gaze or a sufficiently urgent threat. Active combat movement and facing always take precedence over cosmetic body attention.
 
-Attention only changes presentation. Ordinary observation turns eyes and head; sustained high threats may also turn the body. Eyes lead the head slightly, and close targets receive subtle binocular convergence.
+Visual priority, from highest to lowest:
+
+1. Primed or ignited creeper.
+2. Actual recent damage source.
+3. Unprimed creeper within eight blocks.
+4. Current combat target.
+5. A player in the mutual-gaze flow defined below.
+6. A living entity rapidly approaching the echo.
+7. Owner, players, nearby living entities, or a quiet random point.
+
+The pupils hold a selected target for at least 0.25 seconds and the head for at least 0.5 seconds. A primed creeper or actual damage source may override either hold immediately. This prevents ordinary candidates from causing flicker while retaining an immediate startle response.
+
+Layer-specific threat responses:
+
+- A primed creeper moves the pupils and head immediately. Outside combat, the body turns when the creeper is within six blocks, or after 0.3 seconds if the target remains behind the head's useful viewing arc.
+- An actual damage source moves the pupils and head immediately. Outside combat, the body begins turning after 0.15 seconds.
+- An unprimed creeper within eight blocks moves the pupils immediately and the head after 0.2 seconds. The body only turns if it enters four blocks or approaches rapidly.
+- A rapidly approaching living entity moves the pupils immediately and the head after roughly 0.1 seconds. Outside combat, the body only turns if its current motion predicts arrival within three blocks in roughly half a second.
+- During active combat, the eyes and head may acknowledge a more urgent visual target, but body orientation remains owned by combat AI.
 
 Pupil position is recalculated every rendered frame from the attention point in the head's current local coordinate space. The eyes therefore remain locked to the same world-space target while the head and body move. As the face becomes aligned, the pupils naturally approach the centre because the target itself has moved to the centre of the local view; this is not treated as releasing attention. Curious head roll is compensated so a tilted head does not drag the pupils away from their target.
+
+The current Blockbench `head` bone uses yaw and pitch axes opposite to Minecraft's semantic look angles. The renderer negates yaw and pitch only at the final bone-application boundary; target selection, pupil tracking, and body-facing math remain in normal Minecraft coordinates. The roll axis is not inverted, preserving the occasional curious head tilt.
 
 ## Mutual gaze contract
 
@@ -50,7 +66,8 @@ The following behaviour was approved on 2026-08-07 and is the implementation con
 - On acquisition, the pupils lead, the head begins following roughly 0.1 seconds later, and the body begins a smooth turn roughly 0.2 seconds later. The body corrects to within roughly five degrees so the face visibly points at the player.
 - Pupil travel is intentionally more visible than the original prototype, using up to roughly 0.82 model units horizontally and 0.46 vertically while remaining inside the two-by-two eye area.
 - The 2-4 second first mutual-gaze timer begins only after facing alignment is complete; time spent turning does not consume the eye-contact duration. If the player is still looking when it ends, there is a 75% chance to renew for 1-3 seconds and a 25% chance to glance away for 0.5-1.5 seconds before reacquisition is allowed.
-- Damage, an active combat target, creepers, and other genuine high-priority threats interrupt mutual gaze immediately.
+- A primed creeper, an actual damage source, or active combat interrupts mutual gaze immediately.
+- An unprimed creeper within eight blocks temporarily steals pupil/head attention and pauses the mutual-gaze hold timer. If the distraction clears within one second, the echo resumes looking at the player; if it persists longer, the mutual-gaze episode ends.
 - When line of sight is lost during an active episode, the echo watches the player's last visible position for 0.5 seconds before returning to ordinary observation.
 - Any non-spectator player may trigger mutual gaze. When several players qualify, the owner has priority; otherwise the player with the longest valid gaze duration wins. Invisible players only qualify within four blocks.
 
@@ -85,7 +102,7 @@ The `/echo_warrior visual` command can force visual states on the nearest owned 
 /echo_warrior visual status
 ```
 
-`status` reports the observing player's current head-gaze sample, acquisition progress, required ticks, combat suppression, mutual-gaze state, reaction, and body yaw. These commands are testing tools, not player-facing gameplay.
+`status` reports the observing player's current head-gaze sample, acquisition progress, required ticks, combat suppression, mutual-gaze and distraction state, current eye/head/body attention kinds, reaction, and body yaw. These commands are testing tools, not player-facing gameplay.
 
 ## Asset pipeline
 
