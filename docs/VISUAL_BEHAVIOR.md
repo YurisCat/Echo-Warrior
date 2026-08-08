@@ -78,8 +78,9 @@ Ordinary owner-follow navigation pauses during an active mutual-gaze episode and
 
 - Normal blink interval: randomized between roughly 2.5 and 6 seconds.
 - Occasional double blink: approximately 10% probability.
-- Hurt and startled reactions briefly suppress blinking.
+- Startled reactions briefly suppress ordinary blinking.
 - Hurt pupils contract to roughly 60%, then recover quickly.
+- Hurt triggers a code-owned pain blink: the eyebrows close the eyes at roughly 0.08 seconds and reopen them by roughly 0.3 seconds. This eye response still plays when a body attack animation prevents the full-body hurt animation from taking over.
 - Strong surprise contracts pupils to roughly 45-50%.
 - Blinking is performed by moving the existing `eyebrows` bone down by two model units; no eyelid geometry is used.
 - Safe idle observation may trigger an 8-12 degree curious head tilt.
@@ -104,13 +105,26 @@ The `/echo_warrior visual` command can force visual states on the nearest owned 
 
 `status` reports the observing player's current head-gaze sample, acquisition progress, required ticks, combat suppression, mutual-gaze and distraction state, current eye/head/body attention kinds, reaction, and body yaw. These commands are testing tools, not player-facing gameplay.
 
+Model animation previews use a separate command branch:
+
+```text
+/echo_warrior animation attack
+/echo_warrior animation hurt
+/echo_warrior animation shield_raise
+/echo_warrior animation shield_lower
+/echo_warrior animation reset
+```
+
+Previewed attack animations do not deal damage. Shield raise/lower remain development-only previews until the shield skill is designed.
+
 ## Asset pipeline
 
 Run the updater after changing the source model:
 
 ```text
+python scripts/update_roman_visual_assets.py import "path/to/modeler-delivery.bbmodel"
 python scripts/update_roman_visual_assets.py update
 python scripts/update_roman_visual_assets.py validate
 ```
 
-The updater removes obsolete eyelid geometry, reserves the existing eyebrow bone for code-driven blinking, updates GeckoLib runtime assets, and writes a model-artist handoff copy under `outputs/`.
+Import mode accepts a complete modeler delivery, preserves the project's canonical UUID-to-bone naming, normalizes animation names, strips code-owned face keyframes, updates compatible GeckoLib pivots and animations, extracts the embedded runtime texture, and writes a model-artist handoff copy under `outputs/`. It deliberately stops if cube geometry, UVs, or UUIDs changed in a way that requires a reviewed full geometry export.

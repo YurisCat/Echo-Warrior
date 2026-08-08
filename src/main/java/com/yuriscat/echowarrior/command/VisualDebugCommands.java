@@ -28,7 +28,13 @@ public final class VisualDebugCommands {
 						.then(visualCommand("double_blink", RomanLegionaryEchoEntity.VisualTestMode.DOUBLE_BLINK))
 						.then(visualCommand("curious", RomanLegionaryEchoEntity.VisualTestMode.CURIOUS))
 						.then(visualCommand("startled", RomanLegionaryEchoEntity.VisualTestMode.STARTLED))
-						.then(visualCommand("reset", RomanLegionaryEchoEntity.VisualTestMode.RESET))));
+						.then(visualCommand("reset", RomanLegionaryEchoEntity.VisualTestMode.RESET)))
+				.then(Commands.literal("animation")
+						.then(animationCommand("attack", RomanLegionaryEchoEntity.AnimationTestMode.ATTACK))
+						.then(animationCommand("hurt", RomanLegionaryEchoEntity.AnimationTestMode.HURT))
+						.then(animationCommand("shield_raise", RomanLegionaryEchoEntity.AnimationTestMode.SHIELD_RAISE))
+						.then(animationCommand("shield_lower", RomanLegionaryEchoEntity.AnimationTestMode.SHIELD_LOWER))
+						.then(animationCommand("reset", RomanLegionaryEchoEntity.AnimationTestMode.RESET))));
 	}
 
 	private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> visualCommand(
@@ -53,6 +59,31 @@ public final class VisualDebugCommands {
 
 		echo.forceVisualState(mode);
 		source.sendSuccess(() -> Component.literal("Forced visual state " + mode.name().toLowerCase() + " on the nearest echo."), false);
+		return 1;
+	}
+
+	private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> animationCommand(
+			String name,
+			RomanLegionaryEchoEntity.AnimationTestMode mode
+	) {
+		return Commands.literal(name).executes(context -> executeAnimation(context.getSource(), mode));
+	}
+
+	private static int executeAnimation(CommandSourceStack source, RomanLegionaryEchoEntity.AnimationTestMode mode) {
+		ServerPlayer player = source.getPlayer();
+		if (player == null) {
+			source.sendFailure(Component.literal("This command must be used by a player."));
+			return 0;
+		}
+
+		RomanLegionaryEchoEntity echo = findNearestOwnedEcho(player);
+		if (echo == null) {
+			source.sendFailure(Component.literal("No owned Echo Warrior was found within 32 blocks."));
+			return 0;
+		}
+
+		echo.forceAnimationState(mode);
+		source.sendSuccess(() -> Component.literal("Forced animation " + mode.name().toLowerCase() + " on the nearest echo."), false);
 		return 1;
 	}
 

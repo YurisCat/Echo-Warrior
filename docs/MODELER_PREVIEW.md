@@ -24,6 +24,27 @@ The prototype exists to verify the complete Blockbench → GeckoLib → Minecraf
 - Exported GeckoLib model and animations: `src/main/resources/assets/echo_warrior/geckolib/`
 - Direct local playtest launcher: `scripts/playtest-now.bat`
 
+## Current Roman legionary animations
+
+- `animation.roman_legionary.idle`: 3-second loop; used automatically while stationary.
+- `animation.roman_legionary.walk`: 1-second loop; used automatically while moving.
+- `animation.roman_legionary.attack`: 1-second full-body attack; triggered by the SBL melee behaviour.
+- `animation.roman_legionary.hurt`: 0.5-second full-body reaction; does not interrupt an attack already in progress.
+- `animation.roman_legionary.shield_raise`: imported preview only; holds the raised-shield pose.
+- `animation.roman_legionary.shield_lower`: imported preview only; returns from the shield pose.
+
+The game strips animation keyframes for `head`, `left_eye`, `right_eye`, and `eyebrows`. Those bones are always controlled by the procedural expression system.
+
+Use the following commands on the nearest owned echo to inspect one-shot animations without changing gameplay damage or shield behaviour:
+
+```text
+/echo_warrior animation attack
+/echo_warrior animation hurt
+/echo_warrior animation shield_raise
+/echo_warrior animation shield_lower
+/echo_warrior animation reset
+```
+
 ## Git and test-world policy
 
 Source code, editable art sources, exported runtime assets, documentation, and launcher scripts belong in Git.

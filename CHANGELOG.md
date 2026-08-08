@@ -13,6 +13,9 @@ All notable development changes to Echo Warrior are recorded here.
 - Head-centred player-gaze acquisition with distance-scaled timing, two-tick mouse tolerance, line-of-sight validation, multiplayer owner priority, and close-range handling for invisible players.
 - A mutual-gaze state with randomized hold and renewal durations, occasional glance-away breaks, last-seen-position persistence, combat suppression, and threat interruption.
 - Independent pupil, head, and body attention layers with explicit threat priorities and minimum target-hold windows.
+- Modeler-authored full-body attack and hurt animations, plus imported shield raise/lower previews.
+- Gamemaster-only `/echo_warrior animation` commands for attack, hurt, shield raise, shield lower, and reset previews.
+- A repeatable `.bbmodel` import path that normalizes animation and bone names, protects code-owned face bones, extracts the embedded texture, and validates geometry compatibility.
 
 ### Changed
 
@@ -29,6 +32,9 @@ All notable development changes to Echo Warrior are recorded here.
 - Nearby unprimed creepers now pause mutual gaze for up to one second instead of causing alternating-frame target flicker; a cleared distraction resumes player eye contact, while a persistent one ends it.
 - `/echo_warrior visual status` now reports distraction state and the active eye, head, and body attention categories.
 - Corrected horizontal pupil translation so the eyes lead toward the target instead of briefly moving in the mirrored direction.
+- Updated the Roman legionary idle, walk, texture, and corrected bone pivots from the August 8 modeler delivery.
+- SBL melee attacks now trigger the one-second attack animation while retaining the existing sixth-tick damage timing.
+- Non-attacking echoes play the half-second full-body hurt animation; attacks retain body priority while code-driven pupil contraction, source tracking, and a short pain blink still communicate damage.
 
 ## 2026-08-07 - Legionary visual prototype baseline
 

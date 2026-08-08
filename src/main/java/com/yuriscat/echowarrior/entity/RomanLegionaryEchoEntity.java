@@ -5,6 +5,7 @@ import com.geckolib.animatable.instance.AnimatableInstanceCache;
 import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.animation.AnimationController;
 import com.geckolib.animation.RawAnimation;
+import com.geckolib.animation.object.PlayState;
 import com.geckolib.util.GeckoLibUtil;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
@@ -87,6 +88,16 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final int HEAD_STICKY_TICKS = 10;
 	private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.roman_legionary.idle");
 	private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.roman_legionary.walk");
+	private static final RawAnimation ATTACK = RawAnimation.begin().thenPlay("animation.roman_legionary.attack");
+	private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.roman_legionary.hurt");
+	private static final RawAnimation SHIELD_RAISE = RawAnimation.begin().thenPlayAndHold("animation.roman_legionary.shield_raise");
+	private static final RawAnimation SHIELD_LOWER = RawAnimation.begin().thenPlay("animation.roman_legionary.shield_lower");
+	private static final String ACTION_CONTROLLER = "action";
+	private static final String ATTACK_TRIGGER = "attack";
+	private static final String HURT_TRIGGER = "hurt";
+	private static final String SHIELD_RAISE_TRIGGER = "shield_raise";
+	private static final String SHIELD_LOWER_TRIGGER = "shield_lower";
+	private static final int ATTACK_ANIMATION_TICKS = 20;
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
 	private @Nullable EntityReference<LivingEntity> ownerReference;
@@ -124,6 +135,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private boolean mutualGazeBodyTurning;
 	private boolean mutualGazeAligned;
 	private long mutualGazeDistractionStartedAt = -1L;
+	private long attackAnimationUntil;
 
 	public RomanLegionaryEchoEntity(EntityType<? extends RomanLegionaryEchoEntity> type, Level level) {
 		super(type, level);
@@ -182,8 +194,17 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		return List.of(
 				new InvalidateAttackTarget<RomanLegionaryEchoEntity>(),
 				new SetWalkTargetToAttackTarget<RomanLegionaryEchoEntity>().speedModifier(1.15F).closeEnoughDist(1),
-				new AnimatableMeleeAttack<RomanLegionaryEchoEntity>(6).attackInterval(20).canAttack((entity, target) -> entity.canAttack(target))
+				new AnimatableMeleeAttack<RomanLegionaryEchoEntity>(6)
+						.attackInterval(20)
+						.canAttack((entity, target) -> entity.canAttack(target))
+						.whenStarting(RomanLegionaryEchoEntity::startMeleeAttackAnimation)
 		);
+	}
+
+	private void startMeleeAttackAnimation() {
+		long now = this.level().getGameTime();
+		this.attackAnimationUntil = now + ATTACK_ANIMATION_TICKS;
+		this.triggerAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
 	}
 
 	@Override
@@ -937,6 +958,43 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		RESET
 	}
 
+	public enum AnimationTestMode {
+		ATTACK,
+		HURT,
+		SHIELD_RAISE,
+		SHIELD_LOWER,
+		RESET
+	}
+
+	public void forceAnimationState(AnimationTestMode mode) {
+		if (!(this.level() instanceof ServerLevel level)) {
+			return;
+		}
+		long now = level.getGameTime();
+		switch (mode) {
+			case ATTACK -> {
+				this.attackAnimationUntil = now + ATTACK_ANIMATION_TICKS;
+				this.triggerAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
+			}
+			case HURT -> {
+				this.attackAnimationUntil = 0L;
+				setReaction(VISUAL_HURT, now + 10);
+				this.entityData.set(CURIOUS_TILT, (byte)0);
+				this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+				triggerHurtPresentation(now, true);
+			}
+			case SHIELD_RAISE -> this.triggerAnim(ACTION_CONTROLLER, SHIELD_RAISE_TRIGGER);
+			case SHIELD_LOWER -> this.triggerAnim(ACTION_CONTROLLER, SHIELD_LOWER_TRIGGER);
+			case RESET -> {
+				this.attackAnimationUntil = 0L;
+				this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
+				this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+				this.stopTriggeredAnim(ACTION_CONTROLLER, SHIELD_RAISE_TRIGGER);
+				this.stopTriggeredAnim(ACTION_CONTROLLER, SHIELD_LOWER_TRIGGER);
+			}
+		}
+	}
+
 	private enum AttentionKind {
 		PRIMED_CREEPER,
 		DAMAGE_SOURCE,
@@ -1044,6 +1102,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		if (hurt) {
 			Entity attackerEntity = source.getEntity();
 			long now = level.getGameTime();
+			triggerHurtPresentation(now, now >= this.attackAnimationUntil);
 			if (attackerEntity instanceof LivingEntity living) {
 				applyAttention(new AttentionCandidate(living, living.getEyePosition(), 1100,
 						VISUAL_HURT, 16, false, AttentionKind.DAMAGE_SOURCE), now);
@@ -1057,6 +1116,14 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			}
 		}
 		return hurt;
+	}
+
+	private void triggerHurtPresentation(long now, boolean playBodyAnimation) {
+		this.entityData.set(BLINK_START, now);
+		this.entityData.set(BLINK_COUNT, (byte)1);
+		if (playBodyAnimation) {
+			this.triggerAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+		}
 	}
 
 	public void bindTo(Player owner, UUID summonerUuid) {
@@ -1140,6 +1207,11 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	@Override
 	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
 		controllers.add(new AnimationController<>("movement", test -> test.setAndContinue(test.isMoving() ? WALK : IDLE)));
+		controllers.add(new AnimationController<RomanLegionaryEchoEntity>(ACTION_CONTROLLER, 2, test -> PlayState.STOP)
+				.triggerableAnim(ATTACK_TRIGGER, ATTACK)
+				.triggerableAnim(HURT_TRIGGER, HURT)
+				.triggerableAnim(SHIELD_RAISE_TRIGGER, SHIELD_RAISE)
+				.triggerableAnim(SHIELD_LOWER_TRIGGER, SHIELD_LOWER));
 	}
 
 	@Override

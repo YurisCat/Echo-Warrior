@@ -141,9 +141,11 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		state.pupilScale = approach(state.pupilScale, desiredPupilScale, desiredPupilScale < state.pupilScale ? 0.8F : 0.18F, deltaTicks);
 
 		float convergence = eyeHorizontal < 3.0 && eyeHorizontal > 0.1 ? (float)((3.0 - eyeHorizontal) / 3.0) * 0.09F : 0.0F;
-		float blink = reaction == RomanLegionaryEchoEntity.VISUAL_HURT || reaction == RomanLegionaryEchoEntity.VISUAL_STARTLED
+		float blink = reaction == RomanLegionaryEchoEntity.VISUAL_STARTLED
 				? 0.0F
-				: calculateBlink(gameTime + partialTick, renderPass.getGeckolibData(BLINK_START), renderPass.getGeckolibData(BLINK_COUNT));
+				: reaction == RomanLegionaryEchoEntity.VISUAL_HURT
+						? calculateHurtBlink(gameTime + partialTick, renderPass.getGeckolibData(BLINK_START))
+						: calculateBlink(gameTime + partialTick, renderPass.getGeckolibData(BLINK_START), renderPass.getGeckolibData(BLINK_COUNT));
 
 		// This Blockbench model's yaw and pitch axes are opposite Minecraft's semantic head angles.
 		// Roll is already authored in the expected direction and remains unchanged.
@@ -178,6 +180,20 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 			return 0.0F;
 		}
 		return Mth.sin(elapsed / 3.0F * (float)Math.PI);
+	}
+
+	private static float calculateHurtBlink(float now, long blinkStart) {
+		float elapsed = now - blinkStart;
+		if (elapsed < 0.0F || elapsed > 6.0F) {
+			return 0.0F;
+		}
+		if (elapsed <= 1.6F) {
+			return elapsed / 1.6F;
+		}
+		if (elapsed <= 2.2F) {
+			return 1.0F;
+		}
+		return 1.0F - (elapsed - 2.2F) / 3.8F;
 	}
 
 	private static float approach(float current, float target, float responsiveness, float deltaTicks) {
