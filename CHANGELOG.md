@@ -16,6 +16,8 @@ All notable development changes to Echo Warrior are recorded here.
 - Modeler-authored full-body attack and hurt animations, plus imported shield raise/lower previews.
 - Gamemaster-only `/echo_warrior animation` commands for attack, hurt, shield raise, shield lower, and reset previews.
 - A repeatable `.bbmodel` import path that normalizes animation and bone names, protects code-owned face bones, extracts the embedded texture, and validates geometry compatibility.
+- An owner-only caught-watching reaction with delayed guaranteed activation during sustained mutual gaze, a restrained startle, rapid double blink, eyes-first glance-away, head follow-through, and a final covert look back at the owner.
+- Three post-reaction exit behaviours: continued observation, a stationary patrol turn, or a short path-validated walk-away, each with an optional one-time profile glance back at the owner.
 
 ### Changed
 
@@ -37,6 +39,8 @@ All notable development changes to Echo Warrior are recorded here.
 - Non-attacking echoes play the half-second full-body hurt animation; attacks retain body priority while code-driven pupil contraction, source tracking, and a short pain blink still communicate damage.
 - Stabilized code-driven gaze against subtle modeler-authored idle torso rotation, while preserving larger full-body action motion; idle/walk changes now use a short stop delay and transition to filter navigation micro-movement.
 - Ordinary attention now holds a living target or random world-space glance for its full intended duration instead of restarting every awareness scan or treating every anonymous point as the same target.
+- Owner following now begins beyond fifteen blocks, settles within five, and reserves safe teleport recovery for distances beyond thirty-two blocks; visual-interaction navigation temporarily owns movement without competing with SBL follow paths.
+- Rebalanced caught-watching exits to favour a staged short walk-away, require exit targets to differ clearly from the owner's direction, raise the one-time covert-glance chance, and suppress immediate owner reacquisition for 4-7 seconds after completion.
 
 ## 2026-08-07 - Legionary visual prototype baseline
 

@@ -35,6 +35,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 	private static final DataTicket<Byte> CURIOUS_TILT = DataTickets.create("echo_warrior_curious_tilt", Byte.class);
 	private static final DataTicket<Integer> VISUAL_SEQUENCE = DataTickets.create("echo_warrior_visual_sequence", Integer.class);
 	private static final DataTicket<Long> ATTENTION_STARTED_AT = DataTickets.create("echo_warrior_attention_started_at", Long.class);
+	private static final DataTicket<Long> CAUGHT_REACTION_START = DataTickets.create("echo_warrior_caught_reaction_start", Long.class);
 
 	private final Map<Integer, VisualState> visualStates = new HashMap<>();
 
@@ -63,6 +64,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		renderState.addGeckolibData(CURIOUS_TILT, entity.getCuriousTilt());
 		renderState.addGeckolibData(VISUAL_SEQUENCE, entity.getVisualSequence());
 		renderState.addGeckolibData(ATTENTION_STARTED_AT, entity.getAttentionStartedAt());
+		renderState.addGeckolibData(CAUGHT_REACTION_START, entity.getCaughtReactionStart());
 	}
 
 	@Override
@@ -79,6 +81,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		float partialTick = renderPass.renderState().getPartialTick();
 		int sequence = renderPass.getGeckolibData(VISUAL_SEQUENCE);
 		float attentionAge = gameTime + partialTick - renderPass.getGeckolibData(ATTENTION_STARTED_AT);
+		float caughtReactionAge = gameTime + partialTick - renderPass.getGeckolibData(CAUGHT_REACTION_START);
 
 		if (this.visualStates.size() > 256 && !this.visualStates.containsKey(entityId)) {
 			this.visualStates.clear();
@@ -100,6 +103,8 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		float headResponsiveness;
 		if (reaction == RomanLegionaryEchoEntity.VISUAL_STARTLED || reaction == RomanLegionaryEchoEntity.VISUAL_HURT) {
 			headResponsiveness = 0.55F;
+		} else if (reaction == RomanLegionaryEchoEntity.VISUAL_CAUGHT) {
+			headResponsiveness = 0.36F;
 		} else if (reaction == RomanLegionaryEchoEntity.VISUAL_MUTUAL_GAZE) {
 			headResponsiveness = attentionAge < 2.0F ? 0.0F : 0.24F;
 		} else {
@@ -131,6 +136,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		float desiredEyeY = -unrolledEyeX * tiltSin + unrolledEyeY * tiltCos;
 		float eyeResponsiveness = reaction == RomanLegionaryEchoEntity.VISUAL_STARTLED || reaction == RomanLegionaryEchoEntity.VISUAL_HURT
 				? 0.92F
+				: reaction == RomanLegionaryEchoEntity.VISUAL_CAUGHT ? 0.9F
 				: reaction == RomanLegionaryEchoEntity.VISUAL_MUTUAL_GAZE ? 0.82F : 0.58F;
 		state.eyeX = approach(state.eyeX, desiredEyeX, eyeResponsiveness, deltaTicks);
 		state.eyeY = approach(state.eyeY, desiredEyeY, eyeResponsiveness, deltaTicks);
@@ -138,6 +144,11 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		float desiredPupilScale = switch (reaction) {
 			case RomanLegionaryEchoEntity.VISUAL_HURT -> 0.6F;
 			case RomanLegionaryEchoEntity.VISUAL_STARTLED -> 0.48F;
+			case RomanLegionaryEchoEntity.VISUAL_CAUGHT -> Mth.lerp(
+					Mth.clamp((caughtReactionAge - 3.0F) / 7.0F, 0.0F, 1.0F),
+					0.8F,
+					1.0F
+			);
 			default -> 1.0F;
 		};
 		state.pupilScale = approach(state.pupilScale, desiredPupilScale, desiredPupilScale < state.pupilScale ? 0.8F : 0.18F, deltaTicks);

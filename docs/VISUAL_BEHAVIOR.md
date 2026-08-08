@@ -78,6 +78,43 @@ The following behaviour was approved on 2026-08-07 and is the implementation con
 Mutual gaze must not leave SmartBrainLib and the renderer fighting over different facing directions. The presentation layer owns eyes and head, while deliberate mutual gaze may request a gentle body-facing correction without changing navigation or combat targeting.
 Ordinary owner-follow navigation pauses during an active mutual-gaze episode and resumes afterwards, preventing movement steering from immediately pulling the body away.
 
+### Owner catches the echo watching
+
+The owner-only caught-watching reaction is a restrained moment of being found out, not fear or overt shyness. It is eligible only when both pupils and head have already watched the bound owner for at least 0.4 seconds before that owner completes the normal 0.5-second head-gaze acquisition. A player who looks first and causes the echo to turn toward them receives ordinary mutual gaze instead.
+
+Once eligible, continuous owner gaze always produces the reaction, but its delay is selected per episode:
+
+- 30% immediately after acquisition.
+- 45% after another 1-2 seconds.
+- 20% after another 2-4 seconds.
+- 5% after another 4-6 seconds.
+
+Two ordinary missed gaze ticks are tolerated while waiting; a longer miss cancels the pending reaction. The reaction occurs at most once per continuous mutual-gaze episode and, once started, establishes an 8-15 second random cooldown whether it completes or is interrupted.
+
+The 1.6-2.2 second presentation is code-driven:
+
+1. Freeze on the owner for roughly 0.12-0.18 seconds with a mild pupil contraction to about 80%.
+2. Perform a fast double blink over roughly 0.35 seconds.
+3. Move the pupils first toward a randomly selected point 35-55 degrees to either upper side of the owner; the head follows roughly 0.1 seconds later with a small upward pitch while the body stays put.
+4. Hold the false distant focus briefly, then move only the pupils back to the owner's live eye position for a 0.2-0.35 second covert glance.
+5. If the owner is still staring, snap the pupils back to the distant point more quickly; otherwise allow a slightly longer glance before returning to ordinary attention.
+
+Combat, actual damage, a creeper, a rapidly approaching living entity, lost visibility, or the owner pulling beyond roughly 16 blocks interrupts the presentation immediately. Ordinary harmless bystanders do not. The system never starts this presentation for non-owner players and does not add a separate full-body animation or override combat movement.
+
+After the main caught-watching presentation, the echo enters a 2-4 second owner-exclusion exit instead of immediately selecting the owner again:
+
+- 15% continue watching another target without turning the body.
+- 25% turn the body roughly 45-90 degrees and pretend to inspect the surroundings.
+- 60% turn away and casually walk 1.5-3 blocks at roughly 65-75% of normal follow speed.
+
+Every exit focus must be at least 70 degrees away from the direction to the owner. A harmless living target that lies too close to the owner's direction is rejected in favour of another target or a generated side point. Walking chooses either side at a random 70-130 degree angle from the owner, and stages the motion visibly: pupils move first, the head follows, the body turns for 0.25-0.5 seconds, and navigation begins only afterwards. The echo does not automatically turn back on arrival.
+
+Walking is attempted only while the echo begins within nine blocks of the owner and the destination remains within twelve blocks; path failure falls back to the stationary turn. The exit is cancelled when the owner reaches fifteen blocks so normal following can resume. Owner following itself starts beyond fifteen blocks, stops within five, and uses safe teleport recovery only beyond thirty-two blocks.
+
+Each exit has a 75% chance to perform one secondary profile glance after committing to the chosen focus; a walking exit must at least begin moving before this glance becomes eligible. Pupils move to the owner's live eye position first; the head follows by only 8-15 degrees roughly 0.1 seconds later while the body remains committed to the exit direction and walking never pauses. If the owner is still staring, the glance lasts 0.15-0.25 seconds and snaps away; otherwise it may last 0.35-0.55 seconds. The echo continues or completes its exit without turning back, and no exit can produce a third glance or a loop.
+
+After a completed exit, ordinary owner observation and new mutual-gaze acquisition are suppressed for another random 4-7 seconds. The last away focus is retained and regenerated to remain at least 70 degrees from the owner if necessary. Following, protection and combat remain functional. Active combat, actual damage, creeper alarm, or a rapidly approaching living entity cancels this visual avoidance immediately.
+
 ## Reactions
 
 - Normal blink interval: randomized between roughly 2.5 and 6 seconds.
@@ -103,11 +140,17 @@ The `/echo_warrior visual` command can force visual states on the nearest owned 
 /echo_warrior visual double_blink
 /echo_warrior visual curious
 /echo_warrior visual startled
+/echo_warrior visual exit_look
+/echo_warrior visual exit_turn
+/echo_warrior visual exit_walk
+/echo_warrior visual exit_secondary
 /echo_warrior visual reset
 /echo_warrior visual status
 ```
 
-`status` reports the observing player's current head-gaze sample, acquisition progress, required ticks, combat suppression, mutual-gaze and distraction state, current eye/head/body attention kinds, reaction, and body yaw. These commands are testing tools, not player-facing gameplay.
+The four `exit_*` commands deterministically preview the three post-reaction branches and the stationary turn with its optional secondary profile glance. They bypass natural branch probability but retain path validation and normal interruption rules.
+
+`status` reports the observing player's current head-gaze sample, acquisition progress, required ticks, combat suppression, mutual-gaze, caught-reaction and exit state, remaining post-exit owner-avoidance ticks, current eye/head/body attention kinds, reaction, and body yaw. These commands are testing tools, not player-facing gameplay.
 
 Model animation previews use a separate command branch:
 

@@ -13,9 +13,9 @@ public final class EchoFollowOwner extends FollowOwner<RomanLegionaryEchoEntity>
 
 	public EchoFollowOwner() {
 		this.speedModifier((float)SPEED_MODIFIER);
-		this.closeEnoughDist(3.0F);
-		this.startFollowingAfter(5.0F);
-		this.teleportAfterDist(16.0F);
+		this.closeEnoughDist(5.0F);
+		this.startFollowingAfter(15.0F);
+		this.teleportAfterDist(32.0F);
 		this.noTimeout();
 	}
 
@@ -27,7 +27,7 @@ public final class EchoFollowOwner extends FollowOwner<RomanLegionaryEchoEntity>
 
 	@Override
 	protected void tick(RomanLegionaryEchoEntity entity) {
-		if (entity.isMutualGazeActive()) {
+		if (entity.isVisualInteractionMovementOwned()) {
 			entity.getNavigation().stop();
 			return;
 		}
@@ -44,7 +44,7 @@ public final class EchoFollowOwner extends FollowOwner<RomanLegionaryEchoEntity>
 	}
 
 	private void refreshPath(RomanLegionaryEchoEntity entity) {
-		if (entity.isMutualGazeActive()) {
+		if (entity.isVisualInteractionMovementOwned()) {
 			entity.getNavigation().stop();
 		} else if (this.followingEntity != null && this.followingEntity.isAlive()) {
 			entity.getNavigation().moveTo(this.followingEntity, SPEED_MODIFIER);
