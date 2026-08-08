@@ -35,6 +35,8 @@ All notable development changes to Echo Warrior are recorded here.
 - Updated the Roman legionary idle, walk, texture, and corrected bone pivots from the August 8 modeler delivery.
 - SBL melee attacks now trigger the one-second attack animation while retaining the existing sixth-tick damage timing.
 - Non-attacking echoes play the half-second full-body hurt animation; attacks retain body priority while code-driven pupil contraction, source tracking, and a short pain blink still communicate damage.
+- Stabilized code-driven gaze against subtle modeler-authored idle torso rotation, while preserving larger full-body action motion; idle/walk changes now use a short stop delay and transition to filter navigation micro-movement.
+- Ordinary attention now holds a living target or random world-space glance for its full intended duration instead of restarting every awareness scan or treating every anonymous point as the same target.
 
 ## 2026-08-07 - Legionary visual prototype baseline
 

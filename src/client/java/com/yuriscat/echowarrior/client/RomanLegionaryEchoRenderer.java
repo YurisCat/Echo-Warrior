@@ -20,6 +20,8 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 	private static final float EYE_PITCH_LIMIT = 24.0F;
 	private static final float MAX_EYE_X = 0.82F;
 	private static final float MAX_EYE_Y = 0.46F;
+	private static final float FULL_IDLE_PARENT_COMPENSATION_DEGREES = 3.0F;
+	private static final float NO_PARENT_COMPENSATION_DEGREES = 8.0F;
 
 	private static final DataTicket<Integer> ENTITY_ID = DataTickets.create("echo_warrior_entity_id", Integer.class);
 	private static final DataTicket<Vec3> ENTITY_POSITION = DataTickets.create("echo_warrior_entity_position", Vec3.class);
@@ -147,9 +149,36 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 						? calculateHurtBlink(gameTime + partialTick, renderPass.getGeckolibData(BLINK_START))
 						: calculateBlink(gameTime + partialTick, renderPass.getGeckolibData(BLINK_START), renderPass.getGeckolibData(BLINK_COUNT));
 
+		// The head inherits the modeler's animated torso chain. Compensate gentle idle sway so the
+		// code-owned gaze remains stable, but smoothly retain larger combat and reaction motions.
+		float inheritedRotX = snapshots.get("root").map(bone -> bone.getRotX()).orElse(0.0F)
+				+ snapshots.get("body_root").map(bone -> bone.getRotX()).orElse(0.0F)
+				+ snapshots.get("upper_body_root").map(bone -> bone.getRotX()).orElse(0.0F)
+				+ snapshots.get("upper_body").map(bone -> bone.getRotX()).orElse(0.0F);
+		float inheritedRotY = snapshots.get("root").map(bone -> bone.getRotY()).orElse(0.0F)
+				+ snapshots.get("body_root").map(bone -> bone.getRotY()).orElse(0.0F)
+				+ snapshots.get("upper_body_root").map(bone -> bone.getRotY()).orElse(0.0F)
+				+ snapshots.get("upper_body").map(bone -> bone.getRotY()).orElse(0.0F);
+		float inheritedRotZ = snapshots.get("root").map(bone -> bone.getRotZ()).orElse(0.0F)
+				+ snapshots.get("body_root").map(bone -> bone.getRotZ()).orElse(0.0F)
+				+ snapshots.get("upper_body_root").map(bone -> bone.getRotZ()).orElse(0.0F)
+				+ snapshots.get("upper_body").map(bone -> bone.getRotZ()).orElse(0.0F);
+		float inheritedMagnitude = Math.max(Math.abs(inheritedRotX), Math.max(Math.abs(inheritedRotY), Math.abs(inheritedRotZ)));
+		float inheritedMagnitudeDegrees = inheritedMagnitude * Mth.RAD_TO_DEG;
+		float parentCompensation = 1.0F - (float)Mth.smoothstep(Mth.clamp(
+				(inheritedMagnitudeDegrees - FULL_IDLE_PARENT_COMPENSATION_DEGREES)
+						/ (NO_PARENT_COMPENSATION_DEGREES - FULL_IDLE_PARENT_COMPENSATION_DEGREES),
+				0.0F,
+				1.0F
+		));
+
 		// This Blockbench model's yaw and pitch axes are opposite Minecraft's semantic head angles.
 		// Roll is already authored in the expected direction and remains unchanged.
-		snapshots.ifPresent("head", bone -> bone.setRotation(toRadians(-state.headPitch), toRadians(-state.headYaw), toRadians(state.headTilt)));
+		snapshots.ifPresent("head", bone -> bone.setRotation(
+				toRadians(-state.headPitch) - inheritedRotX * parentCompensation,
+				toRadians(-state.headYaw) - inheritedRotY * parentCompensation,
+				toRadians(state.headTilt) - inheritedRotZ * parentCompensation
+		));
 		snapshots.ifPresent("left_eye", bone -> bone
 				.setTranslation(state.eyeX - convergence, state.eyeY, 0.0F)
 				.setScale(state.pupilScale, state.pupilScale, 1.0F));

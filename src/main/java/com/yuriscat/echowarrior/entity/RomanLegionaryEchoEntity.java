@@ -6,6 +6,7 @@ import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.animation.AnimationController;
 import com.geckolib.animation.RawAnimation;
 import com.geckolib.animation.object.PlayState;
+import com.geckolib.animation.state.AnimationTest;
 import com.geckolib.util.GeckoLibUtil;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
@@ -92,6 +93,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.roman_legionary.hurt");
 	private static final RawAnimation SHIELD_RAISE = RawAnimation.begin().thenPlayAndHold("animation.roman_legionary.shield_raise");
 	private static final RawAnimation SHIELD_LOWER = RawAnimation.begin().thenPlay("animation.roman_legionary.shield_lower");
+	private static final int MOVEMENT_ANIMATION_RELEASE_TICKS = 4;
 	private static final String ACTION_CONTROLLER = "action";
 	private static final String ATTACK_TRIGGER = "attack";
 	private static final String HURT_TRIGGER = "hurt";
@@ -100,6 +102,8 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final int ATTACK_ANIMATION_TICKS = 20;
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
+	private boolean movementAnimationActive;
+	private int movementAnimationLastMovingTick = Integer.MIN_VALUE;
 	private @Nullable EntityReference<LivingEntity> ownerReference;
 	private @Nullable UUID summonerUuid;
 	private int remainingLifetime = MAX_LIFETIME_TICKS;
@@ -680,12 +684,12 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	private void considerAttentionCandidate(AttentionCandidate candidate, long now) {
 		boolean urgent = isUrgentVisual(candidate.kind());
-		boolean sameEyeTarget = sameTarget(this.eyeAttentionTarget, candidate.target());
+		boolean sameEyeTarget = candidate.target() != null
+				&& sameTarget(this.eyeAttentionTarget, candidate.target())
+				&& this.eyeAttentionKind == candidate.kind();
 		boolean eyeExpired = now >= this.eyeAttentionExpiresAt || this.eyeAttentionTarget != null && !this.eyeAttentionTarget.isAlive();
-		boolean switchEyes = sameEyeTarget || urgent || eyeExpired
-				|| candidate.priority() >= this.eyeAttentionPriority + 80 || now >= this.eyeStickyUntil;
+		boolean switchEyes = urgent || eyeExpired || candidate.priority() >= this.eyeAttentionPriority + 80;
 		if (switchEyes) {
-			boolean changed = !sameEyeTarget || candidate.kind() != this.eyeAttentionKind;
 			this.eyeAttentionTarget = candidate.target();
 			this.eyeAttentionPriority = candidate.priority();
 			this.eyeAttentionExpiresAt = now + candidate.durationTicks();
@@ -693,10 +697,10 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			this.eyeStickyUntil = now + EYE_STICKY_TICKS;
 			setEyeAttentionPoint(candidate.point());
 			setReaction(candidate.reaction(), now + candidate.durationTicks());
-			if (changed) {
-				this.entityData.set(CURIOUS_TILT, (byte)0);
-				this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
-			}
+			this.entityData.set(CURIOUS_TILT, (byte)0);
+			this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+		} else if (sameEyeTarget) {
+			setEyeAttentionPoint(candidate.target().getEyePosition());
 		}
 
 		boolean samePending = sameTarget(this.pendingHeadTarget, candidate.target()) && this.pendingHeadKind == candidate.kind();
@@ -706,11 +710,12 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			this.pendingHeadSince = now;
 		}
 
-		boolean sameHeadTarget = sameTarget(this.attentionTarget, candidate.target());
+		boolean sameHeadTarget = candidate.target() != null
+				&& sameTarget(this.attentionTarget, candidate.target())
+				&& this.headAttentionKind == candidate.kind();
 		boolean headExpired = now >= this.attentionExpiresAt || this.attentionTarget != null && !this.attentionTarget.isAlive();
 		boolean delayComplete = now - this.pendingHeadSince >= headDelayTicks(candidate.kind());
-		boolean switchHead = delayComplete && (sameHeadTarget || urgent || headExpired
-				|| candidate.priority() >= this.attentionPriority + 80 || now >= this.headStickyUntil);
+		boolean switchHead = delayComplete && (urgent || headExpired || candidate.priority() >= this.attentionPriority + 80);
 		if (switchHead) {
 			this.attentionTarget = candidate.target();
 			this.attentionPoint = candidate.point();
@@ -723,7 +728,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			setAttentionPoint(candidate.point());
 			this.entityData.set(CURIOUS_TILT, candidate.curious() ? (byte)(this.random.nextBoolean() ? 1 : -1) : (byte)0);
 			this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
-		} else if (sameHeadTarget && this.attentionTarget != null && this.attentionTarget.isAlive()) {
+		} else if (sameHeadTarget && this.attentionTarget.isAlive()) {
 			setAttentionPoint(this.attentionTarget.getEyePosition());
 		}
 
@@ -1206,12 +1211,25 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	@Override
 	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-		controllers.add(new AnimationController<>("movement", test -> test.setAndContinue(test.isMoving() ? WALK : IDLE)));
+		controllers.add(new AnimationController<RomanLegionaryEchoEntity>("movement", 3, this::selectMovementAnimation));
 		controllers.add(new AnimationController<RomanLegionaryEchoEntity>(ACTION_CONTROLLER, 2, test -> PlayState.STOP)
 				.triggerableAnim(ATTACK_TRIGGER, ATTACK)
 				.triggerableAnim(HURT_TRIGGER, HURT)
 				.triggerableAnim(SHIELD_RAISE_TRIGGER, SHIELD_RAISE)
 				.triggerableAnim(SHIELD_LOWER_TRIGGER, SHIELD_LOWER));
+	}
+
+	private PlayState selectMovementAnimation(AnimationTest<RomanLegionaryEchoEntity> test) {
+		int currentTick = test.animatable().tickCount;
+		if (test.isMoving()) {
+			this.movementAnimationActive = true;
+			this.movementAnimationLastMovingTick = currentTick;
+		} else if (this.movementAnimationActive
+				&& currentTick - this.movementAnimationLastMovingTick >= MOVEMENT_ANIMATION_RELEASE_TICKS) {
+			this.movementAnimationActive = false;
+		}
+
+		return test.setAndContinue(this.movementAnimationActive ? WALK : IDLE);
 	}
 
 	@Override

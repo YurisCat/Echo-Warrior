@@ -41,6 +41,8 @@ Visual priority, from highest to lowest:
 
 The pupils hold a selected target for at least 0.25 seconds and the head for at least 0.5 seconds. A primed creeper or actual damage source may override either hold immediately. This prevents ordinary candidates from causing flicker while retaining an immediate startle response.
 
+Ordinary attention retains its selected living entity or anonymous world-space glance point for the candidate's full 1.5-4 second duration. Re-scanning the same living entity updates its eye position without restarting the attention episode, while newly generated anonymous points are not treated as the same target merely because both lack an entity. This prevents the ordinary two-tick awareness scan from repeatedly restarting or redirecting the head.
+
 Layer-specific threat responses:
 
 - A primed creeper moves the pupils and head immediately. Outside combat, the body turns when the creeper is within six blocks, or after 0.3 seconds if the target remains behind the head's useful viewing arc.
@@ -52,6 +54,8 @@ Layer-specific threat responses:
 Pupil position is recalculated every rendered frame from the attention point in the head's current local coordinate space. The eyes therefore remain locked to the same world-space target while the head and body move. As the face becomes aligned, the pupils naturally approach the centre because the target itself has moved to the centre of the local view; this is not treated as releasing attention. Curious head roll is compensated so a tilted head does not drag the pupils away from their target.
 
 The current Blockbench `head` bone uses yaw and pitch axes opposite to Minecraft's semantic look angles. The renderer negates yaw and pitch only at the final bone-application boundary; target selection, pupil tracking, and body-facing math remain in normal Minecraft coordinates. The roll axis is not inverted, preserving the occasional curious head tilt.
+
+The modeler's idle animation may retain subtle motion on torso ancestors of `head`. The renderer reads the final animated `root`/torso chain and compensates inherited rotations up to roughly three degrees so code-driven gaze does not oscillate with breathing motion. Compensation fades out between roughly three and eight degrees, preserving larger attack, hurt, and shield motions. Locomotion also holds the walk state for four ticks after movement ceases and blends movement changes over three ticks, filtering navigation micro-movement without delaying the start of walking.
 
 ## Mutual gaze contract
 
