@@ -10,6 +10,7 @@ import com.geckolib.animation.state.AnimationTest;
 import com.geckolib.util.GeckoLibUtil;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
+import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -280,6 +281,9 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			if (target != null && this.canAttack(target)) {
 				BrainUtil.setTargetOfEntity(this, target);
 			}
+		}
+		if (this.tickCount % 20 == 0 && this.getTarget() != null) {
+			EchoExperienceSystem.markParticipation(this, this.getTarget());
 		}
 
 		tickVisualAwareness(serverLevel, owner);
@@ -1735,6 +1739,10 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	public @Nullable UUID getOwnerUuid() {
 		LivingEntity owner = getOwner();
 		return owner == null ? null : owner.getUUID();
+	}
+
+	public @Nullable UUID getSummonerUuid() {
+		return this.summonerUuid;
 	}
 
 	@Override

@@ -14,7 +14,10 @@ public final class ModCreativeTabs {
 			FabricCreativeModeTab.builder()
 					.title(Component.translatable("itemGroup.echo_warrior.echo_warrior"))
 					.icon(() -> new ItemStack(ModItems.TEST_ECHO_SUMMONER))
-					.displayItems((parameters, output) -> output.accept(ModItems.TEST_ECHO_SUMMONER))
+					.displayItems((parameters, output) -> {
+						output.accept(ModItems.TEST_ECHO_SUMMONER);
+						output.accept(ModItems.ROMAN_LEGIONARY_RELIC);
+					})
 					.build()
 	);
 

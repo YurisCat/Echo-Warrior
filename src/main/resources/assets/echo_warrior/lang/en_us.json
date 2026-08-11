@@ -1,5 +1,6 @@
 {
   "entity.echo_warrior.roman_legionary_echo": "Roman Legionary Echo",
+  "item.echo_warrior.roman_legionary_relic": "Roman Legionary Relic",
   "item.echo_warrior.test_echo_summoner": "Test Echo Summoner",
   "itemGroup.echo_warrior.echo_warrior": "Echo Warrior"
 }

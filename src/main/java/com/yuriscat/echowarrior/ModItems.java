@@ -1,5 +1,6 @@
 package com.yuriscat.echowarrior;
 
+import com.yuriscat.echowarrior.item.EchoRelicItem;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -12,6 +13,10 @@ public final class ModItems {
 	public static final TestEchoSummonerItem TEST_ECHO_SUMMONER = register(
 			"test_echo_summoner",
 			properties -> new TestEchoSummonerItem(properties.stacksTo(1))
+	);
+	public static final EchoRelicItem ROMAN_LEGIONARY_RELIC = register(
+			"roman_legionary_relic",
+			properties -> new EchoRelicItem(properties.stacksTo(1))
 	);
 
 	private ModItems() {

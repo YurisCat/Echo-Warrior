@@ -1,8 +1,10 @@
 package com.yuriscat.echowarrior.client;
 
+import com.yuriscat.echowarrior.ModMenus;
 import com.yuriscat.echowarrior.ModEntities;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.minecraft.client.gui.screens.MenuScreens;
 
 public final class EchoWarriorClient implements ClientModInitializer {
 	@Override
@@ -11,5 +13,6 @@ public final class EchoWarriorClient implements ClientModInitializer {
 				ModEntities.ROMAN_LEGIONARY_ECHO,
 				RomanLegionaryEchoRenderer::new
 		);
+		MenuScreens.register(ModMenus.SUMMONER, SummonerPreviewScreen::new);
 	}
 }

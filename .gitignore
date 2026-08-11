@@ -45,6 +45,8 @@ Desktop.ini
 
 # Temporary files
 temporary-delivery/
+__pycache__/
+*.pyc
 *.log
 *.tmp
 *.temp
