@@ -8,6 +8,7 @@ import com.yuriscat.echowarrior.layout.SummonerLayout;
 import com.yuriscat.echowarrior.layout.SummonerLayout.Element;
 import com.yuriscat.echowarrior.layout.SummonerLayout.Offset;
 import com.yuriscat.echowarrior.menu.SummonerMenu;
+import com.yuriscat.echowarrior.item.SummonerFuel;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -36,8 +37,6 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	private static final int[] MODULE_SLOT_X = {8, 37, 66, 94, 123, 152};
 	private static final int[] ATTRIBUTE_ICON_X = {61, 134, 61, 116, 61, 116, 61, 116};
 	private static final int[] ATTRIBUTE_ICON_Y = {19, 19, 32, 32, 45, 45, 58, 58};
-	private static final int[] TALENT_PREVIEW_INDICES = {0, 4};
-	private static final int FUEL_PREVIEW_WIDTH = 38;
 
 	private static final Identifier BACKGROUND = EchoWarrior.id("textures/gui/summoner/summoner_screen.png");
 	private static final Identifier[] ATTRIBUTE_ICONS = {
@@ -100,14 +99,12 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	private double dragStartMouseY;
 	private int dragStartOffsetX;
 	private int dragStartOffsetY;
-	private int selectedActivity = 0;
-	private int selectedAlert = 1;
-	private final boolean[] enabledSkills = {true, true, true};
 	private boolean summonButtonHeld;
 	private int dismissConfirmTicks;
 	private int feedbackTicks;
 	private int lastFeedbackValue;
 	private int feedbackCode;
+	private final List<FuelTransferParticle> fuelTransferParticles = new java.util.ArrayList<>();
 
 	public SummonerPreviewScreen(SummonerMenu menu, Inventory inventory, Component title) {
 		super(menu, inventory, title, IMAGE_WIDTH, IMAGE_HEIGHT);
@@ -134,7 +131,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		this.layoutButton = this.addRenderableWidget(Button.builder(
 				Component.literal("布局"),
 				button -> beginLayoutEditing()
-		).bounds(this.leftPos + 207, this.topPos + 3, 27, 12).build());
+		).bounds(this.leftPos + IMAGE_WIDTH + 4, this.topPos + 3, 27, 12).build());
 
 		int editorX = Math.min(this.width - 50, this.leftPos + IMAGE_WIDTH + 4);
 		this.saveButton = this.addRenderableWidget(Button.builder(
@@ -194,7 +191,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-		super.extractBackground(graphics, mouseX, mouseY, partialTick);
+		this.extractTransparentBackground(graphics);
 		graphics.blit(
 				RenderPipelines.GUI_TEXTURED,
 				BACKGROUND,
@@ -230,6 +227,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		renderModeButtons(graphics, relicLoaded, mouseX, mouseY);
 		renderSummonButton(graphics, relicLoaded, mouseX, mouseY);
 		renderProgressFills(graphics, relicLoaded);
+		renderFuelTransferParticles(graphics);
 		renderEmptySlotHints(graphics);
 	}
 
@@ -254,19 +252,19 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		if (relicLoaded) {
 			graphics.text(
 					this.font,
-					this.menu.spiritHealth() + "/" + this.menu.spiritMaximumHealth(),
+					decimal(this.menu.spiritHealth()) + "/" + decimal(this.menu.spiritMaximumHealth()),
 					rx(Element.BASIC_INFO, 72),
 					ry(Element.BASIC_INFO, 21),
 					TEXT_COLOR,
 					false
 			);
 			graphics.text(this.font, Integer.toString(this.menu.relicLevel()), rx(Element.BASIC_INFO, 145), ry(Element.BASIC_INFO, 21), TEXT_COLOR, false);
-			graphics.text(this.font, Integer.toString(this.menu.spiritAttackDamage()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 34), TEXT_COLOR, false);
-			graphics.text(this.font, "100%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 34), TEXT_COLOR, false);
-			graphics.text(this.font, "8", rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 47), TEXT_COLOR, false);
-			graphics.text(this.font, "100%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 47), TEXT_COLOR, false);
+			graphics.text(this.font, decimal(this.menu.spiritAttackDamage()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 34), TEXT_COLOR, false);
+			graphics.text(this.font, this.menu.spiritAttackSpeed() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 34), TEXT_COLOR, false);
+			graphics.text(this.font, decimal(this.menu.spiritArmor()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 47), TEXT_COLOR, false);
+			graphics.text(this.font, this.menu.spiritMovement() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 47), TEXT_COLOR, false);
 			graphics.text(this.font, "16", rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 60), TEXT_COLOR, false);
-			graphics.text(this.font, "100%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 60), TEXT_COLOR, false);
+			graphics.text(this.font, this.menu.summonCostPercent() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 60), TEXT_COLOR, false);
 		}
 
 		graphics.text(this.font, "行动模式", rx(Element.ACTIVITY, 179), ry(Element.ACTIVITY, 79), TEXT_COLOR, false);
@@ -280,6 +278,28 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		);
 		renderAttributeTooltips(graphics, mouseX, mouseY, relicLoaded);
 		renderInteractiveTooltips(graphics, mouseX, mouseY, relicLoaded);
+		renderFeedbackToast(graphics);
+	}
+
+	private void renderFeedbackToast(GuiGraphicsExtractor graphics) {
+		String message = feedbackText();
+		if (message == null) return;
+		int left = 178;
+		int top = 4;
+		int width = 63;
+		boolean error = this.feedbackCode == SummonerMenu.ACTION_NO_RELIC
+				|| this.feedbackCode == SummonerMenu.ACTION_INVALID_SUMMONER
+				|| this.feedbackCode == SummonerMenu.ACTION_CREATE_FAILED
+				|| this.feedbackCode == SummonerMenu.ACTION_NOT_ENOUGH_FUEL
+				|| this.feedbackCode == SummonerMenu.ACTION_NO_SAFE_POSITION;
+		List<net.minecraft.util.FormattedCharSequence> lines = this.font.split(Component.literal(message), width - 12);
+		int visibleLines = Math.min(lines.size(), 6);
+		int height = 8 + visibleLines * 10;
+		graphics.fill(left, top, left + width, top + height, error ? 0xDD3B2025 : 0xDD26382D);
+		graphics.fill(left, top, left + 2, top + height, error ? 0xFFE47777 : 0xFF7DCE91);
+		for (int index = 0; index < visibleLines; index++) {
+			graphics.text(this.font, lines.get(index), left + 7, top + 5 + index * 10, 0xFFF4F0E8, false);
+		}
 	}
 
 	@Override
@@ -332,9 +352,10 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	}
 
 	private boolean hasRelicLoaded() {
-		return this.menu.summonerContainer()
-				.getItem(SummonerMenu.RELIC_SLOT)
-				.is(ModItems.ROMAN_LEGIONARY_RELIC);
+		ItemStack relic = this.menu.summonerContainer().getItem(SummonerMenu.RELIC_SLOT);
+		return relic.is(ModItems.ROMAN_LEGIONARY_RELIC)
+				&& this.menu.relicSyncToken() != 0
+				&& this.menu.relicSyncToken() == SummonerMenu.relicSyncToken(relic);
 	}
 
 	private void renderAttributeIcons(GuiGraphicsExtractor graphics, boolean active) {
@@ -365,11 +386,34 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			int iconX = x(Element.SKILLS, 63 + index * 22);
 			int iconY = y(Element.SKILLS, 73);
 			blit16(graphics, SKILL_ICONS[index], iconX, iconY);
-			if (!this.enabledSkills[index]) {
+			if (index == 1 && this.menu.shieldCharges() < 3) {
+				renderRadialCooldown(graphics, iconX, iconY, this.menu.shieldChargeProgress() / 1000.0F);
+			}
+			if (index == 2 && this.menu.legionCooldownTicks() > 0) {
+				renderRadialCooldown(graphics, iconX, iconY, 1.0F - this.menu.legionCooldownTicks() / 400.0F);
+			}
+			if ((this.menu.enabledSkills() & 1 << index) == 0) {
 				graphics.fill(iconX, iconY, iconX + 16, iconY + 16, 0x99000000);
 				for (int pixel = 1; pixel < 15; pixel++) {
 					graphics.fill(iconX + pixel, iconY + pixel, iconX + pixel + 1, iconY + pixel + 1, 0xFFE05050);
 				}
+			}
+			if (index == 2 && this.menu.legionActive()) {
+				drawBorder(graphics, iconX - 1, iconY - 1, iconX + 17, iconY + 17, 0xFFD8B55A);
+			}
+			if (index == 1) {
+				graphics.text(this.font, Integer.toString(this.menu.shieldCharges()), iconX + 10, iconY + 8, 0xFFFFFFFF, true);
+			}
+		}
+	}
+
+	private static void renderRadialCooldown(GuiGraphicsExtractor graphics, int left, int top, float progress) {
+		float reveal = Math.clamp(progress, 0.0F, 1.0F) * (float)(Math.PI * 2.0);
+		for (int py = 0; py < 16; py++) {
+			for (int px = 0; px < 16; px++) {
+				double angle = Math.atan2(px - 7.5, 7.5 - py);
+				if (angle < 0.0) angle += Math.PI * 2.0;
+				if (angle > reveal) graphics.fill(left + px, top + py, left + px + 1, top + py + 1, 0xA8000000);
 			}
 		}
 	}
@@ -378,16 +422,20 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		if (!active) {
 			return;
 		}
-		for (int index = 0; index < TALENT_PREVIEW_INDICES.length; index++) {
-			int slotX = 157 - (TALENT_PREVIEW_INDICES.length - 1 - index) * 11;
+		int count = Integer.bitCount(this.menu.traitMask());
+		int displayed = 0;
+		for (int talentIndex = 0; talentIndex < TALENT_ICONS.length; talentIndex++) {
+			if ((this.menu.traitMask() & 1 << talentIndex) == 0) continue;
+			int slotX = 157 - (count - 1 - displayed) * 11;
 			blitSized(
 					graphics,
-					TALENT_ICONS[TALENT_PREVIEW_INDICES[index]],
+					TALENT_ICONS[talentIndex],
 					x(Element.TALENTS, slotX),
 					y(Element.TALENTS, 6),
 					11,
 					11
 			);
+			displayed++;
 		}
 	}
 
@@ -397,8 +445,8 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			int activityY = y(Element.ACTIVITY, 90);
 			int alertX = x(Element.ALERT, 178 + index * 19);
 			int alertY = y(Element.ALERT, 123);
-			Identifier activityFrame = modeFrame(active, index == this.selectedActivity, mouseX, mouseY, activityX, activityY);
-			Identifier alertFrame = modeFrame(active, index == this.selectedAlert, mouseX, mouseY, alertX, alertY);
+			Identifier activityFrame = modeFrame(active, index == this.menu.activityMode(), mouseX, mouseY, activityX, activityY);
+			Identifier alertFrame = modeFrame(active, index == this.menu.alertMode(), mouseX, mouseY, alertX, alertY);
 			blitSized(graphics, activityFrame, activityX, activityY, 18, 18);
 			blitSized(graphics, alertFrame, alertX, alertY, 18, 18);
 			if (active) {
@@ -450,8 +498,11 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		}
 		int fuelX = x(Element.FUEL_BAR, 179);
 		int fuelY = y(Element.FUEL_BAR, 165);
-		blitRegion(graphics, FUEL_FILL, fuelX, fuelY, FUEL_PREVIEW_WIDTH, 3, 54, 3);
-		renderFuelParticles(graphics, fuelX, fuelY, FUEL_PREVIEW_WIDTH);
+		int fuelWidth = Math.clamp(Math.round(this.menu.fuelAmount() * 54.0F / SummonerFuel.CAPACITY), 0, 54);
+		if (fuelWidth > 0) {
+			blitRegion(graphics, FUEL_FILL, fuelX, fuelY, fuelWidth, 3, 54, 3);
+			renderFuelParticles(graphics, fuelX, fuelY, fuelWidth);
+		}
 	}
 
 	private void renderFuelParticles(GuiGraphicsExtractor graphics, int left, int top, int fillWidth) {
@@ -465,6 +516,29 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			int particleY = index % 3;
 			int color = index % 2 == 0 ? 0xFF91FFFF : 0xFF57CBCD;
 			graphics.fill(left + particleX, top + particleY, left + particleX + 1, top + particleY + 1, color);
+		}
+	}
+
+	private void renderFuelTransferParticles(GuiGraphicsExtractor graphics) {
+		for (FuelTransferParticle particle : this.fuelTransferParticles) {
+			float progress = particle.age / (float)particle.lifetime;
+			double eased = progress * progress * (3.0 - 2.0 * progress);
+			double x = particle.startX + (particle.endX - particle.startX) * eased;
+			double y = particle.startY + (particle.endY - particle.startY) * eased - Math.sin(progress * Math.PI) * particle.arc;
+			graphics.fill((int)Math.round(x), (int)Math.round(y), (int)Math.round(x) + 1, (int)Math.round(y) + 1, particle.color);
+		}
+	}
+
+	private void spawnFuelTransferParticles(boolean soulSand) {
+		int count = 3 + this.minecraft.level.getRandom().nextInt(4);
+		for (int index = 0; index < count && this.fuelTransferParticles.size() < 24; index++) {
+			int startX = x(Element.FUEL_SLOT, 187) + this.minecraft.level.getRandom().nextInt(7) - 3;
+			int startY = y(Element.FUEL_SLOT, 180) + this.minecraft.level.getRandom().nextInt(7) - 3;
+			int endX = x(Element.FUEL_BAR, 179) + Math.max(1, Math.round(this.menu.fuelAmount() * 53.0F / SummonerFuel.CAPACITY));
+			int endY = y(Element.FUEL_BAR, 166);
+			int lifetime = 8 + this.minecraft.level.getRandom().nextInt(5);
+			int color = soulSand ? (index % 2 == 0 ? 0xFF77D6CE : 0xFFB7F4E9) : (index % 2 == 0 ? 0xFF8B4A42 : 0xFFB66A55);
+			this.fuelTransferParticles.add(new FuelTransferParticle(startX, startY, endX, endY, 3 + this.minecraft.level.getRandom().nextInt(5), lifetime, color));
 		}
 	}
 
@@ -488,15 +562,15 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				{61, 58, 53, 11}, {116, 58, 53, 11}
 		};
 		String[] descriptions = {
-				"生命值：" + this.menu.spiritHealth() + "/" + this.menu.spiritMaximumHealth()
+				"生命值：" + decimal(this.menu.spiritHealth()) + "/" + decimal(this.menu.spiritMaximumHealth())
 						+ (this.menu.isSpiritPresent() ? "" : "（未召唤）"),
 				"等级：" + this.menu.relicLevel() + "/30",
-				"攻击力：" + this.menu.spiritAttackDamage(),
-				"攻击速度：100%（攻击间隔1.0秒）",
-				"护甲：8",
-				"移动速度：100%",
+				"攻击力：" + decimal(this.menu.spiritAttackDamage()),
+				"攻击速度：" + this.menu.spiritAttackSpeed() + "%",
+				"护甲：" + decimal(this.menu.spiritArmor()),
+				"移动速度：" + this.menu.spiritMovement() + "%",
 				"警戒范围：16格",
-				"召唤与生命恢复燃料消耗：100%"
+				"召唤与生命恢复燃料消耗：" + this.menu.summonCostPercent() + "%"
 		};
 		for (int index = 0; index < boxes.length; index++) {
 			int[] box = boxes[index];
@@ -517,20 +591,23 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					"生命值-25%，移动速度和攻击速度+25%",
 					"护甲+4，移动速度-25%"
 			};
-			for (int index = 0; index < TALENT_PREVIEW_INDICES.length; index++) {
-				int talentIndex = TALENT_PREVIEW_INDICES[index];
-				int slotX = 157 - (TALENT_PREVIEW_INDICES.length - 1 - index) * 11;
+			int traitCount = Integer.bitCount(this.menu.traitMask());
+			int displayed = 0;
+			for (int talentIndex = 0; talentIndex < TALENT_ICONS.length; talentIndex++) {
+				if ((this.menu.traitMask() & 1 << talentIndex) == 0) continue;
+				int slotX = 157 - (traitCount - 1 - displayed) * 11;
 				if (isInside(mouseX, mouseY, x(Element.TALENTS, slotX), y(Element.TALENTS, 6), 11, 11)) {
 					showTooltip(graphics, mouseX, mouseY, talentNames[talentIndex], talentEffects[talentIndex]);
 					return;
 				}
+				displayed++;
 			}
 
 			String[] skillNames = {"士兵阵列！", "举盾冲锋！", "军团永存！"};
 			String[][] skillDescriptions = {
-					{"被动为自身和友军提供力量。", "附近有持盾玩家时，额外获得伤害减免。"},
+					{"开启后常驻，为自身和友军提供力量。", "离开光环立即失效；附近有持盾玩家时额外减伤。"},
 					{"冲向威胁主人的投射物或即将爆炸的苦力怕。", "弹开投射物；每5秒恢复1次充能，最多3次。"},
-					{"举盾防御并嘲讽周围敌人。", "3秒后返还减免前所受伤害并击退敌人。"}
+					{"举盾防御并嘲讽周围敌人。", "5秒后返还减免前所受伤害并击退敌人。"}
 			};
 			for (int index = 0; index < SKILL_ICONS.length; index++) {
 				if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
@@ -541,7 +618,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 							skillNames[index],
 							skillDescriptions[index][0],
 							skillDescriptions[index][1],
-							this.enabledSkills[index] ? "当前：已启用（点击禁用）" : "当前：已禁用（点击启用）"
+							(this.menu.enabledSkills() & 1 << index) != 0 ? "当前：已启用（点击禁用）" : "当前：已禁用（点击启用）"
 					);
 					return;
 				}
@@ -563,12 +640,12 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		for (int index = 0; index < 3; index++) {
 			if (isInside(mouseX, mouseY, x(Element.ACTIVITY, 178 + index * 19), y(Element.ACTIVITY, 90), 18, 18)) {
 				showTooltip(graphics, mouseX, mouseY, activityNames[index], activityDescriptions[index],
-						active ? (index == this.selectedActivity ? "当前已选择" : "点击切换") : "需要先装入英灵遗物");
+						active ? (index == this.menu.activityMode() ? "当前已选择" : "点击切换") : "需要先装入英灵遗物");
 				return;
 			}
 			if (isInside(mouseX, mouseY, x(Element.ALERT, 178 + index * 19), y(Element.ALERT, 123), 18, 18)) {
 				showTooltip(graphics, mouseX, mouseY, alertNames[index], alertDescriptions[index],
-						active ? (index == this.selectedAlert ? "当前已选择" : "点击切换") : "需要先装入英灵遗物");
+						active ? (index == this.menu.alertMode() ? "当前已选择" : "点击切换") : "需要先装入英灵遗物");
 				return;
 			}
 		}
@@ -593,7 +670,35 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 
 		if (isInside(mouseX, mouseY, x(Element.SUMMON_BUTTON, 178), y(Element.SUMMON_BUTTON, 143), 56, 19)) {
 			showTooltip(graphics, mouseX, mouseY, summonButtonTooltip(active));
+			return;
 		}
+		if (isInside(mouseX, mouseY, x(Element.FUEL_BAR, 179), y(Element.FUEL_BAR, 165), 54, 3)) {
+			int summonCost = (int)Math.ceil(SummonerFuel.BASE_SUMMON_COST * this.menu.summonCostPercent() / 100.0);
+			double healCost = SummonerFuel.BASE_HEAL_COST * this.menu.summonCostPercent() / 100.0;
+			showTooltip(graphics, mouseX, mouseY, "英灵燃料",
+					this.menu.fuelAmount() + "/" + SummonerFuel.CAPACITY,
+					"召唤消耗：" + summonCost,
+					"自然恢复每点生命：" + String.format(java.util.Locale.ROOT, "%.1f", healCost),
+					"当前可召唤：" + this.menu.fuelAmount() / summonCost + "次");
+			return;
+		}
+		if (this.menu.summonerContainer().getItem(SummonerMenu.FUEL_SLOT).isEmpty()
+				&& isInside(mouseX, mouseY, x(Element.FUEL_SLOT, 179), y(Element.FUEL_SLOT, 172), 16, 16)) {
+			showTooltip(graphics, mouseX, mouseY, "燃料输入槽", "腐肉：+20燃料", "灵魂沙：+50燃料", "容量不足时不会消耗物品");
+			return;
+		}
+		for (int index = 0; index < SummonerMenu.MODULE_SLOT_COUNT; index++) {
+			if (isInside(mouseX, mouseY, x(Element.MODULES, MODULE_SLOT_X[index]), y(Element.MODULES, 94), 16, 16)) {
+				showTooltip(graphics, mouseX, mouseY, "升级模块槽", "模块系统尚未实装，当前不接受新物品。");
+				return;
+			}
+		}
+	}
+
+	private static String decimal(int tenths) {
+		return tenths % 10 == 0
+				? Integer.toString(tenths / 10)
+				: String.format(java.util.Locale.ROOT, "%.1f", tenths / 10.0);
 	}
 
 	private void showTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, String title, String... descriptions) {
@@ -657,6 +762,10 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			case SummonerMenu.ACTION_NO_RELIC -> "召唤失败：没有装入英灵遗物。";
 			case SummonerMenu.ACTION_INVALID_SUMMONER -> "操作失败：召唤器实例已经失效。";
 			case SummonerMenu.ACTION_CREATE_FAILED -> "召唤失败：无法在当前位置生成英灵。";
+			case SummonerMenu.ACTION_NOT_ENOUGH_FUEL -> "召唤失败：燃料不足。";
+			case SummonerMenu.ACTION_NO_SAFE_POSITION -> "召唤失败：附近没有安全位置。";
+			case SummonerMenu.ACTION_MODE_CHANGED -> "英灵模式已更新。";
+			case SummonerMenu.ACTION_SKILL_CHANGED -> "技能启用状态已更新。";
 			default -> null;
 		};
 	}
@@ -670,6 +779,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		if (this.feedbackTicks > 0) {
 			this.feedbackTicks--;
 		}
+		this.fuelTransferParticles.removeIf(particle -> ++particle.age > particle.lifetime);
 		if (!this.menu.isSpiritPresent()) {
 			this.dismissConfirmTicks = 0;
 		}
@@ -677,8 +787,34 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		int feedbackValue = this.menu.actionFeedbackValue();
 		if (feedbackValue != 0 && feedbackValue != this.lastFeedbackValue) {
 			this.lastFeedbackValue = feedbackValue;
-			this.feedbackCode = feedbackValue & 0xF;
-			this.feedbackTicks = 60;
+			this.feedbackCode = feedbackValue & 0xFF;
+			if (this.feedbackCode == SummonerMenu.ACTION_FUEL_ROTTEN_FLESH || this.feedbackCode == SummonerMenu.ACTION_FUEL_SOUL_SAND) {
+				if (this.minecraft.level != null) spawnFuelTransferParticles(this.feedbackCode == SummonerMenu.ACTION_FUEL_SOUL_SAND);
+				this.feedbackTicks = 0;
+			} else {
+				this.feedbackTicks = 60;
+			}
+		}
+	}
+
+	private static final class FuelTransferParticle {
+		private final int startX;
+		private final int startY;
+		private final int endX;
+		private final int endY;
+		private final int arc;
+		private final int lifetime;
+		private final int color;
+		private int age;
+
+		private FuelTransferParticle(int startX, int startY, int endX, int endY, int arc, int lifetime, int color) {
+			this.startX = startX;
+			this.startY = startY;
+			this.endX = endX;
+			this.endY = endY;
+			this.arc = arc;
+			this.lifetime = lifetime;
+			this.color = color;
 		}
 	}
 
@@ -743,15 +879,15 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				if (hasRelicLoaded()) {
 					for (int index = 0; index < 3; index++) {
 						if (isInside(event.x(), event.y(), x(Element.ACTIVITY, 178 + index * 19), y(Element.ACTIVITY, 90), 18, 18)) {
-							this.selectedActivity = index;
+							sendMenuButton(SummonerMenu.BUTTON_ACTIVITY_START + index);
 							return true;
 						}
 						if (isInside(event.x(), event.y(), x(Element.ALERT, 178 + index * 19), y(Element.ALERT, 123), 18, 18)) {
-							this.selectedAlert = index;
+							sendMenuButton(SummonerMenu.BUTTON_ALERT_START + index);
 							return true;
 						}
 						if (isInside(event.x(), event.y(), x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
-							this.enabledSkills[index] = !this.enabledSkills[index];
+							sendMenuButton(SummonerMenu.BUTTON_SKILL_START + index);
 							return true;
 						}
 					}
@@ -792,10 +928,14 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	}
 
 	private void sendSummonAction() {
+		sendMenuButton(SummonerMenu.BUTTON_SUMMON_OR_DISMISS);
+	}
+
+	private void sendMenuButton(int button) {
 		if (this.minecraft.gameMode != null) {
 			this.minecraft.gameMode.handleInventoryButtonClick(
 					this.menu.containerId,
-					SummonerMenu.BUTTON_SUMMON_OR_DISMISS
+					button
 			);
 		}
 	}

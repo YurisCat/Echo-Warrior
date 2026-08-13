@@ -36,6 +36,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 	private static final DataTicket<Integer> VISUAL_SEQUENCE = DataTickets.create("echo_warrior_visual_sequence", Integer.class);
 	private static final DataTicket<Long> ATTENTION_STARTED_AT = DataTickets.create("echo_warrior_attention_started_at", Long.class);
 	private static final DataTicket<Long> CAUGHT_REACTION_START = DataTickets.create("echo_warrior_caught_reaction_start", Long.class);
+	private static final DataTicket<Boolean> SHIELD_RAISED = DataTickets.create("echo_warrior_shield_raised", Boolean.class);
 
 	private final Map<Integer, VisualState> visualStates = new HashMap<>();
 
@@ -65,6 +66,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		renderState.addGeckolibData(VISUAL_SEQUENCE, entity.getVisualSequence());
 		renderState.addGeckolibData(ATTENTION_STARTED_AT, entity.getAttentionStartedAt());
 		renderState.addGeckolibData(CAUGHT_REACTION_START, entity.getCaughtReactionStart());
+		renderState.addGeckolibData(SHIELD_RAISED, entity.isShieldRaised());
 	}
 
 	@Override
@@ -77,6 +79,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		Vec3 eyeAttentionPoint = renderPass.getGeckolibData(EYE_ATTENTION_POINT);
 		float bodyYaw = renderPass.getGeckolibData(BODY_YAW);
 		byte reaction = renderPass.getGeckolibData(REACTION);
+		boolean shieldRaised = renderPass.getGeckolibData(SHIELD_RAISED);
 		long gameTime = renderPass.getGeckolibData(GAME_TIME);
 		float partialTick = renderPass.renderState().getPartialTick();
 		int sequence = renderPass.getGeckolibData(VISUAL_SEQUENCE);
@@ -93,15 +96,19 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 
 		Vec3 headDelta = attentionPoint.subtract(entityPosition);
 		double headHorizontal = Math.sqrt(headDelta.x * headDelta.x + headDelta.z * headDelta.z);
-		float desiredHeadWorldYaw = headHorizontal < 1.0E-4 ? bodyYaw : worldYawToward(headDelta);
-		float desiredHeadYaw = Mth.clamp(Mth.wrapDegrees(desiredHeadWorldYaw - bodyYaw), -75.0F, 75.0F);
-		float desiredHeadPitch = headHorizontal < 1.0E-4 ? 0.0F : Mth.clamp(worldPitchToward(headDelta, headHorizontal), -35.0F, 40.0F);
-		float desiredTilt = reaction == RomanLegionaryEchoEntity.VISUAL_CURIOUS
+		float desiredHeadWorldYaw = shieldRaised || headHorizontal < 1.0E-4 ? bodyYaw : worldYawToward(headDelta);
+		float desiredHeadYaw = shieldRaised ? 0.0F
+				: Mth.clamp(Mth.wrapDegrees(desiredHeadWorldYaw - bodyYaw), -75.0F, 75.0F);
+		float desiredHeadPitch = shieldRaised || headHorizontal < 1.0E-4 ? 0.0F
+				: Mth.clamp(worldPitchToward(headDelta, headHorizontal), -35.0F, 40.0F);
+		float desiredTilt = !shieldRaised && reaction == RomanLegionaryEchoEntity.VISUAL_CURIOUS
 				? renderPass.getGeckolibData(CURIOUS_TILT) * 10.0F
 				: 0.0F;
 
 		float headResponsiveness;
-		if (reaction == RomanLegionaryEchoEntity.VISUAL_STARTLED || reaction == RomanLegionaryEchoEntity.VISUAL_HURT) {
+		if (shieldRaised) {
+			headResponsiveness = 0.45F;
+		} else if (reaction == RomanLegionaryEchoEntity.VISUAL_STARTLED || reaction == RomanLegionaryEchoEntity.VISUAL_HURT) {
 			headResponsiveness = 0.55F;
 		} else if (reaction == RomanLegionaryEchoEntity.VISUAL_CAUGHT) {
 			headResponsiveness = 0.36F;
@@ -176,7 +183,7 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 				+ snapshots.get("upper_body").map(bone -> bone.getRotZ()).orElse(0.0F);
 		float inheritedMagnitude = Math.max(Math.abs(inheritedRotX), Math.max(Math.abs(inheritedRotY), Math.abs(inheritedRotZ)));
 		float inheritedMagnitudeDegrees = inheritedMagnitude * Mth.RAD_TO_DEG;
-		float parentCompensation = 1.0F - (float)Mth.smoothstep(Mth.clamp(
+		float parentCompensation = shieldRaised ? 1.0F : 1.0F - (float)Mth.smoothstep(Mth.clamp(
 				(inheritedMagnitudeDegrees - FULL_IDLE_PARENT_COMPENSATION_DEGREES)
 						/ (NO_PARENT_COMPENSATION_DEGREES - FULL_IDLE_PARENT_COMPENSATION_DEGREES),
 				0.0F,

@@ -16,7 +16,7 @@ public final class ModCreativeTabs {
 					.icon(() -> new ItemStack(ModItems.TEST_ECHO_SUMMONER))
 					.displayItems((parameters, output) -> {
 						output.accept(ModItems.TEST_ECHO_SUMMONER);
-						output.accept(ModItems.ROMAN_LEGIONARY_RELIC);
+						output.accept(new ItemStack(ModItems.ROMAN_LEGIONARY_RELIC));
 					})
 					.build()
 	);

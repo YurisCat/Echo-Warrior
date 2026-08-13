@@ -9,6 +9,7 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $jdkRoot = Join-Path $projectRoot '.toolchains\jdk-25'
 $javaExecutable = Join-Path $jdkRoot 'bin\java.exe'
 $worldPath = Join-Path $projectRoot "run\saves\$TestWorldName"
+$focusScript = Join-Path $PSScriptRoot 'focus-test-client-window.ps1'
 
 if (-not (Test-Path -LiteralPath $javaExecutable)) {
     throw "Project Java 25 runtime is missing: $javaExecutable"
@@ -25,6 +26,7 @@ $runningClient = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
 
 if ($runningClient) {
     Write-Host "Echo Warrior development client is already running (PID $($runningClient.ProcessId))."
+    & $focusScript -ProjectRoot $projectRoot -ProcessId $runningClient.ProcessId -TimeoutSeconds 10
     exit 0
 }
 
@@ -40,6 +42,10 @@ if (Test-Path -LiteralPath $worldPath) {
 } else {
     Write-Host "Launching Echo Warrior. Create the world '$TestWorldName' once; later launches will enter it automatically."
 }
+
+Start-Process -FilePath 'powershell.exe' `
+    -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $focusScript, '-ProjectRoot', $projectRoot) `
+    -WindowStyle Hidden
 
 Push-Location $projectRoot
 try {

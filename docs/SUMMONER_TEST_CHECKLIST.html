@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>英灵召唤器测试清单</title>
+<style>
+:root{color-scheme:dark;--bg:#17151d;--panel:#24212c;--line:#494254;--gold:#d2b46c;--text:#eee8dc;--muted:#aaa3b1;--ok:#78bf8b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#332b39,var(--bg) 48%);color:var(--text);font:15px/1.55 system-ui,"Microsoft YaHei",sans-serif}
+main{max-width:1040px;margin:auto;padding:32px 20px 80px}header{display:flex;gap:18px;align-items:end;justify-content:space-between;flex-wrap:wrap;margin-bottom:22px}
+h1{margin:0;color:var(--gold);font-size:28px}p{color:var(--muted);margin:.4em 0}.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+button,.file{border:1px solid var(--line);background:#302b39;color:var(--text);padding:8px 12px;border-radius:6px;cursor:pointer}button:hover,.file:hover{border-color:var(--gold)}input[type=file]{display:none}
+.progress{height:9px;background:#111;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:16px 0}.bar{height:100%;width:0;background:linear-gradient(90deg,#8f7440,var(--gold),var(--ok));transition:width .2s}
+#summary{font-weight:700;color:var(--gold)}section{background:linear-gradient(145deg,var(--panel),#1d1a23);border:1px solid var(--line);border-radius:10px;margin:14px 0;padding:16px 18px;box-shadow:0 8px 24px #0005}
+h2{font-size:18px;margin:0 0 8px;color:#e3cf9b}.item{display:flex;gap:10px;padding:7px 4px;border-top:1px solid #ffffff0c}.item:first-of-type{border-top:0}.item.done{color:#89838d;text-decoration:line-through}.item input{width:18px;height:18px;accent-color:var(--ok);flex:none;margin-top:2px}
+textarea{width:100%;min-height:72px;margin-top:12px;background:#15131a;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:9px;resize:vertical}small{color:var(--muted)}
+</style></head><body><main>
+<header><div><h1>英灵召唤器 · 开发测试清单</h1><p>勾选结果自动保存在当前浏览器。每个分区下方可记录故障、复现步骤或手感意见。</p></div><div class="toolbar"><button id="export">导出结果</button><label class="file">导入结果<input id="import" type="file" accept="application/json"></label><button id="clear">清空勾选</button></div></header>
+<div id="summary"></div><div class="progress"><div class="bar" id="bar"></div></div><div id="sections"></div>
+<script>
+const groups={
+"GUI 与物品交互":["打开 GUI 后世界背景像原版物品栏一样变暗，GUI 与槽位坐标不偏移","玩家物品栏正常交互，只有召唤器所在槽位被锁定","遗物装入/取出会即时刷新全部区域并正确遣散英灵","0～4 个天赋从右向左显示，图标与悬浮信息对应","技能、天赋、模式、经验条、燃料条悬浮信息完整","空燃料槽显示燃料说明；有物品时仅显示物品悬浮框","模块槽拒绝新物品、允许取出旧物品并显示未实装说明","属性与燃料全部读取真实服务端数据"],
+"遗物、天赋与成长":["创造栏遗物保持未鉴定，真正取入玩家物品栏后才初始化；/give同样只初始化一次","天赋数量权重、无重复及两组互斥规则正确","复制遗物保留天赋、成长、模式、技能与冷却","开发命令 /echo_warrior relic reroll_traits 可用","共同战斗经验不抢玩家经验球","30级曲线、60生命与12攻击终值正确","升级即时刷新实体属性并有声音/行动栏反馈"],
+"燃料与召唤":["新召唤器为0/1000，腐肉+20、灵魂沙+50","仅手持或GUI打开时每5tick转换一个","容量不足时不消耗，GUI转换粒子正确","燃料条宽度、遮罩与悬浮信息同步","召唤成本及天赋比例正确，创造模式同样扣除","安全位置搜索失败时不扣燃料","GUI召唤/二次确认收回后保持开启","右键召回不扣燃料且英灵不会自然超时","脱战回血间隔和小数燃料累计正确"],
+"模式与边界":["跟随模式跟随与超距传送正确","等待模式2格活动、6格主动扫描、8格放弃并可重设锚点","闲逛模式16格活动、24格放弃并可重设锚点","主动、被动、和平三种警戒逻辑正确","普通挥刀只在判定帧处于原版近战范围且有视线时命中，拉开距离或隔墙不会隔空受伤","友军、队伍、驯服生物和创造/旁观玩家保护正确"],
+"士兵阵列":["技能启用后始终生效，不需要敌人，可在GUI技能栏手动关闭；技能框始终保持普通白边","未持盾时显示无限持续的‘举起武器！’及独立图标，固定提供不叠加+2攻击","离开8格范围、禁用技能、来源消失或重新登录时直接取消效果，旧版无限效果也会被清理","主人任一只手持盾时立即切换为‘举起盾牌！’及独立图标，攻击仍只加2，同时双方获得15%最终减伤","移走盾牌后立即切回‘举起武器！’，两个状态不同时残留；举盾冲锋充能数字已向下1像素"],
+"举盾冲锋":["3点初始充能及每5秒世界时间恢复正确","只拦截约1秒内威胁主人的敌对投射物/苦力怕","投射物反射保留伤害、改变归属且只处理一次","主人近期攻击的苦力怕被排除","苦力怕按70/30方向击退约5～7格且引信不重置","冲锋阻塞/超时取消，不沿途造成伤害","充能数字与顺时针像素遮罩正确","冲锋期间维持举盾，头部笔直朝前且瞳孔仍可小幅观察；结束后收盾","速度呈平稳起步、中段加速、末段收势","沿途有低频风弹声和少量尾流，命中两类目标都有盾牌撞击声","命中或取消后水平速度迅速衰减，不会继续顶着目标滑行","0.5秒冷却从冲锋结束时开始，同一目标2秒内不会再次触发"],
+"军团永存":["触发条件、同主人互斥与20秒冷却正确","12格可见近远程敌人被嘲讽且头顶持续显示生气粒子","自身头顶零星生气粒子沿小型抛物线上升再回落，脚底无触发风爆","触发后通过同步姿态维持举盾动作，头部不被上半身旋转带歪，瞳孔可独立观察","5秒定身、+12护甲、100%击退抗性正确","爆发完成后才收盾，释放使用风弹爆发音效","仅累计敌对实体造成的减免前伤害","6格每名敌人承受完整返还且仍受自身减伤","平方根极端击退和距离衰减手感合理","蓄力、释放及冷却遮罩反馈正确"],
+"持久化与多人":["使用scripts/playtest-now.bat启动后，Minecraft窗口自动恢复并置于前台，不会在后台锁住鼠标","关闭GUI、换槽、重进后数据不丢失","实体加载后主人、模式与锚点正确","换遗物实例遣散旧英灵且不自动召唤","多个召唤器不会串绑、串燃料、串经验或串冷却","单人、局域网/专用服务器结果一致"]};
+const KEY="echo-warrior-summoner-checklist-v1";let state=JSON.parse(localStorage.getItem(KEY)||'{"checks":{},"notes":{}}');
+const root=document.querySelector('#sections');let n=0;for(const [title,items] of Object.entries(groups)){const s=document.createElement('section');s.innerHTML=`<h2>${title}</h2>`;items.forEach(text=>{const id=`c${n++}`,row=document.createElement('label');row.className='item';row.innerHTML=`<input type="checkbox" data-id="${id}"><span>${text}</span>`;const box=row.querySelector('input');box.checked=!!state.checks[id];row.classList.toggle('done',box.checked);box.onchange=()=>{state.checks[id]=box.checked;row.classList.toggle('done',box.checked);save()};s.append(row)});const note=document.createElement('textarea');note.placeholder=`${title}：问题记录 / 复现步骤 / 手感意见`;note.value=state.notes[title]||'';note.oninput=()=>{state.notes[title]=note.value;save()};s.append(note);root.append(s)}
+function save(){localStorage.setItem(KEY,JSON.stringify(state));update()}function update(){const boxes=[...document.querySelectorAll('input[type=checkbox]')],done=boxes.filter(x=>x.checked).length;document.querySelector('#summary').textContent=`已完成 ${done} / ${boxes.length} 项（${Math.round(done*100/boxes.length)}%）`;document.querySelector('#bar').style.width=`${done*100/boxes.length}%`}update();
+document.querySelector('#export').onclick=()=>{const blob=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='summoner-test-results.json';a.click();URL.revokeObjectURL(a.href)};
+document.querySelector('#import').onchange=async e=>{try{state=JSON.parse(await e.target.files[0].text());localStorage.setItem(KEY,JSON.stringify(state));location.reload()}catch{alert('无法读取该测试结果文件。')}};
+document.querySelector('#clear').onclick=()=>{if(confirm('确定清空所有勾选？问题记录会保留。')){state.checks={};save();location.reload()}};
+</script></main></body></html>

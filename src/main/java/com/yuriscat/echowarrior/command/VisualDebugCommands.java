@@ -2,6 +2,10 @@ package com.yuriscat.echowarrior.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.yuriscat.echowarrior.entity.RomanLegionaryEchoEntity;
+import com.yuriscat.echowarrior.item.EchoRelicItem;
+import com.yuriscat.echowarrior.item.EchoRelicState;
+import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
+import net.minecraft.world.item.ItemStack;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -38,7 +42,24 @@ public final class VisualDebugCommands {
 						.then(animationCommand("hurt", RomanLegionaryEchoEntity.AnimationTestMode.HURT))
 						.then(animationCommand("shield_raise", RomanLegionaryEchoEntity.AnimationTestMode.SHIELD_RAISE))
 						.then(animationCommand("shield_lower", RomanLegionaryEchoEntity.AnimationTestMode.SHIELD_LOWER))
-						.then(animationCommand("reset", RomanLegionaryEchoEntity.AnimationTestMode.RESET))));
+						.then(animationCommand("reset", RomanLegionaryEchoEntity.AnimationTestMode.RESET)))
+				.then(Commands.literal("relic")
+						.then(Commands.literal("reroll_traits").executes(context -> rerollTraits(context.getSource())))));
+	}
+
+	private static int rerollTraits(CommandSourceStack source) {
+		ServerPlayer player = source.getPlayer();
+		if (player == null) return 0;
+		ItemStack held = player.getMainHandItem();
+		ItemStack relic = held.getItem() instanceof EchoRelicItem ? held : TestEchoSummonerItem.relicStack(held);
+		if (!(relic.getItem() instanceof EchoRelicItem)) {
+			source.sendFailure(Component.literal("主手需要拿着英灵遗物，或装有遗物的召唤器。"));
+			return 0;
+		}
+		int mask = EchoRelicState.rerollTraits(relic, player.getRandom(), player.level().getGameTime());
+		if (held.getItem() instanceof TestEchoSummonerItem) TestEchoSummonerItem.setRelicStack(held, relic);
+		source.sendSuccess(() -> Component.literal("已重新随机遗物天赋，掩码=" + mask), false);
+		return 1;
 	}
 
 	private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> visualCommand(

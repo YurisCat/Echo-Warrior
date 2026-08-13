@@ -2,5 +2,8 @@
   "entity.echo_warrior.roman_legionary_echo": "罗马军团兵英灵",
   "item.echo_warrior.roman_legionary_relic": "罗马军团战士遗物",
   "item.echo_warrior.test_echo_summoner": "测试英灵召唤器",
-  "itemGroup.echo_warrior.echo_warrior": "英灵回声"
+  "itemGroup.echo_warrior.echo_warrior": "英灵回声",
+  "effect.echo_warrior.soldier_formation": "士兵阵列（旧版）",
+  "effect.echo_warrior.weapons_raised": "举起武器！",
+  "effect.echo_warrior.shields_raised": "举起盾牌！"
 }
