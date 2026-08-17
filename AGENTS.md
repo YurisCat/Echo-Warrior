@@ -37,3 +37,11 @@
 
 - Do not generate AI project avatars or CurseForge gallery artwork for the submission.
 - Preserve source files for manually created models, textures, audio, and promotional material.
+
+## Interactive encyclopedia
+
+- The web-first interactive encyclopedia lives in `encyclopedia/`.
+- Treat `encyclopedia/content/atlas.zh_cn.json` as the current source of truth for encyclopedia categories, node positions, relationships, and Chinese articles.
+- Player-visible gameplay, controls, balance values, or status changes must update the relevant encyclopedia entry in the same task, or explicitly record why no encyclopedia change is needed.
+- Keep the encyclopedia content schema renderer-neutral so a later Minecraft-native screen can consume generated data without embedding a web browser.
+- The in-game encyclopedia is deferred work; do not add a new runtime dependency or promote it into the contest MVP without an explicit decision.
