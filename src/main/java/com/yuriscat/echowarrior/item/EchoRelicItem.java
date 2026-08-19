@@ -16,8 +16,15 @@ import java.util.function.Consumer;
  * Common item type for relics that can be inserted into an echo summoner.
  */
 public class EchoRelicItem extends Item {
-	public EchoRelicItem(Properties properties) {
+	private final EchoHeroType heroType;
+
+	public EchoRelicItem(Properties properties, EchoHeroType heroType) {
 		super(properties);
+		this.heroType = heroType;
+	}
+
+	public EchoHeroType heroType() {
+		return this.heroType;
 	}
 
 	@Override

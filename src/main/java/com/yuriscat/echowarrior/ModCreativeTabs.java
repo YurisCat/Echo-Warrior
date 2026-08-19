@@ -17,6 +17,7 @@ public final class ModCreativeTabs {
 					.displayItems((parameters, output) -> {
 						output.accept(ModItems.TEST_ECHO_SUMMONER);
 						output.accept(new ItemStack(ModItems.ROMAN_LEGIONARY_RELIC));
+						output.accept(new ItemStack(ModItems.AZTEC_WARRIOR_RELIC));
 					})
 					.build()
 	);

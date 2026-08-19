@@ -13,6 +13,7 @@ public final class EchoWarriorClient implements ClientModInitializer {
 				ModEntities.ROMAN_LEGIONARY_ECHO,
 				RomanLegionaryEchoRenderer::new
 		);
+		EntityRendererRegistry.register(ModEntities.AZTEC_WARRIOR_ECHO, AztecWarriorEchoRenderer::new);
 		MenuScreens.register(ModMenus.SUMMONER, SummonerPreviewScreen::new);
 	}
 }

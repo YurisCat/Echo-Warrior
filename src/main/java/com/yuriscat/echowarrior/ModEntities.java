@@ -1,6 +1,7 @@
 package com.yuriscat.echowarrior;
 
 import com.yuriscat.echowarrior.entity.RomanLegionaryEchoEntity;
+import com.yuriscat.echowarrior.entity.AztecWarriorEchoEntity;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,12 +21,22 @@ public final class ModEntities {
 					.noSave()
 					.clientTrackingRange(10)
 	);
+	public static final EntityType<AztecWarriorEchoEntity> AZTEC_WARRIOR_ECHO = register(
+			"aztec_warrior_echo",
+			EntityType.Builder.of(AztecWarriorEchoEntity::new, MobCategory.CREATURE)
+					.sized(0.8F, 2.0F)
+					.eyeHeight(1.78F)
+					.noLootTable()
+					.noSave()
+					.clientTrackingRange(10)
+	);
 
 	private ModEntities() {
 	}
 
 	public static void initialize() {
 		FabricDefaultAttributeRegistry.register(ROMAN_LEGIONARY_ECHO, RomanLegionaryEchoEntity.createAttributes().build());
+		FabricDefaultAttributeRegistry.register(AZTEC_WARRIOR_ECHO, AztecWarriorEchoEntity.createAttributes().build());
 	}
 
 	private static <T extends net.minecraft.world.entity.Entity> EntityType<T> register(String path, EntityType.Builder<T> builder) {

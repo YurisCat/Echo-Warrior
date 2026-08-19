@@ -1,9 +1,15 @@
 {
   "entity.echo_warrior.roman_legionary_echo": "Roman Legionary Echo",
+  "entity.echo_warrior.aztec_warrior_echo": "Aztec Warrior Echo",
   "item.echo_warrior.roman_legionary_relic": "Roman Legionary Relic",
+  "item.echo_warrior.aztec_warrior_relic": "Aztec Warrior Relic",
   "item.echo_warrior.test_echo_summoner": "Test Echo Summoner",
   "itemGroup.echo_warrior.echo_warrior": "Echo Warrior",
   "effect.echo_warrior.soldier_formation": "Soldier Formation (Legacy)",
   "effect.echo_warrior.weapons_raised": "Raise Weapons!",
-  "effect.echo_warrior.shields_raised": "Raise Shields!"
+  "effect.echo_warrior.shields_raised": "Raise Shields!",
+  "effect.echo_warrior.huitzilopochtli_blessing": "Huitzilopochtli's Blessing",
+  "effect.echo_warrior.obsidian_wound": "Obsidian Wound",
+  "death.attack.obsidian_wound": "%1$s bled out from an obsidian wound",
+  "death.attack.obsidian_wound.player": "%1$s bled out from an obsidian wound while fighting %2$s"
 }

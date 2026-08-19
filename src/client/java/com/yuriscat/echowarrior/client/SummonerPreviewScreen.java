@@ -3,7 +3,8 @@ package com.yuriscat.echowarrior.client;
 import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.ModEntities;
 import com.yuriscat.echowarrior.ModItems;
-import com.yuriscat.echowarrior.entity.RomanLegionaryEchoEntity;
+import com.yuriscat.echowarrior.item.EchoHeroType;
+import com.yuriscat.echowarrior.item.EchoRelicItem;
 import com.yuriscat.echowarrior.layout.SummonerLayout;
 import com.yuriscat.echowarrior.layout.SummonerLayout.Element;
 import com.yuriscat.echowarrior.layout.SummonerLayout.Offset;
@@ -20,6 +21,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -49,10 +51,19 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			icon("attributes/alert_range.png"),
 			icon("attributes/summon_cost_ratio.png")
 	};
-	private static final Identifier[] SKILL_ICONS = {
-			icon("skills/roman_legionary/soldier_formation.png"),
-			icon("skills/roman_legionary/shield_charge.png"),
-			icon("skills/roman_legionary/legion_endures.png")
+	private static final Identifier[][] SKILL_ICONS = {
+			{
+					icon("skills/roman_legionary/soldier_formation.png"),
+					icon("skills/roman_legionary/shield_charge.png"),
+					icon("skills/roman_legionary/legion_endures.png")
+			},
+			{
+					icon("skills/aztec_warrior/quetzalcoatls_curse.png"),
+					icon("skills/aztec_warrior/huitzilopochtlis_blessing.png"),
+					icon("skills/aztec_warrior/obsidian_wound.png"),
+					icon("skills/aztec_warrior/pursuit.png"),
+					icon("skills/aztec_warrior/macuahuitl_mastery.png")
+			}
 	};
 	private static final Identifier[] TALENT_ICONS = {
 			icon("traits/bad_temper.png"),
@@ -86,7 +97,8 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	private static final Identifier FUEL_FILL = icon("bars/fuel_fill.png");
 
 	private final SummonerLayout layout = SummonerLayout.get();
-	private RomanLegionaryEchoEntity previewEntity;
+	private LivingEntity previewEntity;
+	private int previewHeroType = -1;
 	private Button layoutButton;
 	private Button saveButton;
 	private Button undoButton;
@@ -121,12 +133,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	@Override
 	protected void init() {
 		super.init();
-		if (this.previewEntity == null && this.minecraft.level != null) {
-			this.previewEntity = ModEntities.ROMAN_LEGIONARY_ECHO.create(
-					this.minecraft.level,
-					EntitySpawnReason.LOAD
-			);
-		}
+		refreshPreviewEntity();
 
 		this.layoutButton = this.addRenderableWidget(Button.builder(
 				Component.literal("布局"),
@@ -191,6 +198,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+		refreshPreviewEntity();
 		this.extractTransparentBackground(graphics);
 		graphics.blit(
 				RenderPipelines.GUI_TEXTURED,
@@ -242,7 +250,9 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	@Override
 	protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		boolean relicLoaded = hasRelicLoaded();
-		String fullName = relicLoaded ? "罗马军团兵" : "未载入英灵";
+		String fullName = relicLoaded && this.menu.heroType() == EchoHeroType.AZTEC_WARRIOR.ordinal()
+				? "阿兹特克勇士"
+				: relicLoaded ? "罗马军团兵" : "未载入英灵";
 		String visibleName = fitText(fullName, 115);
 		graphics.text(this.font, visibleName, rx(Element.TITLE, 8), ry(Element.TITLE, 7), TEXT_COLOR, false);
 		if (isInside(mouseX, mouseY, x(Element.TITLE, 7), y(Element.TITLE, 6), 116, 11)
@@ -353,9 +363,19 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 
 	private boolean hasRelicLoaded() {
 		ItemStack relic = this.menu.summonerContainer().getItem(SummonerMenu.RELIC_SLOT);
-		return relic.is(ModItems.ROMAN_LEGIONARY_RELIC)
+		return relic.getItem() instanceof EchoRelicItem
 				&& this.menu.relicSyncToken() != 0
 				&& this.menu.relicSyncToken() == SummonerMenu.relicSyncToken(relic);
+	}
+
+	private void refreshPreviewEntity() {
+		if (this.minecraft == null || this.minecraft.level == null || !hasRelicLoaded()) return;
+		int hero = this.menu.heroType();
+		if (this.previewEntity != null && this.previewHeroType == hero) return;
+		this.previewHeroType = hero;
+		this.previewEntity = hero == EchoHeroType.AZTEC_WARRIOR.ordinal()
+				? ModEntities.AZTEC_WARRIOR_ECHO.create(this.minecraft.level, EntitySpawnReason.LOAD)
+				: ModEntities.ROMAN_LEGIONARY_ECHO.create(this.minecraft.level, EntitySpawnReason.LOAD);
 	}
 
 	private void renderAttributeIcons(GuiGraphicsExtractor graphics, boolean active) {
@@ -375,18 +395,22 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	}
 
 	private void renderSkillIcons(GuiGraphicsExtractor graphics, boolean active) {
+		Identifier[] icons = SKILL_ICONS[Math.clamp(this.menu.heroType(), 0, SKILL_ICONS.length - 1)];
+		int count = active ? Math.min(this.menu.skillCount(), icons.length) : 0;
 		for (int index = 0; index < 5; index++) {
-			Identifier frame = active && index < SKILL_ICONS.length ? SKILL_OCCUPIED : SKILL_EMPTY;
+			Identifier frame = active && index < count ? SKILL_OCCUPIED : SKILL_EMPTY;
 			blitSized(graphics, frame, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20);
 		}
 		if (!active) {
 			return;
 		}
-		for (int index = 0; index < SKILL_ICONS.length; index++) {
+		for (int index = 0; index < count; index++) {
 			int iconX = x(Element.SKILLS, 63 + index * 22);
 			int iconY = y(Element.SKILLS, 73);
-			blit16(graphics, SKILL_ICONS[index], iconX, iconY);
-			if (index == 1 && this.menu.shieldCharges() < 3) {
+			blit16(graphics, icons[index], iconX, iconY);
+			boolean activeChargeSkill = this.menu.heroType() == EchoHeroType.AZTEC_WARRIOR.ordinal() ? index == 3 : index == 1;
+			int maximumCharges = this.menu.heroType() == EchoHeroType.AZTEC_WARRIOR.ordinal() ? 2 : 3;
+			if (activeChargeSkill && this.menu.shieldCharges() < maximumCharges) {
 				renderRadialCooldown(graphics, iconX, iconY, this.menu.shieldChargeProgress() / 1000.0F);
 			}
 			if (index == 2 && this.menu.legionCooldownTicks() > 0) {
@@ -401,7 +425,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			if (index == 2 && this.menu.legionActive()) {
 				drawBorder(graphics, iconX - 1, iconY - 1, iconX + 17, iconY + 17, 0xFFD8B55A);
 			}
-			if (index == 1) {
+			if (activeChargeSkill) {
 				graphics.text(this.font, Integer.toString(this.menu.shieldCharges()), iconX + 10, iconY + 8, 0xFFFFFFFF, true);
 			}
 		}
@@ -603,13 +627,24 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				displayed++;
 			}
 
-			String[] skillNames = {"士兵阵列！", "举盾冲锋！", "军团永存！"};
-			String[][] skillDescriptions = {
-					{"开启后常驻，为自身和友军提供力量。", "离开光环立即失效；附近有持盾玩家时额外减伤。"},
-					{"冲向威胁主人的投射物或即将爆炸的苦力怕。", "弹开投射物；每5秒恢复1次充能，最多3次。"},
-					{"举盾防御并嘲讽周围敌人。", "5秒后返还减免前所受伤害并击退敌人。"}
-			};
-			for (int index = 0; index < SKILL_ICONS.length; index++) {
+			boolean aztec = this.menu.heroType() == EchoHeroType.AZTEC_WARRIOR.ordinal();
+			String[] skillNames = aztec
+					? new String[] {"羽蛇神的诅咒", "维齐洛波奇特利的祝福", "黑曜石创口", "追猎", "马夸威特"}
+					: new String[] {"士兵阵列！", "举盾冲锋！", "军团永存！"};
+			String[][] skillDescriptions = aztec
+					? new String[][] {
+							{"受到直接伤害时60%概率诅咒攻击者。", "施加虚弱I，少数时升为虚弱II。"},
+							{"白天且直视天空时，当事者独立获得近战伤害与恢复。", "偏好生物群系内英灵额外获得攻击和移速。"},
+							{"攻击可造成持6秒的致死性流血。", "每秒1点伤害，会显示克制的暗红与黑色粒子。"},
+							{"在4–10格内跃向已锁定目标，落地造成范围伤害。", "2层充能，每层6秒恢复，两次施放间隔至少2秒。"},
+							{"沉重黑曜石大剑：攻速较慢，但横扫160°、2.5格。", "溅射目标受50%伤害，并可独立触发流血。"}
+					}
+					: new String[][] {
+							{"开启后常驻，为自身和友军提供力量。", "离开光环立即失效；附近有持盾玩家时额外减伤。"},
+							{"冲向威胁主人的投射物或即将爆炸的苦力怕。", "弹开投射物；每5秒恢复1次充能，最多3次。"},
+							{"举盾防御并嘲讽周围敌人。", "5秒后返还减免前所受伤害并击退敌人。"}
+					};
+			for (int index = 0; index < Math.min(this.menu.skillCount(), skillNames.length); index++) {
 				if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
 					showTooltip(
 							graphics,
@@ -886,6 +921,8 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 							sendMenuButton(SummonerMenu.BUTTON_ALERT_START + index);
 							return true;
 						}
+					}
+					for (int index = 0; index < this.menu.skillCount(); index++) {
 						if (isInside(event.x(), event.y(), x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
 							sendMenuButton(SummonerMenu.BUTTON_SKILL_START + index);
 							return true;

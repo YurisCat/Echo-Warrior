@@ -33,13 +33,17 @@ public final class EchoRelicProgress {
 		return level >= MAX_LEVEL ? 0 : 15 + 2 * Math.clamp(level, 1, MAX_LEVEL);
 	}
 
-	public static double maximumHealth(int level) {
-		int clamped = Math.clamp(level, 1, MAX_LEVEL);
-		return clamped == MAX_LEVEL ? 60.0 : 29.0 + clamped;
+	public static double maximumHealth(EchoHeroType heroType, int level) {
+		return heroType.baseMaximumHealth() * growthMultiplier(level);
 	}
 
-	public static double attackDamage(int level) {
-		return 6.0 + Math.clamp(level, 1, MAX_LEVEL) / 5;
+	public static double attackDamage(EchoHeroType heroType, int level) {
+		return heroType.baseAttackDamage() * growthMultiplier(level);
+	}
+
+	private static double growthMultiplier(int level) {
+		int clamped = Math.clamp(level, 1, MAX_LEVEL);
+		return 1.0 + (clamped - 1.0) / (MAX_LEVEL - 1.0);
 	}
 
 	public static ProgressResult addExperience(ItemStack relic, int amount) {

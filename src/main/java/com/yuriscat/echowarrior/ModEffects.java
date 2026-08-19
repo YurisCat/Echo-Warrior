@@ -1,6 +1,8 @@
 package com.yuriscat.echowarrior;
 
 import com.yuriscat.echowarrior.effect.SoldierFormationMobEffect;
+import com.yuriscat.echowarrior.effect.ObsidianWoundMobEffect;
+import com.yuriscat.echowarrior.effect.SunBlessingMobEffect;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -21,6 +23,16 @@ public final class ModEffects {
 			BuiltInRegistries.MOB_EFFECT,
 			EchoWarrior.id("shields_raised"),
 			new SoldierFormationMobEffect()
+	);
+	public static final Holder<MobEffect> HUITZILOPOCHTLI_BLESSING = Registry.registerForHolder(
+			BuiltInRegistries.MOB_EFFECT,
+			EchoWarrior.id("huitzilopochtli_blessing"),
+			new SunBlessingMobEffect()
+	);
+	public static final Holder<MobEffect> OBSIDIAN_WOUND = Registry.registerForHolder(
+			BuiltInRegistries.MOB_EFFECT,
+			EchoWarrior.id("obsidian_wound"),
+			new ObsidianWoundMobEffect()
 	);
 
 	private ModEffects() {

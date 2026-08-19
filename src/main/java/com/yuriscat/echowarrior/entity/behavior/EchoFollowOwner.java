@@ -1,6 +1,7 @@
 package com.yuriscat.echowarrior.entity.behavior;
 
-import com.yuriscat.echowarrior.entity.RomanLegionaryEchoEntity;
+import com.yuriscat.echowarrior.entity.EchoWarriorEntity;
+import net.minecraft.world.entity.PathfinderMob;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.move.FollowOwner;
 
 /**
@@ -8,7 +9,7 @@ import net.tslat.smartbrainlib.api.core.behaviour.custom.move.FollowOwner;
  * Refreshing the vanilla navigation path here makes following a moving owner
  * reliable instead of waiting until the teleport threshold is reached.
  */
-public final class EchoFollowOwner extends FollowOwner<RomanLegionaryEchoEntity> {
+public final class EchoFollowOwner<E extends PathfinderMob & EchoWarriorEntity> extends FollowOwner<E> {
 	private static final double SPEED_MODIFIER = 1.1;
 
 	public EchoFollowOwner() {
@@ -20,14 +21,14 @@ public final class EchoFollowOwner extends FollowOwner<RomanLegionaryEchoEntity>
 	}
 
 	@Override
-	protected void start(RomanLegionaryEchoEntity entity) {
+	protected void start(E entity) {
 		super.start(entity);
 		refreshPath(entity);
 	}
 
 	@Override
-	protected void tick(RomanLegionaryEchoEntity entity) {
-		if (!entity.shouldFollowOwner() || entity.isVisualInteractionMovementOwned()) {
+	protected void tick(E entity) {
+		if (!entity.shouldFollowOwner() || entity.isFollowMovementSuppressed()) {
 			entity.getNavigation().stop();
 			return;
 		}
@@ -38,13 +39,13 @@ public final class EchoFollowOwner extends FollowOwner<RomanLegionaryEchoEntity>
 	}
 
 	@Override
-	protected void stop(RomanLegionaryEchoEntity entity) {
+	protected void stop(E entity) {
 		entity.getNavigation().stop();
 		super.stop(entity);
 	}
 
-	private void refreshPath(RomanLegionaryEchoEntity entity) {
-		if (!entity.shouldFollowOwner() || entity.isVisualInteractionMovementOwned()) {
+	private void refreshPath(E entity) {
+		if (!entity.shouldFollowOwner() || entity.isFollowMovementSuppressed()) {
 			entity.getNavigation().stop();
 		} else if (this.followingEntity != null && this.followingEntity.isAlive()) {
 			entity.getNavigation().moveTo(this.followingEntity, SPEED_MODIFIER);

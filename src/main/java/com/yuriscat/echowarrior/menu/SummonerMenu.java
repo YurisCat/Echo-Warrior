@@ -4,6 +4,7 @@ import com.yuriscat.echowarrior.ModMenus;
 import com.yuriscat.echowarrior.item.EchoRelicItem;
 import com.yuriscat.echowarrior.item.EchoRelicProgress;
 import com.yuriscat.echowarrior.item.EchoRelicState;
+import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import com.yuriscat.echowarrior.layout.SummonerLayout;
@@ -74,6 +75,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	private final DataSlot activityMode = DataSlot.standalone();
 	private final DataSlot alertMode = DataSlot.standalone();
 	private final DataSlot enabledSkills = DataSlot.standalone();
+	private final DataSlot heroType = DataSlot.standalone();
+	private final DataSlot skillCount = DataSlot.standalone();
 	private final DataSlot shieldCharges = DataSlot.standalone();
 	private final DataSlot shieldChargeProgress = DataSlot.standalone();
 	private final DataSlot legionCooldownTicks = DataSlot.standalone();
@@ -132,6 +135,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		this.addDataSlot(this.activityMode);
 		this.addDataSlot(this.alertMode);
 		this.addDataSlot(this.enabledSkills);
+		this.addDataSlot(this.heroType);
+		this.addDataSlot(this.skillCount);
 		this.addDataSlot(this.shieldCharges);
 		this.addDataSlot(this.shieldChargeProgress);
 		this.addDataSlot(this.legionCooldownTicks);
@@ -259,7 +264,7 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			this.relicExperienceNeeded.set(EchoRelicProgress.experienceNeeded(level));
 			this.spiritMaximumHealth.set(maximumHealth);
 			this.spiritAttackDamage.set((int)Math.round(EchoRelicState.attackDamage(relic) * 10.0));
-			this.spiritHealth.set(spirit == null ? maximumHealth : Math.round(spirit.getHealth() * 10.0F));
+			this.spiritHealth.set(spirit == null ? maximumHealth : Math.round(spirit.livingEntity().getHealth() * 10.0F));
 			this.spiritAttackSpeed.set(EchoRelicState.attackSpeedPercent(relic));
 			this.spiritArmor.set((int)Math.round(EchoRelicState.armor(relic) * 10.0));
 			this.spiritMovement.set(EchoRelicState.movementPercent(relic));
@@ -269,8 +274,11 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			this.activityMode.set(EchoRelicState.activityMode(relic).ordinal());
 			this.alertMode.set(EchoRelicState.alertMode(relic).ordinal());
 			this.enabledSkills.set(EchoRelicState.enabledSkills(relic));
-			this.shieldCharges.set(EchoRelicState.shieldCharges(relic, serverPlayer.level().getGameTime()));
-			this.shieldChargeProgress.set(EchoRelicState.shieldChargeProgress(relic, serverPlayer.level().getGameTime()));
+			EchoHeroType currentHero = EchoHeroType.fromRelic(relic);
+			this.heroType.set(currentHero.ordinal());
+			this.skillCount.set(currentHero.skillCount());
+			this.shieldCharges.set(EchoRelicState.activeSkillCharges(relic, serverPlayer.level().getGameTime()));
+			this.shieldChargeProgress.set(EchoRelicState.activeSkillChargeProgress(relic, serverPlayer.level().getGameTime()));
 			if (!summoner.isEmpty()) {
 				summoner.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(this.summonerContainer.getItems()));
 			}
@@ -294,6 +302,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			this.activityMode.set(0);
 			this.alertMode.set(1);
 			this.enabledSkills.set(EchoRelicState.ALL_SKILLS_ENABLED);
+			this.heroType.set(0);
+			this.skillCount.set(0);
 			this.shieldCharges.set(0);
 			this.shieldChargeProgress.set(0);
 			this.legionCooldownTicks.set(0);
@@ -353,7 +363,7 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			reportAction(ACTION_MODE_CHANGED);
 			return true;
 		}
-		if (buttonId >= BUTTON_SKILL_START && buttonId < BUTTON_SKILL_START + EchoRelicState.SKILL_COUNT) {
+		if (buttonId >= BUTTON_SKILL_START && buttonId < BUTTON_SKILL_START + EchoHeroType.fromRelic(relic).skillCount()) {
 			EchoRelicState.toggleSkill(relic, buttonId - BUTTON_SKILL_START);
 			var spirit = TestEchoSummonerItem.findBoundSpirit(serverPlayer.level(), summoner);
 			if (spirit != null) spirit.applyRelicState(relic, false);
@@ -522,6 +532,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	public int activityMode() { return this.activityMode.get(); }
 	public int alertMode() { return this.alertMode.get(); }
 	public int enabledSkills() { return this.enabledSkills.get(); }
+	public int heroType() { return this.heroType.get(); }
+	public int skillCount() { return this.skillCount.get(); }
 	public int shieldCharges() { return this.shieldCharges.get(); }
 	public int shieldChargeProgress() { return this.shieldChargeProgress.get(); }
 	public int legionCooldownTicks() { return this.legionCooldownTicks.get(); }

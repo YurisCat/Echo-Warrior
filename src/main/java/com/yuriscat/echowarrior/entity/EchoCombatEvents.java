@@ -14,6 +14,7 @@ public final class EchoCombatEvents {
 
 	public static void initialize() {
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register(EchoCombatEvents::allowDamage);
+		ServerLivingEntityEvents.AFTER_DAMAGE.register(EchoCombatEvents::afterDamage);
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> clearFormationEffects(handler.getPlayer()));
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> clearFormationEffects(handler.getPlayer()));
 	}
@@ -40,5 +41,28 @@ public final class EchoCombatEvents {
 		level.sendParticles(net.minecraft.core.particles.ParticleTypes.ENCHANT,
 				entity.getX(), entity.getY() + entity.getBbHeight() * 0.6, entity.getZ(), 3, 0.2, 0.25, 0.2, 0.0);
 		return false;
+	}
+
+	private static void afterDamage(
+			LivingEntity victim,
+			net.minecraft.world.damagesource.DamageSource source,
+			float baseDamageTaken,
+			float damageTaken,
+			boolean blocked
+	) {
+		if (!(victim.level() instanceof ServerLevel level) || blocked || damageTaken <= 0.0F) return;
+		if (!(source.getEntity() instanceof LivingEntity attacker) || source.getDirectEntity() == null) return;
+		if (victim instanceof AztecWarriorEchoEntity aztec) {
+			aztec.tryApplyCurse(level, attacker);
+			return;
+		}
+		for (AztecWarriorEchoEntity aztec : level.getEntitiesOfClass(
+				AztecWarriorEchoEntity.class,
+				victim.getBoundingBox().inflate(128.0),
+				candidate -> candidate.isAlive() && victim.getUUID().equals(candidate.getOwnerUuid())
+		)) {
+			aztec.tryApplyCurse(level, attacker);
+			break;
+		}
 	}
 }

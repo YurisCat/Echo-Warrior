@@ -1,8 +1,9 @@
 package com.yuriscat.echowarrior.progress;
 
-import com.yuriscat.echowarrior.entity.RomanLegionaryEchoEntity;
+import com.yuriscat.echowarrior.entity.EchoWarriorEntity;
 import com.yuriscat.echowarrior.item.EchoRelicItem;
 import com.yuriscat.echowarrior.item.EchoRelicProgress;
+import com.yuriscat.echowarrior.item.EchoRelicState;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import com.yuriscat.echowarrior.menu.SummonerMenu;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -48,10 +49,10 @@ public final class EchoExperienceSystem {
 			boolean blocked
 	) {
 		Entity attacker = source.getEntity();
-		if (attacker instanceof RomanLegionaryEchoEntity echo) {
+		if (attacker instanceof EchoWarriorEntity echo) {
 			markParticipation(echo, victim);
 		}
-		if (victim instanceof RomanLegionaryEchoEntity echo && attacker instanceof LivingEntity opponent) {
+		if (victim instanceof EchoWarriorEntity echo && attacker instanceof LivingEntity opponent) {
 			markParticipation(echo, opponent);
 		}
 	}
@@ -62,15 +63,15 @@ public final class EchoExperienceSystem {
 		}
 
 		Entity killer = source.getEntity();
-		if (killer instanceof RomanLegionaryEchoEntity echo) {
+		if (killer instanceof EchoWarriorEntity echo) {
 			markParticipation(echo, victim);
 		}
 
 		UUID creditedOwner = null;
 		UUID killingEcho = null;
-		if (killer instanceof RomanLegionaryEchoEntity echo) {
+		if (killer instanceof EchoWarriorEntity echo) {
 			creditedOwner = echo.getOwnerUuid();
-			killingEcho = echo.getUUID();
+			killingEcho = echo.livingEntity().getUUID();
 		} else if (killer instanceof ServerPlayer player) {
 			creditedOwner = player.getUUID();
 		}
@@ -111,8 +112,9 @@ public final class EchoExperienceSystem {
 		}
 	}
 
-	public static void markParticipation(RomanLegionaryEchoEntity echo, LivingEntity target) {
-		if (!(echo.level() instanceof ServerLevel level) || target == echo || !target.isAlive()) {
+	public static void markParticipation(EchoWarriorEntity echo, LivingEntity target) {
+		LivingEntity echoEntity = echo.livingEntity();
+		if (!(echoEntity.level() instanceof ServerLevel level) || target == echoEntity || !target.isAlive()) {
 			return;
 		}
 		UUID ownerUuid = echo.getOwnerUuid();
@@ -121,8 +123,8 @@ public final class EchoExperienceSystem {
 			return;
 		}
 		PARTICIPATION.computeIfAbsent(target, ignored -> new java.util.HashMap<>())
-				.put(echo.getUUID(), new Participation(
-						echo.getUUID(),
+				.put(echoEntity.getUUID(), new Participation(
+						echoEntity.getUUID(),
 						ownerUuid,
 						summonerUuid,
 						level.getGameTime()
@@ -167,10 +169,11 @@ public final class EchoExperienceSystem {
 			return;
 		}
 		Entity active = level.getEntity(participation.echoUuid());
-		if (active instanceof RomanLegionaryEchoEntity echo && echo.isAlive()) {
+		if (active instanceof EchoWarriorEntity echo && echo.livingEntity().isAlive()) {
 			applyRelicProgress(echo, relic, true);
 		}
-		owner.sendOverlayMessage(Component.literal("罗马军团兵升至 " + result.newLevel() + " 级"));
+		owner.sendOverlayMessage(Component.literal(com.yuriscat.echowarrior.item.EchoHeroType.fromRelic(relic).chineseName()
+				+ "升至 " + result.newLevel() + " 级"));
 		level.playSound(
 				null,
 				owner.blockPosition(),
@@ -181,23 +184,24 @@ public final class EchoExperienceSystem {
 		);
 	}
 
-	public static void applyRelicProgress(RomanLegionaryEchoEntity echo, ItemStack relic, boolean preserveHealthGain) {
-		int level = relic.getItem() instanceof EchoRelicItem ? EchoRelicProgress.level(relic) : 1;
-		double newMaximumHealth = EchoRelicProgress.maximumHealth(level);
-		double oldMaximumHealth = echo.getMaxHealth();
-		AttributeInstance maximumHealth = echo.getAttribute(Attributes.MAX_HEALTH);
-		AttributeInstance attackDamage = echo.getAttribute(Attributes.ATTACK_DAMAGE);
+	public static void applyRelicProgress(EchoWarriorEntity echo, ItemStack relic, boolean preserveHealthGain) {
+		LivingEntity entity = echo.livingEntity();
+		double newMaximumHealth = EchoRelicState.maximumHealth(relic);
+		double oldMaximumHealth = entity.getMaxHealth();
+		AttributeInstance maximumHealth = entity.getAttribute(Attributes.MAX_HEALTH);
+		AttributeInstance attackDamage = entity.getAttribute(Attributes.ATTACK_DAMAGE);
 		if (maximumHealth != null) {
 			maximumHealth.setBaseValue(newMaximumHealth);
 		}
 		if (attackDamage != null) {
-			attackDamage.setBaseValue(EchoRelicProgress.attackDamage(level));
+			attackDamage.setBaseValue(EchoRelicState.attackDamage(relic));
 		}
+		echo.applyRelicState(relic, false);
 		if (preserveHealthGain) {
 			float gained = (float)Math.max(0.0, newMaximumHealth - oldMaximumHealth);
-			echo.setHealth(Math.min(echo.getMaxHealth(), echo.getHealth() + gained));
+			entity.setHealth(Math.min(entity.getMaxHealth(), entity.getHealth() + gained));
 		} else {
-			echo.setHealth(echo.getMaxHealth());
+			entity.setHealth(entity.getMaxHealth());
 		}
 	}
 

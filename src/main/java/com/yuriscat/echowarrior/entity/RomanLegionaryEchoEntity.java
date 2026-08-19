@@ -11,6 +11,7 @@ import com.geckolib.util.GeckoLibUtil;
 import com.yuriscat.echowarrior.ModEffects;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
 import com.yuriscat.echowarrior.item.EchoRelicState;
+import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
@@ -66,7 +67,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class RomanLegionaryEchoEntity extends PathfinderMob
-		implements OwnableEntity, SmartBrainOwner<RomanLegionaryEchoEntity>, GeoEntity {
+		implements EchoWarriorEntity, SmartBrainOwner<RomanLegionaryEchoEntity>, GeoEntity {
 	public static final byte VISUAL_NORMAL = 0;
 	public static final byte VISUAL_ALERT = 1;
 	public static final byte VISUAL_STARTLED = 2;
@@ -195,7 +196,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private long attackAnimationUntil;
 	private EchoRelicState.ActivityMode activityMode = EchoRelicState.ActivityMode.FOLLOW;
 	private EchoRelicState.AlertMode alertMode = EchoRelicState.AlertMode.DEFENSIVE;
-	private int enabledSkills = EchoRelicState.ALL_SKILLS_ENABLED;
+	private int enabledSkills = EchoHeroType.ROMAN_LEGIONARY.allSkillsEnabledMask();
 	private Vec3 activityAnchor = Vec3.ZERO;
 	private boolean formationActive;
 	private boolean shieldBondActive;
@@ -217,12 +218,12 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	public static AttributeSupplier.Builder createAttributes() {
 		return PathfinderMob.createMobAttributes()
-				.add(Attributes.MAX_HEALTH, 30.0)
-				.add(Attributes.ARMOR, 8.0)
-				.add(Attributes.ATTACK_DAMAGE, 6.0)
-				.add(Attributes.MOVEMENT_SPEED, 0.28)
+				.add(Attributes.MAX_HEALTH, EchoHeroType.ROMAN_LEGIONARY.baseMaximumHealth())
+				.add(Attributes.ARMOR, EchoHeroType.ROMAN_LEGIONARY.baseArmor())
+				.add(Attributes.ATTACK_DAMAGE, EchoHeroType.ROMAN_LEGIONARY.baseAttackDamage())
+				.add(Attributes.MOVEMENT_SPEED, EchoHeroType.ROMAN_LEGIONARY.baseMovementSpeed())
 				.add(Attributes.FOLLOW_RANGE, 32.0)
-				.add(Attributes.KNOCKBACK_RESISTANCE, 0.3);
+				.add(Attributes.KNOCKBACK_RESISTANCE, EchoHeroType.ROMAN_LEGIONARY.baseKnockbackResistance());
 	}
 
 	@Override
@@ -261,7 +262,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	@Override
 	public List<? extends BehaviorControl<?>> getIdleBehaviours(RomanLegionaryEchoEntity owner) {
-		return List.of(new EchoFollowOwner());
+		return List.of(new EchoFollowOwner<RomanLegionaryEchoEntity>());
 	}
 
 	@Override
@@ -1869,6 +1870,11 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		return isMutualGazeActive() || isCaughtExitActive();
 	}
 
+	@Override
+	public boolean isFollowMovementSuppressed() {
+		return isVisualInteractionMovementOwned();
+	}
+
 	public enum VisualTestMode {
 		BLINK,
 		DOUBLE_BLINK,
@@ -2024,7 +2030,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		if (target instanceof Player player && (player.isCreative() || player.isSpectator())) {
 			return false;
 		}
-		if (target instanceof RomanLegionaryEchoEntity echo && owner != null && owner == echo.getOwner()) {
+		if (target instanceof EchoWarriorEntity echo && owner != null && owner == echo.getOwner()) {
 			return false;
 		}
 		if (target instanceof OwnableEntity ownable && owner != null && ownable.getRootOwner() == owner) {
@@ -2039,7 +2045,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		if (other == owner) {
 			return true;
 		}
-		if (other instanceof RomanLegionaryEchoEntity echo && owner != null && owner == echo.getOwner()) {
+		if (other instanceof EchoWarriorEntity echo && owner != null && owner == echo.getOwner()) {
 			return true;
 		}
 		return owner != null && owner.isAlliedTo(other) || super.considersEntityAsAlly(other);
@@ -2048,7 +2054,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	@Override
 	public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
 		Entity attacker = source.getEntity();
-		if (attacker == this.getOwner() || attacker instanceof RomanLegionaryEchoEntity echo && echo.getOwner() == this.getOwner()) {
+		if (attacker == this.getOwner() || attacker instanceof EchoWarriorEntity echo && echo.getOwner() == this.getOwner()) {
 			return false;
 		}
 		if (isLegionEnduresActive() && attacker instanceof LivingEntity living && this.canAttack(living)) {
@@ -2118,7 +2124,8 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(EchoRelicState.maximumHealth(relic));
 		this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(EchoRelicState.attackDamage(relic));
 		this.getAttribute(Attributes.ARMOR).setBaseValue(EchoRelicState.armor(relic));
-		this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.28 * EchoRelicState.movementPercent(relic) / 100.0);
+		this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(EchoRelicState.movementSpeed(relic));
+		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(EchoRelicState.knockbackResistance(relic));
 		if (this.getHealth() >= oldMaximum - 0.01F) {
 			this.setHealth(this.getMaxHealth());
 		} else if (this.getHealth() > this.getMaxHealth()) {
@@ -2132,8 +2139,18 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	public int meleeAttackInterval() {
 		ItemStack relic = currentRelic();
-		int percent = relic.isEmpty() ? 100 : EchoRelicState.attackSpeedPercent(relic);
-		return Math.max(4, Math.round(20.0F * 100.0F / percent));
+		return relic.isEmpty() ? EchoHeroType.ROMAN_LEGIONARY.baseAttackIntervalTicks()
+				: EchoRelicState.attackIntervalTicks(relic);
+	}
+
+	@Override
+	public LivingEntity livingEntity() {
+		return this;
+	}
+
+	@Override
+	public EchoHeroType heroType() {
+		return EchoHeroType.ROMAN_LEGIONARY;
 	}
 
 	public boolean isFormationActive() {
@@ -2269,7 +2286,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.missingSummonerTicks = input.getIntOr("MissingSummonerTicks", 0);
 		this.activityMode = EchoRelicState.ActivityMode.byOrdinal(input.getIntOr("ActivityMode", 0));
 		this.alertMode = EchoRelicState.AlertMode.byOrdinal(input.getIntOr("AlertMode", 1));
-		this.enabledSkills = input.getIntOr("EnabledSkills", EchoRelicState.ALL_SKILLS_ENABLED);
+		this.enabledSkills = input.getIntOr("EnabledSkills", EchoHeroType.ROMAN_LEGIONARY.allSkillsEnabledMask());
 		this.activityAnchor = new Vec3(input.getDoubleOr("ActivityAnchorX", this.getX()),
 				input.getDoubleOr("ActivityAnchorY", this.getY()), input.getDoubleOr("ActivityAnchorZ", this.getZ()));
 	}

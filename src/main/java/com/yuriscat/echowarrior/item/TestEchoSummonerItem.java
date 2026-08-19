@@ -2,7 +2,7 @@ package com.yuriscat.echowarrior.item;
 
 import com.yuriscat.echowarrior.ModEntities;
 import com.yuriscat.echowarrior.menu.SummonerMenu;
-import com.yuriscat.echowarrior.entity.RomanLegionaryEchoEntity;
+import com.yuriscat.echowarrior.entity.EchoWarriorEntity;
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.BlockPos;
@@ -19,6 +19,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
@@ -43,8 +44,9 @@ public final class TestEchoSummonerItem extends Item {
 
 	@Override
 	public Component getName(ItemStack stack) {
-		return relicStack(stack).getItem() instanceof EchoRelicItem
-				? Component.literal("罗马军团兵召唤器")
+		ItemStack relic = relicStack(stack);
+		return relic.getItem() instanceof EchoRelicItem
+				? Component.literal(EchoHeroType.fromRelic(relic).chineseName() + "召唤器")
 				: Component.literal("英灵之魂召唤器");
 	}
 
@@ -75,7 +77,7 @@ public final class TestEchoSummonerItem extends Item {
 			return InteractionResult.SUCCESS;
 		}
 
-		RomanLegionaryEchoEntity current = findBoundSpirit(serverLevel, stack);
+		EchoWarriorEntity current = findBoundSpirit(serverLevel, stack);
 		if (player.isShiftKeyDown()) {
 			return openMenu(player, hand, stack);
 		}
@@ -123,7 +125,7 @@ public final class TestEchoSummonerItem extends Item {
 		if (!(stack.getItem() instanceof TestEchoSummonerItem)) {
 			return SummonResult.INVALID_SUMMONER;
 		}
-		RomanLegionaryEchoEntity current = findBoundSpirit(level, stack);
+		EchoWarriorEntity current = findBoundSpirit(level, stack);
 		if (current != null) {
 			return SummonResult.ALREADY_PRESENT;
 		}
@@ -138,7 +140,10 @@ public final class TestEchoSummonerItem extends Item {
 		}
 
 		UUID summonerId = getOrCreateSummonerId(stack);
-		RomanLegionaryEchoEntity spirit = ModEntities.ROMAN_LEGIONARY_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
+		EchoWarriorEntity spirit = switch (EchoHeroType.fromRelic(relic)) {
+			case ROMAN_LEGIONARY -> ModEntities.ROMAN_LEGIONARY_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
+			case AZTEC_WARRIOR -> ModEntities.AZTEC_WARRIOR_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
+		};
 		if (spirit == null) {
 			return SummonResult.CREATE_FAILED;
 		}
@@ -149,23 +154,25 @@ public final class TestEchoSummonerItem extends Item {
 		}
 		double spawnX = spawnPosition.x;
 		double spawnZ = spawnPosition.z;
-		float facingYaw = RomanLegionaryEchoEntity.yawToward(spawnX, spawnZ, player.getX(), player.getZ());
-		spirit.snapTo(spawnX, spawnPosition.y, spawnZ, facingYaw, 0.0F);
-		spirit.setYBodyRot(facingYaw);
-		spirit.setYHeadRot(facingYaw);
+		LivingEntity spiritEntity = spirit.livingEntity();
+		float facingYaw = yawToward(spawnX, spawnZ, player.getX(), player.getZ());
+		spiritEntity.snapTo(spawnX, spawnPosition.y, spawnZ, facingYaw, 0.0F);
+		spiritEntity.setYBodyRot(facingYaw);
+		spiritEntity.setYHeadRot(facingYaw);
 		spirit.bindTo(player, summonerId);
 		spirit.applyRelicState(relic, true);
-		if (!level.addFreshEntity(spirit)) {
+		if (!level.addFreshEntity(spiritEntity)) {
 			return SummonResult.CREATE_FAILED;
 		}
 		SummonerFuel.consume(stack, summonCost);
-		setSpiritId(stack, spirit.getUUID());
-		level.sendParticles(ParticleTypes.SOUL, spirit.getX(), spirit.getY() + 1.0, spirit.getZ(), 24, 0.35, 0.7, 0.35, 0.02);
-		level.playSound(null, spirit.blockPosition(), SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 0.8F, 1.15F);
+		setSpiritId(stack, spiritEntity.getUUID());
+		level.sendParticles(ParticleTypes.SOUL, spiritEntity.getX(), spiritEntity.getY() + 1.0, spiritEntity.getZ(), 24, 0.35, 0.7, 0.35, 0.02);
+		level.playSound(null, spiritEntity.blockPosition(), SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 0.8F, 1.15F);
 		return SummonResult.SUMMONED;
 	}
 
-	private static Vec3 findSafeSummonPosition(ServerLevel level, Player player, RomanLegionaryEchoEntity spirit) {
+	private static Vec3 findSafeSummonPosition(ServerLevel level, Player player, EchoWarriorEntity spirit) {
+		LivingEntity spiritEntity = spirit.livingEntity();
 		Vec3 forward = player.getLookAngle().multiply(2.0, 0.0, 2.0);
 		List<Vec3> candidates = new java.util.ArrayList<>();
 		candidates.add(new Vec3(player.getX() + forward.x, player.getY(), player.getZ() + forward.z));
@@ -186,8 +193,8 @@ public final class TestEchoSummonerItem extends Item {
 						|| level.getFluidState(feet).is(FluidTags.LAVA)) {
 					continue;
 				}
-				spirit.snapTo(position);
-				if (level.noCollision(spirit)) {
+				spiritEntity.snapTo(position);
+				if (level.noCollision(spiritEntity)) {
 					return position;
 				}
 			}
@@ -196,7 +203,7 @@ public final class TestEchoSummonerItem extends Item {
 	}
 
 	public static boolean dismissBoundSpirit(ServerPlayer player, ItemStack stack) {
-		RomanLegionaryEchoEntity spirit = findBoundSpirit(player.level(), stack);
+		EchoWarriorEntity spirit = findBoundSpirit(player.level(), stack);
 		if (spirit == null || !player.getUUID().equals(spirit.getOwnerUuid())) {
 			clearSpiritId(stack);
 			return false;
@@ -272,11 +279,11 @@ public final class TestEchoSummonerItem extends Item {
 		}
 	}
 
-	public static RomanLegionaryEchoEntity findBoundSpirit(ServerLevel level, ItemStack stack) {
+	public static EchoWarriorEntity findBoundSpirit(ServerLevel level, ItemStack stack) {
 		String value = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getStringOr(SPIRIT_ID, "");
 		try {
 			Entity entity = level.getEntity(UUID.fromString(value));
-			return entity instanceof RomanLegionaryEchoEntity spirit && spirit.isAlive() ? spirit : null;
+			return entity instanceof EchoWarriorEntity spirit && spirit.livingEntity().isAlive() ? spirit : null;
 		} catch (IllegalArgumentException ignored) {
 			return null;
 		}
@@ -288,6 +295,10 @@ public final class TestEchoSummonerItem extends Item {
 
 	private static void clearSpiritId(ItemStack stack) {
 		CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> tag.remove(SPIRIT_ID));
+	}
+
+	private static float yawToward(double fromX, double fromZ, double toX, double toZ) {
+		return (float)(Math.atan2(toZ - fromZ, toX - fromX) * 180.0 / Math.PI) - 90.0F;
 	}
 
 	public enum SummonResult {

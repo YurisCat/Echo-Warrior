@@ -5,7 +5,7 @@
     "title": "Echo Archive",
     "displayTitle": "回声档案馆",
     "description": "Echo Warrior 的交互式知识地图",
-    "lastVerified": "2026-08-17"
+    "lastVerified": "2026-08-19"
   },
   "categories": [
     {
@@ -95,7 +95,7 @@
             "items": [
               { "title": "理解核心循环", "body": "从探索、考古、遗物和召唤开始，先建立整体认识。" },
               { "title": "进入召唤系统", "body": "了解召唤器、燃料、活动模式与警戒状态。" },
-              { "title": "选择英灵", "body": "查看军团兵，以及后续的骑士和阵线步枪兵。" }
+              { "title": "选择英灵", "body": "查看已可运行的罗马军团兵与阿兹特克勇士，以及后续候选英灵。" }
             ]
           },
           {
@@ -139,7 +139,7 @@
             "type": "callout",
             "tone": "warning",
             "title": "当前进度",
-            "body": "召唤器与罗马军团兵闭环已有可运行版本；考古、回声罗盘和另外两位英灵仍属于比赛 MVP 主线。"
+            "body": "召唤器与罗马军团兵闭环已有可运行版本；阿兹特克勇士已进入功能实装与实机调试；考古、回声罗盘和第三位英灵仍属于比赛 MVP 主线。"
           }
         ],
         "related": ["echo_compass", "relics_overview", "summoner", "roman_legionary"]
@@ -300,6 +300,14 @@
             "tone": "info",
             "title": "召唤器与遗物分工",
             "body": "遗物保存英灵本身的成长和设置；召唤器保存燃料与升级模块。"
+          },
+          {
+            "type": "cards",
+            "title": "当前遗物",
+            "items": [
+              { "title": "罗马军团兵遗物", "meta": "已实装", "body": "召唤罗马军团兵英灵。", "icon": "/assets/echo-warrior/item/roman_legionary_relic.png" },
+              { "title": "阿兹特克勇士遗物", "meta": "开发版可用", "body": "召唤阿兹特克勇士英灵，保存五项技能开关与追猎充能。", "icon": "/assets/echo-warrior/item/aztec_warrior_relic.png" }
+            ]
           }
         ],
         "related": ["traits", "trait_conflicts", "summoner", "leveling"]
@@ -421,7 +429,7 @@
             ]
           }
         ],
-        "related": ["fuel", "activity_modes", "alert_modes", "relics_overview", "roman_legionary"]
+        "related": ["fuel", "activity_modes", "alert_modes", "relics_overview", "roman_legionary", "aztec_warrior"]
       }
     },
     {
@@ -487,7 +495,7 @@
             ]
           }
         ],
-        "related": ["summoner", "alert_modes", "roman_legionary"]
+        "related": ["summoner", "alert_modes", "roman_legionary", "aztec_warrior"]
       }
     },
     {
@@ -517,7 +525,7 @@
             ]
           }
         ],
-        "related": ["summoner", "activity_modes", "roman_legionary"]
+        "related": ["summoner", "activity_modes", "roman_legionary", "aztec_warrior"]
       }
     },
     {
@@ -534,8 +542,8 @@
         { "targetId": "soldier_formation", "kind": "skill" },
         { "targetId": "shield_charge", "kind": "skill" },
         { "targetId": "legion_endures", "kind": "skill" },
-        { "targetId": "knight", "kind": "related" },
-        { "targetId": "rifleman", "kind": "related" }
+        { "targetId": "aztec_warrior", "kind": "related" },
+        { "targetId": "future_roster", "kind": "related" }
       ],
       "article": {
         "summary": "比赛版首位可运行英灵。以盾牌、近战防护和保护主人为核心，已经具备完整召唤、跟随、战斗、成长和三项技能的首版闭环。",
@@ -668,55 +676,84 @@
       }
     },
     {
-      "id": "knight",
+      "id": "aztec_warrior",
       "categoryId": "heroes",
-      "title": "骑士",
-      "subtitle": "冲锋、拦截与爆发",
-      "status": "planned",
+      "title": "阿兹特克勇士",
+      "subtitle": "沉重横扫、流血与跳劈追猎",
+      "status": "development",
       "x": 155,
       "y": 210,
-      "symbol": "K",
+      "icon": "/assets/echo-warrior/item/aztec_warrior_relic.png",
+      "symbol": "A",
       "connections": [
-        { "targetId": "roman_legionary", "kind": "related" }
+        { "targetId": "roman_legionary", "kind": "related" },
+        { "targetId": "future_roster", "kind": "related" }
       ],
       "article": {
-        "summary": "比赛版目标英灵之一，定位为冲锋、拦截和较高爆发伤害。具体技能、属性与美术仍未冻结。",
-        "tags": ["计划中", "近战", "爆发"],
+        "summary": "第二位英灵。以马夸威特的慢速大范围横扫为核心，通过黑曜石创口造成致死性流血，并使用追猎跳劈切入战场。",
+        "tags": ["第二英灵", "近战", "流血", "范围伤害", "开发中"],
         "sections": [
           {
+            "type": "stats",
+            "title": "基础属性",
+            "items": [
+              { "label": "生命", "value": "34", "note": "满级 68", "icon": "/assets/echo-warrior/gui/attributes/health.png" },
+              { "label": "护甲", "value": "4", "note": "轻装战士", "icon": "/assets/echo-warrior/gui/attributes/armor.png" },
+              { "label": "攻击", "value": "8", "note": "满级 16", "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png" },
+              { "label": "移速", "value": "0.30", "note": "偏好生物群系内 +10%", "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png" },
+              { "label": "击退抗性", "value": "20%", "note": "追猎强势期约 70%" },
+              { "label": "攻击间隔", "value": "29 tick", "note": "约 1.45 秒" }
+            ]
+          },
+          {
+            "type": "cards",
+            "title": "五项可独立开关的技能",
+            "items": [
+              { "title": "羽蛇神的诅咒", "meta": "反应式被动", "body": "英灵或主人实际受到可归因的直接伤害时，60% 概率使攻击者虚弱；触发后 25% 为虚弱 II。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/quetzalcoatls_curse.png" },
+              { "title": "维齐洛波奇特利的祝福", "meta": "日照祝福", "body": "白天且直视天空的当事者独立获得 +15% 近战攻击，每 4 秒恢复 1 点生命，不消耗燃料。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/huitzilopochtlis_blessing.png" },
+              { "title": "黑曜石创口", "meta": "致死性流血", "body": "持续 6 秒，每秒 1 点可致死伤害。普通主目标 30%，横扫和追猎目标各自 15% 触发。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/obsidian_wound.png" },
+              { "title": "追猎", "meta": "2 层充能", "body": "在 4–10 格内向锁定目标跳劈，落地 2 格内造成 100% 攻击伤害与轻微击退。每层 6 秒恢复，两次施放至少间隔 2 秒。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/pursuit.png" },
+              { "title": "马夸威特", "meta": "160° 横扫", "body": "普通攻击横扫 2.5 格，溅射伤害为 50%。追猎后 3 秒强势期扩大为 180°、3 格、75% 溅射。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/macuahuitl_mastery.png" }
+            ]
+          },
+          {
             "type": "callout",
-            "tone": "planned",
-            "title": "尚未实装",
-            "body": "百科目前只记录已确认的战斗定位，不提前把候选技能写成正式内容。"
+            "tone": "warning",
+            "title": "开发版美术占位",
+            "body": "五个技能和两个状态图标当前使用占位资源；黑曜石创口已列入必须手绘替换的美术待办。"
           }
         ],
-        "related": ["roman_legionary", "rifleman"]
+        "related": ["roman_legionary", "summoner", "leveling", "future_roster"]
       }
     },
     {
-      "id": "rifleman",
+      "id": "future_roster",
       "categoryId": "heroes",
-      "title": "阵线步枪兵",
-      "subtitle": "保持距离的高伤远程",
+      "title": "后续英灵候选",
+      "subtitle": "日本、埃及与中国战士",
       "status": "planned",
       "x": 705,
       "y": 210,
-      "symbol": "R",
+      "symbol": "+",
       "connections": [
-        { "targetId": "roman_legionary", "kind": "related" }
+        { "targetId": "roman_legionary", "kind": "related" },
+        { "targetId": "aztec_warrior", "kind": "related" }
       ],
       "article": {
-        "summary": "比赛版目标英灵之一，定位为保持距离、缓慢装填和高单次远程伤害。具体技能、属性与美术仍未冻结。",
-        "tags": ["计划中", "远程", "装填"],
+        "summary": "骑士与阵线步枪兵已从当前开发队列移除。后续候选为日本武士、埃及弓箭手和中国武士，但未经后续确认不进入当前必做范围。",
+        "tags": ["候选", "后续", "未排期"],
         "sections": [
           {
-            "type": "callout",
-            "tone": "planned",
-            "title": "尚未实装",
-            "body": "后续设计需要重点验证距离控制、装填节奏、弹道反馈与多人游戏正确性。"
+            "type": "cards",
+            "title": "候选方向",
+            "items": [
+              { "title": "日本武士", "meta": "候选", "body": "具体定位和技能待后续冻结。" },
+              { "title": "埃及弓箭手", "meta": "候选", "body": "可作为远程英灵方向，尚未排期。" },
+              { "title": "中国武士", "meta": "候选", "body": "具体时代、武器与战斗定位待确认。" }
+            ]
           }
         ],
-        "related": ["roman_legionary", "knight"]
+        "related": ["roman_legionary", "aztec_warrior"]
       }
     },
     {
@@ -737,12 +774,12 @@
         "sections": [
           {
             "type": "stats",
-            "title": "军团兵成长",
+            "title": "共用成长框架",
             "items": [
               { "label": "等级上限", "value": "30", "note": "满级停止累计溢出经验" },
               { "label": "累计经验", "value": "1305", "note": "从 1 级升至 30 级" },
-              { "label": "满级生命", "value": "60", "note": "基础生命 30" },
-              { "label": "满级攻击", "value": "12", "note": "每五级增加一点" }
+              { "label": "罗马军团兵", "value": "60 / 12", "note": "满级生命 / 攻击" },
+              { "label": "阿兹特克勇士", "value": "68 / 16", "note": "满级生命 / 攻击" }
             ]
           },
           {
@@ -754,7 +791,7 @@
             ]
           }
         ],
-        "related": ["roman_legionary", "relics_overview", "modules"]
+        "related": ["roman_legionary", "aztec_warrior", "relics_overview", "modules"]
       }
     },
     {

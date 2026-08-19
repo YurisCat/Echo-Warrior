@@ -19,11 +19,16 @@ public final class EchoRelicState {
 	private static final String SHIELD_CHARGES_KEY = "EchoWarriorShieldCharges";
 	private static final String SHIELD_CHARGE_TIME_KEY = "EchoWarriorShieldChargeTime";
 	private static final String LEGION_COOLDOWN_END_KEY = "EchoWarriorLegionCooldownEnd";
+	private static final String PURSUIT_CHARGES_KEY = "EchoWarriorPursuitCharges";
+	private static final String PURSUIT_CHARGE_TIME_KEY = "EchoWarriorPursuitChargeTime";
+	private static final String PURSUIT_COOLDOWN_END_KEY = "EchoWarriorPursuitCooldownEnd";
 
-	public static final int SKILL_COUNT = 3;
+	public static final int SKILL_COUNT = 5;
 	public static final int ALL_SKILLS_ENABLED = (1 << SKILL_COUNT) - 1;
 	public static final int MAX_SHIELD_CHARGES = 3;
 	public static final long SHIELD_CHARGE_TICKS = 100L;
+	public static final int MAX_PURSUIT_CHARGES = 2;
+	public static final long PURSUIT_CHARGE_TICKS = 120L;
 
 	private EchoRelicState() {
 	}
@@ -38,16 +43,20 @@ public final class EchoRelicState {
 		}
 
 		int traitMask = rollTraits(random);
+		EchoHeroType heroType = EchoHeroType.fromRelic(relic);
 		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> {
 			tag.putBoolean(INITIALIZED_KEY, true);
 			tag.putString(RELIC_ID_KEY, UUID.randomUUID().toString());
 			tag.putInt(TRAIT_MASK_KEY, traitMask);
 			tag.putInt(ACTIVITY_MODE_KEY, ActivityMode.FOLLOW.ordinal());
 			tag.putInt(ALERT_MODE_KEY, AlertMode.DEFENSIVE.ordinal());
-			tag.putInt(ENABLED_SKILLS_KEY, ALL_SKILLS_ENABLED);
+			tag.putInt(ENABLED_SKILLS_KEY, heroType.allSkillsEnabledMask());
 			tag.putInt(SHIELD_CHARGES_KEY, MAX_SHIELD_CHARGES);
 			tag.putLong(SHIELD_CHARGE_TIME_KEY, gameTime);
 			tag.putLong(LEGION_COOLDOWN_END_KEY, 0L);
+			tag.putInt(PURSUIT_CHARGES_KEY, MAX_PURSUIT_CHARGES);
+			tag.putLong(PURSUIT_CHARGE_TIME_KEY, gameTime);
+			tag.putLong(PURSUIT_COOLDOWN_END_KEY, 0L);
 		});
 		return true;
 	}
@@ -121,15 +130,17 @@ public final class EchoRelicState {
 	}
 
 	public static int enabledSkills(ItemStack relic) {
-		return intValue(relic, ENABLED_SKILLS_KEY, ALL_SKILLS_ENABLED) & ALL_SKILLS_ENABLED;
+		int allowed = EchoHeroType.fromRelic(relic).allSkillsEnabledMask();
+		return intValue(relic, ENABLED_SKILLS_KEY, allowed) & allowed;
 	}
 
 	public static boolean skillEnabled(ItemStack relic, int skill) {
-		return skill >= 0 && skill < SKILL_COUNT && (enabledSkills(relic) & 1 << skill) != 0;
+		return skill >= 0 && skill < EchoHeroType.fromRelic(relic).skillCount()
+				&& (enabledSkills(relic) & 1 << skill) != 0;
 	}
 
 	public static void toggleSkill(ItemStack relic, int skill) {
-		if (skill < 0 || skill >= SKILL_COUNT) {
+		if (skill < 0 || skill >= EchoHeroType.fromRelic(relic).skillCount()) {
 			return;
 		}
 		int updated = enabledSkills(relic) ^ 1 << skill;
@@ -151,37 +162,108 @@ public final class EchoRelicState {
 	}
 
 	public static boolean consumeShieldCharge(ItemStack relic, long gameTime) {
-		int charges = shieldCharges(relic, gameTime);
-		if (charges <= 0) {
-			return false;
-		}
+		return consumeCharge(relic, gameTime, SHIELD_CHARGES_KEY, SHIELD_CHARGE_TIME_KEY,
+				MAX_SHIELD_CHARGES, SHIELD_CHARGE_TICKS);
+	}
+
+	private static void updateShieldCharges(ItemStack relic, long gameTime) {
+		updateCharges(relic, gameTime, SHIELD_CHARGES_KEY, SHIELD_CHARGE_TIME_KEY,
+				MAX_SHIELD_CHARGES, SHIELD_CHARGE_TICKS);
+	}
+
+	public static int pursuitCharges(ItemStack relic, long gameTime) {
+		updatePursuitCharges(relic, gameTime);
+		return intValue(relic, PURSUIT_CHARGES_KEY, MAX_PURSUIT_CHARGES);
+	}
+
+	public static int pursuitChargeProgress(ItemStack relic, long gameTime) {
+		int charges = pursuitCharges(relic, gameTime);
+		if (charges >= MAX_PURSUIT_CHARGES) return 1000;
+		long last = longValue(relic, PURSUIT_CHARGE_TIME_KEY, gameTime);
+		return (int)Math.clamp((gameTime - last) * 1000L / PURSUIT_CHARGE_TICKS, 0L, 1000L);
+	}
+
+	public static boolean consumePursuitCharge(ItemStack relic, long gameTime) {
+		return consumeCharge(relic, gameTime, PURSUIT_CHARGES_KEY, PURSUIT_CHARGE_TIME_KEY,
+				MAX_PURSUIT_CHARGES, PURSUIT_CHARGE_TICKS);
+	}
+
+	private static void updatePursuitCharges(ItemStack relic, long gameTime) {
+		updateCharges(relic, gameTime, PURSUIT_CHARGES_KEY, PURSUIT_CHARGE_TIME_KEY,
+				MAX_PURSUIT_CHARGES, PURSUIT_CHARGE_TICKS);
+	}
+
+	private static boolean consumeCharge(
+			ItemStack relic,
+			long gameTime,
+			String chargesKey,
+			String chargeTimeKey,
+			int maximumCharges,
+			long chargeTicks
+	) {
+		updateCharges(relic, gameTime, chargesKey, chargeTimeKey, maximumCharges, chargeTicks);
+		int charges = intValue(relic, chargesKey, maximumCharges);
+		if (charges <= 0) return false;
 		int remaining = charges - 1;
 		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> {
-			tag.putInt(SHIELD_CHARGES_KEY, remaining);
-			if (remaining < MAX_SHIELD_CHARGES) {
-				tag.putLong(SHIELD_CHARGE_TIME_KEY, gameTime);
-			}
+			tag.putInt(chargesKey, remaining);
+			// A full stack has no active recharge timer. Spending from full starts one;
+			// spending another charge preserves the partial progress already accumulated.
+			if (charges >= maximumCharges) tag.putLong(chargeTimeKey, gameTime);
 		});
 		return true;
 	}
 
-	private static void updateShieldCharges(ItemStack relic, long gameTime) {
-		int charges = intValue(relic, SHIELD_CHARGES_KEY, MAX_SHIELD_CHARGES);
-		if (charges >= MAX_SHIELD_CHARGES) {
+	private static void updateCharges(
+			ItemStack relic,
+			long gameTime,
+			String chargesKey,
+			String chargeTimeKey,
+			int maximumCharges,
+			long chargeTicks
+	) {
+		int charges = intValue(relic, chargesKey, maximumCharges);
+		if (charges >= maximumCharges) {
 			return;
 		}
-		long last = longValue(relic, SHIELD_CHARGE_TIME_KEY, gameTime);
+		long last = longValue(relic, chargeTimeKey, gameTime);
 		long elapsed = Math.max(0L, gameTime - last);
-		int restored = (int)(elapsed / SHIELD_CHARGE_TICKS);
+		int restored = (int)(elapsed / chargeTicks);
 		if (restored <= 0) {
 			return;
 		}
-		int updated = Math.min(MAX_SHIELD_CHARGES, charges + restored);
-		long updatedTime = updated >= MAX_SHIELD_CHARGES ? gameTime : last + restored * SHIELD_CHARGE_TICKS;
+		int updated = Math.min(maximumCharges, charges + restored);
+		long updatedTime = updated >= maximumCharges ? gameTime : last + restored * chargeTicks;
 		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> {
-			tag.putInt(SHIELD_CHARGES_KEY, updated);
-			tag.putLong(SHIELD_CHARGE_TIME_KEY, updatedTime);
+			tag.putInt(chargesKey, updated);
+			tag.putLong(chargeTimeKey, updatedTime);
 		});
+	}
+
+	public static long pursuitCooldownEnd(ItemStack relic) {
+		return longValue(relic, PURSUIT_COOLDOWN_END_KEY, 0L);
+	}
+
+	public static void setPursuitCooldownEnd(ItemStack relic, long end) {
+		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> tag.putLong(PURSUIT_COOLDOWN_END_KEY, end));
+	}
+
+	public static int activeSkillCharges(ItemStack relic, long gameTime) {
+		return EchoHeroType.fromRelic(relic) == EchoHeroType.AZTEC_WARRIOR
+				? pursuitCharges(relic, gameTime)
+				: shieldCharges(relic, gameTime);
+	}
+
+	public static int activeSkillMaximumCharges(ItemStack relic) {
+		return EchoHeroType.fromRelic(relic) == EchoHeroType.AZTEC_WARRIOR
+				? MAX_PURSUIT_CHARGES
+				: MAX_SHIELD_CHARGES;
+	}
+
+	public static int activeSkillChargeProgress(ItemStack relic, long gameTime) {
+		return EchoHeroType.fromRelic(relic) == EchoHeroType.AZTEC_WARRIOR
+				? pursuitChargeProgress(relic, gameTime)
+				: shieldChargeProgress(relic, gameTime);
 	}
 
 	public static long legionCooldownEnd(ItemStack relic) {
@@ -200,19 +282,27 @@ public final class EchoRelicState {
 	}
 
 	public static double maximumHealth(ItemStack relic) {
-		double value = EchoRelicProgress.maximumHealth(EchoRelicProgress.level(relic));
+		double value = EchoRelicProgress.maximumHealth(EchoHeroType.fromRelic(relic), EchoRelicProgress.level(relic));
 		return hasTrait(relic, EchoTrait.SKINNY) ? value * 0.75 : value;
 	}
 
 	public static double attackDamage(ItemStack relic) {
-		double value = EchoRelicProgress.attackDamage(EchoRelicProgress.level(relic));
+		double value = EchoRelicProgress.attackDamage(EchoHeroType.fromRelic(relic), EchoRelicProgress.level(relic));
 		if (hasTrait(relic, EchoTrait.BAD_TEMPER)) value += 4.0;
 		if (hasTrait(relic, EchoTrait.COURAGE)) value += 2.0;
 		return value;
 	}
 
 	public static double armor(ItemStack relic) {
-		return 8.0 + (hasTrait(relic, EchoTrait.STURDY) ? 4.0 : 0.0);
+		return EchoHeroType.fromRelic(relic).baseArmor() + (hasTrait(relic, EchoTrait.STURDY) ? 4.0 : 0.0);
+	}
+
+	public static double movementSpeed(ItemStack relic) {
+		return EchoHeroType.fromRelic(relic).baseMovementSpeed() * movementPercent(relic) / 100.0;
+	}
+
+	public static double knockbackResistance(ItemStack relic) {
+		return EchoHeroType.fromRelic(relic).baseKnockbackResistance();
 	}
 
 	public static int movementPercent(ItemStack relic) {
@@ -224,7 +314,13 @@ public final class EchoRelicState {
 	}
 
 	public static int attackSpeedPercent(ItemStack relic) {
-		return hasTrait(relic, EchoTrait.SKINNY) ? 125 : 100;
+		int base = Math.round(2000.0F / EchoHeroType.fromRelic(relic).baseAttackIntervalTicks());
+		return hasTrait(relic, EchoTrait.SKINNY) ? Math.round(base * 1.25F) : base;
+	}
+
+	public static int attackIntervalTicks(ItemStack relic) {
+		int percent = attackSpeedPercent(relic);
+		return Math.max(4, Math.round(20.0F * 100.0F / percent));
 	}
 
 	private static int intValue(ItemStack stack, String key, int fallback) {
