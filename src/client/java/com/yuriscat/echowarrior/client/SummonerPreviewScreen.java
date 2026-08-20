@@ -34,7 +34,7 @@ import java.util.Optional;
 public final class SummonerPreviewScreen extends AbstractContainerScreen<SummonerMenu> {
 	private static final int IMAGE_WIDTH = SummonerLayout.GUI_WIDTH;
 	private static final int IMAGE_HEIGHT = SummonerLayout.GUI_HEIGHT;
-	private static final int TEXT_COLOR = 0xFF404040;
+	private static final int PRIMARY_TEXT_COLOR = 0xFFFFFFFF;
 	private static final int HEADER_TEXT_COLOR = 0xFFE0E0E0;
 	private static final int[] MODULE_SLOT_X = {8, 37, 66, 94, 123, 152};
 	private static final int[] ATTRIBUTE_ICON_X = {61, 134, 61, 116, 61, 116, 61, 116};
@@ -262,7 +262,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				? "阿兹特克勇士"
 				: relicLoaded ? "罗马军团兵" : "未载入英灵";
 		String visibleName = fitText(fullName, 115);
-		graphics.text(this.font, visibleName, rx(Element.TITLE, 8), ry(Element.TITLE, 7), TEXT_COLOR, false);
+		graphics.text(this.font, visibleName, rx(Element.TITLE, 8), ry(Element.TITLE, 7), PRIMARY_TEXT_COLOR, true);
 		if (isInside(mouseX, mouseY, x(Element.TITLE, 7), y(Element.TITLE, 6), 116, 11)
 				&& !visibleName.equals(fullName)) {
 			graphics.setTooltipForNextFrame(this.font, Component.literal(fullName), mouseX, mouseY);
@@ -273,20 +273,20 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					decimal(this.menu.spiritHealth()) + "/" + decimal(this.menu.spiritMaximumHealth()),
 					rx(Element.BASIC_INFO, 72),
 					ry(Element.BASIC_INFO, 21),
-					TEXT_COLOR,
-					false
+					PRIMARY_TEXT_COLOR,
+					true
 			);
-			graphics.text(this.font, Integer.toString(this.menu.relicLevel()), rx(Element.BASIC_INFO, 145), ry(Element.BASIC_INFO, 21), TEXT_COLOR, false);
-			graphics.text(this.font, decimal(this.menu.spiritAttackDamage()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 34), TEXT_COLOR, false);
-			graphics.text(this.font, this.menu.spiritAttackSpeed() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 34), TEXT_COLOR, false);
-			graphics.text(this.font, decimal(this.menu.spiritArmor()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 47), TEXT_COLOR, false);
-			graphics.text(this.font, this.menu.spiritMovement() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 47), TEXT_COLOR, false);
-			graphics.text(this.font, "16", rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 60), TEXT_COLOR, false);
-			graphics.text(this.font, this.menu.summonCostPercent() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 60), TEXT_COLOR, false);
+			graphics.text(this.font, Integer.toString(this.menu.relicLevel()), rx(Element.BASIC_INFO, 145), ry(Element.BASIC_INFO, 21), PRIMARY_TEXT_COLOR, true);
+			graphics.text(this.font, decimal(this.menu.spiritAttackDamage()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 34), PRIMARY_TEXT_COLOR, true);
+			graphics.text(this.font, this.menu.spiritAttackSpeed() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 34), PRIMARY_TEXT_COLOR, true);
+			graphics.text(this.font, decimal(this.menu.spiritArmor()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 47), PRIMARY_TEXT_COLOR, true);
+			graphics.text(this.font, this.menu.spiritMovement() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 47), PRIMARY_TEXT_COLOR, true);
+			graphics.text(this.font, "16", rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);
+			graphics.text(this.font, this.menu.summonCostPercent() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);
 		}
 
-		graphics.text(this.font, "行动模式", rx(Element.ACTIVITY, 179), ry(Element.ACTIVITY, 79), TEXT_COLOR, false);
-		graphics.text(this.font, "警戒状态", rx(Element.ALERT, 179), ry(Element.ALERT, 112), TEXT_COLOR, false);
+		graphics.text(this.font, "行动模式", rx(Element.ACTIVITY, 179), ry(Element.ACTIVITY, 78), PRIMARY_TEXT_COLOR, true);
+		graphics.text(this.font, "警戒状态", rx(Element.ALERT, 179), ry(Element.ALERT, 111), PRIMARY_TEXT_COLOR, true);
 		graphics.centeredText(
 				this.font,
 				summonButtonText(relicLoaded),

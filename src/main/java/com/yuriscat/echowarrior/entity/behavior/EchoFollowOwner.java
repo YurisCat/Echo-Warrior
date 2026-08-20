@@ -17,6 +17,8 @@ public final class EchoFollowOwner<E extends PathfinderMob & EchoWarriorEntity> 
 		this.closeEnoughDist(5.0F);
 		this.startFollowingAfter(5.0F);
 		this.teleportAfterDist(32.0F);
+		this.startCondition(entity -> entity.shouldFollowOwner() && !entity.isFollowMovementSuppressed());
+		this.stopIf(entity -> !entity.shouldFollowOwner() || entity.isFollowMovementSuppressed());
 		this.noTimeout();
 	}
 
@@ -29,7 +31,6 @@ public final class EchoFollowOwner<E extends PathfinderMob & EchoWarriorEntity> 
 	@Override
 	protected void tick(E entity) {
 		if (!entity.shouldFollowOwner() || entity.isFollowMovementSuppressed()) {
-			entity.getNavigation().stop();
 			return;
 		}
 		super.tick(entity);

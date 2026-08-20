@@ -413,8 +413,8 @@
             "type": "steps",
             "title": "基础操作",
             "items": [
-              { "title": "普通右键", "body": "英灵未在场时召唤；英灵已经出现时，把仍在场的英灵召回玩家附近。" },
-              { "title": "潜行右键", "body": "打开召唤器管理界面。没有装入遗物时仍可以打开。" },
+              { "title": "普通右键", "body": "打开召唤器管理界面。没有装入遗物时仍可以打开。" },
+              { "title": "潜行右键", "body": "英灵未在场时召唤；英灵已经出现时，把仍在场的英灵召回玩家附近。" },
               { "title": "界面内收回", "body": "主动使英灵离场，需要在约三秒确认时间内连续点击两次。" }
             ]
           },
@@ -491,8 +491,14 @@
             "items": [
               { "title": "跟随", "meta": "围绕主人", "body": "在主人附近移动和战斗，距离过远时使用安全传送。", "icon": "/assets/echo-warrior/gui/modes/activity/follow.png" },
               { "title": "等待", "meta": "约 2 格活动", "body": "以切换位置为锚点，平时仅轻微移动；主动响应范围约 6 格。", "icon": "/assets/echo-warrior/gui/modes/activity/wait.png" },
-              { "title": "闲逛", "meta": "约 16 格活动", "body": "在锚点周围自由行动，最多追至约 24 格后返回。", "icon": "/assets/echo-warrior/gui/modes/activity/wander.png" }
+              { "title": "闲逛", "meta": "约 16 格活动", "body": "在锚点周围停留、漫步并自然归位，最多追至约 24 格后返回。", "icon": "/assets/echo-warrior/gui/modes/activity/wander.png" }
             ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "自然闲逛",
+            "body": "英灵通常停留 2～5 秒，再选择一处可安全到达的陆地位置步行前往；单次移动以约 4～8 格为主，偶尔走得更远。接近活动区边缘时会偏向锚点方向，越界、战斗结束、路径失败或卡住时会重新归位或选择目标。战斗、主动技能、视觉互动和浮水行为始终拥有更高优先级。"
           }
         ],
         "related": ["summoner", "alert_modes", "roman_legionary", "aztec_warrior"]
@@ -571,6 +577,12 @@
               { "title": "举盾冲锋", "meta": "拦截技能", "body": "举盾加速冲锋，拦截投射物与危险目标。", "icon": "/assets/echo-warrior/gui/skills/roman_legionary/shield_charge.png" },
               { "title": "军团永存", "meta": "蓄力技能", "body": "经过五秒蓄力后释放，并维持完整的举盾与收盾姿态流程。", "icon": "/assets/echo-warrior/gui/skills/roman_legionary/legion_endures.png" }
             ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "水域生存与脱困",
+            "body": "军团兵会主动浮向水面并免疫溺水。跟随主人时若完全沉入水中且持续卡住，会先暂停战斗并尝试游向主人；仍无法脱困时，会在主人附近寻找干燥地面或水面安全传送。等待和闲逛模式不会因此被强制召回。"
           }
         ],
         "related": ["soldier_formation", "shield_charge", "legion_endures", "leveling", "summoner"]
@@ -733,6 +745,12 @@
             "tone": "info",
             "title": "视觉生命感",
             "body": "阿兹特克勇士使用与罗马军团兵相同的注视、对视、被主人发现偷看、害羞离场、眨眼、歪头、瞳孔追踪、苦力怕警觉和伤害来源注视逻辑；战斗、攻击和追猎始终拥有更高优先级。"
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "水域生存与脱困",
+            "body": "阿兹特克勇士会主动浮向水面并免疫溺水。跟随主人时若完全沉入水中且持续卡住，会先暂停战斗并尝试游向主人；仍无法脱困时，会在主人附近寻找干燥地面或水面安全传送。追猎期间不会被该传送打断。"
           },
           {
             "type": "callout",

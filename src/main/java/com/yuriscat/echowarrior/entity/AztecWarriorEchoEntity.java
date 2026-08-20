@@ -11,7 +11,9 @@ import com.geckolib.util.GeckoLibUtil;
 import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.ModEffects;
 import com.yuriscat.echowarrior.ModTags;
+import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
+import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoRelicState;
 import com.yuriscat.echowarrior.item.SummonerFuel;
@@ -44,6 +46,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -266,6 +269,7 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 
 	@Override
 	protected void registerGoals() {
+		this.goalSelector.addGoal(0, new FloatGoal(this));
 	}
 
 	@Override
@@ -342,8 +346,13 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 		if (this.tickCount % 20 == 0 && this.getTarget() != null) {
 			EchoExperienceSystem.markParticipation(this, this.getTarget());
 		}
+		EchoActivityMovement.tick(level, this, this.activityMode, this.activityAnchor,
+				this.getTarget() != null || isPursuing() || level.getGameTime() < this.attackAnimationUntil
+						|| isVisualInteractionMovementOwned());
 		tickPursuitBuffVisuals(level);
 		tickVisualAwareness(level, owner);
+		EchoWaterSafety.tick(level, this, owner,
+				this.activityMode == EchoRelicState.ActivityMode.FOLLOW && !isPursuing());
 	}
 
 	private void tryStartPursuit(ServerLevel level, ItemStack relic) {
@@ -1968,6 +1977,11 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 		return hurt;
 	}
 
+	@Override
+	public boolean canBreatheUnderwater() {
+		return true;
+	}
+
 	private void triggerHurtPresentation(long now, boolean playBodyAnimation) {
 		this.entityData.set(BLINK_START, now);
 		this.entityData.set(BLINK_COUNT, (byte)1);
@@ -1983,16 +1997,6 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 			BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
 			this.setTarget(null);
 			target = null;
-		}
-		if (this.activityMode == EchoRelicState.ActivityMode.FOLLOW || target != null) return;
-		double idleRadius = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 2.0 : 16.0;
-		if (this.position().distanceToSqr(this.activityAnchor) > idleRadius * idleRadius) {
-			this.getNavigation().moveTo(this.activityAnchor.x, this.activityAnchor.y, this.activityAnchor.z, 1.0);
-		} else if (this.activityMode == EchoRelicState.ActivityMode.WANDER && this.tickCount % 60 == 0 && this.random.nextInt(3) == 0) {
-			double angle = this.random.nextDouble() * Math.PI * 2.0;
-			double distance = 3.0 + this.random.nextDouble() * 10.0;
-			this.getNavigation().moveTo(this.activityAnchor.x + Math.cos(angle) * distance,
-					this.activityAnchor.y, this.activityAnchor.z + Math.sin(angle) * distance, 0.8);
 		}
 	}
 
@@ -2028,6 +2032,9 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 		if (previousActivity != this.activityMode || previousAlert != this.alertMode || resetAnchor) {
 			this.setTarget(null);
 			BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
+		}
+		if (previousActivity != this.activityMode || resetAnchor) {
+			EchoActivityMovement.reset(this);
 		}
 		if (resetAnchor || this.activityAnchor == Vec3.ZERO) this.activityAnchor = this.position();
 		double oldMaximum = this.getMaxHealth();

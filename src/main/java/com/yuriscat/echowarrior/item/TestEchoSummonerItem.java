@@ -77,11 +77,11 @@ public final class TestEchoSummonerItem extends Item {
 			return InteractionResult.SUCCESS;
 		}
 
-		EchoWarriorEntity current = findBoundSpirit(serverLevel, stack);
-		if (player.isShiftKeyDown()) {
+		if (!player.isShiftKeyDown()) {
 			return openMenu(player, hand, stack);
 		}
 
+		EchoWarriorEntity current = findBoundSpirit(serverLevel, stack);
 		if (current != null && player.getUUID().equals(current.getOwnerUuid())) {
 			current.recallTo(player);
 			return InteractionResult.SUCCESS;

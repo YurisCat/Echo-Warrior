@@ -9,7 +9,9 @@ import com.geckolib.animation.object.PlayState;
 import com.geckolib.animation.state.AnimationTest;
 import com.geckolib.util.GeckoLibUtil;
 import com.yuriscat.echowarrior.ModEffects;
+import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
+import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoRelicState;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.SummonerFuel;
@@ -34,6 +36,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -248,6 +251,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	@Override
 	protected void registerGoals() {
+		this.goalSelector.addGoal(0, new FloatGoal(this));
 	}
 
 	@Override
@@ -335,7 +339,13 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			EchoExperienceSystem.markParticipation(this, this.getTarget());
 		}
 
+		EchoActivityMovement.tick(serverLevel, this, this.activityMode, this.activityAnchor,
+				this.getTarget() != null || this.shieldChargeTarget != null || isLegionEnduresActive()
+						|| serverLevel.getGameTime() < this.attackAnimationUntil || isVisualInteractionMovementOwned());
 		tickVisualAwareness(serverLevel, owner);
+		EchoWaterSafety.tick(serverLevel, this, owner,
+				this.activityMode == EchoRelicState.ActivityMode.FOLLOW
+						&& this.shieldChargeTarget == null && !isLegionEnduresActive());
 	}
 
 	private void tickCombatSkills(ServerLevel level, LivingEntity owner) {
@@ -548,18 +558,6 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
 			this.setTarget(null);
 			target = null;
-		}
-		if (this.activityMode == EchoRelicState.ActivityMode.FOLLOW || target != null || isLegionEnduresActive()) {
-			return;
-		}
-		double idleRadius = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 2.0 : 16.0;
-		if (this.position().distanceToSqr(this.activityAnchor) > idleRadius * idleRadius) {
-			this.getNavigation().moveTo(this.activityAnchor.x, this.activityAnchor.y, this.activityAnchor.z, 1.0);
-		} else if (this.activityMode == EchoRelicState.ActivityMode.WANDER && this.tickCount % 60 == 0 && this.getRandom().nextInt(3) == 0) {
-			double angle = this.getRandom().nextDouble() * Math.PI * 2.0;
-			double distance = 3.0 + this.getRandom().nextDouble() * 10.0;
-			this.getNavigation().moveTo(this.activityAnchor.x + Math.cos(angle) * distance,
-					this.activityAnchor.y, this.activityAnchor.z + Math.sin(angle) * distance, 0.8);
 		}
 	}
 
@@ -2082,6 +2080,11 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		return hurt;
 	}
 
+	@Override
+	public boolean canBreatheUnderwater() {
+		return true;
+	}
+
 	private void triggerHurtPresentation(long now, boolean playBodyAnimation) {
 		this.entityData.set(BLINK_START, now);
 		this.entityData.set(BLINK_COUNT, (byte)1);
@@ -2112,6 +2115,9 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		if (previousAlert != this.alertMode || previousActivity != this.activityMode || resetAnchor) {
 			this.setTarget(null);
 			BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
+		}
+		if (previousActivity != this.activityMode || resetAnchor) {
+			EchoActivityMovement.reset(this);
 		}
 		if ((this.enabledSkills & 1 << 1) == 0 && this.shieldChargeTarget != null) stopShieldCharge();
 		if ((this.enabledSkills & 1 << 2) == 0 && isLegionEnduresActive() && this.level() instanceof ServerLevel serverLevel) {
