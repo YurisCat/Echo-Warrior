@@ -36,7 +36,7 @@ Model artists must continue from the latest matching source file rather than an 
 The server maintains three related but independent attention layers so every client sees the same intent without forcing the entire body to snap toward every interesting object:
 
 - **Pupils:** react first and remain locked to the selected world-space target.
-- **Head:** follows the pupil target after the reaction-specific delay, clamped to roughly 75 degrees left or right.
+- **Head:** follows the pupil target after the reaction-specific delay, clamped to roughly 75 degrees left or right while stationary; ordinary locomotion uses the narrower rule below.
 - **Body:** turns only for mutual gaze or a sufficiently urgent threat. Active combat movement and facing always take precedence over cosmetic body attention.
 
 Visual priority, from highest to lowest:
@@ -52,6 +52,8 @@ Visual priority, from highest to lowest:
 The pupils hold a selected target for at least 0.25 seconds and the head for at least 0.5 seconds. A primed creeper or actual damage source may override either hold immediately. This prevents ordinary candidates from causing flicker while retaining an immediate startle response.
 
 Ordinary attention retains its selected living entity or anonymous world-space glance point for the candidate's full 1.5-4 second duration. Re-scanning the same living entity updates its eye position without restarting the attention episode, while newly generated anonymous points are not treated as the same target merely because both lack an entity. This prevents the ordinary two-tick awareness scan from repeatedly restarting or redirecting the head.
+
+During ordinary walking, following, wandering, returning to an activity anchor, or swimming, locomotion temporarily replaces the owner as the baseline attention target. The synthetic attention point stays approximately six blocks ahead along current horizontal movement, falling back to body facing while a path has begun but movement is still accelerating. Head yaw is limited to roughly 15 degrees and residual pupil yaw to roughly 10 degrees, so the echo looks where it is going instead of continuously walking sideways while staring at the owner. This locomotion attention refreshes in short episodes and releases within roughly 0.3 seconds after movement ends. Combat targets, creepers, actual damage sources, rapidly approaching entities, mutual gaze, and the dedicated caught-watching exit presentation retain their existing higher priority and may override the locomotion limit.
 
 Layer-specific threat responses:
 

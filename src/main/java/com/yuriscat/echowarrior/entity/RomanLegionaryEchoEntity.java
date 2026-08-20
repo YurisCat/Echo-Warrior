@@ -78,6 +78,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	public static final byte VISUAL_CURIOUS = 4;
 	public static final byte VISUAL_MUTUAL_GAZE = 5;
 	public static final byte VISUAL_CAUGHT = 6;
+	public static final byte VISUAL_LOCOMOTION = 7;
 
 	private static final EntityDataAccessor<Float> ATTENTION_X = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> ATTENTION_Y = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.FLOAT);
@@ -105,6 +106,8 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final int MUTUAL_GAZE_PRIORITY = 790;
 	private static final int EYE_STICKY_TICKS = 5;
 	private static final int HEAD_STICKY_TICKS = 10;
+	private static final int LOCOMOTION_ATTENTION_PRIORITY = 320;
+	private static final int LOCOMOTION_ATTENTION_TICKS = 6;
 	private static final int CAUGHT_PREWATCH_TICKS = 8;
 	private static final int CAUGHT_GLANCE_START_TICKS = 18;
 	private static final double CAUGHT_MAX_OWNER_DISTANCE_SQR = 16.0 * 16.0;
@@ -1477,13 +1480,17 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			this.caughtExitOwnerAvoidPoint = createCaughtExitFallbackPoint(owner);
 		}
 		LivingEntity combatTarget = this.getTarget();
+		boolean locomotionAttention = shouldUseLocomotionAttention();
 		AttentionCandidate best = isVisibleAttentionTarget(combatTarget)
 				? new AttentionCandidate(combatTarget, combatTarget.getEyePosition(), 800, VISUAL_ALERT, 30, false, AttentionKind.COMBAT_TARGET)
 				: now < this.caughtExitOwnerAvoidUntil
 						? new AttentionCandidate(null, this.caughtExitOwnerAvoidPoint, 220, VISUAL_NORMAL,
 								35 + this.random.nextInt(36), false, AttentionKind.NORMAL)
-						: new AttentionCandidate(owner, owner.getEyePosition(), 220, VISUAL_NORMAL,
-								35 + this.random.nextInt(36), false, AttentionKind.NORMAL);
+						: locomotionAttention
+								? new AttentionCandidate(null, createLocomotionAttentionPoint(), LOCOMOTION_ATTENTION_PRIORITY,
+										VISUAL_LOCOMOTION, LOCOMOTION_ATTENTION_TICKS, false, AttentionKind.LOCOMOTION)
+								: new AttentionCandidate(owner, owner.getEyePosition(), 220, VISUAL_NORMAL,
+										35 + this.random.nextInt(36), false, AttentionKind.NORMAL);
 
 		LivingEntity attacker = this.getLastHurtByMob();
 		if (isRecentWithin(this, this.getLastHurtByMobTimestamp(), 20) && isVisibleAttentionTarget(attacker)) {
@@ -1658,6 +1665,25 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		return this.getTarget() == null
 				&& !isRecent(this, this.getLastHurtByMobTimestamp())
 				&& this.getNavigation().isDone();
+	}
+
+	private boolean shouldUseLocomotionAttention() {
+		Vec3 movement = this.getDeltaMovement();
+		double horizontalSpeedSqr = movement.x * movement.x + movement.z * movement.z;
+		return !isVisualInteractionMovementOwned()
+				&& (!this.getNavigation().isDone() || horizontalSpeedSqr > 2.5E-4);
+	}
+
+	private Vec3 createLocomotionAttentionPoint() {
+		Vec3 movement = this.getDeltaMovement();
+		Vec3 direction = new Vec3(movement.x, 0.0, movement.z);
+		if (direction.lengthSqr() > 1.0E-4) {
+			direction = direction.normalize();
+		} else {
+			float yaw = this.yBodyRot * ((float)Math.PI / 180.0F);
+			direction = new Vec3(-Math.sin(yaw), 0.0, Math.cos(yaw));
+		}
+		return this.getEyePosition().add(direction.scale(6.0));
 	}
 
 	private void applyAttention(AttentionCandidate candidate, long now) {
@@ -1928,6 +1954,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		COMBAT_TARGET,
 		MUTUAL_GAZE,
 		APPROACHING,
+		LOCOMOTION,
 		NORMAL
 	}
 

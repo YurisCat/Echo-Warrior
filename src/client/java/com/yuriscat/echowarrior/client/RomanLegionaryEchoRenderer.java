@@ -18,6 +18,8 @@ import java.util.Map;
 public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLegionaryEchoEntity, EntityRenderState> {
 	private static final float EYE_YAW_LIMIT = 34.0F;
 	private static final float EYE_PITCH_LIMIT = 24.0F;
+	private static final float LOCOMOTION_HEAD_YAW_LIMIT = 15.0F;
+	private static final float LOCOMOTION_EYE_YAW_LIMIT = 10.0F;
 	private static final float MAX_EYE_X = 0.82F;
 	private static final float MAX_EYE_Y = 0.46F;
 	private static final float FULL_IDLE_PARENT_COMPENSATION_DEGREES = 3.0F;
@@ -96,9 +98,11 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 
 		Vec3 headDelta = attentionPoint.subtract(entityPosition);
 		double headHorizontal = Math.sqrt(headDelta.x * headDelta.x + headDelta.z * headDelta.z);
+		boolean locomotionGaze = reaction == RomanLegionaryEchoEntity.VISUAL_LOCOMOTION;
+		float headYawLimit = locomotionGaze ? LOCOMOTION_HEAD_YAW_LIMIT : 75.0F;
 		float desiredHeadWorldYaw = shieldRaised || headHorizontal < 1.0E-4 ? bodyYaw : worldYawToward(headDelta);
 		float desiredHeadYaw = shieldRaised ? 0.0F
-				: Mth.clamp(Mth.wrapDegrees(desiredHeadWorldYaw - bodyYaw), -75.0F, 75.0F);
+				: Mth.clamp(Mth.wrapDegrees(desiredHeadWorldYaw - bodyYaw), -headYawLimit, headYawLimit);
 		float desiredHeadPitch = shieldRaised || headHorizontal < 1.0E-4 ? 0.0F
 				: Mth.clamp(worldPitchToward(headDelta, headHorizontal), -35.0F, 40.0F);
 		float desiredTilt = !shieldRaised && reaction == RomanLegionaryEchoEntity.VISUAL_CURIOUS
@@ -114,6 +118,8 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 			headResponsiveness = 0.36F;
 		} else if (reaction == RomanLegionaryEchoEntity.VISUAL_MUTUAL_GAZE) {
 			headResponsiveness = attentionAge < 2.0F ? 0.0F : 0.24F;
+		} else if (locomotionGaze) {
+			headResponsiveness = 0.28F;
 		} else {
 			headResponsiveness = 0.18F;
 		}
@@ -127,7 +133,8 @@ public final class RomanLegionaryEchoRenderer extends GeoEntityRenderer<RomanLeg
 		double eyeHorizontal = Math.sqrt(eyeDelta.x * eyeDelta.x + eyeDelta.z * eyeDelta.z);
 		float desiredEyeWorldYaw = eyeHorizontal < 1.0E-4 ? desiredHeadWorldYaw : worldYawToward(eyeDelta);
 		float desiredEyeWorldPitch = eyeHorizontal < 1.0E-4 ? desiredHeadPitch : worldPitchToward(eyeDelta, eyeHorizontal);
-		float eyeTargetYaw = Mth.clamp(Mth.wrapDegrees(desiredEyeWorldYaw - bodyYaw - state.headYaw), -EYE_YAW_LIMIT, EYE_YAW_LIMIT);
+		float eyeYawLimit = locomotionGaze ? LOCOMOTION_EYE_YAW_LIMIT : EYE_YAW_LIMIT;
+		float eyeTargetYaw = Mth.clamp(Mth.wrapDegrees(desiredEyeWorldYaw - bodyYaw - state.headYaw), -eyeYawLimit, eyeYawLimit);
 		float eyeTargetPitch = Mth.clamp(desiredEyeWorldPitch - state.headPitch, -EYE_PITCH_LIMIT, EYE_PITCH_LIMIT);
 		// GeckoLib's model-space X runs opposite Minecraft's semantic look yaw for
 		// this model: a target on the echo's left needs a positive pupil translation.
