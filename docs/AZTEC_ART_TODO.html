@@ -3,32 +3,33 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>阿兹特克勇士美术待办</title>
+  <title>阿兹特克勇士美术资源状态</title>
   <style>
     body { max-width: 820px; margin: 40px auto; padding: 0 24px; color: #e8dfca; background: #17130f; font: 16px/1.65 system-ui, sans-serif; }
     h1, h2 { color: #f0b14b; }
     code { color: #efc988; }
     li { margin: 10px 0; }
-    .placeholder { padding: 12px 16px; border-left: 4px solid #b94b3d; background: #241a14; }
+    .completed { padding: 12px 16px; border-left: 4px solid #5ca66f; background: #18231a; }
   </style>
 </head>
 <body>
-  <h1>阿兹特克勇士美术待办</h1>
-  <p>更新时间：2026-08-19</p>
-  <p class="placeholder">当前开发版为了先验证玩法，技能栏与状态栏使用占位图标。占位图只用于开发，不视为最终美术。</p>
+  <h1>阿兹特克勇士美术资源状态</h1>
+  <p>更新时间：2026-08-20</p>
+  <p class="completed">本轮所需的五个技能图标、两个状态效果图标和新版实体贴图均已接入，没有缺项。</p>
 
-  <h2>必须手绘替换</h2>
+  <h2>已完成资源</h2>
   <ul>
-    <li><strong>黑曜石创口</strong>：绘制独立的 16×16 技能图标与 18×18 状态效果图标。建议突出黑曜石锯刃、暗红创口和少量黑色碎片，避免直接复用遗物图标。</li>
-    <li>替换路径：<code>textures/gui/summoner/skills/aztec_warrior/obsidian_wound.png</code></li>
-    <li>替换路径：<code>textures/mob_effect/obsidian_wound.png</code></li>
+    <li>羽蛇神的诅咒：<code>quetzalcoatls_curse.png</code>（16×16）</li>
+    <li>维齐洛波奇特利的祝福：<code>huitzilopochtlis_blessing.png</code>（16×16）</li>
+    <li>黑曜石创口：<code>obsidian_wound.png</code>（16×16）</li>
+    <li>追猎：<code>pursuit.png</code>（16×16）</li>
+    <li>马夸威特：<code>macuahuitl_mastery.png</code>（16×16）</li>
+    <li>黑曜石创口状态：<code>mob_effect/obsidian_wound.png</code>（18×18）</li>
+    <li>维齐洛波奇特利祝福状态：<code>mob_effect/huitzilopochtli_blessing.png</code>（18×18）</li>
+    <li>实体贴图：<code>assets-source/textures/entity/aztec_warrior_echo.png</code>（128×128）</li>
   </ul>
 
-  <h2>同批次建议补齐</h2>
-  <ul>
-    <li>羽蛇神的诅咒、维齐洛波奇特利的祝福、追猎、马夸威特：各自绘制 16×16 技能图标。</li>
-    <li>维齐洛波奇特利的祝福：绘制 18×18 状态效果图标。</li>
-    <li>完成后同步替换游戏资源与 <code>encyclopedia/public/assets/echo-warrior/</code> 中的百科资源。</li>
-  </ul>
+  <h2>同步规则</h2>
+  <p>技能与状态图标同时同步到游戏资源和 <code>encyclopedia/public/assets/echo-warrior/</code>。实体贴图由 <code>scripts/update_aztec_visual_assets.py</code> 写入 BBModel 并导出运行时资源。</p>
 </body>
 </html>

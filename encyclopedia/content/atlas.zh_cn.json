@@ -5,7 +5,7 @@
     "title": "Echo Archive",
     "displayTitle": "回声档案馆",
     "description": "Echo Warrior 的交互式知识地图",
-    "lastVerified": "2026-08-19"
+    "lastVerified": "2026-08-20"
   },
   "categories": [
     {
@@ -718,9 +718,9 @@
           },
           {
             "type": "callout",
-            "tone": "warning",
-            "title": "开发版美术占位",
-            "body": "五个技能和两个状态图标当前使用占位资源；黑曜石创口已列入必须手绘替换的美术待办。"
+            "tone": "success",
+            "title": "人工绘制美术已接入",
+            "body": "五个技能图标、黑曜石创口与维齐洛波奇特利祝福的状态图标，以及新版 128×128 实体贴图均已替换为人工绘制资源。"
           }
         ],
         "related": ["roman_legionary", "summoner", "leveling", "future_roster"]

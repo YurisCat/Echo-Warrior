@@ -6,11 +6,13 @@ from __future__ import annotations
 import base64
 import json
 from pathlib import Path
+import struct
 import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
 BBMODEL = ROOT / "assets-source/blockbench/aztec_warrior_echo.bbmodel"
+SOURCE_TEXTURE = ROOT / "assets-source/textures/entity/aztec_warrior_echo.png"
 GEO = ROOT / "src/main/resources/assets/echo_warrior/geckolib/models/entity/aztec_warrior_echo.geo.json"
 ANIMATION = ROOT / "src/main/resources/assets/echo_warrior/geckolib/animations/entity/aztec_warrior_echo.animation.json"
 TEXTURE = ROOT / "src/main/resources/assets/echo_warrior/textures/entity/aztec_warrior_echo.png"
@@ -258,6 +260,30 @@ def export_texture(model: dict) -> None:
     TEXTURE.write_bytes(base64.b64decode(source.split(",", 1)[1]))
 
 
+def embed_source_texture(model: dict) -> None:
+    if not SOURCE_TEXTURE.exists():
+        raise ValueError(f"Canonical source texture is missing: {SOURCE_TEXTURE}")
+    content = SOURCE_TEXTURE.read_bytes()
+    if len(content) < 24 or content[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ValueError("Canonical source texture is not a valid PNG")
+    width, height = struct.unpack(">II", content[16:24])
+    if (width, height) != (128, 128):
+        raise ValueError(f"Canonical source texture must be 128x128, got {width}x{height}")
+    textures = model.setdefault("textures", [])
+    if not textures:
+        textures.append({})
+    texture = textures[0]
+    texture["name"] = "aztec_warrior_echo"
+    texture["path"] = ""
+    texture["width"] = width
+    texture["height"] = height
+    texture["uv_width"] = width
+    texture["uv_height"] = height
+    texture["file_format"] = "png"
+    texture["internal"] = True
+    texture["source"] = "data:image/png;base64," + base64.b64encode(content).decode("ascii")
+
+
 def validate(model: dict, geo: dict, animations: dict) -> list[str]:
     errors: list[str] = []
     names = set(animations.get("animations", {}))
@@ -279,6 +305,8 @@ def validate(model: dict, geo: dict, animations: dict) -> list[str]:
             errors.append("Arm_Right pursuit rotation still contains a >180 degree interpolation jump")
     if not TEXTURE.exists() or TEXTURE.stat().st_size == 0:
         errors.append("Runtime texture is missing")
+    elif TEXTURE.read_bytes() != SOURCE_TEXTURE.read_bytes():
+        errors.append("Runtime texture does not match the canonical source texture")
     return errors
 
 
@@ -286,8 +314,7 @@ def main() -> int:
     model = read_json(BBMODEL)
     model["name"] = "aztec_warrior_echo"
     model["model_identifier"] = "aztec_warrior_echo"
-    if model.get("textures"):
-        model["textures"][0]["name"] = "aztec_warrior_echo"
+    embed_source_texture(model)
     repaired = repair_jump_attack_rotation(model)
     geometry = export_geometry(model)
     animations = export_animations(model)
