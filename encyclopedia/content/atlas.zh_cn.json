@@ -131,7 +131,7 @@
             "items": [
               { "title": "发现回声", "body": "携带回声罗盘，在已加载区域内感知附近考古目标。" },
               { "title": "取得遗物", "body": "从可疑方块等考古目标获得决定英灵类型的遗物。" },
-              { "title": "准备召唤", "body": "把遗物装入召唤器，并使用灵魂沙或腐肉补充燃料。" },
+              { "title": "准备召唤", "body": "把遗物装入召唤器，并使用灵魂沙、灵魂土或腐肉补充燃料。" },
               { "title": "共同战斗", "body": "英灵跟随主人作战，遗物保存经验、等级、天赋和行为设置。" }
             ]
           },
@@ -446,13 +446,13 @@
       ],
       "article": {
         "summary": "燃料只在实际召唤和实际恢复生命时扣除；英灵存活期间没有持续维持费用。",
-        "tags": ["灵魂沙", "腐肉", "恢复"],
+        "tags": ["灵魂沙", "灵魂土", "腐肉", "恢复"],
         "sections": [
           {
             "type": "stats",
             "title": "基础数值",
             "items": [
-              { "label": "灵魂沙", "value": "+50", "note": "高效率燃料" },
+              { "label": "灵魂沙 / 灵魂土", "value": "+50", "note": "两者完全等价的高效率燃料" },
               { "label": "腐肉", "value": "+20", "note": "低效率燃料" },
               { "label": "单次召唤", "value": "100", "note": "受消耗比例修正" },
               { "label": "自然恢复", "value": "2 / 生命", "note": "每两秒恢复一点生命" }
@@ -710,11 +710,29 @@
             "title": "五项可独立开关的技能",
             "items": [
               { "title": "羽蛇神的诅咒", "meta": "反应式被动", "body": "英灵或主人实际受到可归因的直接伤害时，60% 概率使攻击者虚弱；触发后 25% 为虚弱 II。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/quetzalcoatls_curse.png" },
-              { "title": "维齐洛波奇特利的祝福", "meta": "日照祝福", "body": "白天且直视天空的当事者独立获得 +15% 近战攻击，每 4 秒恢复 1 点生命，不消耗燃料。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/huitzilopochtlis_blessing.png" },
+              { "title": "维齐洛波奇特利的祝福", "meta": "日照祝福", "body": "白天且直视天空的当事者独立获得 +15% 近战攻击，每 4 秒恢复 1 点生命，不消耗燃料。生效时以无限时长图标稳定显示，离开日照后立即移除；不显示原版药水粒子。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/huitzilopochtlis_blessing.png" },
               { "title": "黑曜石创口", "meta": "致死性流血", "body": "持续 6 秒，每秒 1 点可致死伤害。普通主目标 30%，横扫和追猎目标各自 15% 触发。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/obsidian_wound.png" },
-              { "title": "追猎", "meta": "2 层充能", "body": "在 4–10 格内向锁定目标跳劈，落地 2 格内造成 100% 攻击伤害与轻微击退。每层 6 秒恢复，两次施放至少间隔 2 秒。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/pursuit.png" },
+              { "title": "追猎", "meta": "2 层充能", "body": "在 4–10 格内向锁定目标跳劈，落地 2 格内造成 100% 攻击伤害与轻微击退。每层 6 秒恢复，两次施放至少间隔 2 秒；起跳至落地前免疫普通伤害。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/pursuit.png" },
               { "title": "马夸威特", "meta": "160° 横扫", "body": "普通攻击横扫 2.5 格，溅射伤害为 50%。追猎后 3 秒强势期扩大为 180°、3 格、75% 溅射。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/macuahuitl_mastery.png" }
             ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "简短提示与详细机制",
+            "body": "召唤器中的技能悬浮提示采用简短描述；本页继续保留触发概率、持续时间、范围和充能恢复等详细数据。"
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "动作稳定性与追猎防护",
+            "body": "普通攻击开始后，完整 29 tick 挥击不会被全身受伤动画打断，但仍会承受伤害、减益和击退，因此位移仍可能令攻击落空。追猎开始至落地前约 18 tick 免疫普通伤害；绕过无敌的绝对伤害仍然生效。落地后的伤害恢复正常，但完整 24 tick 追猎动画结束前仍不会切换为全身受伤动作。"
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "视觉生命感",
+            "body": "阿兹特克勇士使用与罗马军团兵相同的注视、对视、被主人发现偷看、害羞离场、眨眼、歪头、瞳孔追踪、苦力怕警觉和伤害来源注视逻辑；战斗、攻击和追猎始终拥有更高优先级。"
           },
           {
             "type": "callout",

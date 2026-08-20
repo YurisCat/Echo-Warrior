@@ -65,6 +65,14 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					icon("skills/aztec_warrior/macuahuitl_mastery.png")
 			}
 	};
+	private static final String[] AZTEC_SKILL_TRANSLATION_KEYS = {
+			"gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse",
+			"gui.echo_warrior.summoner.skill.aztec.huitzilopochtlis_blessing",
+			"gui.echo_warrior.summoner.skill.aztec.obsidian_wound",
+			"gui.echo_warrior.summoner.skill.aztec.pursuit",
+			"gui.echo_warrior.summoner.skill.aztec.macuahuitl"
+	};
+	private static final int[] AZTEC_SKILL_DESCRIPTION_LINES = {1, 2, 2, 2, 2};
 	private static final Identifier[] TALENT_ICONS = {
 			icon("traits/bad_temper.png"),
 			icon("traits/lazy.png"),
@@ -628,34 +636,33 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			}
 
 			boolean aztec = this.menu.heroType() == EchoHeroType.AZTEC_WARRIOR.ordinal();
-			String[] skillNames = aztec
-					? new String[] {"羽蛇神的诅咒", "维齐洛波奇特利的祝福", "黑曜石创口", "追猎", "马夸威特"}
-					: new String[] {"士兵阵列！", "举盾冲锋！", "军团永存！"};
-			String[][] skillDescriptions = aztec
-					? new String[][] {
-							{"受到直接伤害时60%概率诅咒攻击者。", "施加虚弱I，少数时升为虚弱II。"},
-							{"白天且直视天空时，当事者独立获得近战伤害与恢复。", "偏好生物群系内英灵额外获得攻击和移速。"},
-							{"攻击可造成持6秒的致死性流血。", "每秒1点伤害，会显示克制的暗红与黑色粒子。"},
-							{"在4–10格内跃向已锁定目标，落地造成范围伤害。", "2层充能，每层6秒恢复，两次施放间隔至少2秒。"},
-							{"沉重黑曜石大剑：攻速较慢，但横扫160°、2.5格。", "溅射目标受50%伤害，并可独立触发流血。"}
+			if (aztec) {
+				for (int index = 0; index < Math.min(this.menu.skillCount(), AZTEC_SKILL_TRANSLATION_KEYS.length); index++) {
+					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
+						showAztecSkillTooltip(graphics, mouseX, mouseY, index, (this.menu.enabledSkills() & 1 << index) != 0);
+						return;
 					}
-					: new String[][] {
+				}
+			} else {
+				String[] skillNames = {"士兵阵列！", "举盾冲锋！", "军团永存！"};
+				String[][] skillDescriptions = {
 							{"开启后常驻，为自身和友军提供力量。", "离开光环立即失效；附近有持盾玩家时额外减伤。"},
 							{"冲向威胁主人的投射物或即将爆炸的苦力怕。", "弹开投射物；每5秒恢复1次充能，最多3次。"},
 							{"举盾防御并嘲讽周围敌人。", "5秒后返还减免前所受伤害并击退敌人。"}
-					};
-			for (int index = 0; index < Math.min(this.menu.skillCount(), skillNames.length); index++) {
-				if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
-					showTooltip(
-							graphics,
-							mouseX,
-							mouseY,
-							skillNames[index],
-							skillDescriptions[index][0],
-							skillDescriptions[index][1],
-							(this.menu.enabledSkills() & 1 << index) != 0 ? "当前：已启用（点击禁用）" : "当前：已禁用（点击启用）"
-					);
-					return;
+				};
+				for (int index = 0; index < Math.min(this.menu.skillCount(), skillNames.length); index++) {
+					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
+						showTooltip(
+								graphics,
+								mouseX,
+								mouseY,
+								skillNames[index],
+								skillDescriptions[index][0],
+								skillDescriptions[index][1],
+								(this.menu.enabledSkills() & 1 << index) != 0 ? "当前：已启用（点击禁用）" : "当前：已禁用（点击启用）"
+						);
+						return;
+					}
 				}
 			}
 		}
@@ -719,7 +726,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		}
 		if (this.menu.summonerContainer().getItem(SummonerMenu.FUEL_SLOT).isEmpty()
 				&& isInside(mouseX, mouseY, x(Element.FUEL_SLOT, 179), y(Element.FUEL_SLOT, 172), 16, 16)) {
-			showTooltip(graphics, mouseX, mouseY, "燃料输入槽", "腐肉：+20燃料", "灵魂沙：+50燃料", "容量不足时不会消耗物品");
+			showTooltip(graphics, mouseX, mouseY, "燃料输入槽", "腐肉：+20燃料", "灵魂沙/灵魂土：+50燃料", "容量不足时不会消耗物品");
 			return;
 		}
 		for (int index = 0; index < SummonerMenu.MODULE_SLOT_COUNT; index++) {
@@ -742,6 +749,19 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		for (String description : descriptions) {
 			lines.add(Component.literal(description).withStyle(ChatFormatting.GRAY));
 		}
+		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
+	}
+
+	private void showAztecSkillTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int skill, boolean enabled) {
+		String key = AZTEC_SKILL_TRANSLATION_KEYS[skill];
+		List<Component> lines = new java.util.ArrayList<>();
+		lines.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
+		for (int line = 1; line <= AZTEC_SKILL_DESCRIPTION_LINES[skill]; line++) {
+			lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
+		}
+		lines.add(Component.translatable(enabled
+				? "gui.echo_warrior.summoner.skill.enabled"
+				: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
 		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
 	}
 

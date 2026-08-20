@@ -60,12 +60,12 @@ public final class SummonerFuel {
 	}
 
 	public static boolean isFuel(ItemStack stack) {
-		return stack.is(Items.ROTTEN_FLESH) || stack.is(Items.SOUL_SAND);
+		return stack.is(Items.ROTTEN_FLESH) || stack.is(Items.SOUL_SAND) || stack.is(Items.SOUL_SOIL);
 	}
 
 	public static int value(ItemStack stack) {
 		if (stack.is(Items.ROTTEN_FLESH)) return 20;
-		if (stack.is(Items.SOUL_SAND)) return 50;
+		if (stack.is(Items.SOUL_SAND) || stack.is(Items.SOUL_SOIL)) return 50;
 		return 0;
 	}
 }

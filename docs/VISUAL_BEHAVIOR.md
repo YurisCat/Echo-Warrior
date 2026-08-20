@@ -2,24 +2,34 @@
 
 ## Purpose
 
-The Roman legionary prototype uses a code-driven visual-attention layer on top of GeckoLib locomotion animations. This layer is cosmetic: it must not change navigation, combat targeting, damage, or summoner binding.
+The Roman legionary and Aztec warrior echoes use the same code-driven visual-attention layer on top of GeckoLib locomotion animations. This layer is cosmetic: it must not change navigation, combat targeting, damage, or summoner binding. Their timing, probability, priority, and interruption rules are intentionally identical; only model-specific bone names and torso ancestry differ.
 
 ## Code-owned bones
 
-The following bones are reserved and controlled by code in ordinary gameplay:
+The following Roman legionary bones are reserved and controlled by code in ordinary gameplay:
 
 - `head`
 - `left_eye`
 - `right_eye`
 - `eyebrows`
 
-Animation files must not keyframe these bones unless the project owner explicitly approves a future exception. The authoritative Blockbench source is:
+The corresponding Aztec warrior mappings are:
+
+- `Head`
+- `Eyes_Left`
+- `Eyes_Right`
+- `Eyebrow`
+
+The renderer also compensates the Roman `root`/torso ancestry and the Aztec `Main` → `Body` → `Upper_Body2` ancestry independently. Model-specific axis signs and ancestor compensation belong in each renderer; gameplay attention data remains shared in behaviour.
+
+Animation files must not introduce new face keyframes that fight the runtime layer unless the project owner explicitly approves a future exception. The authoritative Blockbench sources are:
 
 ```text
 assets-source/blockbench/roman_legionary.bbmodel
+assets-source/blockbench/aztec_warrior_echo.bbmodel
 ```
 
-Model artists must continue from the latest copy of that file rather than an older local branch.
+Model artists must continue from the latest matching source file rather than an older local branch.
 
 ## Attention model
 
@@ -53,7 +63,7 @@ Layer-specific threat responses:
 
 Pupil position is recalculated every rendered frame from the attention point in the head's current local coordinate space. The eyes therefore remain locked to the same world-space target while the head and body move. As the face becomes aligned, the pupils naturally approach the centre because the target itself has moved to the centre of the local view; this is not treated as releasing attention. Curious head roll is compensated so a tilted head does not drag the pupils away from their target.
 
-The current Blockbench `head` bone uses yaw and pitch axes opposite to Minecraft's semantic look angles. The renderer negates yaw and pitch only at the final bone-application boundary; target selection, pupil tracking, and body-facing math remain in normal Minecraft coordinates. The roll axis is not inverted, preserving the occasional curious head tilt.
+The current Blockbench `head`/`Head` bones use yaw and pitch axes opposite to Minecraft's semantic look angles. Each renderer negates yaw and pitch only at the final bone-application boundary; target selection, pupil tracking, and body-facing math remain in normal Minecraft coordinates. The roll axis is not inverted, preserving the occasional curious head tilt.
 
 The modeler's idle animation may retain subtle motion on torso ancestors of `head`. The renderer reads the final animated `root`/torso chain and compensates inherited rotations up to roughly three degrees so code-driven gaze does not oscillate with breathing motion. Compensation fades out between roughly three and eight degrees, preserving larger attack, hurt, and shield motions. Locomotion also holds the walk state for four ticks after movement ceases and blends movement changes over three ticks, filtering navigation micro-movement without delaying the start of walking.
 
@@ -123,7 +133,7 @@ After a completed exit, ordinary owner observation and new mutual-gaze acquisiti
 - Hurt pupils contract to roughly 60%, then recover quickly.
 - Hurt triggers a code-owned pain blink: the eyebrows close the eyes at roughly 0.08 seconds and reopen them by roughly 0.3 seconds. This eye response still plays when a body attack animation prevents the full-body hurt animation from taking over.
 - Strong surprise contracts pupils to roughly 45-50%.
-- Blinking is performed by moving the existing `eyebrows` bone down by two model units; no eyelid geometry is used.
+- Blinking is performed by moving the Roman `eyebrows` or Aztec `Eyebrow` bone down by two model units; no eyelid geometry is used.
 - Safe idle observation may trigger an 8-12 degree curious head tilt.
 - Different echoes use independent timing to prevent synchronized gestures.
 
@@ -133,7 +143,7 @@ The entity uses a 0.45-block shadow radius at approximately 70% strength. It sho
 
 ## Development controls
 
-The `/echo_warrior visual` command can force visual states on the nearest owned echo:
+The `/echo_warrior visual` command currently forces visual states on the nearest owned Roman legionary. The Aztec warrior uses the same runtime state machine, but command selection has not yet been generalized:
 
 ```text
 /echo_warrior visual blink
@@ -172,6 +182,13 @@ Run the updater after changing the source model:
 python scripts/update_roman_visual_assets.py import "path/to/modeler-delivery.bbmodel"
 python scripts/update_roman_visual_assets.py update
 python scripts/update_roman_visual_assets.py validate
+```
+
+For the Aztec warrior model and texture, use:
+
+```text
+python scripts/update_aztec_visual_assets.py update
+python scripts/update_aztec_visual_assets.py validate
 ```
 
 Import mode accepts a complete modeler delivery, preserves the project's canonical UUID-to-bone naming, normalizes animation names, strips code-owned face keyframes, updates compatible GeckoLib pivots and animations, extracts the embedded runtime texture, and writes a model-artist handoff copy under `outputs/`. It deliberately stops if cube geometry, UVs, or UUIDs changed in a way that requires a reviewed full geometry export.

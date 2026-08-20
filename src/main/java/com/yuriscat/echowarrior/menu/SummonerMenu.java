@@ -324,7 +324,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		if (summoner.isEmpty() || value <= 0 || SummonerFuel.amount(summoner) + value > SummonerFuel.CAPACITY) {
 			return;
 		}
-		boolean soulSand = input.is(net.minecraft.world.item.Items.SOUL_SAND);
+		boolean soulSand = input.is(net.minecraft.world.item.Items.SOUL_SAND)
+				|| input.is(net.minecraft.world.item.Items.SOUL_SOIL);
 		input.shrink(1);
 		SummonerFuel.setAmount(summoner, SummonerFuel.amount(summoner) + value);
 		this.summonerContainer.setChanged();
