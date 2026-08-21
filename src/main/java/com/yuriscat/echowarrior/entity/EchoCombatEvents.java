@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Creeper;
 
 public final class EchoCombatEvents {
 	private static final ThreadLocal<Boolean> APPLYING_SHIELD_REDUCTION = ThreadLocal.withInitial(() -> false);
@@ -51,6 +52,9 @@ public final class EchoCombatEvents {
 			boolean blocked
 	) {
 		if (!(victim.level() instanceof ServerLevel level) || blocked || damageTaken <= 0.0F) return;
+		if (victim instanceof Creeper creeper && source.getDirectEntity() != null) {
+			CatGodCreeperSystem.onDirectlyDamaged(level, creeper);
+		}
 		if (!(source.getEntity() instanceof LivingEntity attacker) || source.getDirectEntity() == null) return;
 		if (victim instanceof AztecWarriorEchoEntity aztec) {
 			aztec.tryApplyCurse(level, attacker);

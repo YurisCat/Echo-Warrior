@@ -1,8 +1,10 @@
 {
   "entity.echo_warrior.roman_legionary_echo": "罗马军团兵英灵",
   "entity.echo_warrior.aztec_warrior_echo": "阿兹特克勇士英灵",
+  "entity.echo_warrior.egyptian_archer_echo": "埃及弓箭手英灵",
   "item.echo_warrior.roman_legionary_relic": "罗马军团战士遗物",
   "item.echo_warrior.aztec_warrior_relic": "阿兹特克勇士遗物",
+  "item.echo_warrior.egyptian_archer_relic": "埃及弓箭手遗物",
   "item.echo_warrior.test_echo_summoner": "测试英灵召唤器",
   "itemGroup.echo_warrior.echo_warrior": "英灵回声",
   "effect.echo_warrior.soldier_formation": "士兵阵列（旧版）",
@@ -10,6 +12,7 @@
   "effect.echo_warrior.shields_raised": "举起盾牌！",
   "effect.echo_warrior.huitzilopochtli_blessing": "维齐洛波奇特利的祝福",
   "effect.echo_warrior.obsidian_wound": "黑曜石创口",
+  "effect.echo_warrior.bleeding": "流血",
   "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.name": "羽蛇神的诅咒",
   "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.description.1": "友军被攻击时有概率诅咒攻击者使其虚弱。",
   "gui.echo_warrior.summoner.skill.aztec.huitzilopochtlis_blessing.name": "维齐洛波奇特利的祝福",
@@ -28,4 +31,8 @@
   "gui.echo_warrior.summoner.skill.disabled": "当前：已禁用（点击启用）",
   "death.attack.obsidian_wound": "%1$s因黑曜石创口流血而亡",
   "death.attack.obsidian_wound.player": "%1$s在与%2$s战斗时因黑曜石创口流血而亡"
+  ,"death.attack.bleeding": "%1$s流血而亡",
+  "death.attack.bleeding.player": "%1$s在与%2$s战斗时流血而亡",
+  "death.attack.armor_piercing_arrow": "%1$s被锥锋箭射杀",
+  "death.attack.armor_piercing_arrow.player": "%1$s被%2$s的锥锋箭射杀"
 }

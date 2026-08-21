@@ -2,6 +2,7 @@ package com.yuriscat.echowarrior;
 
 import com.yuriscat.echowarrior.command.VisualDebugCommands;
 import com.yuriscat.echowarrior.entity.EchoCombatEvents;
+import com.yuriscat.echowarrior.entity.CatGodCreeperSystem;
 import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
@@ -21,6 +22,7 @@ public final class EchoWarrior implements ModInitializer {
 		ModCreativeTabs.initialize();
 		EchoExperienceSystem.initialize();
 		EchoCombatEvents.initialize();
+		CatGodCreeperSystem.initialize();
 		VisualDebugCommands.initialize();
 		LOGGER.info("Echo Warrior is awakening.");
 	}

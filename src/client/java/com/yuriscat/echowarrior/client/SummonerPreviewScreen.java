@@ -63,8 +63,16 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					icon("skills/aztec_warrior/obsidian_wound.png"),
 					icon("skills/aztec_warrior/pursuit.png"),
 					icon("skills/aztec_warrior/macuahuitl_mastery.png")
+			},
+			{
+					icon("skills/egyptian_archer/cat_god.png"),
+					icon("skills/egyptian_archer/leaf_arrow.png"),
+					icon("skills/egyptian_archer/chariot_volley.png"),
+					icon("skills/egyptian_archer/backstep.png")
 			}
 	};
+	private static final Identifier EGYPTIAN_LEAF_ARROW_ICON = icon("skills/egyptian_archer/leaf_arrow.png");
+	private static final Identifier EGYPTIAN_CONE_ARROW_ICON = icon("skills/egyptian_archer/cone_arrow.png");
 	private static final String[] AZTEC_SKILL_TRANSLATION_KEYS = {
 			"gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse",
 			"gui.echo_warrior.summoner.skill.aztec.huitzilopochtlis_blessing",
@@ -258,9 +266,9 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	@Override
 	protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		boolean relicLoaded = hasRelicLoaded();
-		String fullName = relicLoaded && this.menu.heroType() == EchoHeroType.AZTEC_WARRIOR.ordinal()
-				? "阿兹特克勇士"
-				: relicLoaded ? "罗马军团兵" : "未载入英灵";
+		String fullName = relicLoaded
+				? EchoHeroType.values()[Math.clamp(this.menu.heroType(), 0, EchoHeroType.values().length - 1)].chineseName()
+				: "未载入英灵";
 		String visibleName = fitText(fullName, 115);
 		graphics.text(this.font, visibleName, rx(Element.TITLE, 8), ry(Element.TITLE, 7), PRIMARY_TEXT_COLOR, true);
 		if (isInside(mouseX, mouseY, x(Element.TITLE, 7), y(Element.TITLE, 6), 116, 11)
@@ -281,7 +289,8 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			graphics.text(this.font, this.menu.spiritAttackSpeed() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 34), PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, decimal(this.menu.spiritArmor()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 47), PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, this.menu.spiritMovement() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 47), PRIMARY_TEXT_COLOR, true);
-			graphics.text(this.font, "16", rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);
+			graphics.text(this.font, this.menu.heroType() == EchoHeroType.EGYPTIAN_ARCHER.ordinal() ? "24" : "16",
+					rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, this.menu.summonCostPercent() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);
 		}
 
@@ -381,9 +390,11 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		int hero = this.menu.heroType();
 		if (this.previewEntity != null && this.previewHeroType == hero) return;
 		this.previewHeroType = hero;
-		this.previewEntity = hero == EchoHeroType.AZTEC_WARRIOR.ordinal()
-				? ModEntities.AZTEC_WARRIOR_ECHO.create(this.minecraft.level, EntitySpawnReason.LOAD)
-				: ModEntities.ROMAN_LEGIONARY_ECHO.create(this.minecraft.level, EntitySpawnReason.LOAD);
+		this.previewEntity = switch (EchoHeroType.values()[Math.clamp(hero, 0, EchoHeroType.values().length - 1)]) {
+			case ROMAN_LEGIONARY -> ModEntities.ROMAN_LEGIONARY_ECHO.create(this.minecraft.level, EntitySpawnReason.LOAD);
+			case AZTEC_WARRIOR -> ModEntities.AZTEC_WARRIOR_ECHO.create(this.minecraft.level, EntitySpawnReason.LOAD);
+			case EGYPTIAN_ARCHER -> ModEntities.EGYPTIAN_ARCHER_ECHO.create(this.minecraft.level, EntitySpawnReason.LOAD);
+		};
 	}
 
 	private void renderAttributeIcons(GuiGraphicsExtractor graphics, boolean active) {
@@ -403,7 +414,10 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	}
 
 	private void renderSkillIcons(GuiGraphicsExtractor graphics, boolean active) {
-		Identifier[] icons = SKILL_ICONS[Math.clamp(this.menu.heroType(), 0, SKILL_ICONS.length - 1)];
+		Identifier[] icons = SKILL_ICONS[Math.clamp(this.menu.heroType(), 0, SKILL_ICONS.length - 1)].clone();
+		if (this.menu.heroType() == EchoHeroType.EGYPTIAN_ARCHER.ordinal() && icons.length > 1) {
+			icons[1] = this.menu.egyptianArrowMode() == 2 ? EGYPTIAN_CONE_ARROW_ICON : EGYPTIAN_LEAF_ARROW_ICON;
+		}
 		int count = active ? Math.min(this.menu.skillCount(), icons.length) : 0;
 		for (int index = 0; index < 5; index++) {
 			Identifier frame = active && index < count ? SKILL_OCCUPIED : SKILL_EMPTY;
@@ -416,8 +430,11 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			int iconX = x(Element.SKILLS, 63 + index * 22);
 			int iconY = y(Element.SKILLS, 73);
 			blit16(graphics, icons[index], iconX, iconY);
-			boolean activeChargeSkill = this.menu.heroType() == EchoHeroType.AZTEC_WARRIOR.ordinal() ? index == 3 : index == 1;
-			int maximumCharges = this.menu.heroType() == EchoHeroType.AZTEC_WARRIOR.ordinal() ? 2 : 3;
+			boolean activeChargeSkill = switch (EchoHeroType.values()[Math.clamp(this.menu.heroType(), 0, EchoHeroType.values().length - 1)]) {
+				case ROMAN_LEGIONARY -> index == 1;
+				case AZTEC_WARRIOR, EGYPTIAN_ARCHER -> index == 3;
+			};
+			int maximumCharges = this.menu.heroType() == EchoHeroType.ROMAN_LEGIONARY.ordinal() ? 3 : 2;
 			if (activeChargeSkill && this.menu.shieldCharges() < maximumCharges) {
 				renderRadialCooldown(graphics, iconX, iconY, this.menu.shieldChargeProgress() / 1000.0F);
 			}
@@ -636,10 +653,28 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			}
 
 			boolean aztec = this.menu.heroType() == EchoHeroType.AZTEC_WARRIOR.ordinal();
+			boolean egyptian = this.menu.heroType() == EchoHeroType.EGYPTIAN_ARCHER.ordinal();
 			if (aztec) {
 				for (int index = 0; index < Math.min(this.menu.skillCount(), AZTEC_SKILL_TRANSLATION_KEYS.length); index++) {
 					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
 						showAztecSkillTooltip(graphics, mouseX, mouseY, index, (this.menu.enabledSkills() & 1 << index) != 0);
+						return;
+					}
+				}
+			} else if (egyptian) {
+				String[] skillNames = {"赞美猫神", this.menu.egyptianArrowMode() == 2 ? "锥锋箭" : "叶形箭", "战车与齐射之魂", "后撤步"};
+				String[][] skillDescriptions = {
+						{"30格球形范围内的苦力怕无法完成爆炸。", "尝试点燃或受到直接伤害时会慌乱逃窜。"},
+						{"点击循环：关闭 → 叶形箭 → 锥锋箭。", "叶形箭造成流血与减速；锥锋箭忽略35%护甲并可能贯穿。"},
+						{"允许移动射击并保持8—14格距离。", "敌人越多，越可能向另一个目标追加一箭。"},
+						{"敌人靠近4格时向最安全方向跳跃5格。", "拥有2点充能，每6秒恢复1点，并齐射至多6个目标。"}
+				};
+				for (int index = 0; index < Math.min(this.menu.skillCount(), skillNames.length); index++) {
+					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
+						String state = index == 1
+								? "当前：" + switch (this.menu.egyptianArrowMode()) { case 1 -> "叶形箭"; case 2 -> "锥锋箭"; default -> "关闭"; } + "（点击切换）"
+								: ((this.menu.enabledSkills() & 1 << index) != 0 ? "当前：已启用（点击禁用）" : "当前：已禁用（点击启用）");
+						showTooltip(graphics, mouseX, mouseY, skillNames[index], skillDescriptions[index][0], skillDescriptions[index][1], state);
 						return;
 					}
 				}

@@ -5,7 +5,7 @@
     "title": "Echo Archive",
     "displayTitle": "回声档案馆",
     "description": "Echo Warrior 的交互式知识地图",
-    "lastVerified": "2026-08-20"
+    "lastVerified": "2026-08-21"
   },
   "categories": [
     {
@@ -306,7 +306,8 @@
             "title": "当前遗物",
             "items": [
               { "title": "罗马军团兵遗物", "meta": "已实装", "body": "召唤罗马军团兵英灵。", "icon": "/assets/echo-warrior/item/roman_legionary_relic.png" },
-              { "title": "阿兹特克勇士遗物", "meta": "开发版可用", "body": "召唤阿兹特克勇士英灵，保存五项技能开关与追猎充能。", "icon": "/assets/echo-warrior/item/aztec_warrior_relic.png" }
+              { "title": "阿兹特克勇士遗物", "meta": "开发版可用", "body": "召唤阿兹特克勇士英灵，保存五项技能开关与追猎充能。", "icon": "/assets/echo-warrior/item/aztec_warrior_relic.png" },
+              { "title": "埃及弓箭手遗物", "meta": "开发版可用", "body": "召唤埃及弓箭手，保存箭型选择、四项技能状态与后撤步充能。", "icon": "/assets/echo-warrior/item/egyptian_archer_relic.png" }
             ]
           }
         ],
@@ -769,20 +770,79 @@
       }
     },
     {
+      "id": "egyptian_archer",
+      "categoryId": "heroes",
+      "title": "埃及弓箭手",
+      "subtitle": "移动射击、箭型切换与全向后撤",
+      "status": "development",
+      "x": 430,
+      "y": 420,
+      "icon": "/assets/echo-warrior/item/egyptian_archer_relic.png",
+      "symbol": "E",
+      "connections": [
+        { "targetId": "roman_legionary", "kind": "related" },
+        { "targetId": "aztec_warrior", "kind": "related" },
+        { "targetId": "future_roster", "kind": "related" }
+      ],
+      "article": {
+        "summary": "第三位英灵与首位远程战士。以完整拉弓—放箭动作、移动射击和距离控制为核心，并可在普通箭、叶形箭与锥锋箭之间切换。",
+        "tags": ["第三英灵", "远程", "移动射击", "箭型", "开发中"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "基础属性",
+            "items": [
+              { "label": "生命", "value": "28", "note": "满级 56", "icon": "/assets/echo-warrior/gui/attributes/health.png" },
+              { "label": "护甲", "value": "0", "note": "依靠距离控制", "icon": "/assets/echo-warrior/gui/attributes/armor.png" },
+              { "label": "远程攻击", "value": "5", "note": "满级 10", "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png" },
+              { "label": "移速", "value": "0.30", "note": "可移动射击", "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png" },
+              { "label": "射程", "value": "24 格", "note": "尝试保持 8—14 格" },
+              { "label": "攻击间隔", "value": "42 tick", "note": "约 2.1 秒；动画随攻速等比加速" }
+            ]
+          },
+          {
+            "type": "cards",
+            "title": "四个技能槽",
+            "items": [
+              { "title": "赞美猫神", "meta": "30 格球形光环", "body": "苦力怕进入光环后不会立刻逃跑；当其尝试点燃或受到直接伤害时，点燃被取消并进入类似被动动物的慌乱逃窜。技能关闭后保护立即消失，已经开始的慌乱会自然结束。", "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/cat_god.png" },
+              { "title": "叶形箭", "meta": "点击箭型槽切换", "body": "造成正常箭伤害，并施加 4 秒共 2 点流血与 2 秒轻微减速。流血不叠加，只刷新持续时间；黄色粒子构成箭矢尾迹。", "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/leaf_arrow.png" },
+              { "title": "锥锋箭", "meta": "点击箭型槽切换", "body": "结算伤害前忽略 35% 护甲，并有 25% 概率贯穿当前目标、继续命中最多 1 个额外目标；使用黑色主题尾迹。箭型槽可切回关闭，普通箭无特殊尾迹。", "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/cone_arrow.png" },
+              { "title": "战车与齐射之魂", "meta": "可关闭被动", "body": "开启时允许边移动边射击，但只在必要时位移：8 格内风筝撤退，8～20 格且视线通畅时以站立射击为主，超过 20 格或失去视线时才接近或调整位置；撤退遇到一格高障碍时可普通跳跃越过。16 格内至少有两个有效敌人时，追加射击概率为 15% + 每个额外敌人 8%，最高 55%，每次主射击最多追加一箭；成功追加时身体周围会爆发金黄色尘埃粒子。", "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/chariot_volley.png" },
+              { "title": "后撤步", "meta": "2 层充能", "body": "敌人进入 4 格时，在任意角度搜索使自己最远离最近敌人的安全 5 格落点；起跳时锁定面向主要敌人的稳定战斗朝向，落地前不受寻路临时转向影响。跳跃期间向 12 格内至多 6 个可见敌人齐射；每层 6 秒恢复，无安全落点时不消耗充能。", "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/backstep.png" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "伤害与动作规则",
+            "body": "所有直接攻击对亡灵额外造成 20% 伤害，叶形箭的后续流血不享受该增伤。每次远程攻击完整播放 DRAWBOW→SHOOT；基础总周期 2.1 秒，后续攻速变化会等比加速整段动作。战斗中有敌人进入 8 格时会按“正在攻击英灵或主人 → 近期伤害二者 → 距离最近”转火，锁定到其退出 10 格；自身受到伤害且当前目标在 8 格外时，24 格内伤害来源获得 3 秒紧急优先级，但仍让位于 8 格内敌人。转火保留当前拉弓进度，必要时最多保持满弓 0.3 秒等待身体转正。受伤不会用全身 hurt 动画打断拉弓、射箭、近战或后撤步。"
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "临时技能图标",
+            "body": "当前技能图标仅使用项目已有人工绘制资源作占位；正式埃及主题技能图标交付后需要逐项替换。"
+          }
+        ],
+        "related": ["summoner", "roman_legionary", "aztec_warrior", "leveling", "future_roster"]
+      }
+    },
+    {
       "id": "future_roster",
       "categoryId": "heroes",
       "title": "后续英灵候选",
-      "subtitle": "日本、埃及与中国战士",
+      "subtitle": "日本与中国战士",
       "status": "planned",
       "x": 705,
       "y": 210,
       "symbol": "+",
       "connections": [
         { "targetId": "roman_legionary", "kind": "related" },
-        { "targetId": "aztec_warrior", "kind": "related" }
+        { "targetId": "aztec_warrior", "kind": "related" },
+        { "targetId": "egyptian_archer", "kind": "related" }
       ],
       "article": {
-        "summary": "骑士与阵线步枪兵已从当前开发队列移除。后续候选为日本武士、埃及弓箭手和中国武士，但未经后续确认不进入当前必做范围。",
+        "summary": "埃及弓箭手已进入第三英灵的正式开发范围。骑士与阵线步枪兵已从当前开发队列移除；后续候选暂为日本武士和中国武士。",
         "tags": ["候选", "后续", "未排期"],
         "sections": [
           {
@@ -790,12 +850,11 @@
             "title": "候选方向",
             "items": [
               { "title": "日本武士", "meta": "候选", "body": "具体定位和技能待后续冻结。" },
-              { "title": "埃及弓箭手", "meta": "候选", "body": "可作为远程英灵方向，尚未排期。" },
               { "title": "中国武士", "meta": "候选", "body": "具体时代、武器与战斗定位待确认。" }
             ]
           }
         ],
-        "related": ["roman_legionary", "aztec_warrior"]
+        "related": ["roman_legionary", "aztec_warrior", "egyptian_archer"]
       }
     },
     {

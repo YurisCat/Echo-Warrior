@@ -23,6 +23,10 @@ public final class ModItems {
 			"aztec_warrior_relic",
 			properties -> new EchoRelicItem(properties.stacksTo(1), EchoHeroType.AZTEC_WARRIOR)
 	);
+	public static final EchoRelicItem EGYPTIAN_ARCHER_RELIC = register(
+			"egyptian_archer_relic",
+			properties -> new EchoRelicItem(properties.stacksTo(1), EchoHeroType.EGYPTIAN_ARCHER)
+	);
 
 	private ModItems() {
 	}

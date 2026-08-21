@@ -1,8 +1,10 @@
 {
   "entity.echo_warrior.roman_legionary_echo": "Roman Legionary Echo",
   "entity.echo_warrior.aztec_warrior_echo": "Aztec Warrior Echo",
+  "entity.echo_warrior.egyptian_archer_echo": "Egyptian Archer Echo",
   "item.echo_warrior.roman_legionary_relic": "Roman Legionary Relic",
   "item.echo_warrior.aztec_warrior_relic": "Aztec Warrior Relic",
+  "item.echo_warrior.egyptian_archer_relic": "Egyptian Archer Relic",
   "item.echo_warrior.test_echo_summoner": "Test Echo Summoner",
   "itemGroup.echo_warrior.echo_warrior": "Echo Warrior",
   "effect.echo_warrior.soldier_formation": "Soldier Formation (Legacy)",
@@ -10,6 +12,7 @@
   "effect.echo_warrior.shields_raised": "Raise Shields!",
   "effect.echo_warrior.huitzilopochtli_blessing": "Huitzilopochtli's Blessing",
   "effect.echo_warrior.obsidian_wound": "Obsidian Wound",
+  "effect.echo_warrior.bleeding": "Bleeding",
   "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.name": "Quetzalcoatl's Curse",
   "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.description.1": "When an ally is attacked, the attacker may be cursed and weakened.",
   "gui.echo_warrior.summoner.skill.aztec.huitzilopochtlis_blessing.name": "Huitzilopochtli's Blessing",
@@ -28,4 +31,8 @@
   "gui.echo_warrior.summoner.skill.disabled": "Status: Disabled (click to enable)",
   "death.attack.obsidian_wound": "%1$s bled out from an obsidian wound",
   "death.attack.obsidian_wound.player": "%1$s bled out from an obsidian wound while fighting %2$s"
+  ,"death.attack.bleeding": "%1$s bled out",
+  "death.attack.bleeding.player": "%1$s bled out while fighting %2$s",
+  "death.attack.armor_piercing_arrow": "%1$s was slain by a cone-point arrow",
+  "death.attack.armor_piercing_arrow.player": "%1$s was slain by %2$s's cone-point arrow"
 }

@@ -22,6 +22,10 @@ public final class EchoRelicState {
 	private static final String PURSUIT_CHARGES_KEY = "EchoWarriorPursuitCharges";
 	private static final String PURSUIT_CHARGE_TIME_KEY = "EchoWarriorPursuitChargeTime";
 	private static final String PURSUIT_COOLDOWN_END_KEY = "EchoWarriorPursuitCooldownEnd";
+	private static final String EGYPTIAN_ARROW_MODE_KEY = "EchoWarriorEgyptianArrowMode";
+	private static final String EGYPTIAN_ARROW_SWITCH_TIME_KEY = "EchoWarriorEgyptianArrowSwitchTime";
+	private static final String BACKSTEP_CHARGES_KEY = "EchoWarriorBackstepCharges";
+	private static final String BACKSTEP_CHARGE_TIME_KEY = "EchoWarriorBackstepChargeTime";
 
 	public static final int SKILL_COUNT = 5;
 	public static final int ALL_SKILLS_ENABLED = (1 << SKILL_COUNT) - 1;
@@ -29,6 +33,9 @@ public final class EchoRelicState {
 	public static final long SHIELD_CHARGE_TICKS = 100L;
 	public static final int MAX_PURSUIT_CHARGES = 2;
 	public static final long PURSUIT_CHARGE_TICKS = 120L;
+	public static final int MAX_BACKSTEP_CHARGES = 2;
+	public static final long BACKSTEP_CHARGE_TICKS = 120L;
+	public static final long EGYPTIAN_ARROW_SWITCH_COOLDOWN_TICKS = 10L;
 
 	private EchoRelicState() {
 	}
@@ -50,13 +57,17 @@ public final class EchoRelicState {
 			tag.putInt(TRAIT_MASK_KEY, traitMask);
 			tag.putInt(ACTIVITY_MODE_KEY, ActivityMode.FOLLOW.ordinal());
 			tag.putInt(ALERT_MODE_KEY, AlertMode.DEFENSIVE.ordinal());
-			tag.putInt(ENABLED_SKILLS_KEY, heroType.allSkillsEnabledMask());
+			tag.putInt(ENABLED_SKILLS_KEY, heroType.defaultEnabledSkillsMask());
 			tag.putInt(SHIELD_CHARGES_KEY, MAX_SHIELD_CHARGES);
 			tag.putLong(SHIELD_CHARGE_TIME_KEY, gameTime);
 			tag.putLong(LEGION_COOLDOWN_END_KEY, 0L);
 			tag.putInt(PURSUIT_CHARGES_KEY, MAX_PURSUIT_CHARGES);
 			tag.putLong(PURSUIT_CHARGE_TIME_KEY, gameTime);
 			tag.putLong(PURSUIT_COOLDOWN_END_KEY, 0L);
+			tag.putInt(EGYPTIAN_ARROW_MODE_KEY, EgyptianArrowMode.OFF.ordinal());
+			tag.putLong(EGYPTIAN_ARROW_SWITCH_TIME_KEY, Long.MIN_VALUE / 2L);
+			tag.putInt(BACKSTEP_CHARGES_KEY, MAX_BACKSTEP_CHARGES);
+			tag.putLong(BACKSTEP_CHARGE_TIME_KEY, gameTime);
 		});
 		return true;
 	}
@@ -130,8 +141,9 @@ public final class EchoRelicState {
 	}
 
 	public static int enabledSkills(ItemStack relic) {
-		int allowed = EchoHeroType.fromRelic(relic).allSkillsEnabledMask();
-		return intValue(relic, ENABLED_SKILLS_KEY, allowed) & allowed;
+		EchoHeroType heroType = EchoHeroType.fromRelic(relic);
+		int allowed = heroType.allSkillsEnabledMask();
+		return intValue(relic, ENABLED_SKILLS_KEY, heroType.defaultEnabledSkillsMask()) & allowed;
 	}
 
 	public static boolean skillEnabled(ItemStack relic, int skill) {
@@ -145,6 +157,27 @@ public final class EchoRelicState {
 		}
 		int updated = enabledSkills(relic) ^ 1 << skill;
 		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> tag.putInt(ENABLED_SKILLS_KEY, updated));
+	}
+
+	public static EgyptianArrowMode egyptianArrowMode(ItemStack relic) {
+		if (EchoHeroType.fromRelic(relic) != EchoHeroType.EGYPTIAN_ARCHER) return EgyptianArrowMode.OFF;
+		return EgyptianArrowMode.byOrdinal(intValue(relic, EGYPTIAN_ARROW_MODE_KEY, EgyptianArrowMode.OFF.ordinal()));
+	}
+
+	public static boolean cycleEgyptianArrowMode(ItemStack relic, long gameTime) {
+		if (EchoHeroType.fromRelic(relic) != EchoHeroType.EGYPTIAN_ARCHER) return false;
+		long previous = longValue(relic, EGYPTIAN_ARROW_SWITCH_TIME_KEY, Long.MIN_VALUE / 2L);
+		if (gameTime - previous < EGYPTIAN_ARROW_SWITCH_COOLDOWN_TICKS) return false;
+		EgyptianArrowMode next = egyptianArrowMode(relic).next();
+		int updatedSkills = next == EgyptianArrowMode.OFF
+				? enabledSkills(relic) & ~(1 << 1)
+				: enabledSkills(relic) | 1 << 1;
+		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> {
+			tag.putInt(EGYPTIAN_ARROW_MODE_KEY, next.ordinal());
+			tag.putLong(EGYPTIAN_ARROW_SWITCH_TIME_KEY, gameTime);
+			tag.putInt(ENABLED_SKILLS_KEY, updatedSkills);
+		});
+		return true;
 	}
 
 	public static int shieldCharges(ItemStack relic, long gameTime) {
@@ -191,6 +224,24 @@ public final class EchoRelicState {
 	private static void updatePursuitCharges(ItemStack relic, long gameTime) {
 		updateCharges(relic, gameTime, PURSUIT_CHARGES_KEY, PURSUIT_CHARGE_TIME_KEY,
 				MAX_PURSUIT_CHARGES, PURSUIT_CHARGE_TICKS);
+	}
+
+	public static int backstepCharges(ItemStack relic, long gameTime) {
+		updateCharges(relic, gameTime, BACKSTEP_CHARGES_KEY, BACKSTEP_CHARGE_TIME_KEY,
+				MAX_BACKSTEP_CHARGES, BACKSTEP_CHARGE_TICKS);
+		return intValue(relic, BACKSTEP_CHARGES_KEY, MAX_BACKSTEP_CHARGES);
+	}
+
+	public static int backstepChargeProgress(ItemStack relic, long gameTime) {
+		int charges = backstepCharges(relic, gameTime);
+		if (charges >= MAX_BACKSTEP_CHARGES) return 1000;
+		long last = longValue(relic, BACKSTEP_CHARGE_TIME_KEY, gameTime);
+		return (int)Math.clamp((gameTime - last) * 1000L / BACKSTEP_CHARGE_TICKS, 0L, 1000L);
+	}
+
+	public static boolean consumeBackstepCharge(ItemStack relic, long gameTime) {
+		return consumeCharge(relic, gameTime, BACKSTEP_CHARGES_KEY, BACKSTEP_CHARGE_TIME_KEY,
+				MAX_BACKSTEP_CHARGES, BACKSTEP_CHARGE_TICKS);
 	}
 
 	private static boolean consumeCharge(
@@ -249,21 +300,27 @@ public final class EchoRelicState {
 	}
 
 	public static int activeSkillCharges(ItemStack relic, long gameTime) {
-		return EchoHeroType.fromRelic(relic) == EchoHeroType.AZTEC_WARRIOR
-				? pursuitCharges(relic, gameTime)
-				: shieldCharges(relic, gameTime);
+		return switch (EchoHeroType.fromRelic(relic)) {
+			case ROMAN_LEGIONARY -> shieldCharges(relic, gameTime);
+			case AZTEC_WARRIOR -> pursuitCharges(relic, gameTime);
+			case EGYPTIAN_ARCHER -> backstepCharges(relic, gameTime);
+		};
 	}
 
 	public static int activeSkillMaximumCharges(ItemStack relic) {
-		return EchoHeroType.fromRelic(relic) == EchoHeroType.AZTEC_WARRIOR
-				? MAX_PURSUIT_CHARGES
-				: MAX_SHIELD_CHARGES;
+		return switch (EchoHeroType.fromRelic(relic)) {
+			case ROMAN_LEGIONARY -> MAX_SHIELD_CHARGES;
+			case AZTEC_WARRIOR -> MAX_PURSUIT_CHARGES;
+			case EGYPTIAN_ARCHER -> MAX_BACKSTEP_CHARGES;
+		};
 	}
 
 	public static int activeSkillChargeProgress(ItemStack relic, long gameTime) {
-		return EchoHeroType.fromRelic(relic) == EchoHeroType.AZTEC_WARRIOR
-				? pursuitChargeProgress(relic, gameTime)
-				: shieldChargeProgress(relic, gameTime);
+		return switch (EchoHeroType.fromRelic(relic)) {
+			case ROMAN_LEGIONARY -> shieldChargeProgress(relic, gameTime);
+			case AZTEC_WARRIOR -> pursuitChargeProgress(relic, gameTime);
+			case EGYPTIAN_ARCHER -> backstepChargeProgress(relic, gameTime);
+		};
 	}
 
 	public static long legionCooldownEnd(ItemStack relic) {
@@ -343,6 +400,18 @@ public final class EchoRelicState {
 		AGGRESSIVE, DEFENSIVE, PEACEFUL;
 
 		public static AlertMode byOrdinal(int value) {
+			return values()[Math.clamp(value, 0, values().length - 1)];
+		}
+	}
+
+	public enum EgyptianArrowMode {
+		OFF, LEAF, CONE;
+
+		public EgyptianArrowMode next() {
+			return values()[(this.ordinal() + 1) % values().length];
+		}
+
+		public static EgyptianArrowMode byOrdinal(int value) {
 			return values()[Math.clamp(value, 0, values().length - 1)];
 		}
 	}

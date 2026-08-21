@@ -9,6 +9,14 @@ public final class ModDamageTypes {
 			Registries.DAMAGE_TYPE,
 			EchoWarrior.id("obsidian_wound")
 	);
+	public static final ResourceKey<DamageType> BLEEDING = ResourceKey.create(
+			Registries.DAMAGE_TYPE,
+			EchoWarrior.id("bleeding")
+	);
+	public static final ResourceKey<DamageType> ARMOR_PIERCING_ARROW = ResourceKey.create(
+			Registries.DAMAGE_TYPE,
+			EchoWarrior.id("armor_piercing_arrow")
+	);
 
 	private ModDamageTypes() {
 	}

@@ -20,6 +20,9 @@
       "com.yuriscat.echowarrior.client.EchoWarriorClient"
     ]
   },
+  "mixins": [
+    "echo_warrior.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.19.3",
     "minecraft": "~26.1.2",

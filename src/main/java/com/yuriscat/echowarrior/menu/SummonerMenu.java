@@ -77,6 +77,7 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	private final DataSlot enabledSkills = DataSlot.standalone();
 	private final DataSlot heroType = DataSlot.standalone();
 	private final DataSlot skillCount = DataSlot.standalone();
+	private final DataSlot egyptianArrowMode = DataSlot.standalone();
 	private final DataSlot shieldCharges = DataSlot.standalone();
 	private final DataSlot shieldChargeProgress = DataSlot.standalone();
 	private final DataSlot legionCooldownTicks = DataSlot.standalone();
@@ -137,6 +138,7 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		this.addDataSlot(this.enabledSkills);
 		this.addDataSlot(this.heroType);
 		this.addDataSlot(this.skillCount);
+		this.addDataSlot(this.egyptianArrowMode);
 		this.addDataSlot(this.shieldCharges);
 		this.addDataSlot(this.shieldChargeProgress);
 		this.addDataSlot(this.legionCooldownTicks);
@@ -277,6 +279,7 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			EchoHeroType currentHero = EchoHeroType.fromRelic(relic);
 			this.heroType.set(currentHero.ordinal());
 			this.skillCount.set(currentHero.skillCount());
+			this.egyptianArrowMode.set(EchoRelicState.egyptianArrowMode(relic).ordinal());
 			this.shieldCharges.set(EchoRelicState.activeSkillCharges(relic, serverPlayer.level().getGameTime()));
 			this.shieldChargeProgress.set(EchoRelicState.activeSkillChargeProgress(relic, serverPlayer.level().getGameTime()));
 			if (!summoner.isEmpty()) {
@@ -304,6 +307,7 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			this.enabledSkills.set(EchoRelicState.ALL_SKILLS_ENABLED);
 			this.heroType.set(0);
 			this.skillCount.set(0);
+			this.egyptianArrowMode.set(0);
 			this.shieldCharges.set(0);
 			this.shieldChargeProgress.set(0);
 			this.legionCooldownTicks.set(0);
@@ -365,7 +369,12 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			return true;
 		}
 		if (buttonId >= BUTTON_SKILL_START && buttonId < BUTTON_SKILL_START + EchoHeroType.fromRelic(relic).skillCount()) {
-			EchoRelicState.toggleSkill(relic, buttonId - BUTTON_SKILL_START);
+			int skill = buttonId - BUTTON_SKILL_START;
+			if (EchoHeroType.fromRelic(relic) == EchoHeroType.EGYPTIAN_ARCHER && skill == 1) {
+				if (!EchoRelicState.cycleEgyptianArrowMode(relic, serverPlayer.level().getGameTime())) return true;
+			} else {
+				EchoRelicState.toggleSkill(relic, skill);
+			}
 			var spirit = TestEchoSummonerItem.findBoundSpirit(serverPlayer.level(), summoner);
 			if (spirit != null) spirit.applyRelicState(relic, false);
 			this.summonerContainer.setChanged();
@@ -535,6 +544,7 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	public int enabledSkills() { return this.enabledSkills.get(); }
 	public int heroType() { return this.heroType.get(); }
 	public int skillCount() { return this.skillCount.get(); }
+	public int egyptianArrowMode() { return this.egyptianArrowMode.get(); }
 	public int shieldCharges() { return this.shieldCharges.get(); }
 	public int shieldChargeProgress() { return this.shieldChargeProgress.get(); }
 	public int legionCooldownTicks() { return this.legionCooldownTicks.get(); }

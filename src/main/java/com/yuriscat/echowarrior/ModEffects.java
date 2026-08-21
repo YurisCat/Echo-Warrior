@@ -3,6 +3,7 @@ package com.yuriscat.echowarrior;
 import com.yuriscat.echowarrior.effect.SoldierFormationMobEffect;
 import com.yuriscat.echowarrior.effect.ObsidianWoundMobEffect;
 import com.yuriscat.echowarrior.effect.SunBlessingMobEffect;
+import com.yuriscat.echowarrior.effect.BleedingMobEffect;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -33,6 +34,11 @@ public final class ModEffects {
 			BuiltInRegistries.MOB_EFFECT,
 			EchoWarrior.id("obsidian_wound"),
 			new ObsidianWoundMobEffect()
+	);
+	public static final Holder<MobEffect> BLEEDING = Registry.registerForHolder(
+			BuiltInRegistries.MOB_EFFECT,
+			EchoWarrior.id("bleeding"),
+			new BleedingMobEffect()
 	);
 
 	private ModEffects() {

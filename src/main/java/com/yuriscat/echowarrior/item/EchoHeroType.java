@@ -26,6 +26,18 @@ public enum EchoHeroType {
 			0.20,
 			29,
 			5
+	),
+	EGYPTIAN_ARCHER(
+			"egyptian_archer",
+			"埃及弓箭手",
+			"Egyptian Archer",
+			28.0,
+			5.0,
+			0.0,
+			0.30,
+			0.15,
+			42,
+			4
 	);
 
 	private final String id;
@@ -74,6 +86,11 @@ public enum EchoHeroType {
 	public int baseAttackIntervalTicks() { return this.baseAttackIntervalTicks; }
 	public int skillCount() { return this.skillCount; }
 	public int allSkillsEnabledMask() { return (1 << this.skillCount) - 1; }
+	public int defaultEnabledSkillsMask() {
+		return this == EGYPTIAN_ARCHER
+				? this.allSkillsEnabledMask() & ~(1 << 1)
+				: this.allSkillsEnabledMask();
+	}
 
 	public static EchoHeroType fromRelic(ItemStack relic) {
 		return relic.getItem() instanceof EchoRelicItem echoRelic
