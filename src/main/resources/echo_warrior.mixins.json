@@ -3,7 +3,11 @@
   "package": "com.yuriscat.echowarrior.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "CreeperMixin"
+    "CreeperMixin",
+    "LivingEntityMixin"
+  ],
+  "client": [
+    "ItemInHandRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

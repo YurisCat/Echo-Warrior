@@ -81,6 +81,13 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			"gui.echo_warrior.summoner.skill.aztec.macuahuitl"
 	};
 	private static final int[] AZTEC_SKILL_DESCRIPTION_LINES = {1, 2, 2, 2, 2};
+	private static final String[] EGYPTIAN_SKILL_TRANSLATION_KEYS = {
+			"gui.echo_warrior.summoner.skill.egyptian.cat_god",
+			"gui.echo_warrior.summoner.skill.egyptian.leaf_arrow",
+			"gui.echo_warrior.summoner.skill.egyptian.chariot_volley",
+			"gui.echo_warrior.summoner.skill.egyptian.backstep"
+	};
+	private static final int[] EGYPTIAN_SKILL_DESCRIPTION_LINES = {3, 2, 2, 2};
 	private static final Identifier[] TALENT_ICONS = {
 			icon("traits/bad_temper.png"),
 			icon("traits/lazy.png"),
@@ -128,11 +135,11 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	private int dragStartOffsetX;
 	private int dragStartOffsetY;
 	private boolean summonButtonHeld;
-	private int dismissConfirmTicks;
 	private int feedbackTicks;
 	private int lastFeedbackValue;
 	private int feedbackCode;
 	private final List<FuelTransferParticle> fuelTransferParticles = new java.util.ArrayList<>();
+	private final List<ButtonSoulParticle> buttonSoulParticles = new java.util.ArrayList<>();
 
 	public SummonerPreviewScreen(SummonerMenu menu, Inventory inventory, Component title) {
 		super(menu, inventory, title, IMAGE_WIDTH, IMAGE_HEIGHT);
@@ -252,6 +259,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		renderSummonButton(graphics, relicLoaded, mouseX, mouseY);
 		renderProgressFills(graphics, relicLoaded);
 		renderFuelTransferParticles(graphics);
+		renderButtonSoulParticles(graphics);
 		renderEmptySlotHints(graphics);
 	}
 
@@ -519,7 +527,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		int buttonX = x(Element.SUMMON_BUTTON, 178);
 		int buttonY = y(Element.SUMMON_BUTTON, 143);
 		Identifier texture = SUMMON_DEFAULT;
-		if (active && (this.summonButtonHeld || this.dismissConfirmTicks > 0 && this.menu.isSpiritPresent())) {
+		if (active && this.summonButtonHeld) {
 			texture = SUMMON_PRESSED;
 		} else if (active && isInside(mouseX, mouseY, buttonX, buttonY, 56, 19)) {
 			texture = SUMMON_HOVER;
@@ -588,6 +596,43 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			int lifetime = 8 + this.minecraft.level.getRandom().nextInt(5);
 			int color = soulSand ? (index % 2 == 0 ? 0xFF77D6CE : 0xFFB7F4E9) : (index % 2 == 0 ? 0xFF8B4A42 : 0xFFB66A55);
 			this.fuelTransferParticles.add(new FuelTransferParticle(startX, startY, endX, endY, 3 + this.minecraft.level.getRandom().nextInt(5), lifetime, color));
+		}
+	}
+
+	private void renderButtonSoulParticles(GuiGraphicsExtractor graphics) {
+		for (ButtonSoulParticle particle : this.buttonSoulParticles) {
+			float progress = particle.age / (float)particle.lifetime;
+			double eased = progress * progress * (3.0 - 2.0 * progress);
+			double x = particle.startX + (particle.endX - particle.startX) * eased;
+			double y = particle.startY + (particle.endY - particle.startY) * eased
+					- Math.sin(progress * Math.PI) * particle.arc;
+			int alpha = Math.clamp(Math.round(255.0F * (1.0F - progress)), 32, 255);
+			int color = alpha << 24 | particle.color & 0xFFFFFF;
+			int size = progress < 0.55F ? 2 : 1;
+			int px = (int)Math.round(x);
+			int py = (int)Math.round(y);
+			graphics.fill(px, py, px + size, py + size, color);
+			if (size > 1) graphics.fill(px, py - 1, px + 1, py, color);
+		}
+	}
+
+	private void spawnButtonSoulParticles(boolean dismissing) {
+		if (this.minecraft.level == null) return;
+		var random = this.minecraft.level.getRandom();
+		int centerX = x(Element.SUMMON_BUTTON, 206);
+		int centerY = y(Element.SUMMON_BUTTON, 152);
+		int count = dismissing ? 18 : 14;
+		for (int index = 0; index < count && this.buttonSoulParticles.size() < 36; index++) {
+			double offsetX = random.nextInt(37) - 18;
+			double offsetY = random.nextInt(17) - 8;
+			double startX = dismissing ? centerX + offsetX : centerX + random.nextInt(7) - 3;
+			double startY = dismissing ? centerY + offsetY : centerY + random.nextInt(5) - 2;
+			double endX = dismissing ? centerX : centerX + offsetX;
+			double endY = dismissing ? centerY : centerY + offsetY;
+			int color = index % 3 == 0 ? 0x61F4EB : index % 3 == 1 ? 0x50BFE6 : 0x477DE1;
+			int lifetime = 12 + random.nextInt(8);
+			double arc = (random.nextDouble() - 0.5) * 5.0;
+			this.buttonSoulParticles.add(new ButtonSoulParticle(startX, startY, endX, endY, arc, lifetime, color));
 		}
 	}
 
@@ -662,19 +707,10 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					}
 				}
 			} else if (egyptian) {
-				String[] skillNames = {"赞美猫神", this.menu.egyptianArrowMode() == 2 ? "锥锋箭" : "叶形箭", "战车与齐射之魂", "后撤步"};
-				String[][] skillDescriptions = {
-						{"30格球形范围内的苦力怕无法完成爆炸。", "尝试点燃或受到直接伤害时会慌乱逃窜。"},
-						{"点击循环：关闭 → 叶形箭 → 锥锋箭。", "叶形箭造成流血与减速；锥锋箭忽略35%护甲并可能贯穿。"},
-						{"允许移动射击并保持8—14格距离。", "敌人越多，越可能向另一个目标追加一箭。"},
-						{"敌人靠近4格时向最安全方向跳跃5格。", "拥有2点充能，每6秒恢复1点，并齐射至多6个目标。"}
-				};
-				for (int index = 0; index < Math.min(this.menu.skillCount(), skillNames.length); index++) {
+				for (int index = 0; index < Math.min(this.menu.skillCount(), EGYPTIAN_SKILL_TRANSLATION_KEYS.length); index++) {
 					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
-						String state = index == 1
-								? "当前：" + switch (this.menu.egyptianArrowMode()) { case 1 -> "叶形箭"; case 2 -> "锥锋箭"; default -> "关闭"; } + "（点击切换）"
-								: ((this.menu.enabledSkills() & 1 << index) != 0 ? "当前：已启用（点击禁用）" : "当前：已禁用（点击启用）");
-						showTooltip(graphics, mouseX, mouseY, skillNames[index], skillDescriptions[index][0], skillDescriptions[index][1], state);
+						showEgyptianSkillTooltip(graphics, mouseX, mouseY, index,
+								(this.menu.enabledSkills() & 1 << index) != 0);
 						return;
 					}
 				}
@@ -800,6 +836,30 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
 	}
 
+	private void showEgyptianSkillTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int skill, boolean enabled) {
+		String key = skill == 1 && this.menu.egyptianArrowMode() == 2
+				? "gui.echo_warrior.summoner.skill.egyptian.cone_arrow"
+				: EGYPTIAN_SKILL_TRANSLATION_KEYS[skill];
+		List<Component> lines = new java.util.ArrayList<>();
+		lines.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
+		for (int line = 1; line <= EGYPTIAN_SKILL_DESCRIPTION_LINES[skill]; line++) {
+			lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
+		}
+		if (skill == 1) {
+			String stateKey = switch (this.menu.egyptianArrowMode()) {
+				case 1 -> "gui.echo_warrior.summoner.skill.egyptian.arrow_mode.leaf";
+				case 2 -> "gui.echo_warrior.summoner.skill.egyptian.arrow_mode.cone";
+				default -> "gui.echo_warrior.summoner.skill.egyptian.arrow_mode.off";
+			};
+			lines.add(Component.translatable(stateKey).withStyle(ChatFormatting.GRAY));
+		} else {
+			lines.add(Component.translatable(enabled
+					? "gui.echo_warrior.summoner.skill.enabled"
+					: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
+		}
+		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
+	}
+
 	private void showTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, String[] tooltip) {
 		if (tooltip.length == 0) {
 			return;
@@ -817,7 +877,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			return "需要遗物";
 		}
 		if (this.menu.isSpiritPresent()) {
-			return this.dismissConfirmTicks > 0 ? "再次确认" : "收回英灵";
+			return "收回英灵";
 		}
 		return "召唤英灵";
 	}
@@ -830,12 +890,9 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					: new String[] {"召唤英灵", "需要先在右下角装入英灵遗物。", feedback};
 		}
 		if (this.menu.isSpiritPresent()) {
-			String instruction = this.dismissConfirmTicks > 0
-					? "再次点击会将当前英灵收回并遣散。"
-					: "点击一次进入确认状态，3秒内再次点击执行收回。";
 			return feedback == null
-					? new String[] {"收回英灵", instruction}
-					: new String[] {"收回英灵", instruction, feedback};
+					? new String[] {"收回英灵", "点击后立即将当前英灵收回并遣散。"}
+					: new String[] {"收回英灵", "点击后立即将当前英灵收回并遣散。", feedback};
 		}
 		return feedback == null
 				? new String[] {"召唤英灵", "将英灵召唤到玩家前方，界面保持开启。"}
@@ -863,16 +920,11 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	@Override
 	protected void containerTick() {
 		super.containerTick();
-		if (this.dismissConfirmTicks > 0) {
-			this.dismissConfirmTicks--;
-		}
 		if (this.feedbackTicks > 0) {
 			this.feedbackTicks--;
 		}
 		this.fuelTransferParticles.removeIf(particle -> ++particle.age > particle.lifetime);
-		if (!this.menu.isSpiritPresent()) {
-			this.dismissConfirmTicks = 0;
-		}
+		this.buttonSoulParticles.removeIf(particle -> ++particle.age > particle.lifetime);
 
 		int feedbackValue = this.menu.actionFeedbackValue();
 		if (feedbackValue != 0 && feedbackValue != this.lastFeedbackValue) {
@@ -882,6 +934,8 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				if (this.minecraft.level != null) spawnFuelTransferParticles(this.feedbackCode == SummonerMenu.ACTION_FUEL_SOUL_SAND);
 				this.feedbackTicks = 0;
 			} else {
+				if (this.feedbackCode == SummonerMenu.ACTION_SUMMONED) spawnButtonSoulParticles(false);
+				else if (this.feedbackCode == SummonerMenu.ACTION_DISMISSED) spawnButtonSoulParticles(true);
 				this.feedbackTicks = 60;
 			}
 		}
@@ -898,6 +952,28 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		private int age;
 
 		private FuelTransferParticle(int startX, int startY, int endX, int endY, int arc, int lifetime, int color) {
+			this.startX = startX;
+			this.startY = startY;
+			this.endX = endX;
+			this.endY = endY;
+			this.arc = arc;
+			this.lifetime = lifetime;
+			this.color = color;
+		}
+	}
+
+	private static final class ButtonSoulParticle {
+		private final double startX;
+		private final double startY;
+		private final double endX;
+		private final double endY;
+		private final double arc;
+		private final int lifetime;
+		private final int color;
+		private int age;
+
+		private ButtonSoulParticle(double startX, double startY, double endX, double endY,
+				double arc, int lifetime, int color) {
 			this.startX = startX;
 			this.startY = startY;
 			this.endX = endX;
@@ -986,13 +1062,6 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				}
 				if (isInside(event.x(), event.y(), x(Element.SUMMON_BUTTON, 178), y(Element.SUMMON_BUTTON, 143), 56, 19)) {
 					this.summonButtonHeld = true;
-					if (this.menu.isSpiritPresent() && hasRelicLoaded()) {
-						if (this.dismissConfirmTicks <= 0) {
-							this.dismissConfirmTicks = 60;
-							return true;
-						}
-						this.dismissConfirmTicks = 0;
-					}
 					sendSummonAction();
 					return true;
 				}

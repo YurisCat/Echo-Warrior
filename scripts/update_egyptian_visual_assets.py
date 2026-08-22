@@ -50,6 +50,9 @@ DERIVED_ANIMATIONS = {
     f"{NAMES[short_name]}_{layer}"
     for short_name in ("draw_bow", "shoot")
     for layer in ("upper", "lower")
+} | {
+    f"animation.egyptian_archer.bow_recover_{layer}"
+    for layer in ("upper", "lower")
 }
 
 
@@ -84,6 +87,30 @@ def add_ranged_animation_layers(animations: dict) -> None:
         animation_map[f"{source_name}_lower"] = lower
 
 
+def add_bow_recovery_layers(animations: dict) -> None:
+    animation_map = animations.get("animations", {})
+    for layer in ("upper", "lower"):
+        source = animation_map[f"{NAMES['draw_bow']}_{layer}"]
+        recovery = {
+            "animation_length": 0.4,
+            "loop": "once",
+            "bones": {},
+        }
+        for bone, channels in source.get("bones", {}).items():
+            recovered_channels = {}
+            for channel, keyframes in channels.items():
+                if not isinstance(keyframes, dict) or not keyframes:
+                    recovered_channels[channel] = copy.deepcopy(keyframes)
+                    continue
+                ordered = sorted(keyframes.items(), key=lambda entry: float(entry[0]))
+                recovered_channels[channel] = {
+                    "0.0": copy.deepcopy(ordered[-1][1]),
+                    "0.4": copy.deepcopy(ordered[0][1]),
+                }
+            recovery["bones"][bone] = recovered_channels
+        animation_map[f"animation.egyptian_archer.bow_recover_{layer}"] = recovery
+
+
 def main() -> int:
     model = exporter.read_json(BBMODEL)
     model["name"] = "egyptian_archer_echo"
@@ -96,6 +123,7 @@ def main() -> int:
     geometry["minecraft:geometry"][0]["description"]["identifier"] = "geometry.egyptian_archer"
     animations = exporter.export_animations(model)
     add_ranged_animation_layers(animations)
+    add_bow_recovery_layers(animations)
     extract_texture(model)
     exporter.write_json(BBMODEL, model)
     exporter.write_json(GEO, geometry)

@@ -5,6 +5,7 @@ import com.yuriscat.echowarrior.item.EchoRelicItem;
 import com.yuriscat.echowarrior.item.EchoRelicProgress;
 import com.yuriscat.echowarrior.item.EchoRelicState;
 import com.yuriscat.echowarrior.item.EchoHeroType;
+import com.yuriscat.echowarrior.item.EchoSummonerModule;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import com.yuriscat.echowarrior.layout.SummonerLayout;
@@ -569,14 +570,17 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		return stack.getItem() instanceof EchoRelicItem;
 	}
 
-	private static final class ModuleSlot extends Slot {
+	private final class ModuleSlot extends Slot {
+		private final int moduleSlot;
+
 		private ModuleSlot(SimpleContainer container, int slot, int x, int y) {
 			super(container, slot, x, y);
+			this.moduleSlot = slot;
 		}
 
 		@Override
 		public boolean mayPlace(ItemStack stack) {
-			return false;
+			return EchoSummonerModule.canInstall(stack, currentSummonerStack(), this.moduleSlot, summonerContainer);
 		}
 	}
 

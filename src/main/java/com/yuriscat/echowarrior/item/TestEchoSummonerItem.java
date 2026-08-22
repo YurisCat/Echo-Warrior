@@ -3,6 +3,7 @@ package com.yuriscat.echowarrior.item;
 import com.yuriscat.echowarrior.ModEntities;
 import com.yuriscat.echowarrior.menu.SummonerMenu;
 import com.yuriscat.echowarrior.entity.EchoWarriorEntity;
+import com.yuriscat.echowarrior.entity.EchoCombatEvents;
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.BlockPos;
@@ -20,8 +21,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ClickAction;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
@@ -90,6 +94,66 @@ public final class TestEchoSummonerItem extends Item {
 		return summon(serverLevel, player, stack) == SummonResult.SUMMONED
 				? InteractionResult.SUCCESS
 				: InteractionResult.FAIL;
+	}
+
+	@Override
+	public boolean overrideOtherStackedOnMe(
+			ItemStack self,
+			ItemStack other,
+			Slot slot,
+			ClickAction clickAction,
+			Player player,
+			SlotAccess carriedItem
+	) {
+		if (clickAction != ClickAction.PRIMARY || other.isEmpty()) return false;
+		if (!slot.allowModification(player)) {
+			playInsertionSound(player, false);
+			return true;
+		}
+		getOrCreateSummonerId(self);
+		boolean inserted = insertIntoInternalSlot(self, other);
+		playInsertionSound(player, inserted);
+		if (player.containerMenu != null) player.containerMenu.broadcastChanges();
+		return true;
+	}
+
+	private static boolean insertIntoInternalSlot(ItemStack summoner, ItemStack carried) {
+		SimpleContainer contents = new SimpleContainer(SummonerMenu.CUSTOM_SLOT_COUNT);
+		summoner.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyInto(contents.getItems());
+		int inserted = 0;
+		if (SummonerFuel.isFuel(carried)) {
+			ItemStack stored = contents.getItem(SummonerMenu.FUEL_SLOT);
+			if (stored.isEmpty()) {
+				inserted = Math.min(carried.getCount(), carried.getMaxStackSize());
+				contents.setItem(SummonerMenu.FUEL_SLOT, carried.copyWithCount(inserted));
+			} else if (ItemStack.isSameItemSameComponents(stored, carried)) {
+				inserted = Math.min(carried.getCount(), stored.getMaxStackSize() - stored.getCount());
+				if (inserted > 0) stored.grow(inserted);
+			}
+		} else if (carried.getItem() instanceof EchoRelicItem) {
+			if (contents.getItem(SummonerMenu.RELIC_SLOT).isEmpty()) {
+				inserted = 1;
+				contents.setItem(SummonerMenu.RELIC_SLOT, carried.copyWithCount(1));
+			}
+		} else if (EchoSummonerModule.isModule(carried)) {
+			for (int moduleSlot = 0; moduleSlot < SummonerMenu.MODULE_SLOT_COUNT; moduleSlot++) {
+				if (!contents.getItem(moduleSlot).isEmpty()
+						|| !EchoSummonerModule.canInstall(carried, summoner, moduleSlot, contents)) continue;
+				inserted = 1;
+				contents.setItem(moduleSlot, carried.copyWithCount(1));
+				break;
+			}
+		}
+		if (inserted <= 0) return false;
+		carried.shrink(inserted);
+		summoner.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(contents.getItems()));
+		return true;
+	}
+
+	private static void playInsertionSound(Player player, boolean success) {
+		player.playSound(success ? SoundEvents.BUNDLE_INSERT : SoundEvents.BUNDLE_INSERT_FAIL,
+				success ? 0.8F : 1.0F,
+				success ? 0.8F + player.level().getRandom().nextFloat() * 0.4F : 1.0F);
 	}
 
 	private static InteractionResult openMenu(Player player, InteractionHand hand, ItemStack stack) {
@@ -167,6 +231,7 @@ public final class TestEchoSummonerItem extends Item {
 		}
 		SummonerFuel.consume(stack, summonCost);
 		setSpiritId(stack, spiritEntity.getUUID());
+		EchoCombatEvents.clearStaleAztecBlessing(player);
 		level.sendParticles(ParticleTypes.SOUL, spiritEntity.getX(), spiritEntity.getY() + 1.0, spiritEntity.getZ(), 24, 0.35, 0.7, 0.35, 0.02);
 		level.playSound(null, spiritEntity.blockPosition(), SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 0.8F, 1.15F);
 		return SummonResult.SUMMONED;

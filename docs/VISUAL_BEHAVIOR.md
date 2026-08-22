@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Roman legionary and Aztec warrior echoes use the same code-driven visual-attention layer on top of GeckoLib locomotion animations. This layer is cosmetic: it must not change navigation, combat targeting, damage, or summoner binding. Their timing, probability, priority, and interruption rules are intentionally identical; only model-specific bone names and torso ancestry differ.
+The Roman legionary, Aztec warrior, and Egyptian archer echoes use the same code-driven visual-attention layer on top of GeckoLib locomotion and combat animations. This layer is cosmetic: it must not change navigation, combat targeting, damage, or summoner binding. Their timing, probability, priority, and interruption rules are intentionally identical; only model-specific bone names and torso ancestry differ. The Egyptian archer keeps eye and expression reactions during draw, shoot, melee, and backstep actions, but combat suppresses social gaze and retains ownership of head/body aiming.
 
 ## Code-owned bones
 
@@ -20,6 +20,13 @@ The corresponding Aztec warrior mappings are:
 - `Eyes_Right`
 - `Eyebrow`
 
+The Egyptian archer uses the same runtime bone names as the Aztec model:
+
+- `Head`
+- `Eyes_Left`
+- `Eyes_Right`
+- `Eyebrow`
+
 The renderer also compensates the Roman `root`/torso ancestry and the Aztec `Main` → `Body` → `Upper_Body2` ancestry independently. Model-specific axis signs and ancestor compensation belong in each renderer; gameplay attention data remains shared in behaviour.
 
 Animation files must not introduce new face keyframes that fight the runtime layer unless the project owner explicitly approves a future exception. The authoritative Blockbench sources are:
@@ -27,6 +34,7 @@ Animation files must not introduce new face keyframes that fight the runtime lay
 ```text
 assets-source/blockbench/roman_legionary.bbmodel
 assets-source/blockbench/aztec_warrior_echo.bbmodel
+assets-source/blockbench/egyptian_archer_echo.bbmodel
 ```
 
 Model artists must continue from the latest matching source file rather than an older local branch.
@@ -135,7 +143,7 @@ After a completed exit, ordinary owner observation and new mutual-gaze acquisiti
 - Hurt pupils contract to roughly 60%, then recover quickly.
 - Hurt triggers a code-owned pain blink: the eyebrows close the eyes at roughly 0.08 seconds and reopen them by roughly 0.3 seconds. This eye response still plays when a body attack animation prevents the full-body hurt animation from taking over.
 - Strong surprise contracts pupils to roughly 45-50%.
-- Blinking is performed by moving the Roman `eyebrows` or Aztec `Eyebrow` bone down by two model units; no eyelid geometry is used.
+- Blinking is performed by moving the Roman `eyebrows`, Aztec `Eyebrow`, or Egyptian `Eyebrow` bone down by two model units; no eyelid geometry is used.
 - Safe idle observation may trigger an 8-12 degree curious head tilt.
 - Different echoes use independent timing to prevent synchronized gestures.
 
@@ -145,7 +153,7 @@ The entity uses a 0.45-block shadow radius at approximately 70% strength. It sho
 
 ## Development controls
 
-The `/echo_warrior visual` command currently forces visual states on the nearest owned Roman legionary. The Aztec warrior uses the same runtime state machine, but command selection has not yet been generalized:
+The `/echo_warrior visual` command currently forces visual states on the nearest owned Roman legionary. The Aztec warrior and Egyptian archer use the same runtime state machine, but command selection has not yet been generalized:
 
 ```text
 /echo_warrior visual blink

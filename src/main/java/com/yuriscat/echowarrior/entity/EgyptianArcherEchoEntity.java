@@ -40,25 +40,79 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.util.DefaultRandomPos;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public final class EgyptianArcherEchoEntity extends PathfinderMob implements EchoWarriorEntity, GeoEntity {
+	public static final byte VISUAL_NORMAL = 0;
+	public static final byte VISUAL_ALERT = 1;
+	public static final byte VISUAL_STARTLED = 2;
+	public static final byte VISUAL_HURT = 3;
+	public static final byte VISUAL_CURIOUS = 4;
+	public static final byte VISUAL_MUTUAL_GAZE = 5;
+	public static final byte VISUAL_CAUGHT = 6;
+	public static final byte VISUAL_LOCOMOTION = 7;
+
+	private static final EntityDataAccessor<Float> ATTENTION_X = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> ATTENTION_Y = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> ATTENTION_Z = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_X = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_Y = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_Z = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Byte> VISUAL_REACTION = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Long> VISUAL_REACTION_UNTIL = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Long> BLINK_START = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Byte> BLINK_COUNT = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Byte> CURIOUS_TILT = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Integer> VISUAL_SEQUENCE = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Long> ATTENTION_STARTED_AT = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Long> CAUGHT_REACTION_START = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.LONG);
+
+	private static final double HEAD_GAZE_RADIUS = 0.35;
+	private static final double VISUAL_HEAD_CENTER_HEIGHT = 27.5 / 16.0;
+	private static final double INVISIBLE_GAZE_RANGE = 4.0;
+	private static final int GAZE_MISS_TOLERANCE_TICKS = 2;
+	private static final int COMBAT_GAZE_SUPPRESSION_TICKS = 20 * 3;
+	private static final int MUTUAL_GAZE_PRIORITY = 790;
+	private static final int EYE_STICKY_TICKS = 5;
+	private static final int HEAD_STICKY_TICKS = 10;
+	private static final int LOCOMOTION_ATTENTION_PRIORITY = 320;
+	private static final int LOCOMOTION_ATTENTION_TICKS = 6;
+	private static final int CAUGHT_PREWATCH_TICKS = 8;
+	private static final int CAUGHT_GLANCE_START_TICKS = 18;
+	private static final double CAUGHT_MAX_OWNER_DISTANCE_SQR = 16.0 * 16.0;
+	private static final double CAUGHT_EXIT_WALK_ELIGIBLE_OWNER_DISTANCE_SQR = 9.0 * 9.0;
+	private static final double CAUGHT_EXIT_MAX_OWNER_DISTANCE_SQR = 12.0 * 12.0;
+	private static final double CAUGHT_EXIT_FOLLOW_CANCEL_DISTANCE_SQR = 15.0 * 15.0;
+	private static final float CAUGHT_EXIT_MIN_OWNER_ANGLE = 70.0F;
+	private static final float CAUGHT_EXIT_MAX_WALK_ANGLE = 130.0F;
+
 	public static final int SKILL_CAT_GOD = 0;
 	public static final int SKILL_ARROW_MODE = 1;
 	public static final int SKILL_CHARIOT_VOLLEY = 2;
@@ -69,6 +123,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private static final byte ACTION_SHOOT = 2;
 	private static final byte ACTION_BACKSTEP = 3;
 	private static final byte ACTION_MELEE = 4;
+	private static final byte ACTION_RECOVER = 5;
 	private static final EntityDataAccessor<Byte> ACTION = SynchedEntityData.defineId(
 			EgyptianArcherEchoEntity.class, EntityDataSerializers.BYTE);
 	private static final EntityDataAccessor<Integer> ATTACK_INTERVAL = SynchedEntityData.defineId(
@@ -82,12 +137,15 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private static final RawAnimation DRAW_BOW_LOWER = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.draw_bow_lower");
 	private static final RawAnimation SHOOT_UPPER = RawAnimation.begin().thenPlay("animation.egyptian_archer.shoot_upper");
 	private static final RawAnimation SHOOT_LOWER = RawAnimation.begin().thenPlay("animation.egyptian_archer.shoot_lower");
+	private static final RawAnimation BOW_RECOVER_UPPER = RawAnimation.begin().thenPlay("animation.egyptian_archer.bow_recover_upper");
+	private static final RawAnimation BOW_RECOVER_LOWER = RawAnimation.begin().thenPlay("animation.egyptian_archer.bow_recover_lower");
 	private static final RawAnimation BACKSTEP = RawAnimation.begin().thenPlay("animation.egyptian_archer.backstep_jump");
 	private static final RawAnimation MELEE = RawAnimation.begin().thenPlay("animation.egyptian_archer.melee_attack");
 	private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.egyptian_archer.hurt");
 	private static final String ACTION_CONTROLLER = "action";
 	private static final String DRAW_TRIGGER = "draw_bow";
 	private static final String SHOOT_TRIGGER = "shoot";
+	private static final String BOW_RECOVER_TRIGGER = "bow_recover";
 	private static final String BACKSTEP_TRIGGER = "backstep";
 	private static final String MELEE_TRIGGER = "melee";
 	private static final String HURT_TRIGGER = "hurt";
@@ -108,12 +166,74 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private static final float FIRE_FACING_TOLERANCE = 20.0F;
 	private static final int MAX_FULL_DRAW_HOLD_TICKS = 6;
 	private static final int EMERGENCY_TARGET_TICKS = 60;
+	private static final int BOW_RECOVERY_TICKS = 8;
+	private static final int RETREAT_REPATH_TICKS = 20;
+	private static final double RETREAT_SCAN_RANGE = 12.0;
+	private static final double RETREAT_MIN_PROGRESS = 0.18;
 	private static final int VOLLEY_PARTICLE_COLOR = 0xE6C84E;
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
 	private @Nullable EntityReference<LivingEntity> ownerReference;
 	private @Nullable UUID summonerUuid;
 	private int missingSummonerTicks;
+	private @Nullable LivingEntity attentionTarget;
+	private Vec3 attentionPoint = Vec3.ZERO;
+	private int attentionPriority;
+	private long attentionStartedAt;
+	private long attentionExpiresAt;
+	private @Nullable LivingEntity eyeAttentionTarget;
+	private Vec3 eyeAttentionPoint = Vec3.ZERO;
+	private int eyeAttentionPriority;
+	private long eyeAttentionExpiresAt;
+	private AttentionKind eyeAttentionKind = AttentionKind.NORMAL;
+	private long eyeStickyUntil;
+	private long headStickyUntil;
+	private AttentionKind headAttentionKind = AttentionKind.NORMAL;
+	private @Nullable LivingEntity pendingHeadTarget;
+	private AttentionKind pendingHeadKind = AttentionKind.NORMAL;
+	private long pendingHeadSince;
+	private @Nullable LivingEntity bodyAttentionTarget;
+	private AttentionKind bodyAttentionKind = AttentionKind.NORMAL;
+	private long bodyAttentionStartedAt;
+	private long bodyAttentionExpiresAt;
+	private long nextBlinkAt;
+	private long forcedVisualUntil;
+	private final Map<UUID, PlayerGazeProgress> playerGazeProgress = new HashMap<>();
+	private @Nullable UUID mutualGazePlayerUuid;
+	private Vec3 mutualGazeLastSeenPoint = Vec3.ZERO;
+	private int mutualGazeHoldTicksRemaining;
+	private long mutualGazeLostSightAt = -1L;
+	private long mutualGazeCooldownUntil;
+	private boolean mutualGazeBodyTurning;
+	private boolean mutualGazeAligned;
+	private long mutualGazeDistractionStartedAt = -1L;
+	private long caughtReactionScheduledAt = -1L;
+	private long caughtReactionStartedAt = -1L;
+	private long caughtReactionGlanceEndAt = -1L;
+	private long caughtReactionFinishAt = -1L;
+	private long caughtReactionCooldownUntil;
+	private int caughtReactionGazeMissTicks;
+	private Vec3 caughtReactionAwayPoint = Vec3.ZERO;
+	private CaughtExitMode caughtExitMode = CaughtExitMode.NONE;
+	private long caughtExitStartedAt = -1L;
+	private long caughtExitEndsAt = -1L;
+	private @Nullable LivingEntity caughtExitFocusTarget;
+	private Vec3 caughtExitFocusPoint = Vec3.ZERO;
+	private Vec3 caughtExitWalkTarget = Vec3.ZERO;
+	private float caughtExitBodyTargetYaw;
+	private long caughtExitWalkStartsAt = -1L;
+	private boolean caughtExitWalkStarted;
+	private boolean caughtExitWalkArrived;
+	private boolean caughtExitSecondaryPlanned;
+	private boolean caughtExitSecondaryDone;
+	private long caughtExitSecondaryScheduledAt = -1L;
+	private long caughtExitSecondaryStartedAt = -1L;
+	private long caughtExitSecondaryGlanceEndAt = -1L;
+	private long caughtExitSecondaryReturnEndAt = -1L;
+	private boolean caughtExitSecondaryOwnerStillLooking;
+	private Vec3 caughtExitSecondaryHeadPoint = Vec3.ZERO;
+	private long caughtExitOwnerAvoidUntil = -1L;
+	private Vec3 caughtExitOwnerAvoidPoint = Vec3.ZERO;
 	private EchoRelicState.ActivityMode activityMode = EchoRelicState.ActivityMode.FOLLOW;
 	private EchoRelicState.AlertMode alertMode = EchoRelicState.AlertMode.DEFENSIVE;
 	private int enabledSkills = EchoHeroType.EGYPTIAN_ARCHER.defaultEnabledSkillsMask();
@@ -134,12 +254,17 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private long emergencyTargetUntil;
 	private Vec3 backstepStart = Vec3.ZERO;
 	private Vec3 backstepLanding = Vec3.ZERO;
+	private Vec3 backstepLastSafe = Vec3.ZERO;
 	private float backstepYaw;
 	private boolean backstepVolleyReleased;
 	private int movementAnimationLastMovingTick = Integer.MIN_VALUE;
 	private boolean movementAnimationActive;
 	private boolean combatApproaching;
 	private boolean combatKiting;
+	private Vec3 combatRetreatDestination = Vec3.ZERO;
+	private Vec3 combatRetreatProgressPosition = Vec3.ZERO;
+	private long combatRetreatRepathAt;
+	private long combatRetreatProgressAt;
 	private float combatFacingYaw;
 	private boolean combatFacingInitialized;
 
@@ -164,6 +289,20 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		builder.define(ACTION, ACTION_IDLE);
 		builder.define(ATTACK_INTERVAL, EchoHeroType.EGYPTIAN_ARCHER.baseAttackIntervalTicks());
 		builder.define(ARROW_MODE, EchoRelicState.EgyptianArrowMode.OFF.ordinal());
+		builder.define(ATTENTION_X, 0.0F);
+		builder.define(ATTENTION_Y, 0.0F);
+		builder.define(ATTENTION_Z, 0.0F);
+		builder.define(EYE_ATTENTION_X, 0.0F);
+		builder.define(EYE_ATTENTION_Y, 0.0F);
+		builder.define(EYE_ATTENTION_Z, 0.0F);
+		builder.define(VISUAL_REACTION, VISUAL_NORMAL);
+		builder.define(VISUAL_REACTION_UNTIL, 0L);
+		builder.define(BLINK_START, -100L);
+		builder.define(BLINK_COUNT, (byte)0);
+		builder.define(CURIOUS_TILT, (byte)0);
+		builder.define(VISUAL_SEQUENCE, 0);
+		builder.define(ATTENTION_STARTED_AT, 0L);
+		builder.define(CAUGHT_REACTION_START, -100L);
 	}
 
 	@Override
@@ -197,7 +336,9 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 				tickNaturalHealing(level, relic);
 			}
 		}
-		if ((this.tickCount & 1) == 0) {
+		boolean committedShotLostTarget = (action() == ACTION_DRAW || action() == ACTION_SHOOT && !this.shotReleased)
+				&& !canProtectAgainst(this.getTarget());
+		if ((this.tickCount & 1) == 0 || committedShotLostTarget) {
 			this.setTarget(selectProtectiveTarget(owner));
 			if ((this.tickCount & 3) == 0) enforceActivityBoundary(owner);
 		}
@@ -208,9 +349,10 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		}
 		tickMovement(level, owner);
 		EchoActivityMovement.tick(level, this, this.activityMode, this.activityAnchor,
-				this.getTarget() != null || action() != ACTION_IDLE);
+				this.getTarget() != null || action() != ACTION_IDLE || isVisualInteractionMovementOwned());
+		tickVisualAwareness(level, owner);
 		EchoWaterSafety.tick(level, this, owner, this.activityMode == EchoRelicState.ActivityMode.FOLLOW
-				&& action() != ACTION_BACKSTEP);
+				&& action() != ACTION_BACKSTEP && !isVisualInteractionMovementOwned());
 		LivingEntity facingTarget = this.getTarget();
 		if (facingTarget != null && (action() == ACTION_DRAW || action() == ACTION_SHOOT || action() == ACTION_MELEE)) {
 			faceTarget(facingTarget);
@@ -220,12 +362,24 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private void tickCombat(ServerLevel level, ItemStack relic) {
 		long now = level.getGameTime();
 		LivingEntity target = this.getTarget();
+		if (action() == ACTION_RECOVER) {
+			this.getNavigation().stop();
+			if (now >= this.actionEndsAt) finishAction();
+			return;
+		}
 		if (target == null || !canProtectAgainst(target)) {
 			this.setTarget(null);
-			if (action() == ACTION_DRAW) finishAction();
+			if (action() == ACTION_DRAW || action() == ACTION_SHOOT && !this.shotReleased) {
+				startBowRecovery(now);
+			}
 			if (action() == ACTION_BACKSTEP) tickBackstep(level, relic);
 			if ((action() == ACTION_SHOOT || action() == ACTION_MELEE) && now >= this.actionEndsAt) finishAction();
 			return;
+		}
+		if ((action() == ACTION_DRAW || action() == ACTION_SHOOT) && this.actionTarget != target) {
+			// A dying or newly urgent target must not restart the draw. Keep the current
+			// progress and smoothly redirect the committed shot to the replacement.
+			this.actionTarget = target;
 		}
 		this.getLookControl().setLookAt(target, 35.0F, 35.0F);
 
@@ -279,8 +433,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 				return;
 			}
 		}
-		if (now >= this.nextAttackAt && this.distanceToSqr(target) <= MAX_RANGE * MAX_RANGE
-				&& this.hasLineOfSight(target)) {
+		if (now >= this.nextAttackAt && canRangedAttack(target)) {
 			startRangedAttack(now, target);
 			return;
 		}
@@ -307,6 +460,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.actionStartedAt = now;
 		this.actionEndsAt = now + shootTicks;
 		this.shotReleaseAt = now + Math.max(1, Math.round(4.0F * interval / 42.0F));
+		this.stopTriggeredAnim(ACTION_CONTROLLER, DRAW_TRIGGER);
 		this.triggerAnim(ACTION_CONTROLLER, SHOOT_TRIGGER);
 	}
 
@@ -331,21 +485,39 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private boolean spawnArrow(ServerLevel level, LivingEntity target) {
+		Entity aimTarget = rangedAimTarget(target);
+		if (aimTarget == null || this.distanceToSqr(aimTarget) > MAX_RANGE * MAX_RANGE) return false;
 		EgyptianArcherArrowEntity arrow = ModEntities.EGYPTIAN_ARCHER_ARROW.create(level,
 				net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
 		if (arrow == null) return false;
 		arrow.setPos(this.getX(), this.getEyeY() - 0.18, this.getZ());
 		boolean pierce = this.arrowMode == EchoRelicState.EgyptianArrowMode.CONE && this.random.nextFloat() < 0.25F;
 		arrow.configure(this, this.arrowMode, (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE), pierce);
-		double dx = target.getX() - arrow.getX();
-		double dz = target.getZ() - arrow.getZ();
+		double dx = aimTarget.getX() - arrow.getX();
+		double dz = aimTarget.getZ() - arrow.getZ();
 		double horizontal = Math.sqrt(dx * dx + dz * dz);
-		double targetY = target.getY() + target.getBbHeight() * 0.62;
+		double targetY = aimTarget.getY() + aimTarget.getBbHeight() * 0.62;
 		double dy = ballisticAimHeight(horizontal, targetY - arrow.getY());
 		arrow.shoot(dx, dy, dz, ARROW_SPEED, ARROW_INACCURACY);
 		if (!level.addFreshEntity(arrow)) return false;
 		level.playSound(null, this.blockPosition(), SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 0.75F, 0.95F + this.random.nextFloat() * 0.1F);
 		return true;
+	}
+
+	private boolean canRangedAttack(LivingEntity target) {
+		Entity aimTarget = rangedAimTarget(target);
+		return aimTarget != null && this.distanceToSqr(aimTarget) <= MAX_RANGE * MAX_RANGE;
+	}
+
+	private @Nullable Entity rangedAimTarget(LivingEntity target) {
+		if (!(target instanceof EnderDragon dragon)) {
+			return this.hasLineOfSight(target) ? target : null;
+		}
+		return Arrays.stream(dragon.getSubEntities())
+				.filter(part -> this.distanceToSqr(part) <= MAX_RANGE * MAX_RANGE)
+				.filter(this::hasLineOfSight)
+				.min(Comparator.comparingDouble(this::distanceToSqr))
+				.orElse(null);
 	}
 
 	private static double ballisticAimHeight(double horizontal, double vertical) {
@@ -359,13 +531,15 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private void faceTarget(LivingEntity target) {
-		float desiredYaw = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		Entity aimTarget = target instanceof EnderDragon ? rangedAimTarget(target) : target;
+		if (aimTarget == null) aimTarget = target;
+		float desiredYaw = yawToward(this.getX(), this.getZ(), aimTarget.getX(), aimTarget.getZ());
 		if (!this.combatFacingInitialized) beginCombatFacing();
 		this.combatFacingYaw = Mth.approachDegrees(this.combatFacingYaw, desiredYaw, COMBAT_TURN_SPEED);
 		this.setYRot(this.combatFacingYaw);
 		this.setYBodyRot(this.combatFacingYaw);
 		this.setYHeadRot(this.combatFacingYaw);
-		this.getLookControl().setLookAt(target, 90.0F, 90.0F);
+		this.getLookControl().setLookAt(aimTarget, 90.0F, 90.0F);
 	}
 
 	private void beginCombatFacing() {
@@ -374,7 +548,9 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private boolean isFacingTarget(LivingEntity target) {
-		float desiredYaw = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		Entity aimTarget = target instanceof EnderDragon ? rangedAimTarget(target) : target;
+		if (aimTarget == null) aimTarget = target;
+		float desiredYaw = yawToward(this.getX(), this.getZ(), aimTarget.getX(), aimTarget.getZ());
 		float currentYaw = this.combatFacingInitialized ? this.combatFacingYaw : this.getYRot();
 		return Math.abs(Mth.degreesDifference(currentYaw, desiredYaw)) <= FIRE_FACING_TOLERANCE;
 	}
@@ -389,6 +565,19 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		beginCombatFacing();
 		this.nextAttackAt = now + 20L;
 		this.triggerAnim(ACTION_CONTROLLER, MELEE_TRIGGER);
+	}
+
+	private void startBowRecovery(long now) {
+		this.stopTriggeredAnim(ACTION_CONTROLLER, DRAW_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, SHOOT_TRIGGER);
+		this.entityData.set(ACTION, ACTION_RECOVER);
+		this.actionStartedAt = now;
+		this.actionEndsAt = now + BOW_RECOVERY_TICKS;
+		this.actionTarget = null;
+		this.shotReleased = false;
+		this.pendingBackstep = false;
+		this.getNavigation().stop();
+		this.triggerAnim(ACTION_CONTROLLER, BOW_RECOVER_TRIGGER);
 	}
 
 	private boolean shouldBackstep(LivingEntity target, ItemStack relic) {
@@ -406,8 +595,10 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		persistCurrentRelic(relic);
 		this.backstepStart = this.position();
 		this.backstepLanding = landing;
-		this.backstepYaw = this.combatFacingInitialized ? this.combatFacingYaw
-				: yawToward(this.getX(), this.getZ(), nearestEnemy.getX(), nearestEnemy.getZ());
+		this.backstepLastSafe = this.backstepStart;
+		// Preserve the exact combat-facing direction at take-off. Picking a new yaw
+		// here caused the visible twist immediately before the jump.
+		this.backstepYaw = this.getYRot();
 		this.setYRot(this.backstepYaw);
 		this.setYBodyRot(this.backstepYaw);
 		this.setYHeadRot(this.backstepYaw);
@@ -427,7 +618,15 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		double t = Math.clamp(elapsed / (double)BACKSTEP_TICKS, 0.0, 1.0);
 		double arc = 1.15 * 4.0 * t * (1.0 - t);
 		Vec3 point = this.backstepStart.lerp(this.backstepLanding, t).add(0.0, arc, 0.0);
+		if (!isBackstepPointSafe(level, point)) {
+			this.snapTo(this.backstepLastSafe.x, this.backstepLastSafe.y, this.backstepLastSafe.z,
+					this.backstepYaw, this.getXRot());
+			this.setNoGravity(false);
+			finishAction();
+			return;
+		}
 		this.snapTo(point.x, point.y, point.z, this.backstepYaw, this.getXRot());
+		this.backstepLastSafe = point;
 		this.setYRot(this.backstepYaw);
 		this.setYBodyRot(this.backstepYaw);
 		this.setYHeadRot(this.backstepYaw);
@@ -454,7 +653,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			double z = this.getZ() + Math.sin(angle) * BACKSTEP_DISTANCE;
 			for (int dy : new int[] {0, 1, -1, 2, -2}) {
 				Vec3 candidate = new Vec3(x, this.getY() + dy, z);
-				if (!isSafeLanding(level, candidate)) continue;
+				if (!isSafeLanding(level, candidate) || !isBackstepArcSafe(level, candidate)) continue;
 				double score = candidate.distanceToSqr(nearestEnemy.position());
 				if (score > bestScore) {
 					bestScore = score;
@@ -472,40 +671,77 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 				|| !level.getFluidState(feet).isEmpty() || !level.getFluidState(feet.above()).isEmpty()
 				|| level.getBlockState(feet).is(BlockTags.FIRE) || level.getBlockState(feet).is(Blocks.POWDER_SNOW)) return false;
 		AABB moved = this.getBoundingBox().move(candidate.subtract(this.position()));
-		return level.noCollision(this, moved);
+		return level.noCollision(this, moved) && !containsBackstepHazard(level, moved);
+	}
+
+	private boolean isBackstepArcSafe(ServerLevel level, Vec3 landing) {
+		Vec3 start = this.position();
+		for (int step = 1; step <= BACKSTEP_TICKS; step++) {
+			double t = step / (double)BACKSTEP_TICKS;
+			double arc = 1.15 * 4.0 * t * (1.0 - t);
+			Vec3 point = start.lerp(landing, t).add(0.0, arc, 0.0);
+			AABB moved = this.getBoundingBox().move(point.subtract(start));
+			if (!level.noCollision(this, moved) || containsBackstepHazard(level, moved)) return false;
+		}
+		return true;
+	}
+
+	private boolean isBackstepPointSafe(ServerLevel level, Vec3 point) {
+		AABB moved = this.getBoundingBox().move(point.subtract(this.position()));
+		return level.noCollision(this, moved) && !containsBackstepHazard(level, moved);
+	}
+
+	private static boolean containsBackstepHazard(ServerLevel level, AABB box) {
+		int minX = Mth.floor(box.minX + 1.0E-5);
+		int minY = Mth.floor(box.minY + 1.0E-5);
+		int minZ = Mth.floor(box.minZ + 1.0E-5);
+		int maxX = Mth.floor(box.maxX - 1.0E-5);
+		int maxY = Mth.floor(box.maxY - 1.0E-5);
+		int maxZ = Mth.floor(box.maxZ - 1.0E-5);
+		for (BlockPos pos : BlockPos.betweenClosed(minX, minY, minZ, maxX, maxY, maxZ)) {
+			if (level.getFluidState(pos).is(FluidTags.LAVA)
+					|| level.getBlockState(pos).is(BlockTags.FIRE)
+					|| level.getBlockState(pos).is(Blocks.POWDER_SNOW)) return true;
+		}
+		return false;
 	}
 
 	private List<LivingEntity> combatTargets(ServerLevel level, double range, @Nullable LivingEntity excluded) {
 		return level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(range), candidate ->
-				candidate != excluded && (candidate instanceof Monster || candidate == this.getTarget())
+				candidate != excluded && (candidate instanceof Enemy || candidate == this.getTarget())
 						&& candidate.distanceToSqr(this) <= range * range && this.canAttack(candidate)
 						&& this.hasLineOfSight(candidate)).stream()
 				.sorted(Comparator.comparingDouble(this::distanceToSqr)).toList();
 	}
 
 	private void tickMovement(ServerLevel level, LivingEntity owner) {
-		if (action() == ACTION_BACKSTEP) return;
+		if (action() == ACTION_BACKSTEP || action() == ACTION_RECOVER || isVisualInteractionMovementOwned()) return;
 		LivingEntity target = this.getTarget();
 		if (target != null) {
 			double distance = this.distanceTo(target);
-			boolean hasSight = this.hasLineOfSight(target);
-			boolean kiting = skillEnabled(SKILL_CHARIOT_VOLLEY) && distance < CLOSE_THREAT_TRIGGER_RANGE;
+			boolean hasSight = rangedAimTarget(target) != null;
+			List<LivingEntity> threats = retreatThreats(level, target);
+			double nearestThreatDistance = threats.stream().mapToDouble(this::distanceTo).min().orElse(Double.MAX_VALUE);
 			if (skillEnabled(SKILL_CHARIOT_VOLLEY)) {
-				if (kiting && (!this.combatKiting || (this.tickCount & 3) == 0 || this.getNavigation().isDone())) {
+				boolean wasKiting = this.combatKiting;
+				if (this.combatKiting) {
+					this.combatKiting = nearestThreatDistance <= CLOSE_THREAT_RELEASE_RANGE;
+				} else {
+					this.combatKiting = nearestThreatDistance < CLOSE_THREAT_TRIGGER_RANGE;
+				}
+				if (this.combatKiting) {
 					this.combatApproaching = false;
-					Vec3 away = DefaultRandomPos.getPosAway(this, 10, 5, target.position());
-					if (away != null) this.getNavigation().moveTo(away.x, away.y, away.z, 1.05);
-					else this.getNavigation().stop();
-				} else if (!kiting) tickCombatApproach(target, distance, hasSight);
+					tickCombatRetreat(level, threats, !wasKiting);
+				} else {
+					if (wasKiting) resetCombatRetreat();
+					tickCombatApproach(target, distance, hasSight);
+				}
 			} else tickCombatApproach(target, distance, hasSight);
-			this.combatKiting = kiting;
-			if (kiting && this.horizontalCollision && this.onGround()) {
-				this.getJumpControl().jump();
-			}
 			return;
 		}
 		this.combatApproaching = false;
 		this.combatKiting = false;
+		resetCombatRetreat();
 		if (this.activityMode == EchoRelicState.ActivityMode.FOLLOW) {
 			double distance = this.distanceTo(owner);
 			if (distance > 32.0) recallTo((Player)owner);
@@ -519,6 +755,1464 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		else if (distance <= 18.0) this.combatApproaching = false;
 		if (this.combatApproaching) this.getNavigation().moveTo(target, 1.0);
 		else this.getNavigation().stop();
+	}
+
+	private List<LivingEntity> retreatThreats(ServerLevel level, LivingEntity primaryTarget) {
+		List<LivingEntity> threats = new ArrayList<>(level.getEntitiesOfClass(LivingEntity.class,
+				this.getBoundingBox().inflate(RETREAT_SCAN_RANGE), candidate ->
+						candidate != this && candidate.distanceToSqr(this) <= RETREAT_SCAN_RANGE * RETREAT_SCAN_RANGE
+								&& canProtectAgainst(candidate)
+								&& (candidate instanceof Enemy || candidate == primaryTarget)));
+		if (canProtectAgainst(primaryTarget) && !threats.contains(primaryTarget)) threats.add(primaryTarget);
+		return threats;
+	}
+
+	private void tickCombatRetreat(ServerLevel level, List<LivingEntity> threats, boolean enteringRetreat) {
+		long now = level.getGameTime();
+		if (threats.isEmpty()) {
+			this.combatKiting = false;
+			resetCombatRetreat();
+			this.getNavigation().stop();
+			return;
+		}
+		if (this.horizontalCollision && this.onGround()) this.getJumpControl().jump();
+
+		if (this.combatRetreatProgressPosition == Vec3.ZERO) {
+			this.combatRetreatProgressPosition = this.position();
+			this.combatRetreatProgressAt = now;
+		}
+		boolean stuck = false;
+		if (now - this.combatRetreatProgressAt >= 10L) {
+			stuck = horizontalDistanceSqr(this.position(), this.combatRetreatProgressPosition)
+					< RETREAT_MIN_PROGRESS * RETREAT_MIN_PROGRESS;
+			this.combatRetreatProgressPosition = this.position();
+			this.combatRetreatProgressAt = now;
+		}
+
+		boolean replan = enteringRetreat || stuck || now >= this.combatRetreatRepathAt
+				|| this.getNavigation().isDone() || !retreatDestinationStillUseful(threats);
+		if (!replan) return;
+
+		RetreatPath retreat = findRetreatPath(level, threats);
+		if (retreat == null) {
+			this.getNavigation().stop();
+			this.combatRetreatDestination = Vec3.ZERO;
+			this.combatRetreatRepathAt = now + 6L;
+			return;
+		}
+		this.combatRetreatDestination = retreat.destination();
+		this.combatRetreatRepathAt = now + RETREAT_REPATH_TICKS;
+		this.getNavigation().moveTo(retreat.path(), 1.05);
+	}
+
+	private boolean retreatDestinationStillUseful(List<LivingEntity> threats) {
+		if (this.combatRetreatDestination == Vec3.ZERO) return false;
+		double currentMinimum = threats.stream().mapToDouble(threat -> threat.distanceToSqr(this)).min().orElse(0.0);
+		double destinationMinimum = threats.stream()
+				.mapToDouble(threat -> threat.position().distanceToSqr(this.combatRetreatDestination))
+				.min().orElse(0.0);
+		return destinationMinimum > currentMinimum + 1.0;
+	}
+
+	private @Nullable RetreatPath findRetreatPath(ServerLevel level, List<LivingEntity> threats) {
+		Vec3 away = Vec3.ZERO;
+		for (LivingEntity threat : threats) {
+			Vec3 delta = this.position().subtract(threat.position());
+			double horizontalSqr = delta.x * delta.x + delta.z * delta.z;
+			if (horizontalSqr > 1.0E-5) away = away.add(delta.x / horizontalSqr, 0.0, delta.z / horizontalSqr);
+		}
+		if (away.horizontalDistanceSqr() < 1.0E-5) {
+			LivingEntity nearest = threats.stream().min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
+			if (nearest == null) return null;
+			away = this.position().subtract(nearest.position()).multiply(1.0, 0.0, 1.0);
+		}
+		away = away.normalize();
+		double baseAngle = Math.atan2(away.z, away.x);
+		double currentMinimum = threats.stream().mapToDouble(threat -> threat.distanceToSqr(this)).min().orElse(0.0);
+		RetreatPath best = null;
+		double bestScore = currentMinimum;
+		int[] angleOffsets = {0, 30, -30, 60, -60, 90, -90, 120, -120, 180};
+		for (double distance : new double[] {8.0, 6.0, 4.0}) {
+			for (int angleOffset : angleOffsets) {
+				double angle = baseAngle + Math.toRadians(angleOffset);
+				double x = this.getX() + Math.cos(angle) * distance;
+				double z = this.getZ() + Math.sin(angle) * distance;
+				for (int dy : new int[] {0, 1, -1, 2, -2}) {
+					Vec3 candidate = new Vec3(x, this.getY() + dy, z);
+					if (!isSafeRetreatDestination(level, candidate)) continue;
+					double minimumDistance = threats.stream()
+							.mapToDouble(threat -> threat.position().distanceToSqr(candidate)).min().orElse(0.0);
+					if (minimumDistance <= bestScore + 1.0) continue;
+					Path path = this.getNavigation().createPath(BlockPos.containing(candidate), 0);
+					if (path == null || !path.canReach()) continue;
+					bestScore = minimumDistance;
+					best = new RetreatPath(candidate, path);
+				}
+			}
+		}
+		return best;
+	}
+
+	private boolean isSafeRetreatDestination(ServerLevel level, Vec3 candidate) {
+		BlockPos feet = BlockPos.containing(candidate);
+		BlockPos floor = feet.below();
+		if (!level.getBlockState(floor).isFaceSturdy(level, floor, Direction.UP)
+				|| !level.getFluidState(feet).isEmpty() || !level.getFluidState(feet.above()).isEmpty()
+				|| level.getBlockState(feet).is(BlockTags.FIRE) || level.getBlockState(feet).is(Blocks.POWDER_SNOW)) return false;
+		AABB moved = this.getBoundingBox().move(candidate.subtract(this.position()));
+		return level.noCollision(this, moved);
+	}
+
+	private void resetCombatRetreat() {
+		this.combatRetreatDestination = Vec3.ZERO;
+		this.combatRetreatProgressPosition = Vec3.ZERO;
+		this.combatRetreatRepathAt = 0L;
+		this.combatRetreatProgressAt = 0L;
+	}
+
+	private static double horizontalDistanceSqr(Vec3 first, Vec3 second) {
+		double dx = first.x - second.x;
+		double dz = first.z - second.z;
+		return dx * dx + dz * dz;
+	}
+
+	public void tick() {
+		super.tick();
+		if (!this.level().isClientSide()) {
+			if (this.mutualGazePlayerUuid != null && this.mutualGazeDistractionStartedAt < 0L
+					&& !isCaughtReactionActive()) {
+				tickMutualGazeBodyFacing();
+			} else if (isCaughtExitActive()) {
+				tickCaughtExitBodyFacing();
+			} else {
+				tickThreatBodyFacing();
+			}
+		}
+	}
+
+	private void tickVisualAwareness(ServerLevel level, LivingEntity owner) {
+		long now = level.getGameTime();
+		tickBlinkClock(now);
+
+		if (this.forcedVisualUntil > now) {
+			return;
+		}
+
+		if (this.entityData.get(VISUAL_REACTION_UNTIL) <= now && this.entityData.get(VISUAL_REACTION) != VISUAL_NORMAL) {
+			this.entityData.set(VISUAL_REACTION, VISUAL_NORMAL);
+			this.entityData.set(CURIOUS_TILT, (byte)0);
+		}
+
+		boolean combatSuppressed = isMutualGazeCombatSuppressed(owner);
+		Player acquiredPlayer = this.mutualGazePlayerUuid == null && now >= this.caughtExitOwnerAvoidUntil
+				? tickPlayerGazeAcquisition(level, owner, combatSuppressed, now)
+				: null;
+		boolean attentionScanTick = this.tickCount % 2 == 0;
+		AttentionCandidate candidate = attentionScanTick ? findBestAttentionCandidate(level, owner, now) : null;
+		if (now < this.caughtExitOwnerAvoidUntil && (combatSuppressed
+				|| candidate != null && (isHardMutualGazeInterrupt(candidate) || isCaughtReactionInterrupt(candidate)))) {
+			this.caughtExitOwnerAvoidUntil = -1L;
+		}
+
+		if (this.mutualGazePlayerUuid != null) {
+			if (combatSuppressed || candidate != null && (isHardMutualGazeInterrupt(candidate)
+					|| isCaughtReactionPendingOrActive() && isCaughtReactionInterrupt(candidate))) {
+				endMutualGaze(now);
+			} else if (tickMutualGaze(level, now, candidate, attentionScanTick)) {
+				return;
+			}
+		}
+
+		if (isCaughtExitActive()) {
+			if (combatSuppressed || candidate != null && (isHardMutualGazeInterrupt(candidate)
+					|| isCaughtReactionInterrupt(candidate))) {
+				endCaughtExit(now, true);
+			} else if (tickCaughtExit(level, owner, now)) {
+				return;
+			}
+		}
+
+		if (acquiredPlayer != null && now >= this.mutualGazeCooldownUntil
+				&& !combatSuppressed && (candidate == null || !isHardMutualGazeInterrupt(candidate))) {
+			beginMutualGaze(acquiredPlayer, now);
+			return;
+		}
+
+		if (candidate == null) {
+			return;
+		}
+
+		considerAttentionCandidate(candidate, now);
+	}
+
+	private @Nullable Player tickPlayerGazeAcquisition(ServerLevel level, LivingEntity owner, boolean combatSuppressed, long now) {
+		if (combatSuppressed || now < this.mutualGazeCooldownUntil) {
+			this.playerGazeProgress.clear();
+			return null;
+		}
+
+		Set<UUID> presentPlayers = new HashSet<>();
+		Player qualifiedOwner = null;
+		Player longestGazePlayer = null;
+		int longestGazeTicks = -1;
+
+		for (Player player : level.players()) {
+			if (!player.isAlive() || player.isSpectator()) {
+				continue;
+			}
+
+			UUID playerUuid = player.getUUID();
+			presentPlayers.add(playerUuid);
+			PlayerGazeProgress progress = this.playerGazeProgress.computeIfAbsent(playerUuid, ignored -> new PlayerGazeProgress());
+			GazeSample sample = samplePlayerHeadGaze(player);
+
+			if (sample.state() == GazeState.VALID) {
+				progress.validTicks++;
+				progress.missedTicks = 0;
+			} else if (sample.state() == GazeState.MISSED && progress.missedTicks < GAZE_MISS_TOLERANCE_TICKS) {
+				progress.missedTicks++;
+			} else {
+				progress.reset();
+			}
+
+			if (progress.validTicks < requiredGazeTicks(sample.distance())) {
+				continue;
+			}
+
+			if (player == owner) {
+				qualifiedOwner = player;
+			} else if (progress.validTicks > longestGazeTicks) {
+				longestGazeTicks = progress.validTicks;
+				longestGazePlayer = player;
+			}
+		}
+
+		this.playerGazeProgress.keySet().removeIf(uuid -> !presentPlayers.contains(uuid));
+		return qualifiedOwner != null ? qualifiedOwner : longestGazePlayer;
+	}
+
+	private GazeSample samplePlayerHeadGaze(Player player) {
+		Vec3 playerEye = player.getEyePosition();
+		Vec3 headCenter = getVisualHeadCenter();
+		Vec3 towardHead = headCenter.subtract(playerEye);
+		double distance = towardHead.length();
+		if (distance < 0.1 || player.isInvisible() && distance > INVISIBLE_GAZE_RANGE || !hasClearViewFromPlayer(player, headCenter)) {
+			return new GazeSample(GazeState.BLOCKED, distance);
+		}
+
+		Vec3 look = player.getLookAngle().normalize();
+		double projection = look.dot(towardHead);
+		if (projection <= 0.0) {
+			return new GazeSample(GazeState.MISSED, distance);
+		}
+
+		double distanceFromRaySqr = Math.max(0.0, towardHead.lengthSqr() - projection * projection);
+		return new GazeSample(distanceFromRaySqr <= HEAD_GAZE_RADIUS * HEAD_GAZE_RADIUS ? GazeState.VALID : GazeState.MISSED, distance);
+	}
+
+	private Vec3 getVisualHeadCenter() {
+		return this.position().add(0.0, VISUAL_HEAD_CENTER_HEIGHT, 0.0);
+	}
+
+	private boolean hasClearViewFromPlayer(Player player, Vec3 headCenter) {
+		return this.level().clip(new ClipContext(
+				player.getEyePosition(),
+				headCenter,
+				ClipContext.Block.COLLIDER,
+				ClipContext.Fluid.NONE,
+				player
+		)).getType() == HitResult.Type.MISS;
+	}
+
+	private static int requiredGazeTicks(double distance) {
+		return 10 + (int)Math.ceil(Math.max(0.0, distance - 12.0) / 2.0);
+	}
+
+	private boolean isMutualGazeCombatSuppressed(LivingEntity owner) {
+		LivingEntity target = this.getTarget();
+		return action() != ACTION_IDLE || target != null && target.isAlive()
+				|| isRecentWithin(this, this.getLastHurtByMobTimestamp(), COMBAT_GAZE_SUPPRESSION_TICKS)
+				|| isRecentWithin(this, this.getLastHurtMobTimestamp(), COMBAT_GAZE_SUPPRESSION_TICKS)
+				|| isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), COMBAT_GAZE_SUPPRESSION_TICKS)
+				|| isRecentWithin(owner, owner.getLastHurtMobTimestamp(), COMBAT_GAZE_SUPPRESSION_TICKS);
+	}
+
+	private void beginMutualGaze(Player player, long now) {
+		LivingEntity owner = this.getOwner();
+		boolean caughtEligible = player == owner
+				&& now >= this.caughtReactionCooldownUntil
+				&& this.attentionTarget == player
+				&& this.eyeAttentionTarget == player
+				&& this.headAttentionKind == AttentionKind.NORMAL
+				&& this.eyeAttentionKind == AttentionKind.NORMAL
+				&& now - this.attentionStartedAt >= CAUGHT_PREWATCH_TICKS;
+		this.mutualGazePlayerUuid = player.getUUID();
+		this.mutualGazeLastSeenPoint = player.getEyePosition();
+		this.mutualGazeHoldTicksRemaining = 40 + this.random.nextInt(41);
+		this.mutualGazeLostSightAt = -1L;
+		this.mutualGazeBodyTurning = false;
+		this.mutualGazeAligned = false;
+		this.mutualGazeDistractionStartedAt = -1L;
+		this.playerGazeProgress.clear();
+		this.getNavigation().stop();
+		applyAttention(new AttentionCandidate(player, this.mutualGazeLastSeenPoint, MUTUAL_GAZE_PRIORITY,
+				VISUAL_MUTUAL_GAZE, 20 * 60, false, AttentionKind.MUTUAL_GAZE), now);
+		this.caughtReactionScheduledAt = caughtEligible ? now + chooseCaughtReactionDelay() : -1L;
+		this.caughtReactionStartedAt = -1L;
+		this.caughtReactionGlanceEndAt = -1L;
+		this.caughtReactionFinishAt = -1L;
+		this.caughtReactionGazeMissTicks = 0;
+	}
+
+
+	private boolean tickMutualGaze(ServerLevel level, long now, @Nullable AttentionCandidate candidate, boolean attentionScanTick) {
+		Player player = level.getPlayerByUUID(this.mutualGazePlayerUuid);
+		if (player == null || !player.isAlive() || player.isSpectator()) {
+			endMutualGaze(now);
+			return false;
+		}
+
+		Vec3 headCenter = getVisualHeadCenter();
+		double distance = player.getEyePosition().distanceTo(headCenter);
+		boolean visible = (!player.isInvisible() || distance <= INVISIBLE_GAZE_RANGE) && hasClearViewFromPlayer(player, headCenter);
+		if (isCaughtReactionActive() && (!visible || distance * distance > CAUGHT_MAX_OWNER_DISTANCE_SQR)) {
+			endMutualGaze(now);
+			return false;
+		}
+		if (visible) {
+			this.mutualGazeLostSightAt = -1L;
+			this.mutualGazeLastSeenPoint = player.getEyePosition();
+			setAttentionPoint(this.mutualGazeLastSeenPoint);
+		} else {
+			if (this.mutualGazeLostSightAt < 0L) {
+				this.mutualGazeLostSightAt = now;
+			}
+			if (now - this.mutualGazeLostSightAt > 10) {
+				endMutualGaze(now);
+				return false;
+			}
+			setAttentionPoint(this.mutualGazeLastSeenPoint);
+		}
+
+		this.getNavigation().stop();
+		if (candidate != null && candidate.kind() == AttentionKind.CLOSE_CREEPER) {
+			if (this.mutualGazeDistractionStartedAt < 0L) {
+				this.mutualGazeDistractionStartedAt = now;
+			}
+			considerAttentionCandidate(candidate, now);
+			if (now - this.mutualGazeDistractionStartedAt > 20) {
+				endMutualGaze(now);
+				return false;
+			}
+			return true;
+		}
+
+		if (this.mutualGazeDistractionStartedAt >= 0L && !attentionScanTick) {
+			return true;
+		}
+
+		if (this.mutualGazeDistractionStartedAt >= 0L) {
+			this.mutualGazeDistractionStartedAt = -1L;
+			restoreMutualGazeAttention(player, now);
+		} else {
+			this.eyeAttentionTarget = player;
+			this.attentionTarget = player;
+			setEyeAttentionPoint(this.mutualGazeLastSeenPoint);
+			setAttentionPoint(this.mutualGazeLastSeenPoint);
+		}
+
+		if (tickCaughtReaction(player, now)) {
+			return true;
+		}
+
+		if (visible && this.mutualGazeAligned && --this.mutualGazeHoldTicksRemaining <= 0) {
+			boolean stillLooking = samplePlayerHeadGaze(player).state() == GazeState.VALID;
+			if (stillLooking && this.random.nextFloat() < 0.75F) {
+				this.mutualGazeHoldTicksRemaining = 20 + this.random.nextInt(41);
+			} else {
+				endMutualGaze(now);
+				if (stillLooking) {
+					startMutualGazeGlanceAway(now);
+				}
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private boolean tickCaughtReaction(Player owner, long now) {
+		if (this.caughtReactionScheduledAt >= 0L && !isCaughtReactionActive()) {
+			GazeState gazeState = samplePlayerHeadGaze(owner).state();
+			if (gazeState == GazeState.VALID) {
+				this.caughtReactionGazeMissTicks = 0;
+			} else if (gazeState == GazeState.MISSED && this.caughtReactionGazeMissTicks < GAZE_MISS_TOLERANCE_TICKS) {
+				this.caughtReactionGazeMissTicks++;
+				return true;
+			} else {
+				this.caughtReactionScheduledAt = -1L;
+				this.caughtReactionGazeMissTicks = 0;
+				return false;
+			}
+			if (now < this.caughtReactionScheduledAt) {
+				return true;
+			}
+			startCaughtReaction(owner, now);
+		}
+
+		if (!isCaughtReactionActive()) {
+			return false;
+		}
+
+		long elapsed = now - this.caughtReactionStartedAt;
+		this.getNavigation().stop();
+		setReaction(VISUAL_CAUGHT, now + 10);
+		this.entityData.set(CURIOUS_TILT, (byte)0);
+
+		if (elapsed < 10) {
+			setEyeAttentionPoint(owner.getEyePosition());
+			setAttentionPoint(owner.getEyePosition());
+			return true;
+		}
+
+		setEyeAttentionPoint(this.caughtReactionAwayPoint);
+		if (elapsed < 12) {
+			setAttentionPoint(owner.getEyePosition());
+			return true;
+		}
+
+		setAttentionPoint(this.caughtReactionAwayPoint);
+		if (elapsed < CAUGHT_GLANCE_START_TICKS) {
+			return true;
+		}
+
+		if (this.caughtReactionGlanceEndAt < 0L) {
+			boolean ownerStillLooking = samplePlayerHeadGaze(owner).state() == GazeState.VALID;
+			this.caughtReactionGlanceEndAt = now + (ownerStillLooking ? 4 + this.random.nextInt(4) : 8 + this.random.nextInt(4));
+			this.caughtReactionFinishAt = this.caughtReactionGlanceEndAt + 5 + this.random.nextInt(3);
+		}
+
+		if (now < this.caughtReactionGlanceEndAt) {
+			setEyeAttentionPoint(owner.getEyePosition());
+			return true;
+		}
+
+		setEyeAttentionPoint(this.caughtReactionAwayPoint);
+		if (now < this.caughtReactionFinishAt) {
+			return true;
+		}
+
+		finishCaughtReaction(now);
+		return false;
+	}
+
+	private void startCaughtReaction(Player owner, long now) {
+		this.caughtReactionScheduledAt = -1L;
+		this.caughtReactionStartedAt = now;
+		this.caughtReactionGlanceEndAt = -1L;
+		this.caughtReactionFinishAt = -1L;
+		this.caughtReactionGazeMissTicks = 0;
+		this.caughtReactionAwayPoint = createCaughtReactionAwayPoint(owner);
+		this.entityData.set(CAUGHT_REACTION_START, now);
+		this.entityData.set(BLINK_START, now + 3);
+		this.entityData.set(BLINK_COUNT, (byte)2);
+		setReaction(VISUAL_CAUGHT, now + 60);
+		this.entityData.set(CURIOUS_TILT, (byte)0);
+		this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+	}
+
+	private Vec3 createCaughtReactionAwayPoint(Player owner) {
+		float ownerYaw = yawToward(this.getX(), this.getZ(), owner.getX(), owner.getZ());
+		float offset = 35.0F + this.random.nextFloat() * 20.0F;
+		float targetYaw = ownerYaw + (this.random.nextBoolean() ? offset : -offset);
+		float yawRadians = targetYaw * ((float)Math.PI / 180.0F);
+		double distance = 6.0 + this.random.nextDouble() * 3.0;
+		return new Vec3(
+				this.getX() - Math.sin(yawRadians) * distance,
+				this.getEyeY() + 0.5 + this.random.nextDouble(),
+				this.getZ() + Math.cos(yawRadians) * distance
+		);
+	}
+
+	private int chooseCaughtReactionDelay() {
+		int roll = this.random.nextInt(100);
+		if (roll < 30) {
+			return 0;
+		}
+		if (roll < 75) {
+			return 20 + this.random.nextInt(21);
+		}
+		if (roll < 95) {
+			return 40 + this.random.nextInt(41);
+		}
+		return 80 + this.random.nextInt(41);
+	}
+
+	private boolean isCaughtReactionPendingOrActive() {
+		return this.caughtReactionScheduledAt >= 0L || isCaughtReactionActive();
+	}
+
+	private boolean isCaughtReactionActive() {
+		return this.caughtReactionStartedAt >= 0L;
+	}
+
+	private static boolean isCaughtReactionInterrupt(AttentionCandidate candidate) {
+		return candidate.target() instanceof Creeper
+				|| candidate.kind() == AttentionKind.APPROACHING;
+	}
+
+	private void finishCaughtReaction(long now) {
+
+		Vec3 awayPoint = this.caughtReactionAwayPoint;
+		endMutualGaze(now);
+		LivingEntity owner = this.getOwner();
+		if (this.level() instanceof ServerLevel serverLevel && owner != null) {
+			startCaughtExit(serverLevel, owner, awayPoint, now);
+		}
+	}
+
+	private void startCaughtExit(ServerLevel level, LivingEntity owner, Vec3 initialAwayPoint, long now) {
+		int roll = this.random.nextInt(100);
+		CaughtExitMode mode = roll < 15 ? CaughtExitMode.LOOK_AWAY : roll < 40 ? CaughtExitMode.TURN_AWAY : CaughtExitMode.WALK_AWAY;
+		startCaughtExit(level, owner, initialAwayPoint, now, mode, this.random.nextFloat() < 0.75F);
+	}
+
+	private void startCaughtExit(ServerLevel level, LivingEntity owner, Vec3 initialAwayPoint, long now,
+			CaughtExitMode mode, boolean secondaryPlanned) {
+		this.caughtExitOwnerAvoidUntil = -1L;
+		this.caughtExitMode = mode;
+		this.caughtExitStartedAt = now;
+		this.caughtExitEndsAt = now + 40 + this.random.nextInt(41);
+		this.caughtExitWalkStartsAt = -1L;
+		this.caughtExitWalkStarted = false;
+		this.caughtExitWalkArrived = false;
+		this.caughtExitSecondaryPlanned = secondaryPlanned;
+		this.caughtExitSecondaryDone = false;
+		this.caughtExitSecondaryScheduledAt = -1L;
+		this.caughtExitSecondaryStartedAt = -1L;
+		this.caughtExitSecondaryGlanceEndAt = -1L;
+		this.caughtExitSecondaryReturnEndAt = -1L;
+		this.caughtExitFocusTarget = null;
+		this.caughtExitFocusPoint = initialAwayPoint;
+
+		if (this.caughtExitMode == CaughtExitMode.WALK_AWAY && !chooseCaughtExitWalkTarget(owner)) {
+			this.caughtExitMode = CaughtExitMode.TURN_AWAY;
+		}
+
+		if (this.caughtExitMode == CaughtExitMode.WALK_AWAY) {
+			this.caughtExitFocusPoint = this.caughtExitWalkTarget.add(0.0, this.getEyeHeight(), 0.0);
+			this.caughtExitWalkStartsAt = now + 5 + this.random.nextInt(6);
+		} else {
+			selectCaughtExitFocus(level, owner, initialAwayPoint);
+			this.caughtExitSecondaryScheduledAt = this.caughtExitSecondaryPlanned
+					? now + 16 + this.random.nextInt(15)
+					: -1L;
+		}
+
+		this.caughtExitBodyTargetYaw = chooseCaughtExitBodyYaw(owner);
+		applyCaughtExitFocus(now);
+	}
+
+	private boolean chooseCaughtExitWalkTarget(LivingEntity owner) {
+		if (this.distanceToSqr(owner) > CAUGHT_EXIT_WALK_ELIGIBLE_OWNER_DISTANCE_SQR) {
+			return false;
+		}
+
+		float ownerYaw = yawToward(this.getX(), this.getZ(), owner.getX(), owner.getZ());
+		for (int attempt = 0; attempt < 8; attempt++) {
+			float offset = CAUGHT_EXIT_MIN_OWNER_ANGLE
+					+ this.random.nextFloat() * (CAUGHT_EXIT_MAX_WALK_ANGLE - CAUGHT_EXIT_MIN_OWNER_ANGLE);
+			float targetYaw = ownerYaw + (this.random.nextBoolean() ? offset : -offset);
+			float yawRadians = targetYaw * ((float)Math.PI / 180.0F);
+			double distance = 1.5 + this.random.nextDouble() * 1.5;
+			double targetX = this.getX() - Math.sin(yawRadians) * distance;
+			double targetZ = this.getZ() + Math.cos(yawRadians) * distance;
+			if (owner.distanceToSqr(targetX, this.getY(), targetZ) > CAUGHT_EXIT_MAX_OWNER_DISTANCE_SQR) {
+				continue;
+			}
+
+			this.caughtExitWalkTarget = new Vec3(targetX, this.getY(), targetZ);
+			return true;
+		}
+
+		return false;
+	}
+
+	private void selectCaughtExitFocus(ServerLevel level, LivingEntity owner, Vec3 fallbackPoint) {
+		LivingEntity nearestCreature = null;
+		Player nearestOtherPlayer = null;
+		double creatureDistanceSqr = Double.MAX_VALUE;
+		double playerDistanceSqr = Double.MAX_VALUE;
+		for (LivingEntity entity : level.getEntitiesOfClass(
+				LivingEntity.class,
+				this.getBoundingBox().inflate(12.0),
+				entity -> entity != this && entity != owner && entity.isAlive() && !entity.isSpectator()
+						&& !(entity instanceof Monster) && this.hasLineOfSight(entity)
+		)) {
+			if (!isCaughtExitDirectionAwayFromOwner(owner, entity.getEyePosition())) {
+				continue;
+			}
+			double distanceSqr = this.distanceToSqr(entity);
+			if (entity instanceof Player player) {
+				if (distanceSqr < playerDistanceSqr) {
+					nearestOtherPlayer = player;
+					playerDistanceSqr = distanceSqr;
+				}
+			} else if (distanceSqr < creatureDistanceSqr) {
+				nearestCreature = entity;
+				creatureDistanceSqr = distanceSqr;
+			}
+		}
+
+		this.caughtExitFocusTarget = nearestCreature != null ? nearestCreature : nearestOtherPlayer;
+		this.caughtExitFocusPoint = this.caughtExitFocusTarget == null
+				? isCaughtExitDirectionAwayFromOwner(owner, fallbackPoint) ? fallbackPoint : createCaughtExitFallbackPoint(owner)
+				: this.caughtExitFocusTarget.getEyePosition();
+	}
+
+	private boolean isCaughtExitDirectionAwayFromOwner(LivingEntity owner, Vec3 point) {
+		float ownerYaw = yawToward(this.getX(), this.getZ(), owner.getX(), owner.getZ());
+		float pointYaw = yawToward(this.getX(), this.getZ(), point.x, point.z);
+		return Math.abs(net.minecraft.util.Mth.wrapDegrees(pointYaw - ownerYaw)) >= CAUGHT_EXIT_MIN_OWNER_ANGLE;
+	}
+
+
+	private float chooseCaughtExitBodyYaw(LivingEntity owner) {
+		float ownerYaw = yawToward(this.getX(), this.getZ(), owner.getX(), owner.getZ());
+		float focusYaw = yawToward(this.getX(), this.getZ(), this.caughtExitFocusPoint.x, this.caughtExitFocusPoint.z);
+		float difference = net.minecraft.util.Mth.wrapDegrees(focusYaw - ownerYaw);
+		float direction = Math.abs(difference) < 1.0F ? (this.random.nextBoolean() ? 1.0F : -1.0F) : Math.signum(difference);
+		float offset = net.minecraft.util.Mth.clamp(Math.abs(difference), 45.0F,
+				this.caughtExitMode == CaughtExitMode.WALK_AWAY ? CAUGHT_EXIT_MAX_WALK_ANGLE : 90.0F);
+		return ownerYaw + direction * offset;
+	}
+
+	private boolean tickCaughtExit(ServerLevel level, LivingEntity owner, long now) {
+		if (!isCaughtExitActive()) {
+			return false;
+		}
+		if (this.distanceToSqr(owner) >= CAUGHT_EXIT_FOLLOW_CANCEL_DISTANCE_SQR) {
+			endCaughtExit(now, true);
+			return false;
+		}
+
+		if (this.caughtExitMode == CaughtExitMode.WALK_AWAY && !this.caughtExitWalkArrived) {
+			if (now >= this.caughtExitEndsAt) {
+				endCaughtExit(now, false);
+				return true;
+			}
+			setEyeAttentionPoint(this.caughtExitWalkTarget.add(0.0, this.getEyeHeight(), 0.0));
+			setAttentionPoint(this.caughtExitWalkTarget.add(0.0, this.getEyeHeight(), 0.0));
+			if (!this.caughtExitWalkStarted && now >= this.caughtExitWalkStartsAt) {
+				double speed = 0.715 + this.random.nextDouble() * 0.11;
+				if (!this.getNavigation().moveTo(this.caughtExitWalkTarget.x, this.caughtExitWalkTarget.y,
+						this.caughtExitWalkTarget.z, speed)) {
+					fallbackCaughtExitWalkToTurn(level, owner, now);
+					return true;
+				}
+				this.caughtExitWalkStarted = true;
+				this.caughtExitSecondaryScheduledAt = this.caughtExitSecondaryPlanned
+						? now + 16 + this.random.nextInt(15)
+						: -1L;
+			}
+			tickCaughtExitSecondaryGlance(owner, now);
+			boolean reachedWalkTarget = this.position().distanceToSqr(this.caughtExitWalkTarget) <= 0.75 * 0.75;
+			if (this.caughtExitWalkStarted && reachedWalkTarget) {
+				this.caughtExitWalkArrived = true;
+				this.getNavigation().stop();
+				selectCaughtExitFocus(level, owner, createCaughtExitFallbackPoint(owner));
+				this.caughtExitBodyTargetYaw = chooseCaughtExitBodyYaw(owner);
+				this.caughtExitEndsAt = Math.max(this.caughtExitEndsAt, now + 16 + this.random.nextInt(15));
+				applyCaughtExitFocus(now);
+			} else if (this.caughtExitWalkStarted && this.getNavigation().isDone()) {
+				fallbackCaughtExitWalkToTurn(level, owner, now);
+			}
+			return true;
+		}
+
+		if (this.caughtExitFocusTarget != null) {
+			if (this.caughtExitFocusTarget.isAlive() && this.hasLineOfSight(this.caughtExitFocusTarget)) {
+				this.caughtExitFocusPoint = this.caughtExitFocusTarget.getEyePosition();
+			} else {
+				this.caughtExitFocusTarget = null;
+				this.caughtExitFocusPoint = createCaughtExitFallbackPoint(owner);
+				this.caughtExitBodyTargetYaw = chooseCaughtExitBodyYaw(owner);
+			}
+		}
+
+		tickCaughtExitSecondaryGlance(owner, now);
+		if (now >= this.caughtExitEndsAt && (this.caughtExitSecondaryStartedAt < 0L
+				|| now >= this.caughtExitSecondaryReturnEndAt)) {
+			endCaughtExit(now, false);
+			return true;
+		}
+
+		if (this.caughtExitSecondaryStartedAt < 0L || now >= this.caughtExitSecondaryReturnEndAt) {
+			applyCaughtExitFocus(now);
+		}
+		return true;
+	}
+
+	private void fallbackCaughtExitWalkToTurn(ServerLevel level, LivingEntity owner, long now) {
+		this.getNavigation().stop();
+		this.caughtExitMode = CaughtExitMode.TURN_AWAY;
+		selectCaughtExitFocus(level, owner, createCaughtExitFallbackPoint(owner));
+		this.caughtExitBodyTargetYaw = chooseCaughtExitBodyYaw(owner);
+		if (this.caughtExitSecondaryPlanned && this.caughtExitSecondaryScheduledAt < 0L) {
+			this.caughtExitSecondaryScheduledAt = now + 16 + this.random.nextInt(15);
+		}
+		applyCaughtExitFocus(now);
+	}
+
+	private void tickCaughtExitSecondaryGlance(LivingEntity owner, long now) {
+		if (!this.caughtExitSecondaryPlanned || this.caughtExitSecondaryDone
+				|| this.caughtExitSecondaryScheduledAt < 0L || now < this.caughtExitSecondaryScheduledAt) {
+			return;
+		}
+
+		if (this.caughtExitSecondaryStartedAt < 0L) {
+			this.caughtExitSecondaryStartedAt = now;
+			this.caughtExitSecondaryOwnerStillLooking = owner instanceof Player player
+					&& samplePlayerHeadGaze(player).state() == GazeState.VALID;
+			this.caughtExitSecondaryGlanceEndAt = now + (this.caughtExitSecondaryOwnerStillLooking
+					? 3 + this.random.nextInt(3)
+					: 7 + this.random.nextInt(5));
+			this.caughtExitSecondaryReturnEndAt = this.caughtExitSecondaryGlanceEndAt + 4;
+			this.caughtExitSecondaryHeadPoint = createSecondaryGlanceHeadPoint(owner);
+		}
+
+		if (now < this.caughtExitSecondaryGlanceEndAt) {
+			setEyeAttentionPoint(owner.getEyePosition());
+			setAttentionPoint(now - this.caughtExitSecondaryStartedAt >= 2
+					? this.caughtExitSecondaryHeadPoint
+					: this.caughtExitFocusPoint);
+			return;
+		}
+
+		setEyeAttentionPoint(this.caughtExitFocusPoint);
+		setAttentionPoint(this.caughtExitFocusPoint);
+		if (now >= this.caughtExitSecondaryReturnEndAt) {
+			this.caughtExitSecondaryDone = true;
+			if (this.caughtExitSecondaryOwnerStillLooking) {
+				this.caughtExitEndsAt = Math.max(this.caughtExitEndsAt, now + 20 + this.random.nextInt(21));
+			}
+		}
+	}
+
+	private Vec3 createSecondaryGlanceHeadPoint(LivingEntity owner) {
+		float focusYaw = yawToward(this.getX(), this.getZ(), this.caughtExitFocusPoint.x, this.caughtExitFocusPoint.z);
+		float ownerYaw = yawToward(this.getX(), this.getZ(), owner.getX(), owner.getZ());
+		float difference = net.minecraft.util.Mth.wrapDegrees(ownerYaw - focusYaw);
+		float turn = Math.signum(difference) * Math.min(Math.abs(difference), 8.0F + this.random.nextFloat() * 7.0F);
+		float yawRadians = (focusYaw + turn) * ((float)Math.PI / 180.0F);
+		double distance = 8.0;
+		return new Vec3(
+				this.getX() - Math.sin(yawRadians) * distance,
+				this.caughtExitFocusPoint.y,
+				this.getZ() + Math.cos(yawRadians) * distance
+		);
+	}
+
+	private Vec3 createCaughtExitFallbackPoint(LivingEntity owner) {
+		float ownerYaw = yawToward(this.getX(), this.getZ(), owner.getX(), owner.getZ());
+		float offset = CAUGHT_EXIT_MIN_OWNER_ANGLE
+				+ this.random.nextFloat() * (CAUGHT_EXIT_MAX_WALK_ANGLE - CAUGHT_EXIT_MIN_OWNER_ANGLE);
+		float yawRadians = (ownerYaw + (this.random.nextBoolean() ? offset : -offset)) * ((float)Math.PI / 180.0F);
+		double distance = 6.0 + this.random.nextDouble() * 3.0;
+		return new Vec3(
+				this.getX() - Math.sin(yawRadians) * distance,
+				this.getEyeY() + this.random.nextDouble(),
+				this.getZ() + Math.cos(yawRadians) * distance
+		);
+	}
+
+	private void applyCaughtExitFocus(long now) {
+		this.eyeAttentionTarget = this.caughtExitFocusTarget;
+		this.attentionTarget = this.caughtExitFocusTarget;
+		this.eyeAttentionKind = AttentionKind.NORMAL;
+		this.headAttentionKind = AttentionKind.NORMAL;
+		this.eyeAttentionPriority = 240;
+		this.attentionPriority = 240;
+		this.eyeAttentionExpiresAt = this.caughtExitEndsAt + 20;
+		this.attentionExpiresAt = this.caughtExitEndsAt + 20;
+		setEyeAttentionPoint(this.caughtExitFocusPoint);
+		setAttentionPoint(this.caughtExitFocusPoint);
+		setReaction(VISUAL_NORMAL, now + 20);
+	}
+
+	private void tickCaughtExitBodyFacing() {
+		if (this.caughtExitMode != CaughtExitMode.TURN_AWAY
+				&& !(this.caughtExitMode == CaughtExitMode.WALK_AWAY
+				&& (!this.caughtExitWalkStarted || this.caughtExitWalkArrived))) {
+			return;
+		}
+		float yawRadians = this.caughtExitBodyTargetYaw * ((float)Math.PI / 180.0F);
+		Vec3 target = new Vec3(this.getX() - Math.sin(yawRadians) * 6.0, this.getEyeY(), this.getZ() + Math.cos(yawRadians) * 6.0);
+		turnBodyToward(target, 5.0F);
+	}
+
+	private void endCaughtExit(long now, boolean interrupted) {
+		if (!isCaughtExitActive()) {
+			return;
+		}
+		if (this.caughtExitMode == CaughtExitMode.WALK_AWAY) {
+			this.getNavigation().stop();
+		}
+		Vec3 finalFocus = this.caughtExitFocusPoint;
+		this.caughtExitMode = CaughtExitMode.NONE;
+		this.caughtExitStartedAt = -1L;
+		this.caughtExitEndsAt = -1L;
+		this.caughtExitFocusTarget = null;
+		this.caughtExitWalkStartsAt = -1L;
+		this.caughtExitWalkStarted = false;
+		this.caughtExitWalkArrived = false;
+		this.caughtExitSecondaryPlanned = false;
+		this.caughtExitSecondaryDone = false;
+		this.caughtExitSecondaryScheduledAt = -1L;
+		this.caughtExitSecondaryStartedAt = -1L;
+		this.caughtExitSecondaryGlanceEndAt = -1L;
+		this.caughtExitSecondaryReturnEndAt = -1L;
+		if (!interrupted) {
+			this.caughtReactionCooldownUntil = now + 160 + this.random.nextInt(141);
+			this.mutualGazeCooldownUntil = Math.max(this.mutualGazeCooldownUntil, this.caughtReactionCooldownUntil);
+			this.caughtExitOwnerAvoidUntil = now + 80 + this.random.nextInt(61);
+			this.caughtExitOwnerAvoidPoint = finalFocus;
+			applyAttention(new AttentionCandidate(null, finalFocus, 235, VISUAL_NORMAL,
+					35 + this.random.nextInt(36), false, AttentionKind.NORMAL), now);
+		}
+	}
+
+	private boolean isCaughtExitActive() {
+		return this.caughtExitMode != CaughtExitMode.NONE;
+	}
+
+	private void restoreMutualGazeAttention(Player player, long now) {
+		this.eyeAttentionTarget = player;
+		this.eyeAttentionPriority = MUTUAL_GAZE_PRIORITY;
+		this.eyeAttentionExpiresAt = now + 20 * 60;
+		this.eyeAttentionKind = AttentionKind.MUTUAL_GAZE;
+		this.eyeStickyUntil = now + EYE_STICKY_TICKS;
+		this.attentionTarget = player;
+		this.attentionPriority = MUTUAL_GAZE_PRIORITY;
+		this.attentionExpiresAt = now + 20 * 60;
+		this.headAttentionKind = AttentionKind.MUTUAL_GAZE;
+		this.headStickyUntil = now + HEAD_STICKY_TICKS;
+		setEyeAttentionPoint(this.mutualGazeLastSeenPoint);
+		setAttentionPoint(this.mutualGazeLastSeenPoint);
+		setReaction(VISUAL_MUTUAL_GAZE, now + 20 * 60);
+		this.entityData.set(CURIOUS_TILT, (byte)0);
+		this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+	}
+
+	private void tickMutualGazeBodyFacing() {
+		long now = this.level().getGameTime();
+		if (now - this.attentionStartedAt < 4) {
+			return;
+		}
+
+		float desiredYaw = yawToward(this.getX(), this.getZ(), this.mutualGazeLastSeenPoint.x, this.mutualGazeLastSeenPoint.z);
+		float yawDifference = Math.abs(net.minecraft.util.Mth.wrapDegrees(desiredYaw - this.yBodyRot));
+		if (!this.mutualGazeBodyTurning && yawDifference > 5.0F) {
+			this.mutualGazeBodyTurning = true;
+		}
+		if (!this.mutualGazeBodyTurning) {
+			this.mutualGazeAligned = true;
+			return;
+		}
+		if (yawDifference <= 5.0F) {
+			this.mutualGazeBodyTurning = false;
+			this.mutualGazeAligned = true;
+			return;
+		}
+
+		this.mutualGazeAligned = false;
+		turnBodyToward(this.mutualGazeLastSeenPoint, 8.0F);
+	}
+
+	private void tickThreatBodyFacing() {
+		long now = this.level().getGameTime();
+		LivingEntity target = this.bodyAttentionTarget;
+		if (target == null || !target.isAlive() || now >= this.bodyAttentionExpiresAt || isActivelyFighting()) {
+			return;
+		}
+
+		double distance = this.distanceTo(target);
+		float desiredYaw = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		float yawDifference = Math.abs(net.minecraft.util.Mth.wrapDegrees(desiredYaw - this.yBodyRot));
+		boolean shouldTurn = switch (this.bodyAttentionKind) {
+			case PRIMED_CREEPER -> distance <= 6.0 || yawDifference > 75.0F && now - this.bodyAttentionStartedAt >= 6;
+			case DAMAGE_SOURCE -> now - this.bodyAttentionStartedAt >= 3;
+			case CLOSE_CREEPER -> distance <= 4.0 || approachingSpeed(target) > 0.22;
+			case APPROACHING -> willApproachWithin(target, 3.0, 10.0);
+			default -> false;
+		};
+		if (shouldTurn) {
+			turnBodyToward(target.getEyePosition(), 10.0F);
+		}
+	}
+
+	private boolean isActivelyFighting() {
+		LivingEntity target = this.getTarget();
+		return action() != ACTION_IDLE || target != null && target.isAlive();
+	}
+
+	private boolean willApproachWithin(LivingEntity target, double desiredDistance, double withinTicks) {
+		double closingSpeed = approachingSpeed(target);
+		double distanceToClose = Math.max(0.0, this.distanceTo(target) - desiredDistance);
+		return closingSpeed > 1.0E-4 && distanceToClose / closingSpeed <= withinTicks;
+	}
+
+	private void startMutualGazeGlanceAway(long now) {
+
+		this.mutualGazeCooldownUntil = now + 10 + this.random.nextInt(21);
+		float offset = 35.0F + this.random.nextFloat() * 65.0F;
+		float yaw = (this.yBodyRot + (this.random.nextBoolean() ? offset : -offset)) * ((float)Math.PI / 180.0F);
+		double distance = 4.0 + this.random.nextDouble() * 3.0;
+		Vec3 point = new Vec3(
+				this.getX() - Math.sin(yaw) * distance,
+				this.getEyeY() + this.random.nextDouble() * 1.5 - 0.5,
+				this.getZ() + Math.cos(yaw) * distance
+		);
+		applyAttention(new AttentionCandidate(null, point, 235, VISUAL_NORMAL,
+				(int)(this.mutualGazeCooldownUntil - now), false, AttentionKind.NORMAL), now);
+	}
+
+	private void endMutualGaze(long now) {
+		boolean caughtReactionWasActive = isCaughtReactionActive();
+		this.caughtReactionScheduledAt = -1L;
+		this.caughtReactionStartedAt = -1L;
+		this.caughtReactionGlanceEndAt = -1L;
+		this.caughtReactionFinishAt = -1L;
+		this.caughtReactionGazeMissTicks = 0;
+		this.entityData.set(CAUGHT_REACTION_START, -100L);
+		if (caughtReactionWasActive) {
+			this.caughtReactionCooldownUntil = now + 160 + this.random.nextInt(141);
+			this.mutualGazeCooldownUntil = Math.max(this.mutualGazeCooldownUntil, this.caughtReactionCooldownUntil);
+		}
+		this.mutualGazePlayerUuid = null;
+		this.mutualGazeHoldTicksRemaining = 0;
+		this.mutualGazeLostSightAt = -1L;
+		this.mutualGazeBodyTurning = false;
+		this.mutualGazeAligned = false;
+		this.mutualGazeDistractionStartedAt = -1L;
+		this.playerGazeProgress.clear();
+		this.attentionTarget = null;
+		this.attentionPriority = 0;
+		this.attentionExpiresAt = now;
+		this.headAttentionKind = AttentionKind.NORMAL;
+		this.eyeAttentionTarget = null;
+		this.eyeAttentionPriority = 0;
+		this.eyeAttentionExpiresAt = now;
+		this.eyeAttentionKind = AttentionKind.NORMAL;
+		if (this.entityData.get(VISUAL_REACTION) == VISUAL_MUTUAL_GAZE
+				|| this.entityData.get(VISUAL_REACTION) == VISUAL_CAUGHT) {
+			setReaction(VISUAL_NORMAL, now);
+			this.entityData.set(CURIOUS_TILT, (byte)0);
+		}
+	}
+
+
+	private static boolean isHardMutualGazeInterrupt(AttentionCandidate candidate) {
+		return candidate.kind() == AttentionKind.PRIMED_CREEPER
+				|| candidate.kind() == AttentionKind.DAMAGE_SOURCE
+				|| candidate.kind() == AttentionKind.COMBAT_TARGET;
+	}
+
+	private void tickBlinkClock(long now) {
+		if (this.nextBlinkAt == 0L) {
+			this.nextBlinkAt = now + 50 + this.random.nextInt(71);
+		}
+		if (now < this.nextBlinkAt || this.entityData.get(VISUAL_REACTION) == VISUAL_STARTLED
+				|| this.entityData.get(VISUAL_REACTION) == VISUAL_HURT
+				|| this.entityData.get(VISUAL_REACTION) == VISUAL_CAUGHT) {
+			return;
+		}
+
+		this.entityData.set(BLINK_START, now);
+		this.entityData.set(BLINK_COUNT, this.random.nextFloat() < 0.1F ? (byte)2 : (byte)1);
+		this.nextBlinkAt = now + 50 + this.random.nextInt(71);
+	}
+
+	private AttentionCandidate findBestAttentionCandidate(ServerLevel level, LivingEntity owner, long now) {
+		if (now < this.caughtExitOwnerAvoidUntil
+				&& !isCaughtExitDirectionAwayFromOwner(owner, this.caughtExitOwnerAvoidPoint)) {
+			this.caughtExitOwnerAvoidPoint = createCaughtExitFallbackPoint(owner);
+		}
+		LivingEntity combatTarget = this.getTarget();
+		boolean locomotionAttention = shouldUseLocomotionAttention();
+		AttentionCandidate best = isVisibleAttentionTarget(combatTarget)
+				? new AttentionCandidate(combatTarget, combatTarget.getEyePosition(), 800, VISUAL_ALERT, 30, false, AttentionKind.COMBAT_TARGET)
+				: now < this.caughtExitOwnerAvoidUntil
+						? new AttentionCandidate(null, this.caughtExitOwnerAvoidPoint, 220, VISUAL_NORMAL,
+								35 + this.random.nextInt(36), false, AttentionKind.NORMAL)
+						: locomotionAttention
+								? new AttentionCandidate(null, createLocomotionAttentionPoint(), LOCOMOTION_ATTENTION_PRIORITY,
+										VISUAL_LOCOMOTION, LOCOMOTION_ATTENTION_TICKS, false, AttentionKind.LOCOMOTION)
+								: new AttentionCandidate(owner, owner.getEyePosition(), 220, VISUAL_NORMAL,
+										35 + this.random.nextInt(36), false, AttentionKind.NORMAL);
+
+		LivingEntity attacker = this.getLastHurtByMob();
+		if (isRecentWithin(this, this.getLastHurtByMobTimestamp(), 20) && isVisibleAttentionTarget(attacker)) {
+			best = new AttentionCandidate(attacker, attacker.getEyePosition(), 1100, VISUAL_HURT, 16, false, AttentionKind.DAMAGE_SOURCE);
+		}
+
+		LivingEntity ownerAttacker = owner.getLastHurtByMob();
+		if (isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), 20) && isVisibleAttentionTarget(ownerAttacker) && best.priority() < 1050) {
+			best = new AttentionCandidate(ownerAttacker, ownerAttacker.getEyePosition(), 1050, VISUAL_ALERT, 24, false, AttentionKind.DAMAGE_SOURCE);
+		}
+
+		List<LivingEntity> nearby = level.getEntitiesOfClass(
+				LivingEntity.class,
+				this.getBoundingBox().inflate(12.0),
+				entity -> entity != this && entity.isAlive() && !entity.isSpectator() && this.hasLineOfSight(entity)
+		);
+		for (LivingEntity entity : nearby) {
+			if (entity == owner && now < this.caughtExitOwnerAvoidUntil) {
+				continue;
+			}
+			double distanceSqr = this.distanceToSqr(entity);
+			int score;
+			byte reaction = VISUAL_NORMAL;
+			int duration = 30 + this.random.nextInt(51);
+
+			if (entity instanceof Creeper creeper) {
+				boolean primed = creeper.getSwellDir() > 0 || creeper.isIgnited();
+				score = primed ? 1200 : distanceSqr <= 64.0 ? 900 : 540;
+				reaction = primed || distanceSqr <= 64.0 ? VISUAL_STARTLED : VISUAL_ALERT;
+				duration = primed ? 30 : 22;
+				AttentionKind kind = primed ? AttentionKind.PRIMED_CREEPER
+						: distanceSqr <= 64.0 ? AttentionKind.CLOSE_CREEPER : AttentionKind.NORMAL;
+				if (score > best.priority()) {
+					best = new AttentionCandidate(entity, entity.getEyePosition(), score, reaction, duration, false, kind);
+				}
+				continue;
+			} else {
+				double closingSpeed = approachingSpeed(entity);
+				if (distanceSqr <= 100.0 && closingSpeed > 0.22) {
+					score = 620 + (int)(closingSpeed * 250.0);
+					reaction = VISUAL_STARTLED;
+					duration = 18;
+				} else if (entity == owner) {
+					score = 220;
+				} else if (entity instanceof Player) {
+					score = 170;
+				} else {
+					score = 115;
+				}
+				score -= (int)(Math.sqrt(distanceSqr) * 4.0);
+				score += this.random.nextInt(35);
+			}
+
+			if (score > best.priority()) {
+				boolean curious = reaction == VISUAL_NORMAL && this.isInSafeIdleState() && this.random.nextFloat() < 0.1F;
+				AttentionKind kind = reaction == VISUAL_STARTLED ? AttentionKind.APPROACHING : AttentionKind.NORMAL;
+				best = new AttentionCandidate(entity, entity.getEyePosition(), score, curious ? VISUAL_CURIOUS : reaction, duration, curious, kind);
+			}
+		}
+
+		if (now >= this.caughtExitOwnerAvoidUntil && best.priority() <= 220 && this.random.nextFloat() < 0.3F) {
+			float yaw = (this.getYRot() + this.random.nextFloat() * 130.0F - 65.0F) * ((float)Math.PI / 180.0F);
+			double distance = 4.0 + this.random.nextDouble() * 5.0;
+			Vec3 point = new Vec3(
+					this.getX() - Math.sin(yaw) * distance,
+					this.getEyeY() + this.random.nextDouble() * 3.0 - 1.0,
+					this.getZ() + Math.cos(yaw) * distance
+			);
+			boolean curious = this.isInSafeIdleState() && this.random.nextFloat() < 0.1F;
+			return new AttentionCandidate(null, point, 230, curious ? VISUAL_CURIOUS : VISUAL_NORMAL,
+					30 + this.random.nextInt(51), curious, AttentionKind.NORMAL);
+		}
+
+		return best;
+	}
+
+	private void considerAttentionCandidate(AttentionCandidate candidate, long now) {
+		boolean urgent = isUrgentVisual(candidate.kind());
+		boolean sameEyeTarget = candidate.target() != null
+				&& sameTarget(this.eyeAttentionTarget, candidate.target())
+				&& this.eyeAttentionKind == candidate.kind();
+		boolean eyeExpired = now >= this.eyeAttentionExpiresAt || this.eyeAttentionTarget != null && !this.eyeAttentionTarget.isAlive();
+		boolean switchEyes = urgent || eyeExpired || candidate.priority() >= this.eyeAttentionPriority + 80;
+		if (switchEyes) {
+			this.eyeAttentionTarget = candidate.target();
+			this.eyeAttentionPriority = candidate.priority();
+			this.eyeAttentionExpiresAt = now + candidate.durationTicks();
+			this.eyeAttentionKind = candidate.kind();
+			this.eyeStickyUntil = now + EYE_STICKY_TICKS;
+			setEyeAttentionPoint(candidate.point());
+			setReaction(candidate.reaction(), now + candidate.durationTicks());
+			this.entityData.set(CURIOUS_TILT, (byte)0);
+			this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+		} else if (sameEyeTarget) {
+			setEyeAttentionPoint(candidate.target().getEyePosition());
+		}
+
+		boolean samePending = sameTarget(this.pendingHeadTarget, candidate.target()) && this.pendingHeadKind == candidate.kind();
+		if (!samePending) {
+			this.pendingHeadTarget = candidate.target();
+			this.pendingHeadKind = candidate.kind();
+			this.pendingHeadSince = now;
+		}
+
+		boolean sameHeadTarget = candidate.target() != null
+				&& sameTarget(this.attentionTarget, candidate.target())
+				&& this.headAttentionKind == candidate.kind();
+		boolean headExpired = now >= this.attentionExpiresAt || this.attentionTarget != null && !this.attentionTarget.isAlive();
+		boolean delayComplete = now - this.pendingHeadSince >= headDelayTicks(candidate.kind());
+		boolean switchHead = delayComplete && (urgent || headExpired || candidate.priority() >= this.attentionPriority + 80);
+		if (switchHead) {
+			this.attentionTarget = candidate.target();
+			this.attentionPoint = candidate.point();
+			this.attentionPriority = candidate.priority();
+			this.attentionStartedAt = now;
+			this.attentionExpiresAt = now + candidate.durationTicks();
+			this.headAttentionKind = candidate.kind();
+			this.headStickyUntil = now + HEAD_STICKY_TICKS;
+			this.entityData.set(ATTENTION_STARTED_AT, now);
+			setAttentionPoint(candidate.point());
+			this.entityData.set(CURIOUS_TILT, candidate.curious() ? (byte)(this.random.nextBoolean() ? 1 : -1) : (byte)0);
+			this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+		} else if (sameHeadTarget && this.attentionTarget.isAlive()) {
+			setAttentionPoint(this.attentionTarget.getEyePosition());
+		}
+
+		configureBodyAttention(candidate, now);
+	}
+
+	private static boolean sameTarget(@Nullable LivingEntity first, @Nullable LivingEntity second) {
+		return first == second;
+	}
+
+	private static boolean isUrgentVisual(AttentionKind kind) {
+		return kind == AttentionKind.PRIMED_CREEPER || kind == AttentionKind.DAMAGE_SOURCE;
+	}
+
+	private static int headDelayTicks(AttentionKind kind) {
+		return switch (kind) {
+			case CLOSE_CREEPER -> 4;
+			case APPROACHING -> 2;
+			default -> 0;
+		};
+	}
+
+	private void configureBodyAttention(AttentionCandidate candidate, long now) {
+		if (candidate.target() == null || candidate.kind() != AttentionKind.PRIMED_CREEPER
+				&& candidate.kind() != AttentionKind.DAMAGE_SOURCE
+				&& candidate.kind() != AttentionKind.CLOSE_CREEPER
+				&& candidate.kind() != AttentionKind.APPROACHING) {
+			return;
+		}
+
+		if (this.bodyAttentionTarget != candidate.target() || this.bodyAttentionKind != candidate.kind()) {
+			this.bodyAttentionStartedAt = now;
+		}
+		this.bodyAttentionTarget = candidate.target();
+		this.bodyAttentionKind = candidate.kind();
+		this.bodyAttentionExpiresAt = now + candidate.durationTicks();
+	}
+
+	private boolean isVisibleAttentionTarget(@Nullable LivingEntity target) {
+		return target != null && target.isAlive() && target.level() == this.level() && this.distanceToSqr(target) <= 32.0 * 32.0 && this.hasLineOfSight(target);
+	}
+
+	private double approachingSpeed(LivingEntity target) {
+		Vec3 towardEcho = this.position().subtract(target.position());
+		return towardEcho.lengthSqr() < 1.0E-4 ? 0.0 : target.getDeltaMovement().dot(towardEcho.normalize());
+	}
+
+	private boolean isInSafeIdleState() {
+		return action() == ACTION_IDLE && this.getTarget() == null
+				&& !isRecent(this, this.getLastHurtByMobTimestamp())
+				&& this.getNavigation().isDone();
+	}
+
+	private boolean shouldUseLocomotionAttention() {
+		Vec3 movement = this.getDeltaMovement();
+		double horizontalSpeedSqr = movement.x * movement.x + movement.z * movement.z;
+		return !isVisualInteractionMovementOwned()
+				&& (!this.getNavigation().isDone() || horizontalSpeedSqr > 2.5E-4);
+	}
+
+	private Vec3 createLocomotionAttentionPoint() {
+		Vec3 movement = this.getDeltaMovement();
+		Vec3 direction = new Vec3(movement.x, 0.0, movement.z);
+		if (direction.lengthSqr() > 1.0E-4) {
+			direction = direction.normalize();
+		} else {
+			float yaw = this.yBodyRot * ((float)Math.PI / 180.0F);
+			direction = new Vec3(-Math.sin(yaw), 0.0, Math.cos(yaw));
+		}
+		return this.getEyePosition().add(direction.scale(6.0));
+	}
+
+	private void applyAttention(AttentionCandidate candidate, long now) {
+		this.eyeAttentionTarget = candidate.target();
+		this.eyeAttentionPoint = candidate.point();
+		this.eyeAttentionPriority = candidate.priority();
+		this.eyeAttentionExpiresAt = now + candidate.durationTicks();
+		this.eyeAttentionKind = candidate.kind();
+		this.eyeStickyUntil = now + EYE_STICKY_TICKS;
+		this.attentionTarget = candidate.target();
+		this.attentionPoint = candidate.point();
+		this.attentionPriority = candidate.priority();
+		this.attentionStartedAt = now;
+		this.entityData.set(ATTENTION_STARTED_AT, now);
+		this.attentionExpiresAt = now + candidate.durationTicks();
+		this.headAttentionKind = candidate.kind();
+		this.headStickyUntil = now + HEAD_STICKY_TICKS;
+		this.pendingHeadTarget = candidate.target();
+		this.pendingHeadKind = candidate.kind();
+		this.pendingHeadSince = now;
+		setEyeAttentionPoint(candidate.point());
+		setAttentionPoint(candidate.point());
+		setReaction(candidate.reaction(), now + candidate.durationTicks());
+		this.entityData.set(CURIOUS_TILT, candidate.curious() ? (byte)(this.random.nextBoolean() ? 1 : -1) : (byte)0);
+		this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+		configureBodyAttention(candidate, now);
+	}
+
+	private void setAttentionPoint(Vec3 point) {
+		this.attentionPoint = point;
+		this.entityData.set(ATTENTION_X, (float)point.x);
+		this.entityData.set(ATTENTION_Y, (float)point.y);
+		this.entityData.set(ATTENTION_Z, (float)point.z);
+	}
+
+	private void setEyeAttentionPoint(Vec3 point) {
+		this.eyeAttentionPoint = point;
+		this.entityData.set(EYE_ATTENTION_X, (float)point.x);
+		this.entityData.set(EYE_ATTENTION_Y, (float)point.y);
+		this.entityData.set(EYE_ATTENTION_Z, (float)point.z);
+	}
+
+	private void setReaction(byte reaction, long until) {
+		this.entityData.set(VISUAL_REACTION, reaction);
+		this.entityData.set(VISUAL_REACTION_UNTIL, until);
+	}
+
+	private void turnBodyToward(Vec3 point, float maxDegrees) {
+
+		float desiredYaw = yawToward(this.getX(), this.getZ(), point.x, point.z);
+		float delta = net.minecraft.util.Mth.wrapDegrees(desiredYaw - this.yBodyRot);
+		this.yBodyRot += net.minecraft.util.Mth.clamp(delta, -maxDegrees, maxDegrees);
+		this.setYRot(this.yBodyRot);
+	}
+
+
+	public void forceVisualState(VisualTestMode mode) {
+		if (!(this.level() instanceof ServerLevel level)) {
+			return;
+		}
+		long now = level.getGameTime();
+		this.forcedVisualUntil = now + 60;
+		switch (mode) {
+			case BLINK -> {
+				this.entityData.set(BLINK_START, now);
+				this.entityData.set(BLINK_COUNT, (byte)1);
+				this.forcedVisualUntil = now + 8;
+			}
+			case DOUBLE_BLINK -> {
+				this.entityData.set(BLINK_START, now);
+				this.entityData.set(BLINK_COUNT, (byte)2);
+				this.forcedVisualUntil = now + 12;
+			}
+			case CURIOUS -> {
+				LivingEntity owner = this.getOwner();
+				Vec3 point = owner == null ? this.position().add(0, 1.5, 4) : owner.getEyePosition();
+				setEyeAttentionPoint(point);
+				setAttentionPoint(point);
+				setReaction(VISUAL_CURIOUS, now + 60);
+				this.entityData.set(CURIOUS_TILT, (byte)(this.random.nextBoolean() ? 1 : -1));
+			}
+			case STARTLED -> {
+				LivingEntity owner = this.getOwner();
+				Vec3 point = owner == null ? this.position().add(0, 1.5, 4) : owner.getEyePosition();
+				setEyeAttentionPoint(point);
+				setAttentionPoint(point);
+				setReaction(VISUAL_STARTLED, now + 60);
+				this.entityData.set(CURIOUS_TILT, (byte)0);
+			}
+			case EXIT_LOOK, EXIT_TURN, EXIT_WALK, EXIT_SECONDARY -> {
+				LivingEntity owner = this.getOwner();
+				if (owner == null) {
+					return;
+				}
+				this.forcedVisualUntil = 0L;
+				if (this.mutualGazePlayerUuid != null) {
+					endMutualGaze(now);
+				}
+				endCaughtExit(now, true);
+				CaughtExitMode exitMode = switch (mode) {
+					case EXIT_LOOK -> CaughtExitMode.LOOK_AWAY;
+					case EXIT_WALK -> CaughtExitMode.WALK_AWAY;
+					default -> CaughtExitMode.TURN_AWAY;
+				};
+				startCaughtExit(level, owner, createCaughtExitFallbackPoint(owner), now,
+						exitMode, mode == VisualTestMode.EXIT_SECONDARY);
+			}
+			case RESET -> {
+				this.forcedVisualUntil = 0L;
+				if (this.mutualGazePlayerUuid != null) {
+					endMutualGaze(now);
+				}
+				endCaughtExit(now, true);
+				this.eyeAttentionTarget = null;
+				this.eyeAttentionExpiresAt = 0L;
+				this.eyeAttentionPriority = 0;
+				this.eyeAttentionKind = AttentionKind.NORMAL;
+				this.attentionTarget = null;
+				this.attentionExpiresAt = 0L;
+				this.attentionPriority = 0;
+				this.headAttentionKind = AttentionKind.NORMAL;
+				this.bodyAttentionTarget = null;
+				this.bodyAttentionExpiresAt = 0L;
+				this.bodyAttentionKind = AttentionKind.NORMAL;
+				setReaction(VISUAL_NORMAL, 0L);
+				this.entityData.set(CURIOUS_TILT, (byte)0);
+			}
+		}
+		this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+	}
+
+	public Vec3 getSyncedAttentionPoint() {
+		return new Vec3(this.entityData.get(ATTENTION_X), this.entityData.get(ATTENTION_Y), this.entityData.get(ATTENTION_Z));
+	}
+
+	public Vec3 getSyncedEyeAttentionPoint() {
+		return new Vec3(this.entityData.get(EYE_ATTENTION_X), this.entityData.get(EYE_ATTENTION_Y), this.entityData.get(EYE_ATTENTION_Z));
+	}
+
+	public byte getVisualReaction() {
+		return this.entityData.get(VISUAL_REACTION);
+	}
+
+	public long getVisualReactionUntil() {
+		return this.entityData.get(VISUAL_REACTION_UNTIL);
+	}
+
+	public long getAttentionStartedAt() {
+		return this.entityData.get(ATTENTION_STARTED_AT);
+	}
+
+	public long getCaughtReactionStart() {
+		return this.entityData.get(CAUGHT_REACTION_START);
+	}
+
+	public long getBlinkStart() {
+		return this.entityData.get(BLINK_START);
+	}
+
+	public byte getBlinkCount() {
+		return this.entityData.get(BLINK_COUNT);
+	}
+
+	public byte getCuriousTilt() {
+		return this.entityData.get(CURIOUS_TILT);
+	}
+
+	public int getVisualSequence() {
+		return this.entityData.get(VISUAL_SEQUENCE);
+	}
+
+	public String describeGazeDebug(Player observer) {
+		GazeSample sample = samplePlayerHeadGaze(observer);
+		PlayerGazeProgress progress = this.playerGazeProgress.get(observer.getUUID());
+		int validTicks = progress == null ? 0 : progress.validTicks;
+		int missedTicks = progress == null ? 0 : progress.missedTicks;
+		LivingEntity owner = this.getOwner();
+		boolean combatSuppressed = owner != null && isMutualGazeCombatSuppressed(owner);
+		return String.format(
+				Locale.ROOT,
+				"sample=%s distance=%.2f progress=%d/%d missed=%d combat=%s mutual=%s caughtPending=%s caughtActive=%s exit=%s secondary=%s avoid=%d distracted=%s aligned=%s hold=%d reaction=%d eye=%s head=%s body=%s bodyYaw=%.1f",
+				sample.state().name().toLowerCase(Locale.ROOT),
+				sample.distance(),
+				validTicks,
+				requiredGazeTicks(sample.distance()),
+				missedTicks,
+				combatSuppressed,
+				this.mutualGazePlayerUuid != null,
+				this.caughtReactionScheduledAt >= 0L,
+				isCaughtReactionActive(),
+				this.caughtExitMode.name().toLowerCase(Locale.ROOT),
+				this.caughtExitSecondaryStartedAt >= 0L && !this.caughtExitSecondaryDone,
+				Math.max(0L, this.caughtExitOwnerAvoidUntil - this.level().getGameTime()),
+				this.mutualGazeDistractionStartedAt >= 0L,
+				this.mutualGazeAligned,
+				this.mutualGazeHoldTicksRemaining,
+				this.entityData.get(VISUAL_REACTION),
+				this.eyeAttentionKind.name().toLowerCase(Locale.ROOT),
+				this.headAttentionKind.name().toLowerCase(Locale.ROOT),
+				this.bodyAttentionKind.name().toLowerCase(Locale.ROOT),
+				this.yBodyRot
+		);
+	}
+
+	public boolean isMutualGazeActive() {
+		return this.mutualGazePlayerUuid != null;
+	}
+
+	public boolean isVisualInteractionMovementOwned() {
+		return isMutualGazeActive() || isCaughtExitActive();
+	}
+
+	public enum VisualTestMode {
+		BLINK,
+		DOUBLE_BLINK,
+		CURIOUS,
+		STARTLED,
+		EXIT_LOOK,
+		EXIT_TURN,
+		EXIT_WALK,
+		EXIT_SECONDARY,
+		RESET
+	}
+
+	private enum AttentionKind {
+		PRIMED_CREEPER,
+		DAMAGE_SOURCE,
+		CLOSE_CREEPER,
+		COMBAT_TARGET,
+		MUTUAL_GAZE,
+		APPROACHING,
+		LOCOMOTION,
+		NORMAL
+	}
+
+	private enum CaughtExitMode {
+		NONE,
+		LOOK_AWAY,
+		TURN_AWAY,
+		WALK_AWAY
+	}
+
+	private record AttentionCandidate(
+			@Nullable LivingEntity target,
+			Vec3 point,
+			int priority,
+			byte reaction,
+			int durationTicks,
+			boolean curious,
+			AttentionKind kind
+	) {
+	}
+
+	private enum GazeState {
+		VALID,
+		MISSED,
+		BLOCKED
+	}
+
+	private record GazeSample(GazeState state, double distance) {
+	}
+
+	private static final class PlayerGazeProgress {
+		private int validTicks;
+		private int missedTicks;
+
+		private void reset() {
+			this.validTicks = 0;
+			this.missedTicks = 0;
+		}
 	}
 
 	private @Nullable LivingEntity selectProtectiveTarget(LivingEntity owner) {
@@ -552,7 +2246,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (isRecent(owner, owner.getLastHurtMobTimestamp()) && canProtectAgainst(ownerTarget)) return ownerTarget;
 		if (this.alertMode != EchoRelicState.AlertMode.AGGRESSIVE) return null;
 		double range = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 6.0 : MAX_RANGE;
-		return this.level().getEntitiesOfClass(Monster.class, this.getBoundingBox().inflate(range), this::canProtectAgainst)
+		return this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(range),
+				candidate -> candidate instanceof Enemy && canProtectAgainst(candidate))
 				.stream().min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
 	}
 
@@ -617,6 +2312,10 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		return timestamp > 0 && source.tickCount - timestamp <= 100;
 	}
 
+	private static boolean isRecentWithin(LivingEntity source, int timestamp, int ticks) {
+		return timestamp > 0 && source.tickCount - timestamp <= ticks;
+	}
+
 	private boolean canProtectAgainst(@Nullable LivingEntity target) {
 		if (target == null || !target.isAlive() || this.distanceToSqr(target) > 1024.0 || !this.canAttack(target)) return false;
 		if (this.activityMode == EchoRelicState.ActivityMode.WAIT) return target.position().distanceToSqr(this.activityAnchor) <= 64.0;
@@ -655,8 +2354,22 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
 		Entity attacker = source.getEntity();
 		if (attacker == this.getOwner() || attacker instanceof EchoWarriorEntity echo && echo.getOwner() == this.getOwner()) return false;
+		long now = level.getGameTime();
 		boolean hurt = super.hurtServer(level, source, damage);
-		if (hurt) {
+		if (hurt && damage > 0.0F) {
+			endCaughtExit(now, true);
+			triggerHurtPresentation(now, action() == ACTION_IDLE);
+			if (attacker instanceof LivingEntity living) {
+				applyAttention(new AttentionCandidate(living, living.getEyePosition(), 1100,
+						VISUAL_HURT, 16, false, AttentionKind.DAMAGE_SOURCE), now);
+			} else {
+				Vec3 point = this.position().add(this.getLookAngle().reverse());
+				setEyeAttentionPoint(point);
+				setAttentionPoint(point);
+				setReaction(VISUAL_HURT, now + 16);
+				this.entityData.set(CURIOUS_TILT, (byte)0);
+				this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+			}
 			if (attacker instanceof LivingEntity livingAttacker && canProtectAgainst(livingAttacker)
 					&& this.distanceToSqr(livingAttacker) <= MAX_RANGE * MAX_RANGE) {
 				if (this.emergencyTarget == null && livingAttacker != this.getTarget()
@@ -669,15 +2382,20 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 					this.resumeTargetAfterThreat = livingAttacker;
 				}
 				this.emergencyTarget = livingAttacker;
-				this.emergencyTargetUntil = level.getGameTime() + EMERGENCY_TARGET_TICKS;
+				this.emergencyTargetUntil = now + EMERGENCY_TARGET_TICKS;
 				LivingEntity current = this.getTarget();
 				if (current == null || this.distanceToSqr(current) > CLOSE_THREAT_TRIGGER_RANGE * CLOSE_THREAT_TRIGGER_RANGE) {
 					this.setTarget(livingAttacker);
 				}
 			}
-			if (action() == ACTION_IDLE) this.triggerAnim(ACTION_CONTROLLER, HURT_TRIGGER);
 		}
 		return hurt;
+	}
+
+	private void triggerHurtPresentation(long now, boolean playBodyAnimation) {
+		this.entityData.set(BLINK_START, now);
+		this.entityData.set(BLINK_COUNT, (byte)1);
+		if (playBodyAnimation) this.triggerAnim(ACTION_CONTROLLER, HURT_TRIGGER);
 	}
 
 	private void tickNaturalHealing(ServerLevel level, ItemStack relic) {
@@ -697,6 +2415,11 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private int attackInterval() { return this.entityData.get(ATTACK_INTERVAL); }
 	private boolean skillEnabled(int skill) { return (this.enabledSkills & 1 << skill) != 0; }
 	private void finishAction() {
+		this.stopTriggeredAnim(ACTION_CONTROLLER, DRAW_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, SHOOT_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, BOW_RECOVER_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, BACKSTEP_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, MELEE_TRIGGER);
 		this.entityData.set(ACTION, ACTION_IDLE);
 		this.actionTarget = null;
 		this.shotReleased = false;
@@ -757,8 +2480,13 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 
 	@Override public LivingEntity livingEntity() { return this; }
 	@Override public EchoHeroType heroType() { return EchoHeroType.EGYPTIAN_ARCHER; }
-	@Override public boolean shouldFollowOwner() { return this.activityMode == EchoRelicState.ActivityMode.FOLLOW && action() != ACTION_BACKSTEP; }
-	@Override public boolean isFollowMovementSuppressed() { return action() == ACTION_BACKSTEP; }
+	@Override public boolean shouldFollowOwner() {
+		return this.activityMode == EchoRelicState.ActivityMode.FOLLOW
+				&& action() != ACTION_BACKSTEP && !isVisualInteractionMovementOwned();
+	}
+	@Override public boolean isFollowMovementSuppressed() {
+		return action() == ACTION_BACKSTEP || isVisualInteractionMovementOwned();
+	}
 	@Override public @Nullable UUID getOwnerUuid() { LivingEntity owner = getOwner(); return owner == null ? null : owner.getUUID(); }
 	@Override public @Nullable UUID getSummonerUuid() { return this.summonerUuid; }
 	@Override public @Nullable EntityReference<LivingEntity> getOwnerReference() { return this.ownerReference; }
@@ -826,6 +2554,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		controllers.add(new AnimationController<EgyptianArcherEchoEntity>(ACTION_CONTROLLER, 1, this::selectActionAnimation)
 				.triggerableAnim(DRAW_TRIGGER, DRAW_BOW_UPPER)
 				.triggerableAnim(SHOOT_TRIGGER, SHOOT_UPPER)
+				.triggerableAnim(BOW_RECOVER_TRIGGER, BOW_RECOVER_UPPER)
 				.triggerableAnim(BACKSTEP_TRIGGER, BACKSTEP)
 				.triggerableAnim(MELEE_TRIGGER, MELEE)
 				.triggerableAnim(HURT_TRIGGER, HURT));
@@ -852,6 +2581,10 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			test.setControllerSpeed(61.6F / Math.max(1, test.animatable().attackInterval()));
 			return test.setAndContinue(SHOOT_LOWER);
 		}
+		if (test.animatable().action() == ACTION_RECOVER) {
+			test.setControllerSpeed(1.0F);
+			return test.setAndContinue(BOW_RECOVER_LOWER);
+		}
 		test.setControllerSpeed(1.0F);
 		return test.setAndContinue(IDLE);
 	}
@@ -867,5 +2600,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 
 	private static float yawToward(double fromX, double fromZ, double targetX, double targetZ) {
 		return (float)(Math.atan2(targetZ - fromZ, targetX - fromX) * 180.0 / Math.PI) - 90.0F;
+	}
+
+	private record RetreatPath(Vec3 destination, Path path) {
 	}
 }

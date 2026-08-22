@@ -18,6 +18,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.projectile.arrow.Arrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -84,15 +86,18 @@ public final class EgyptianArcherArrowEntity extends Arrow {
 
 	@Override
 	protected boolean canHitEntity(Entity entity) {
-		if (this.hitEntities.contains(entity.getUUID())) return false;
-		if (entity instanceof LivingEntity living && this.getOwner() instanceof EgyptianArcherEchoEntity owner
-				&& !owner.canAttack(living)) return false;
+		LivingEntity target = normalizeLivingTarget(entity);
+		if (target != null && this.hitEntities.contains(target.getUUID())) return false;
+		if (target != null && this.getOwner() instanceof EgyptianArcherEchoEntity owner
+				&& !owner.canAttack(target)) return false;
 		return super.canHitEntity(entity);
 	}
 
 	@Override
 	protected void onHitEntity(EntityHitResult hitResult) {
-		if (!(this.level() instanceof ServerLevel level) || !(hitResult.getEntity() instanceof LivingEntity target)) {
+		Entity hitEntity = hitResult.getEntity();
+		LivingEntity target = normalizeLivingTarget(hitEntity);
+		if (!(this.level() instanceof ServerLevel level) || target == null) {
 			this.discard();
 			return;
 		}
@@ -101,16 +106,23 @@ public final class EgyptianArcherArrowEntity extends Arrow {
 		this.hitEntities.add(target.getUUID());
 		float damage = this.entityData.get(RAW_DAMAGE);
 		if (target.getType().builtInRegistryHolder().is(EntityTypeTags.UNDEAD)) damage *= 1.20F;
-		DamageSource normalArrowSource = level.damageSources().arrow(this, ownerEntity == null ? this : ownerEntity);
+		Entity causingEntity = ownerEntity == null ? this : ownerEntity;
+		if (target instanceof EnderDragon && ownerEntity instanceof EgyptianArcherEchoEntity archer
+				&& archer.getOwner() != null) {
+			// Vanilla only accepts ordinary dragon damage when the causing entity is a
+			// player. Keep the projectile and echo ownership, but attribute this special
+			// boss hit to the echo's owner so dragon parts use their normal damage rules.
+			causingEntity = archer.getOwner();
+		}
+		DamageSource normalArrowSource = level.damageSources().arrow(this, causingEntity);
 		DamageSource actualSource = normalArrowSource;
 		if (arrowMode() == EchoRelicState.EgyptianArrowMode.CONE) {
 			float reducedArmor = target.getArmorValue() * 0.65F;
 			damage = CombatRules.getDamageAfterAbsorb(target, damage, normalArrowSource, reducedArmor,
 					(float)target.getAttributeValue(Attributes.ARMOR_TOUGHNESS));
-			actualSource = level.damageSources().source(ModDamageTypes.ARMOR_PIERCING_ARROW, this,
-					ownerEntity == null ? this : ownerEntity);
+			actualSource = level.damageSources().source(ModDamageTypes.ARMOR_PIERCING_ARROW, this, causingEntity);
 		}
-		boolean damaged = target.hurtServer(level, actualSource, damage);
+		boolean damaged = hitEntity.hurtServer(level, actualSource, damage);
 		if (damaged) {
 			if (ownerEntity instanceof LivingEntity owner) owner.setLastHurtMob(target);
 			if (arrowMode() == EchoRelicState.EgyptianArrowMode.LEAF) {
@@ -122,6 +134,11 @@ public final class EgyptianArcherArrowEntity extends Arrow {
 		boolean continuePiercing = arrowMode() == EchoRelicState.EgyptianArrowMode.CONE
 				&& this.entityData.get(PIERCE_ON_HIT) && this.hitEntities.size() < 2;
 		if (!continuePiercing) this.discard();
+	}
+
+	private static LivingEntity normalizeLivingTarget(Entity entity) {
+		if (entity instanceof LivingEntity living) return living;
+		return entity instanceof EnderDragonPart part ? part.parentMob : null;
 	}
 
 	@Override

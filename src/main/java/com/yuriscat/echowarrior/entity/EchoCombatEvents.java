@@ -2,6 +2,7 @@ package com.yuriscat.echowarrior.entity;
 
 import com.yuriscat.echowarrior.ModEffects;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -16,14 +17,28 @@ public final class EchoCombatEvents {
 	public static void initialize() {
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register(EchoCombatEvents::allowDamage);
 		ServerLivingEntityEvents.AFTER_DAMAGE.register(EchoCombatEvents::afterDamage);
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> clearFormationEffects(handler.getPlayer()));
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> clearFormationEffects(handler.getPlayer()));
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> clearPersistentCombatEffects(handler.getPlayer()));
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> clearPersistentCombatEffects(handler.getPlayer()));
+		ServerTickEvents.END_SERVER_TICK.register(server -> {
+			if (server.getTickCount() % 10 != 0) return;
+			server.getPlayerList().getPlayers().forEach(EchoCombatEvents::clearStaleAztecBlessing);
+		});
 	}
 
-	private static void clearFormationEffects(LivingEntity entity) {
+	private static void clearPersistentCombatEffects(LivingEntity entity) {
 		entity.removeEffect(ModEffects.LEGACY_SOLDIER_FORMATION);
 		entity.removeEffect(ModEffects.WEAPONS_RAISED);
 		entity.removeEffect(ModEffects.SHIELDS_RAISED);
+		entity.removeEffect(ModEffects.HUITZILOPOCHTLI_BLESSING);
+	}
+
+	public static void clearStaleAztecBlessing(LivingEntity entity) {
+		if (!entity.hasEffect(ModEffects.HUITZILOPOCHTLI_BLESSING)
+				|| !(entity.level() instanceof ServerLevel level)) return;
+		for (net.minecraft.world.entity.Entity candidate : level.getAllEntities()) {
+			if (candidate instanceof AztecWarriorEchoEntity aztec && aztec.providesSunBlessingTo(entity)) return;
+		}
+		entity.removeEffect(ModEffects.HUITZILOPOCHTLI_BLESSING);
 	}
 
 	private static boolean allowDamage(LivingEntity entity, net.minecraft.world.damagesource.DamageSource source, float amount) {

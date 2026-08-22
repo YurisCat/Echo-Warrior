@@ -492,6 +492,17 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 		}
 	}
 
+	public boolean providesSunBlessingTo(LivingEntity beneficiary) {
+		if (!this.isAlive() || beneficiary != this.getOwner()
+				|| !(this.level() instanceof ServerLevel level)) return false;
+		ItemStack relic = currentRelic();
+		if (relic.isEmpty() || EchoHeroType.fromRelic(relic) != EchoHeroType.AZTEC_WARRIOR
+				|| !EchoRelicState.skillEnabled(relic, SKILL_BLESSING)) return false;
+		long timeOfDay = Math.floorMod(level.getOverworldClockTime(), 24_000L);
+		return level.dimensionType().hasSkyLight() && timeOfDay < 12_000L
+				&& level.canSeeSky(beneficiary.blockPosition());
+	}
+
 	private void updateFavoredBiomeModifiers(boolean active) {
 		var attack = this.getAttribute(Attributes.ATTACK_DAMAGE);
 		var speed = this.getAttribute(Attributes.MOVEMENT_SPEED);
@@ -2072,7 +2083,12 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(EchoRelicState.knockbackResistance(relic));
 		if (this.getHealth() >= oldMaximum - 0.01F) this.setHealth(this.getMaxHealth());
 		else if (this.getHealth() > this.getMaxHealth()) this.setHealth(this.getMaxHealth());
-		if (!EchoRelicState.skillEnabled(relic, SKILL_BLESSING)) updateFavoredBiomeModifiers(false);
+		if (!EchoRelicState.skillEnabled(relic, SKILL_BLESSING)) {
+			updateFavoredBiomeModifiers(false);
+			this.removeEffect(ModEffects.HUITZILOPOCHTLI_BLESSING);
+			LivingEntity owner = this.getOwner();
+			if (owner != null) owner.removeEffect(ModEffects.HUITZILOPOCHTLI_BLESSING);
+		}
 	}
 
 	private int meleeAttackInterval() {
