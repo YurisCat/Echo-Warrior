@@ -28,6 +28,7 @@ NAMES = {
     "hurt": "animation.egyptian_archer.hurt",
     "draw_bow": "animation.egyptian_archer.draw_bow",
     "backstep_jump": "animation.egyptian_archer.backstep_jump",
+    "backstep_shoot": "animation.egyptian_archer.backstep_shoot",
     "melee_attack": "animation.egyptian_archer.melee_attack",
     "shoot": "animation.egyptian_archer.shoot",
 }
@@ -47,6 +48,7 @@ LOWER_BODY_BONES = {
     "bone3",
     "Leg_Left_Lower",
 }
+RELOAD_CANCEL_VARIANTS = 8
 DERIVED_ANIMATIONS = {
     f"{NAMES[short_name]}_{layer}"
     for short_name in ("draw_bow", "shoot")
@@ -59,6 +61,9 @@ DERIVED_ANIMATIONS = {
     "animation.egyptian_archer.bow_ready_upper",
     "animation.egyptian_archer.bow_lower_upper",
     "animation.egyptian_archer.melee_attack_upper",
+} | {
+    f"animation.egyptian_archer.reload_cancel_{index}_upper"
+    for index in range(RELOAD_CANCEL_VARIANTS)
 }
 
 SHOOT_READY_TIME = 0.33333
@@ -71,6 +76,8 @@ RELOAD_ARROW_BONE = "bone7"
 RELOAD_ARROW_VISIBLE_AT = 0.70833
 RELOAD_ARROW_BAKE_STEP = 1.0 / 48.0
 RELOAD_ARROW_VALIDATION_STEP = 1.0 / 240.0
+RELOAD_CANCEL_STEP = 0.1
+RELOAD_CANCEL_DURATION = 0.25
 
 
 def extract_texture(model: dict) -> None:
@@ -466,6 +473,36 @@ def add_reload_animation(animation_map: dict, ready_source: dict, geometry: dict
         reload_animation["bones"][bone] = built_channels
     retarget_reload_arrow(draw, reload_animation, geometry, right_offset)
     animation_map["animation.egyptian_archer.reload_bow_upper"] = reload_animation
+    add_reload_cancel_animations(animation_map, reload_animation)
+
+
+def add_reload_cancel_animations(animation_map: dict, reload_animation: dict) -> None:
+    """Bake phase-matched early-reload cancellations back to bow-ready.
+
+    GeckoLib trigger animations cannot reverse an arbitrary running clip from its
+    exact clock position. Closely spaced source checkpoints keep the transition to
+    a cancellation clip below one server animation tick, then return the right arm
+    and held arrow to the authored raised-bow ready pose before normal lowering.
+    """
+    for index in range(RELOAD_CANCEL_VARIANTS):
+        source_time = min(index * RELOAD_CANCEL_STEP, float(reload_animation["animation_length"]))
+        cancellation = {
+            "animation_length": RELOAD_CANCEL_DURATION,
+            "loop": "once",
+            "bones": {},
+        }
+        for bone, channels in reload_animation.get("bones", {}).items():
+            cancelled_channels = {}
+            for channel, keyframes in channels.items():
+                if not isinstance(keyframes, dict) or not keyframes:
+                    cancelled_channels[channel] = copy.deepcopy(keyframes)
+                    continue
+                cancelled_channels[channel] = {
+                    "0": sample_channel(keyframes, source_time),
+                    time_key(RELOAD_CANCEL_DURATION): sample_channel(keyframes, 0.0),
+                }
+            cancellation["bones"][bone] = cancelled_channels
+        animation_map[f"animation.egyptian_archer.reload_cancel_{index}_upper"] = cancellation
 
 
 def add_post_shot_layers(animations: dict, geometry: dict) -> None:
@@ -518,7 +555,10 @@ def main() -> int:
     model["model_identifier"] = "egyptian_archer_echo"
     for animation in model.get("animations", []):
         animation["name"] = NAMES.get(animation.get("name"), animation.get("name"))
-        if animation["name"] == "animation.egyptian_archer.shoot":
+        if animation["name"] in {
+                "animation.egyptian_archer.shoot",
+                "animation.egyptian_archer.backstep_shoot",
+        }:
             animation["loop"] = "once"
     geometry = exporter.export_geometry(model)
     geometry["minecraft:geometry"][0]["description"]["identifier"] = "geometry.egyptian_archer"

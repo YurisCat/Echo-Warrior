@@ -58,6 +58,14 @@ public final class EgyptianArcherArrowEntity extends Arrow {
 		return EchoRelicState.EgyptianArrowMode.byOrdinal(this.entityData.get(ARROW_MODE));
 	}
 
+	public boolean isStillInFlight() {
+		return this.isAlive() && !this.isRemoved() && !this.isInGround();
+	}
+
+	public boolean canStillHit(UUID targetUuid) {
+		return isStillInFlight() && !this.hitEntities.contains(targetUuid);
+	}
+
 	@Override
 	protected void defineSynchedData(SynchedEntityData.Builder builder) {
 		super.defineSynchedData(builder);
