@@ -377,7 +377,8 @@ public final class EchoRelicState {
 
 	public static int attackIntervalTicks(ItemStack relic) {
 		int percent = attackSpeedPercent(relic);
-		return Math.max(4, Math.round(20.0F * 100.0F / percent));
+		int minimum = EchoHeroType.fromRelic(relic) == EchoHeroType.EGYPTIAN_ARCHER ? 24 : 4;
+		return Math.max(minimum, Math.round(20.0F * 100.0F / percent));
 	}
 
 	private static int intValue(ItemStack stack, String key, int fallback) {

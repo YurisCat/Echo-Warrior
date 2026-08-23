@@ -16453,7 +16453,7 @@
               "time": 2.25,
               "color": -1,
               "uniform": true,
-              "interpolation": "catmullrom"
+              "interpolation": "linear"
             },
             {
               "channel": "scale",
@@ -16468,7 +16468,7 @@
               "time": 0.70833,
               "color": -1,
               "uniform": true,
-              "interpolation": "catmullrom"
+              "interpolation": "linear"
             },
             {
               "channel": "scale",
@@ -16483,7 +16483,7 @@
               "time": 0.83333,
               "color": -1,
               "uniform": true,
-              "interpolation": "catmullrom"
+              "interpolation": "linear"
             }
           ]
         },

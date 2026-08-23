@@ -14,6 +14,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<EgyptianArcherEchoEntity, EntityRenderState> {
@@ -26,6 +27,22 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 	private static final float FULL_IDLE_PARENT_COMPENSATION_DEGREES = 3.0F;
 	private static final float NO_PARENT_COMPENSATION_DEGREES = 8.0F;
 	private static final float RANGED_HEAD_FRAME_RELEASE_GRACE_TICKS = 8.0F;
+	private static final byte ACTION_IDLE = 0;
+	private static final byte ACTION_BOW_LOWER = 7;
+	private static final byte ACTION_BOW_RECOVER = 8;
+	private static final byte ACTION_UNNOCK = 9;
+	private static final long BOW_BOUNDARY_DIAGNOSTIC_TICKS = 16L;
+	private static final String[] BOW_BOUNDARY_DIAGNOSTIC_BONES = {
+			"Main", "Upper_Body", "Upper_Body2", "Head",
+			"Arm_Left", "Upper Left Arm", "Lower Left Arm",
+			"Arm_Right", "Upper Right Arm", "Lower Right Arm",
+			"bone7", "Leg_Left", "Leg_Right"
+	};
+	private static final String[] BOW_RETURN_GUARD_BONES = {
+			"Upper_Body", "Upper_Body2",
+			"Arm_Left", "Upper Left Arm", "Lower Left Arm",
+			"Arm_Right", "Upper Right Arm", "Lower Right Arm", "bone7"
+	};
 
 	private static final DataTicket<Integer> ENTITY_ID = DataTickets.create("echo_warrior_egyptian_entity_id", Integer.class);
 	private static final DataTicket<Vec3> ENTITY_POSITION = DataTickets.create("echo_warrior_egyptian_entity_position", Vec3.class);
@@ -112,6 +129,12 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 		}
 		rangedHeadFrameStabilized = rangedHeadFrameStabilized
 				|| age < state.rangedHeadFrameStabilizedUntilAge;
+		applyBowReturnReplayGuard(snapshots, state, entityId, gameTime, age, actionState);
+		// bone7 is the loose arrow animated between the quiver and the bow. Its authored
+		// idle transform is the model origin, so allowing it to render on the first idle
+		// frame makes the just-stowed arrow visibly teleport once before disappearing.
+		// Hide it for the whole idle state; every bow action supplies its own visible pose.
+		snapshots.ifPresent("bone7", bone -> bone.skipRender(actionState == ACTION_IDLE));
 
 		Vec3 headDelta = attentionPoint.subtract(entityPosition);
 		double headHorizontal = Math.sqrt(headDelta.x * headDelta.x + headDelta.z * headDelta.z);
@@ -218,23 +241,34 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 
 		// This Blockbench model's yaw and pitch axes are opposite Minecraft's semantic head angles.
 		// Roll is already authored in the expected direction and remains unchanged.
-		float localHeadX;
-		float localHeadY;
-		float localHeadZ;
-		if (combatGazeLocked || rangedHeadFrameStabilized) {
-			float[] parentRotation = inheritedRotation(snapshots);
-			float[] desiredWorldRotation = rotationMatrix(
-					toRadians(-state.headPitch), toRadians(-state.headYaw), toRadians(state.headTilt));
-			float[] localRotation = multiplyRotation(transposeRotation(parentRotation), desiredWorldRotation);
-			float[] localEuler = extractEulerZyx(localRotation);
-			localHeadX = localEuler[0];
-			localHeadY = localEuler[1];
-			localHeadZ = localEuler[2];
+		float relaxedHeadX = toRadians(-state.headPitch) - inheritedRotX * parentCompensation;
+		float relaxedHeadY = toRadians(-state.headYaw) - inheritedRotY * parentCompensation;
+		float relaxedHeadZ = toRadians(state.headTilt) - inheritedRotZ * parentCompensation;
+		float[] parentRotation = inheritedRotation(snapshots);
+		float[] desiredWorldRotation = rotationMatrix(
+				toRadians(-state.headPitch), toRadians(-state.headYaw), toRadians(state.headTilt));
+		float[] localRotation = multiplyRotation(transposeRotation(parentRotation), desiredWorldRotation);
+		float[] exactHead = extractEulerZyx(localRotation);
+		boolean exactHeadFrame = combatGazeLocked || rangedHeadFrameStabilized;
+		if (exactHeadFrame) {
+			// Combat acquisition must remain immediate so the face cannot lag behind
+			// the committed target while an arrow is being aimed or released.
+			state.exactHeadFrameBlend = 1.0F;
 		} else {
-			localHeadX = toRadians(-state.headPitch) - inheritedRotX * parentCompensation;
-			localHeadY = toRadians(-state.headYaw) - inheritedRotY * parentCompensation;
-			localHeadZ = toRadians(state.headTilt) - inheritedRotZ * parentCompensation;
+			if (state.exactHeadFrameActive) {
+				EchoWarrior.LOGGER.info(
+						"[EgyptianArcherHeadFrameClient] archer={} tick={} event=release_blend_start action={}",
+						entityId, gameTime, actionState);
+			}
+			// The exact matrix inverse and the relaxed Euler compensation are both
+			// valid, but switching between them in one frame produces a visible head
+			// twitch after the bow has already been lowered.
+			state.exactHeadFrameBlend = approach(state.exactHeadFrameBlend, 0.0F, 0.16F, deltaTicks);
 		}
+		state.exactHeadFrameActive = exactHeadFrame;
+		float localHeadX = lerpRadians(relaxedHeadX, exactHead[0], state.exactHeadFrameBlend);
+		float localHeadY = lerpRadians(relaxedHeadY, exactHead[1], state.exactHeadFrameBlend);
+		float localHeadZ = lerpRadians(relaxedHeadZ, exactHead[2], state.exactHeadFrameBlend);
 		snapshots.ifPresent("Head", bone -> bone.setRotation(localHeadX, localHeadY, localHeadZ));
 		snapshots.ifPresent("Eyes_Left", bone -> bone
 				.setTranslation(state.eyeX - convergence, state.eyeY, 0.0F)
@@ -245,10 +279,232 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 		snapshots.ifPresent("Eyebrow", bone -> bone.setTranslation(0.0F, -2.0F * blink, 0.0F));
 		registerWorldSpaceGazeDiagnostic(renderPass, state, entityId, gameTime, actionState,
 				combatGazeLocked, combatGazeTargetId, attentionPoint);
+		registerBowBoundaryBoneDiagnostic(snapshots, state, entityId, gameTime, age, actionState,
+				combatGazeTargetId, rangedHeadFrameStabilized);
 
 		if (state.lastSequence != sequence) {
 			state.lastSequence = sequence;
 			state.lastAge = age;
+		}
+	}
+
+	private static void applyBowReturnReplayGuard(BoneSnapshots snapshots, VisualState state,
+			int entityId, long gameTime, float age, byte actionState) {
+		Map<String, BoneBoundaryPose> rawPoses = captureBoundaryPoses(snapshots);
+		if (actionState == ACTION_BOW_LOWER) {
+			// The synced action can reach IDLE before GeckoLib has cleared the
+			// triggered PLAY_ONCE timeline. Keep watching the first few idle render
+			// frames as well; that is where the completed clip can briefly replay.
+			state.bowReturnBoundaryWatchUntilAge = age + 4.0F;
+		}
+		boolean watchingBowReturnBoundary = actionState == ACTION_BOW_LOWER
+				|| actionState == ACTION_IDLE && age <= state.bowReturnBoundaryWatchUntilAge;
+		if (!state.bowReturnReplayGuardActive && watchingBowReturnBoundary
+				&& isSettledBowLowerPose(state.lastBowReturnRawPoses)
+				&& isBowLowerReplayJump(state.lastBowReturnRawPoses, rawPoses)) {
+			state.bowReturnReplayGuardActive = true;
+			state.bowReturnReplayGuardUntilAge = age + 4.0F;
+			state.bowReturnReplayGuardPose.clear();
+			state.bowReturnReplayGuardPose.putAll(state.lastBowReturnRawPoses);
+			EchoWarrior.LOGGER.info(
+					"[EgyptianArcherBowBoundaryClient] archer={} tick={} event=replay_guard_start action={} age={}",
+					entityId, gameTime, actionState, String.format(Locale.ROOT, "%.3f", age));
+		}
+
+		if (state.bowReturnReplayGuardActive) {
+			boolean controllerSettled = actionState == ACTION_IDLE && isIdleActionLayerPose(rawPoses);
+			boolean replacedByNewAction = actionState != ACTION_BOW_LOWER && actionState != ACTION_IDLE;
+			boolean timedOut = age >= state.bowReturnReplayGuardUntilAge;
+			if (controllerSettled || replacedByNewAction || timedOut) {
+				state.bowReturnReplayGuardActive = false;
+				state.bowReturnReplayGuardPose.clear();
+				EchoWarrior.LOGGER.info(
+						"[EgyptianArcherBowBoundaryClient] archer={} tick={} event=replay_guard_release "
+								+ "action={} age={} settled={} replaced={} timedOut={}",
+						entityId, gameTime, actionState, String.format(Locale.ROOT, "%.3f", age),
+						controllerSettled, replacedByNewAction, timedOut);
+			} else {
+				restoreBoundaryPoses(snapshots, state.bowReturnReplayGuardPose);
+			}
+		}
+
+		state.lastBowReturnRawPoses.clear();
+		if (watchingBowReturnBoundary || state.bowReturnReplayGuardActive) {
+			state.lastBowReturnRawPoses.putAll(rawPoses);
+		} else if (actionState != ACTION_IDLE) {
+			state.bowReturnBoundaryWatchUntilAge = Float.NEGATIVE_INFINITY;
+		}
+	}
+
+	private static Map<String, BoneBoundaryPose> captureBoundaryPoses(BoneSnapshots snapshots) {
+		Map<String, BoneBoundaryPose> poses = new HashMap<>();
+		for (String boneName : BOW_RETURN_GUARD_BONES) {
+			snapshots.get(boneName).ifPresent(snapshot -> poses.put(boneName, BoneBoundaryPose.capture(snapshot)));
+		}
+		return poses;
+	}
+
+	private static void restoreBoundaryPoses(BoneSnapshots snapshots, Map<String, BoneBoundaryPose> poses) {
+		poses.forEach((boneName, pose) -> snapshots.ifPresent(boneName, pose::apply));
+	}
+
+	private static boolean isSettledBowLowerPose(Map<String, BoneBoundaryPose> poses) {
+		BoneBoundaryPose upperBody = poses.get("Upper_Body");
+		BoneBoundaryPose leftArm = poses.get("Arm_Left");
+		BoneBoundaryPose rightArm = poses.get("Arm_Right");
+		return upperBody != null && upperBody.rotationMagnitudeDegrees() < 8.0F
+				&& leftArm != null && Math.abs(leftArm.rotY() * Mth.RAD_TO_DEG) < 8.0F
+				&& rightArm != null && Math.abs(rightArm.rotY() * Mth.RAD_TO_DEG) < 8.0F;
+	}
+
+	private static boolean isBowLowerReplayJump(Map<String, BoneBoundaryPose> previous,
+			Map<String, BoneBoundaryPose> current) {
+		BoneBoundaryPose previousArrow = previous.get("bone7");
+		BoneBoundaryPose currentArrow = current.get("bone7");
+		BoneBoundaryPose previousUpperBody = previous.get("Upper_Body");
+		BoneBoundaryPose currentUpperBody = current.get("Upper_Body");
+		if (previousArrow == null || currentArrow == null
+				|| previousUpperBody == null || currentUpperBody == null) return false;
+		return currentArrow.translationDelta(previousArrow) > 4.0F
+				|| currentArrow.maximumRotationDeltaDegrees(previousArrow) > 25.0F
+				|| currentUpperBody.maximumRotationDeltaDegrees(previousUpperBody) > 20.0F;
+	}
+
+	private static boolean isIdleActionLayerPose(Map<String, BoneBoundaryPose> poses) {
+		BoneBoundaryPose arrow = poses.get("bone7");
+		BoneBoundaryPose upperBody = poses.get("Upper_Body");
+		BoneBoundaryPose upperBody2 = poses.get("Upper_Body2");
+		BoneBoundaryPose leftArm = poses.get("Arm_Left");
+		BoneBoundaryPose rightArm = poses.get("Arm_Right");
+		return arrow != null && arrow.rotationMagnitudeDegrees() < 5.0F
+				&& arrow.translationMagnitude() < 0.5F
+				&& upperBody != null && upperBody.rotationMagnitudeDegrees() < 6.0F
+				&& upperBody2 != null && upperBody2.rotationMagnitudeDegrees() < 6.0F
+				&& leftArm != null && Math.abs(leftArm.rotY() * Mth.RAD_TO_DEG) < 6.0F
+				&& rightArm != null && Math.abs(rightArm.rotY() * Mth.RAD_TO_DEG) < 6.0F;
+	}
+
+	private record BoneBoundaryPose(float rotX, float rotY, float rotZ,
+			float translateX, float translateY, float translateZ,
+			float scaleX, float scaleY, float scaleZ, boolean hidden, boolean childrenHidden) {
+		private static BoneBoundaryPose capture(com.geckolib.animation.state.BoneSnapshot snapshot) {
+			return new BoneBoundaryPose(snapshot.getRotX(), snapshot.getRotY(), snapshot.getRotZ(),
+					snapshot.getTranslateX(), snapshot.getTranslateY(), snapshot.getTranslateZ(),
+					snapshot.getScaleX(), snapshot.getScaleY(), snapshot.getScaleZ(),
+					snapshot.isHidden(), snapshot.areChildrenHidden());
+		}
+
+		private void apply(com.geckolib.animation.state.BoneSnapshot snapshot) {
+			snapshot.setRotation(this.rotX, this.rotY, this.rotZ)
+					.setTranslation(this.translateX, this.translateY, this.translateZ)
+					.setScale(this.scaleX, this.scaleY, this.scaleZ)
+					.skipRender(this.hidden)
+					.skipChildrenRender(this.childrenHidden);
+		}
+
+		private float maximumRotationDeltaDegrees(BoneBoundaryPose previous) {
+			float x = Math.abs(Mth.wrapDegrees((this.rotX - previous.rotX) * Mth.RAD_TO_DEG));
+			float y = Math.abs(Mth.wrapDegrees((this.rotY - previous.rotY) * Mth.RAD_TO_DEG));
+			float z = Math.abs(Mth.wrapDegrees((this.rotZ - previous.rotZ) * Mth.RAD_TO_DEG));
+			return Math.max(x, Math.max(y, z));
+		}
+
+		private float rotationMagnitudeDegrees() {
+			return Math.max(Math.abs(this.rotX), Math.max(Math.abs(this.rotY), Math.abs(this.rotZ))) * Mth.RAD_TO_DEG;
+		}
+
+		private float translationDelta(BoneBoundaryPose previous) {
+			float x = this.translateX - previous.translateX;
+			float y = this.translateY - previous.translateY;
+			float z = this.translateZ - previous.translateZ;
+			return Mth.sqrt(x * x + y * y + z * z);
+		}
+
+		private float translationMagnitude() {
+			return Mth.sqrt(this.translateX * this.translateX
+					+ this.translateY * this.translateY + this.translateZ * this.translateZ);
+		}
+	}
+
+	private static void registerBowBoundaryBoneDiagnostic(BoneSnapshots snapshots, VisualState state,
+			int entityId, long gameTime, float age, byte actionState, int targetId,
+			boolean rangedHeadFrameStabilized) {
+		byte previousActionState = state.lastBoneDiagnosticActionState;
+		boolean actionChanged = previousActionState != actionState;
+		boolean bowReturnAction = isBowReturnAction(actionState);
+		if (bowReturnAction || actionChanged && actionState == ACTION_IDLE && isBowReturnAction(previousActionState)) {
+			state.bowBoneDiagnosticUntil = Math.max(state.bowBoneDiagnosticUntil,
+					gameTime + BOW_BOUNDARY_DIAGNOSTIC_TICKS);
+		}
+		state.lastBoneDiagnosticActionState = actionState;
+		if (gameTime > state.bowBoneDiagnosticUntil
+				|| Math.abs(age - state.lastBowBoneDiagnosticAge) < 1.0E-4F) {
+			return;
+		}
+		state.lastBowBoneDiagnosticAge = age;
+
+		StringBuilder poses = new StringBuilder(640);
+		String maxDeltaBone = "none";
+		float maxRotationDelta = 0.0F;
+		float maxTranslationDelta = 0.0F;
+		float maxDeltaScore = 0.0F;
+		for (String boneName : BOW_BOUNDARY_DIAGNOSTIC_BONES) {
+			var snapshot = snapshots.get(boneName).orElse(null);
+			if (snapshot == null) continue;
+			BoneDiagnosticPose current = new BoneDiagnosticPose(
+					snapshot.getRotX(), snapshot.getRotY(), snapshot.getRotZ(),
+					snapshot.getTranslateX(), snapshot.getTranslateY(), snapshot.getTranslateZ());
+			BoneDiagnosticPose previous = state.lastBowBonePoses.put(boneName, current);
+			if (previous != null) {
+				float rotationDelta = current.maximumRotationDeltaDegrees(previous);
+				float translationDelta = current.translationDelta(previous);
+				float score = Math.max(rotationDelta / 10.0F, translationDelta / 0.25F);
+				if (score > maxDeltaScore) {
+					maxDeltaScore = score;
+					maxDeltaBone = boneName;
+					maxRotationDelta = rotationDelta;
+					maxTranslationDelta = translationDelta;
+				}
+			}
+			if (!poses.isEmpty()) poses.append(';');
+			poses.append(boneName).append('=')
+					.append(String.format(Locale.ROOT, "r(%.1f,%.1f,%.1f)p(%.2f,%.2f,%.2f)",
+							current.rotX() * Mth.RAD_TO_DEG,
+							current.rotY() * Mth.RAD_TO_DEG,
+							current.rotZ() * Mth.RAD_TO_DEG,
+							current.translateX(), current.translateY(), current.translateZ()));
+		}
+
+		EchoWarrior.LOGGER.info(
+				"[EgyptianArcherBowBonesClient] archer={} tick={} age={} action={} previousAction={} "
+						+ "target={} stabilized={} exactBlend={} maxBone={} maxRotDeg={} maxPos={} poses={}",
+				entityId, gameTime, String.format(Locale.ROOT, "%.3f", age), actionState, previousActionState,
+				targetId, rangedHeadFrameStabilized,
+				String.format(Locale.ROOT, "%.3f", state.exactHeadFrameBlend), maxDeltaBone,
+				String.format(Locale.ROOT, "%.2f", maxRotationDelta),
+				String.format(Locale.ROOT, "%.3f", maxTranslationDelta), poses);
+	}
+
+	private static boolean isBowReturnAction(byte actionState) {
+		return actionState == ACTION_BOW_LOWER
+				|| actionState == ACTION_BOW_RECOVER
+				|| actionState == ACTION_UNNOCK;
+	}
+
+	private record BoneDiagnosticPose(float rotX, float rotY, float rotZ,
+			float translateX, float translateY, float translateZ) {
+		private float maximumRotationDeltaDegrees(BoneDiagnosticPose previous) {
+			float x = Math.abs(Mth.wrapDegrees((this.rotX - previous.rotX) * Mth.RAD_TO_DEG));
+			float y = Math.abs(Mth.wrapDegrees((this.rotY - previous.rotY) * Mth.RAD_TO_DEG));
+			float z = Math.abs(Mth.wrapDegrees((this.rotZ - previous.rotZ) * Mth.RAD_TO_DEG));
+			return Math.max(x, Math.max(y, z));
+		}
+
+		private float translationDelta(BoneDiagnosticPose previous) {
+			float x = this.translateX - previous.translateX;
+			float y = this.translateY - previous.translateY;
+			float z = this.translateZ - previous.translateZ;
+			return Mth.sqrt(x * x + y * y + z * z);
 		}
 	}
 
@@ -291,6 +547,11 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 
 	private static float toRadians(float degrees) {
 		return degrees * ((float)Math.PI / 180.0F);
+	}
+
+	private static float lerpRadians(float from, float to, float weight) {
+		float delta = Mth.wrapDegrees((to - from) * Mth.RAD_TO_DEG) * Mth.DEG_TO_RAD;
+		return from + delta * Mth.clamp(weight, 0.0F, 1.0F);
 	}
 
 	private static float worldYawToward(Vec3 delta) {
@@ -445,6 +706,17 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 		private float pupilScale = 1.0F;
 		private float lastAge = -1.0F;
 		private float rangedHeadFrameStabilizedUntilAge = Float.NEGATIVE_INFINITY;
+		private float exactHeadFrameBlend;
+		private boolean exactHeadFrameActive;
+		private byte lastBoneDiagnosticActionState = Byte.MIN_VALUE;
+		private long bowBoneDiagnosticUntil = Long.MIN_VALUE;
+		private float lastBowBoneDiagnosticAge = Float.NEGATIVE_INFINITY;
+		private final Map<String, BoneDiagnosticPose> lastBowBonePoses = new HashMap<>();
+		private final Map<String, BoneBoundaryPose> lastBowReturnRawPoses = new HashMap<>();
+		private final Map<String, BoneBoundaryPose> bowReturnReplayGuardPose = new HashMap<>();
+		private boolean bowReturnReplayGuardActive;
+		private float bowReturnReplayGuardUntilAge = Float.NEGATIVE_INFINITY;
+		private float bowReturnBoundaryWatchUntilAge = Float.NEGATIVE_INFINITY;
 		private int lastSequence = -1;
 		private Vec3 diagnosticHeadWorld;
 		private Vec3 diagnosticEyesWorld;

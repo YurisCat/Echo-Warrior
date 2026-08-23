@@ -43,7 +43,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
-import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
@@ -106,6 +105,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private static final int COMBAT_GAZE_SUPPRESSION_TICKS = 20 * 3;
 	private static final int POST_COMBAT_VISUAL_SETTLE_TICKS = 30;
 	private static final int POST_COMBAT_VISUAL_DIAGNOSTIC_TICKS = 80;
+	private static final int POST_BOW_VISUAL_RELEASE_GRACE_TICKS = 8;
 	private static final int MUTUAL_GAZE_PRIORITY = 790;
 	private static final int EYE_STICKY_TICKS = 5;
 	private static final int HEAD_STICKY_TICKS = 10;
@@ -127,53 +127,50 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	public static final int SKILL_BACKSTEP = 3;
 
 	private static final byte ACTION_IDLE = 0;
-	private static final byte ACTION_DRAW = 1;
-	private static final byte ACTION_SHOOT = 2;
-	private static final byte ACTION_BACKSTEP = 3;
-	private static final byte ACTION_MELEE = 4;
-	private static final byte ACTION_BOW_READY = 5;
-	private static final byte ACTION_BOW_LOWER = 6;
-	private static final byte ACTION_RECOVER = 7;
-	private static final byte ACTION_RELOAD_CANCEL = 8;
+	private static final byte ACTION_NOCK = 1;
+	private static final byte ACTION_DRAW = 2;
+	private static final byte ACTION_AIM = 3;
+	private static final byte ACTION_SHOOT = 4;
+	private static final byte ACTION_BACKSTEP = 5;
+	private static final byte ACTION_MELEE = 6;
+	private static final byte ACTION_BOW_LOWER = 7;
+	private static final byte ACTION_RECOVER = 8;
+	private static final byte ACTION_UNNOCK = 9;
 	private static final EntityDataAccessor<Byte> ACTION = SynchedEntityData.defineId(
 			EgyptianArcherEchoEntity.class, EntityDataSerializers.BYTE);
 	private static final EntityDataAccessor<Integer> ATTACK_INTERVAL = SynchedEntityData.defineId(
 			EgyptianArcherEchoEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Integer> ACTION_DURATION_TICKS = SynchedEntityData.defineId(
+			EgyptianArcherEchoEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Boolean> RANGED_RELOAD_STYLE = SynchedEntityData.defineId(
+			EgyptianArcherEchoEntity.class, EntityDataSerializers.BOOLEAN);
 	private static final EntityDataAccessor<Integer> ARROW_MODE = SynchedEntityData.defineId(
 			EgyptianArcherEchoEntity.class, EntityDataSerializers.INT);
 
 	private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.egyptian_archer.idle");
 	private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.egyptian_archer.walk");
-	private static final RawAnimation DRAW_BOW_UPPER = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.draw_bow_upper");
-	private static final RawAnimation RELOAD_BOW_UPPER = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.reload_bow_upper");
+	private static final RawAnimation FIRST_NOCK_UPPER = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.draw_bow_nock_upper");
+	private static final RawAnimation RELOAD_NOCK_UPPER = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.reload_bow_nock_upper");
+	private static final RawAnimation FIRST_DRAW_UPPER = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.draw_bow_pull_upper");
+	private static final RawAnimation RELOAD_DRAW_UPPER = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.reload_bow_pull_upper");
+	private static final RawAnimation BOW_AIM_UPPER = RawAnimation.begin().thenLoop("animation.egyptian_archer.bow_aim_upper");
 	private static final RawAnimation SHOOT_UPPER = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.shoot_upper");
-	private static final RawAnimation BOW_READY_UPPER = RawAnimation.begin().thenLoop("animation.egyptian_archer.bow_ready_upper");
+	private static final RawAnimation UNNOCK_UPPER = RawAnimation.begin().thenPlay("animation.egyptian_archer.un_nock_upper");
 	private static final RawAnimation BOW_LOWER_UPPER = RawAnimation.begin().thenPlay("animation.egyptian_archer.bow_lower_upper");
 	private static final RawAnimation BOW_RECOVER_UPPER = RawAnimation.begin().thenPlay("animation.egyptian_archer.bow_recover_upper");
-	private static final RawAnimation[] RELOAD_CANCEL_UPPER = {
-			RawAnimation.begin().thenPlay("animation.egyptian_archer.reload_cancel_0_upper"),
-			RawAnimation.begin().thenPlay("animation.egyptian_archer.reload_cancel_1_upper"),
-			RawAnimation.begin().thenPlay("animation.egyptian_archer.reload_cancel_2_upper"),
-			RawAnimation.begin().thenPlay("animation.egyptian_archer.reload_cancel_3_upper"),
-			RawAnimation.begin().thenPlay("animation.egyptian_archer.reload_cancel_4_upper"),
-			RawAnimation.begin().thenPlay("animation.egyptian_archer.reload_cancel_5_upper"),
-			RawAnimation.begin().thenPlay("animation.egyptian_archer.reload_cancel_6_upper"),
-			RawAnimation.begin().thenPlay("animation.egyptian_archer.reload_cancel_7_upper")
-	};
 	private static final RawAnimation BACKSTEP = RawAnimation.begin().thenPlay("animation.egyptian_archer.backstep_shoot");
 	private static final RawAnimation MELEE = RawAnimation.begin().thenPlay("animation.egyptian_archer.melee_attack_upper");
 	private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.egyptian_archer.hurt");
 	private static final String ACTION_CONTROLLER = "action";
-	private static final String DRAW_TRIGGER = "draw_bow";
-	private static final String RELOAD_TRIGGER = "reload_bow";
+	private static final String FIRST_NOCK_TRIGGER = "first_nock";
+	private static final String RELOAD_NOCK_TRIGGER = "reload_nock";
+	private static final String FIRST_DRAW_TRIGGER = "first_draw";
+	private static final String RELOAD_DRAW_TRIGGER = "reload_draw";
+	private static final String BOW_AIM_TRIGGER = "bow_aim";
 	private static final String SHOOT_TRIGGER = "shoot";
-	private static final String BOW_READY_TRIGGER = "bow_ready";
+	private static final String UNNOCK_TRIGGER = "un_nock";
 	private static final String BOW_LOWER_TRIGGER = "bow_lower";
 	private static final String BOW_RECOVER_TRIGGER = "bow_recover";
-	private static final String[] RELOAD_CANCEL_TRIGGERS = {
-			"reload_cancel_0", "reload_cancel_1", "reload_cancel_2", "reload_cancel_3",
-			"reload_cancel_4", "reload_cancel_5", "reload_cancel_6", "reload_cancel_7"
-	};
 	private static final String BACKSTEP_TRIGGER = "backstep";
 	private static final String MELEE_TRIGGER = "melee";
 	private static final String HURT_TRIGGER = "hurt";
@@ -198,10 +195,15 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private static final int BOW_LOWER_TICKS = 10;
 	private static final int TARGET_LOSS_GRACE_TICKS = 6;
 	private static final int COMBAT_SIGHT_MEMORY_TICKS = 20;
-	private static final int PRIMARY_ARROW_RESOLUTION_GUARD_TICKS = 4;
-	private static final float RELOAD_CANCEL_STEP_SECONDS = 0.1F;
-	private static final float RELOAD_ARROW_MOUNT_TIME_SECONDS = 0.70F;
-	private static final float RELOAD_CANCEL_ANIMATION_SECONDS = 0.25F;
+	private static final int BASE_RANGED_ATTACK_INTERVAL = 42;
+	private static final int MIN_RANGED_ATTACK_INTERVAL = 24;
+	private static final int UNNOCK_TICKS = 12;
+	private static final double COMMITTED_RELEASE_RANGE = 32.0;
+	private static final double AIM_ALIGNMENT_DOT = 0.8660254037844386;
+	private static final float FIRST_NOCK_ANIMATION_SECONDS = 1.70833F;
+	private static final float RELOAD_NOCK_ANIMATION_SECONDS = 1.69166F;
+	private static final float DRAW_ANIMATION_SECONDS = 0.54167F;
+	private static final float RELEASE_ANIMATION_SECONDS = 0.25F;
 	private static final double RETREAT_SCAN_RANGE = 12.0;
 	private static final double RETREAT_MIN_PROGRESS = 0.18;
 	private static final double DIRECT_RETREAT_LOOKAHEAD = 1.5;
@@ -297,11 +299,10 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private long actionEndsAt;
 	private long shotReleaseAt;
 	private boolean shotReleased;
-	private boolean drawStartedFromBowReady;
-	private @Nullable EgyptianArcherArrowEntity pendingPrimaryArrow;
-	private @Nullable UUID pendingPrimaryTargetUuid;
-	private long pendingPrimaryResolutionDeadline;
-	private boolean pendingPrimaryGuardLogged;
+	private RangedPhaseBudget rangedPhaseBudget = rangedPhaseBudget(BASE_RANGED_ATTACK_INTERVAL);
+	private int aimTicksRemaining;
+	private @Nullable UUID aimTargetUuid;
+	private @Nullable Entity committedAimTarget;
 	private boolean pendingBackstep;
 	private long targetLostAt = -1L;
 	private @Nullable LivingEntity actionTarget;
@@ -326,6 +327,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private boolean backstepVolleyReleased;
 	private int movementAnimationLastMovingTick = Integer.MIN_VALUE;
 	private boolean movementAnimationActive;
+	private boolean bowReturnMovementFrameLocked;
+	private int bowReturnMovementReleaseDeferredAtTick = Integer.MIN_VALUE;
 	private boolean combatApproaching;
 	private boolean combatKiting;
 	private Vec3 combatRetreatDestination = Vec3.ZERO;
@@ -371,6 +374,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		super.defineSynchedData(builder);
 		builder.define(ACTION, ACTION_IDLE);
 		builder.define(ATTACK_INTERVAL, EchoHeroType.EGYPTIAN_ARCHER.baseAttackIntervalTicks());
+		builder.define(ACTION_DURATION_TICKS, 1);
+		builder.define(RANGED_RELOAD_STYLE, false);
 		builder.define(ARROW_MODE, EchoRelicState.EgyptianArrowMode.OFF.ordinal());
 		builder.define(ATTENTION_X, 0.0F);
 		builder.define(ATTENTION_Y, 0.0F);
@@ -423,9 +428,9 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		}
 		validateSelfDefenseTarget();
 		tickCombatSightMemory(level.getGameTime());
-		boolean committedShotLostTarget = (action() == ACTION_DRAW || action() == ACTION_BOW_READY)
+		boolean preparingShotLostTarget = (action() == ACTION_NOCK || action() == ACTION_DRAW || action() == ACTION_AIM)
 				&& !canContinueCombatAgainst(this.getTarget());
-		if (action() == ACTION_SHOOT && canContinueCombatAgainst(this.actionTarget)) {
+		if (action() == ACTION_SHOOT && isCommittedTargetAlive(this.actionTarget)) {
 			// SHOOT is a committed release. Ordinary scans must not replace its target midway
 			// through the authored release and make the face snap toward an unrelated enemy.
 			if (this.getTarget() != this.actionTarget) this.setTarget(this.actionTarget);
@@ -434,7 +439,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			// even when the jump crosses a WAIT/WANDER activity boundary.
 			if (this.getTarget() != this.actionTarget) this.setTarget(this.actionTarget);
 		} else if (action() != ACTION_MELEE && action() != ACTION_SHOOT
-				&& ((this.tickCount & 1) == 0 || committedShotLostTarget)) {
+				&& ((this.tickCount & 1) == 0 || preparingShotLostTarget)) {
 			this.setTarget(selectProtectiveTarget(owner));
 			if ((this.tickCount & 3) == 0) enforceActivityBoundary(owner);
 		}
@@ -450,11 +455,13 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		EchoWaterSafety.tick(level, this, owner, this.activityMode == EchoRelicState.ActivityMode.FOLLOW
 				&& action() != ACTION_BACKSTEP && !isVisualInteractionMovementOwned());
 		LivingEntity facingTarget = (action() == ACTION_MELEE || action() == ACTION_BACKSTEP)
-				&& canDefendAgainst(this.actionTarget)
+				&& canDefendAgainst(this.actionTarget) || action() == ACTION_SHOOT
+				&& isCommittedTargetAlive(this.actionTarget)
 				? this.actionTarget
 				: this.getTarget();
-		if (action() == ACTION_MELEE || action() == ACTION_BACKSTEP
-				? canDefendAgainst(facingTarget) : canContinueCombatAgainst(facingTarget)) {
+		if (action() == ACTION_SHOOT ? isCommittedTargetAlive(facingTarget)
+				: action() == ACTION_MELEE || action() == ACTION_BACKSTEP
+						? canDefendAgainst(facingTarget) : canContinueCombatAgainst(facingTarget)) {
 			faceTarget(facingTarget);
 		}
 	}
@@ -465,9 +472,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (action() != ACTION_MELEE && action() != ACTION_BACKSTEP) {
 			LivingEntity meleeThreat = selectImmediateMeleeThreat(level, target);
 			if (meleeThreat != null) {
-				// Point-blank danger is evaluated before target-loss recovery and every bow
-				// phase, so a dead ranged target or a ready/reload boundary cannot leave the
-				// archer passively playing hurt while a melee attacker keeps connecting.
+				// Immediate melee danger owns every bow phase. During RELEASE this is the
+				// only event allowed to interrupt before the projectile has actually spawned.
 				startMeleeAttack(now, meleeThreat);
 				return;
 			}
@@ -476,112 +482,43 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			tickCommittedMelee(level, now, relic);
 			return;
 		}
+		if (action() == ACTION_BACKSTEP) {
+			tickBackstep(level, relic);
+			return;
+		}
 		if (action() == ACTION_RECOVER || action() == ACTION_BOW_LOWER) {
 			stopMovementIntent();
 			if (now >= this.actionEndsAt) finishAction();
 			return;
 		}
-		if (action() == ACTION_RELOAD_CANCEL) {
+		if (action() == ACTION_UNNOCK) {
 			stopMovementIntent();
 			if (now >= this.actionEndsAt) startBowLower(now);
 			return;
 		}
-		if (action() == ACTION_SHOOT && !canContinueCombatAgainst(this.actionTarget)) {
-			// The target died after the release animation was committed. Finish that exact
-			// release pose without spawning an orphan arrow, then let BOW_READY reacquire on
-			// the next tick. This avoids both a frozen full draw and a mid-release target snap.
-			this.setTarget(null);
-			this.shotReleased = true;
-			stopMovementIntent();
-			if (now >= this.actionEndsAt) startBowReady(now, null);
-			return;
-		}
-		if (target == null || !canContinueCombatAgainst(target)) {
-			this.setTarget(null);
-			boolean sightMemoryExpired = isCombatSightExpired(target)
-					|| target == null && isCombatSightExpired(this.actionTarget);
-			if (action() == ACTION_DRAW || action() == ACTION_SHOOT || action() == ACTION_BOW_READY) {
-				if (this.targetLostAt < 0L) this.targetLostAt = now;
-				if (!sightMemoryExpired && now - this.targetLostAt < TARGET_LOSS_GRACE_TICKS) {
-					// Keep the committed bow phase visually stable while the target selector
-					// gets a few ticks to find a replacement. Falling back to follow/wander
-					// navigation here made the grace period look like another animation twitch.
-					stopMovementIntent();
-					return;
-				}
-			}
-			if (action() == ACTION_DRAW) {
-				// A raised-bow reload can be cancelled before the arrow reaches the string.
-				// Select the nearest baked phase so the right hand returns to the ready pose
-				// without flashing to either the first reload frame or a full draw.
-				stopMovementIntent();
-				if (this.drawStartedFromBowReady && reloadAnimationSeconds(now) < RELOAD_ARROW_MOUNT_TIME_SECONDS) {
-					startReloadCancel(now);
-					return;
-				}
-				// Once the arrow is mounted, finish the committed draw without firing and
-				// recover from the actual full-draw pose.
-				if (now >= this.actionEndsAt) startBowRecovery(now);
-				return;
-			}
-			if (action() == ACTION_BOW_READY) {
-				startBowLower(now);
-				return;
-			}
-			if (action() == ACTION_BACKSTEP) tickBackstep(level, relic);
-			return;
-		}
-		this.targetLostAt = -1L;
-		if ((action() == ACTION_DRAW || action() == ACTION_BOW_READY)
-				&& this.actionTarget != target) {
-			// A dying or newly urgent target must not restart the draw. Keep the current
-			// progress and smoothly redirect the committed shot to the replacement.
-			this.actionTarget = target;
-		}
-		this.getLookControl().setLookAt(target, 35.0F, 35.0F);
-
-		if (action() == ACTION_BACKSTEP) {
-			tickBackstep(level, relic);
+		if (action() == ACTION_NOCK) {
+			tickNock(level, now, relic, target);
 			return;
 		}
 		if (action() == ACTION_DRAW) {
-			if (shouldBackstep(target, relic) && findBackstepLanding(level, target) != null) {
-				startBackstep(level, relic, target);
-				return;
-			}
-			if (now >= this.actionEndsAt && isFacingTarget(target)) enterShoot(now);
+			tickDraw(level, now, relic, target);
+			return;
+		}
+		if (action() == ACTION_AIM) {
+			tickAim(level, now, relic, target);
 			return;
 		}
 		if (action() == ACTION_SHOOT) {
-			boolean waitingForAim = false;
-			if (!this.shotReleased && now >= this.shotReleaseAt) {
-				if (isFacingTarget(target)) {
-					this.shotReleased = true;
-					fireMainShot(level, target);
-				} else waitingForAim = true;
-			}
-			if (shouldBackstep(target, relic)) this.pendingBackstep = true;
-			if (now >= this.actionEndsAt && !waitingForAim) {
-				if (this.pendingBackstep) {
-					this.pendingBackstep = false;
-					finishAction();
-					startBackstep(level, relic, target);
-				} else startBowReady(now, target);
-			}
+			tickRelease(level, now, relic);
 			return;
 		}
-		if (action() == ACTION_BOW_READY) {
-			if (shouldBackstep(target, relic) && startBackstep(level, relic, target)) return;
-			if (isInMeleeRange(target)) {
-				startMeleeAttack(now, target);
-				return;
-			}
-			if (now >= this.nextAttackAt && canRangedAttack(target)) {
-				if (shouldAwaitPrimaryArrowResolution(now, target)) return;
-				startReloadAttack(now, target);
-			}
+
+		if (target == null || !canContinueCombatAgainst(target)) {
+			this.setTarget(null);
 			return;
 		}
+		this.targetLostAt = -1L;
+		this.getLookControl().setLookAt(target, 35.0F, 35.0F);
 		if (this.meleeEscapeActive) {
 			LivingEntity closeThreat = nearestMeleeEscapeThreat(level, target);
 			if (closeThreat == null || this.distanceTo(closeThreat) >= MELEE_ESCAPE_RELEASE_RANGE) {
@@ -601,9 +538,110 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			startMeleeAttack(now, target);
 			return;
 		}
-		if (now >= this.nextAttackAt && canRangedAttack(target)) {
-			startRangedAttack(now, target);
+		if (canRangedAttack(target)) startNock(now, target, false);
+	}
+
+	private void tickNock(ServerLevel level, long now, ItemStack relic, @Nullable LivingEntity target) {
+		if (canContinueCombatAgainst(target)) {
+			this.targetLostAt = -1L;
+			this.actionTarget = target;
+			this.getLookControl().setLookAt(target, 35.0F, 35.0F);
+			if (shouldBackstep(target, relic) && startBackstep(level, relic, target)) return;
+		} else {
+			this.setTarget(null);
+			this.actionTarget = null;
+			stopMovementIntent();
 		}
+		if (now < this.actionEndsAt) return;
+		LivingEntity owner = this.getOwner();
+		LivingEntity drawTarget = owner == null ? this.getTarget() : selectProtectiveTarget(owner);
+		this.setTarget(drawTarget);
+		if (canRangedAttack(drawTarget)) startDraw(now, drawTarget);
+		else startUnnock(now);
+	}
+
+	private void tickDraw(ServerLevel level, long now, ItemStack relic, @Nullable LivingEntity target) {
+		if (canContinueCombatAgainst(target)) {
+			this.targetLostAt = -1L;
+			this.actionTarget = target;
+			this.getLookControl().setLookAt(target, 35.0F, 35.0F);
+			if (shouldBackstep(target, relic) && startBackstep(level, relic, target)) return;
+		} else {
+			this.setTarget(null);
+			if (this.targetLostAt < 0L) this.targetLostAt = now;
+			stopMovementIntent();
+		}
+		if (now < this.actionEndsAt) return;
+		LivingEntity owner = this.getOwner();
+		LivingEntity aimTarget = owner == null ? this.getTarget() : selectProtectiveTarget(owner);
+		this.setTarget(aimTarget);
+		if (canContinueCombatAgainst(aimTarget)) startAim(now, aimTarget);
+		else startBowRecovery(now);
+	}
+
+	private void tickAim(ServerLevel level, long now, ItemStack relic, @Nullable LivingEntity target) {
+		if (!canContinueCombatAgainst(target)) {
+			this.setTarget(null);
+			stopMovementIntent();
+			if (this.targetLostAt < 0L) this.targetLostAt = now;
+			if (isCombatSightExpired(this.actionTarget)
+					|| now - this.targetLostAt >= TARGET_LOSS_GRACE_TICKS) startBowRecovery(now);
+			return;
+		}
+		this.targetLostAt = -1L;
+		this.actionTarget = target;
+		this.getLookControl().setLookAt(target, 90.0F, 90.0F);
+		if (shouldBackstep(target, relic) && startBackstep(level, relic, target)) return;
+		if (!target.getUUID().equals(this.aimTargetUuid)) {
+			this.aimTargetUuid = target.getUUID();
+			this.aimTicksRemaining = this.rangedPhaseBudget.aimTicks();
+			EchoWarrior.LOGGER.info(
+					"[EgyptianArcherRangedState] archer={} tick={} event=aim_reset target={} aimTicks={}",
+					this.getId(), now, target.getId(), this.aimTicksRemaining);
+		}
+		if (!isAimStable(target)) {
+			// The renderer keeps the head and pupils locked to the combat target, while
+			// Minecraft's server-side LookControl can occasionally leave getLookAngle()
+			// just outside the alignment threshold (most often for steep or fast-moving
+			// targets). Do not let that cosmetic pitch/yaw discrepancy hold AIM forever.
+			// After the authored aim window plus a short grace period, release only when
+			// line of sight, range, and the archer's body facing are still valid.
+			long aimAge = now - this.actionStartedAt;
+			if (aimAge >= this.rangedPhaseBudget.aimTicks() + 4L && canReleaseAfterAimAlignmentGrace(target)) {
+				Entity aimTarget = rangedAimTarget(target);
+				EchoWarrior.LOGGER.info(
+						"[EgyptianArcherRangedState] archer={} tick={} event=aim_alignment_fallback "
+								+ "target={} aimAge={} lookDot={} distance={}",
+						this.getId(), now, target.getId(), aimAge,
+						String.format(Locale.ROOT, "%.3f", aimAlignmentDot(aimTarget)),
+						formatDistance(Math.sqrt(this.distanceToSqr(aimTarget))));
+				startRelease(now, target);
+			}
+			return;
+		}
+		if (--this.aimTicksRemaining <= 0) startRelease(now, target);
+	}
+
+	private void tickRelease(ServerLevel level, long now, ItemStack relic) {
+		LivingEntity committedTarget = this.actionTarget;
+		if (!this.shotReleased && now >= this.shotReleaseAt) {
+			this.shotReleased = true;
+			if (canFireCommittedShot(committedTarget)) fireMainShot(level, committedTarget, this.committedAimTarget);
+		}
+		if (canDefendAgainst(committedTarget) && shouldBackstep(committedTarget, relic)) {
+			this.pendingBackstep = true;
+		}
+		if (now < this.actionEndsAt) return;
+		if (this.pendingBackstep && canDefendAgainst(committedTarget)) {
+			this.pendingBackstep = false;
+			finishAction();
+			if (startBackstep(level, relic, committedTarget)) return;
+		}
+		LivingEntity owner = this.getOwner();
+		LivingEntity nextTarget = owner == null ? null : selectProtectiveTarget(owner);
+		this.setTarget(nextTarget);
+		if (canContinueCombatAgainst(nextTarget)) startNock(now, nextTarget, true);
+		else startBowLower(now);
 	}
 
 	private void tickCommittedMelee(ServerLevel level, long now, ItemStack relic) {
@@ -655,57 +693,71 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (!stillPressured) clearMeleeEscape();
 	}
 
-	private void startRangedAttack(long now, LivingEntity target) {
-		startDraw(now, target, false);
-	}
-
-	private void startReloadAttack(long now, LivingEntity target) {
-		startDraw(now, target, true);
-	}
-
-	private void startDraw(long now, LivingEntity target, boolean bowAlreadyRaised) {
-		int interval = attackInterval();
-		int drawTicks = Math.max(8, Math.round(31.0F * interval / 42.0F));
-		clearPendingPrimaryArrow();
-		stopBowAnimations();
-		this.entityData.set(ACTION, ACTION_DRAW);
+	private void startNock(long now, @Nullable LivingEntity target, boolean reloadStyle) {
+		this.rangedPhaseBudget = rangedPhaseBudget(attackInterval());
+		this.entityData.set(ACTION, ACTION_NOCK);
+		this.entityData.set(ACTION_DURATION_TICKS, this.rangedPhaseBudget.nockTicks());
+		this.entityData.set(RANGED_RELOAD_STYLE, reloadStyle);
 		this.actionStartedAt = now;
-		this.actionEndsAt = now + drawTicks;
+		this.actionEndsAt = now + this.rangedPhaseBudget.nockTicks();
 		this.actionTarget = target;
 		this.targetLostAt = -1L;
 		beginCombatFacing();
 		this.shotReleased = false;
-		this.drawStartedFromBowReady = bowAlreadyRaised;
-		this.nextAttackAt = now + interval;
-		this.triggerAnim(ACTION_CONTROLLER, bowAlreadyRaised ? RELOAD_TRIGGER : DRAW_TRIGGER);
+		this.aimTargetUuid = null;
+		this.committedAimTarget = null;
+		this.pendingBackstep = false;
+		this.triggerAnim(ACTION_CONTROLLER, reloadStyle ? RELOAD_NOCK_TRIGGER : FIRST_NOCK_TRIGGER);
+		EchoWarrior.LOGGER.info(
+				"[EgyptianArcherRangedState] archer={} tick={} event=nock_start target={} reload={} budget={}/{}/{}/{}",
+				this.getId(), now, entityId(target), reloadStyle, this.rangedPhaseBudget.nockTicks(),
+				this.rangedPhaseBudget.drawTicks(), this.rangedPhaseBudget.aimTicks(),
+				this.rangedPhaseBudget.releaseTicks());
 	}
 
-	private void enterShoot(long now) {
-		int interval = attackInterval();
-		int shootTicks = Math.max(4, Math.round(5.0F * interval / 42.0F));
-		stopBowAnimations();
-		this.entityData.set(ACTION, ACTION_SHOOT);
+	private void startDraw(long now, LivingEntity target) {
+		this.entityData.set(ACTION, ACTION_DRAW);
+		this.entityData.set(ACTION_DURATION_TICKS, this.rangedPhaseBudget.drawTicks());
 		this.actionStartedAt = now;
-		this.actionEndsAt = now + shootTicks;
-		this.shotReleaseAt = now + Math.max(1, Math.round(4.0F * interval / 42.0F));
+		this.actionEndsAt = now + this.rangedPhaseBudget.drawTicks();
+		this.actionTarget = target;
 		this.targetLostAt = -1L;
-		this.drawStartedFromBowReady = false;
+		this.triggerAnim(ACTION_CONTROLLER,
+				this.entityData.get(RANGED_RELOAD_STYLE) ? RELOAD_DRAW_TRIGGER : FIRST_DRAW_TRIGGER);
+	}
+
+	private void startAim(long now, LivingEntity target) {
+		this.entityData.set(ACTION, ACTION_AIM);
+		this.entityData.set(ACTION_DURATION_TICKS, this.rangedPhaseBudget.aimTicks());
+		this.actionStartedAt = now;
+		this.actionEndsAt = Long.MAX_VALUE;
+		this.actionTarget = target;
+		this.targetLostAt = -1L;
+		this.aimTicksRemaining = this.rangedPhaseBudget.aimTicks();
+		this.aimTargetUuid = target.getUUID();
+		this.triggerAnim(ACTION_CONTROLLER, BOW_AIM_TRIGGER);
+	}
+
+	private void startRelease(long now, LivingEntity target) {
+		int releaseTicks = this.rangedPhaseBudget.releaseTicks();
+		this.entityData.set(ACTION, ACTION_SHOOT);
+		this.entityData.set(ACTION_DURATION_TICKS, releaseTicks);
+		this.actionStartedAt = now;
+		this.actionEndsAt = now + releaseTicks;
+		this.shotReleaseAt = now + (releaseTicks + 1L) / 2L;
+		this.actionTarget = target;
+		this.committedAimTarget = rangedAimTarget(target);
+		this.targetLostAt = -1L;
+		this.shotReleased = false;
+		this.pendingBackstep = false;
 		this.triggerAnim(ACTION_CONTROLLER, SHOOT_TRIGGER);
 	}
 
-	private void fireMainShot(ServerLevel level, LivingEntity target) {
-		if (!target.isAlive()) return;
-		// Line of sight is checked before drawing the bow. Once the shot is committed,
-		// always create the projectile and let its normal block collision handle cover.
-		// Rechecking here could silently consume shots when a ledge briefly obscured a
-		// target below the archer between the draw and release frames.
-		EgyptianArcherArrowEntity primaryArrow = spawnArrow(level, target);
-		if (primaryArrow != null) {
-			this.pendingPrimaryArrow = primaryArrow;
-			this.pendingPrimaryTargetUuid = target.getUUID();
-			this.pendingPrimaryResolutionDeadline = this.nextAttackAt + PRIMARY_ARROW_RESOLUTION_GUARD_TICKS;
-			this.pendingPrimaryGuardLogged = false;
-		}
+	private void fireMainShot(ServerLevel level, LivingEntity target, @Nullable Entity aimTarget) {
+		if (!target.isAlive() || aimTarget == null) return;
+		// RELEASE is committed after a valid AIM. Do not re-check ordinary line of
+		// sight here: any newly interposed wall is handled by projectile collision.
+		spawnArrow(level, target, aimTarget, COMMITTED_RELEASE_RANGE);
 		if (!skillEnabled(SKILL_CHARIOT_VOLLEY)) return;
 		List<LivingEntity> alternatives = combatTargets(level, VOLLEY_RANGE, target);
 		int enemyCount = alternatives.size() + 1;
@@ -721,7 +773,13 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 
 	private @Nullable EgyptianArcherArrowEntity spawnArrow(ServerLevel level, LivingEntity target) {
 		Entity aimTarget = rangedAimTarget(target);
-		if (aimTarget == null || this.distanceToSqr(aimTarget) > MAX_RANGE * MAX_RANGE) return null;
+		return aimTarget == null ? null : spawnArrow(level, target, aimTarget, MAX_RANGE);
+	}
+
+	private @Nullable EgyptianArcherArrowEntity spawnArrow(ServerLevel level, LivingEntity target,
+			Entity aimTarget, double permittedRange) {
+		if (!target.isAlive() || aimTarget.isRemoved()
+				|| this.distanceToSqr(aimTarget) > permittedRange * permittedRange) return null;
 		EgyptianArcherArrowEntity arrow = ModEntities.EGYPTIAN_ARCHER_ARROW.create(level,
 				net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
 		if (arrow == null) return null;
@@ -739,43 +797,72 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		return arrow;
 	}
 
-	private boolean shouldAwaitPrimaryArrowResolution(long now, LivingEntity target) {
-		EgyptianArcherArrowEntity arrow = this.pendingPrimaryArrow;
-		if (arrow == null || this.pendingPrimaryTargetUuid == null
-				|| !this.pendingPrimaryTargetUuid.equals(target.getUUID())) {
-			clearPendingPrimaryArrow();
-			return false;
+	private boolean canFireCommittedShot(@Nullable LivingEntity target) {
+		if (!isCommittedTargetAlive(target)) return false;
+		Entity aimTarget = this.committedAimTarget;
+		if (aimTarget == null || aimTarget.isRemoved()
+				|| this.distanceToSqr(aimTarget) > COMMITTED_RELEASE_RANGE * COMMITTED_RELEASE_RANGE) {
+			aimTarget = committedAimTarget(target);
+			this.committedAimTarget = aimTarget;
 		}
-		if (!target.isAlive() || !arrow.canStillHit(target.getUUID())) {
-			clearPendingPrimaryArrow();
-			return false;
-		}
-		if (now >= this.pendingPrimaryResolutionDeadline) {
-			EchoWarrior.LOGGER.info(
-					"[EgyptianArcherRangedState] archer={} tick={} event=projectile_guard_timeout target={} arrow={}",
-					this.getId(), now, target.getId(), arrow.getId());
-			clearPendingPrimaryArrow();
-			return false;
-		}
-		if (!this.pendingPrimaryGuardLogged) {
-			this.pendingPrimaryGuardLogged = true;
-			EchoWarrior.LOGGER.info(
-					"[EgyptianArcherRangedState] archer={} tick={} event=projectile_guard_start target={} arrow={} deadline={}",
-					this.getId(), now, target.getId(), arrow.getId(), this.pendingPrimaryResolutionDeadline);
-		}
-		return true;
+		return aimTarget != null && !aimTarget.isRemoved()
+				&& this.distanceToSqr(aimTarget) <= COMMITTED_RELEASE_RANGE * COMMITTED_RELEASE_RANGE;
 	}
 
-	private void clearPendingPrimaryArrow() {
-		this.pendingPrimaryArrow = null;
-		this.pendingPrimaryTargetUuid = null;
-		this.pendingPrimaryResolutionDeadline = 0L;
-		this.pendingPrimaryGuardLogged = false;
+	private boolean isCommittedTargetAlive(@Nullable LivingEntity target) {
+		return target != null && target.isAlive() && !target.isRemoved() && this.canAttack(target);
 	}
 
-	private boolean canRangedAttack(LivingEntity target) {
+	private @Nullable Entity committedAimTarget(LivingEntity target) {
+		if (!(target instanceof EnderDragon dragon)) return target;
+		return Arrays.stream(dragon.getSubEntities())
+				.filter(part -> !part.isRemoved())
+				.filter(part -> this.distanceToSqr(part) <= COMMITTED_RELEASE_RANGE * COMMITTED_RELEASE_RANGE)
+				.min(Comparator.comparingDouble(this::distanceToSqr))
+				.orElse(null);
+	}
+
+	private boolean canRangedAttack(@Nullable LivingEntity target) {
+		if (target == null) return false;
 		Entity aimTarget = rangedAimTarget(target);
 		return aimTarget != null && this.distanceToSqr(aimTarget) <= MAX_RANGE * MAX_RANGE;
+	}
+
+	private boolean isAimStable(LivingEntity target) {
+		Entity aimTarget = rangedAimTarget(target);
+		if (aimTarget == null || this.distanceToSqr(aimTarget) > MAX_RANGE * MAX_RANGE
+				|| !isFacingTarget(target)) return false;
+		return aimAlignmentDot(aimTarget) >= AIM_ALIGNMENT_DOT;
+	}
+
+	private boolean canReleaseAfterAimAlignmentGrace(LivingEntity target) {
+		Entity aimTarget = rangedAimTarget(target);
+		return aimTarget != null && this.distanceToSqr(aimTarget) <= MAX_RANGE * MAX_RANGE
+				&& isFacingTarget(target);
+	}
+
+	private double aimAlignmentDot(@Nullable Entity aimTarget) {
+		if (aimTarget == null) return -1.0;
+		Vec3 aimPoint = aimTarget instanceof LivingEntity living
+				? living.getEyePosition()
+				: aimTarget.getBoundingBox().getCenter();
+		Vec3 targetDirection = aimPoint.subtract(this.getEyePosition());
+		if (targetDirection.lengthSqr() <= 1.0E-6) return 1.0;
+		return this.getLookAngle().normalize().dot(targetDirection.normalize());
+	}
+
+	private static RangedPhaseBudget rangedPhaseBudget(int requestedInterval) {
+		int interval = Mth.clamp(requestedInterval, MIN_RANGED_ATTACK_INTERVAL, BASE_RANGED_ATTACK_INTERVAL);
+		float progress = (interval - MIN_RANGED_ATTACK_INTERVAL)
+				/ (float)(BASE_RANGED_ATTACK_INTERVAL - MIN_RANGED_ATTACK_INTERVAL);
+		int nockTicks = Math.round(13.0F + 10.0F * progress);
+		int drawTicks = Mth.floor(5.0F + 3.0F * progress + 1.0E-5F);
+		int releaseTicks = Math.round(3.0F + 2.0F * progress);
+		int aimTicks = interval - nockTicks - drawTicks - releaseTicks;
+		if (aimTicks < 3 || nockTicks + drawTicks + aimTicks + releaseTicks != interval) {
+			throw new IllegalStateException("Invalid Egyptian Archer ranged phase budget for " + interval);
+		}
+		return new RangedPhaseBudget(interval, nockTicks, drawTicks, aimTicks, releaseTicks);
 	}
 
 	private void tickCombatSightMemory(long now) {
@@ -830,7 +917,9 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private boolean canAcquireCombatTarget(@Nullable LivingEntity target) {
-		return target != null && canProtectAgainst(target) && rangedAimTarget(target) != null;
+		if (target == null || !canProtectAgainst(target) || rangedAimTarget(target) == null) return false;
+		return !(target instanceof Creeper creeper) || !CatGodCreeperSystem.isPanicking(creeper)
+				|| target == this.getLastHurtByMob() && isRecentWithin(this, this.getLastHurtByMobTimestamp(), 20);
 	}
 
 	private @Nullable Entity rangedAimTarget(LivingEntity target) {
@@ -855,7 +944,10 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private void faceTarget(LivingEntity target) {
-		Entity aimTarget = target instanceof EnderDragon ? rangedAimTarget(target) : target;
+		Entity aimTarget = action() == ACTION_SHOOT && target == this.actionTarget
+				&& this.committedAimTarget != null && !this.committedAimTarget.isRemoved()
+				? this.committedAimTarget
+				: target instanceof EnderDragon ? rangedAimTarget(target) : target;
 		if (aimTarget == null) aimTarget = target;
 		float desiredYaw = yawToward(this.getX(), this.getZ(), aimTarget.getX(), aimTarget.getZ());
 		if (!this.combatFacingInitialized) beginCombatFacing();
@@ -885,11 +977,13 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
 		this.setTarget(target);
 		this.entityData.set(ACTION, ACTION_MELEE);
+		this.entityData.set(ACTION_DURATION_TICKS, 20);
 		this.actionStartedAt = now;
 		this.actionEndsAt = now + 20L;
 		this.shotReleaseAt = now + 8L;
 		this.shotReleased = false;
-		this.drawStartedFromBowReady = false;
+		this.aimTargetUuid = null;
+		this.committedAimTarget = null;
 		this.pendingBackstep = false;
 		this.targetLostAt = -1L;
 		this.actionTarget = target;
@@ -984,81 +1078,75 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		resetCombatRetreat();
 	}
 
-	private void startBowReady(long now, @Nullable LivingEntity target) {
-		stopBowAnimations();
-		this.entityData.set(ACTION, ACTION_BOW_READY);
-		this.actionStartedAt = now;
-		this.actionEndsAt = Long.MAX_VALUE;
-		this.actionTarget = target;
-		this.targetLostAt = -1L;
-		this.shotReleased = false;
-		this.drawStartedFromBowReady = false;
-		this.pendingBackstep = false;
-		this.triggerAnim(ACTION_CONTROLLER, BOW_READY_TRIGGER);
-	}
-
 	private void startBowLower(long now) {
-		stopBowAnimations();
 		this.entityData.set(ACTION, ACTION_BOW_LOWER);
+		this.entityData.set(ACTION_DURATION_TICKS, BOW_LOWER_TICKS);
 		this.actionStartedAt = now;
 		this.actionEndsAt = now + BOW_LOWER_TICKS;
 		this.actionTarget = null;
 		this.targetLostAt = -1L;
 		this.shotReleased = false;
-		this.drawStartedFromBowReady = false;
+		this.aimTargetUuid = null;
+		this.committedAimTarget = null;
 		this.pendingBackstep = false;
 		stopMovementIntent();
+		extendPostCombatVisualSettleThrough(this.actionEndsAt + POST_BOW_VISUAL_RELEASE_GRACE_TICKS);
 		this.triggerAnim(ACTION_CONTROLLER, BOW_LOWER_TRIGGER);
+		EchoWarrior.LOGGER.info(
+				"[EgyptianArcherRangedState] archer={} tick={} event=bow_lower_start duration={} settleUntil={}",
+				this.getId(), now, BOW_LOWER_TICKS, this.postCombatVisualSettleUntil);
 	}
 
 	private void startBowRecovery(long now) {
-		stopBowAnimations();
 		this.entityData.set(ACTION, ACTION_RECOVER);
+		this.entityData.set(ACTION_DURATION_TICKS, BOW_RECOVERY_TICKS);
 		this.actionStartedAt = now;
 		this.actionEndsAt = now + BOW_RECOVERY_TICKS;
 		this.actionTarget = null;
 		this.targetLostAt = -1L;
 		this.shotReleased = false;
-		this.drawStartedFromBowReady = false;
+		this.aimTargetUuid = null;
+		this.committedAimTarget = null;
 		this.pendingBackstep = false;
 		stopMovementIntent();
+		extendPostCombatVisualSettleThrough(this.actionEndsAt + POST_BOW_VISUAL_RELEASE_GRACE_TICKS);
 		this.triggerAnim(ACTION_CONTROLLER, BOW_RECOVER_TRIGGER);
+		EchoWarrior.LOGGER.info(
+				"[EgyptianArcherRangedState] archer={} tick={} event=bow_recovery_start duration={} settleUntil={}",
+				this.getId(), now, BOW_RECOVERY_TICKS, this.postCombatVisualSettleUntil);
 	}
 
-	private void startReloadCancel(long now) {
-		float reloadSeconds = reloadAnimationSeconds(now);
-		int variant = Mth.clamp(Math.round(reloadSeconds / RELOAD_CANCEL_STEP_SECONDS),
-				0, RELOAD_CANCEL_TRIGGERS.length - 1);
-		int cancelTicks = Math.max(2, Mth.ceil(RELOAD_CANCEL_ANIMATION_SECONDS * 20.0F
-				* attackInterval() / 61.6F));
-		stopBowAnimations();
-		this.entityData.set(ACTION, ACTION_RELOAD_CANCEL);
+	private void startUnnock(long now) {
+		this.entityData.set(ACTION, ACTION_UNNOCK);
+		this.entityData.set(ACTION_DURATION_TICKS, UNNOCK_TICKS);
+		this.entityData.set(RANGED_RELOAD_STYLE, true);
 		this.actionStartedAt = now;
-		this.actionEndsAt = now + cancelTicks;
+		this.actionEndsAt = now + UNNOCK_TICKS;
 		this.actionTarget = null;
 		this.targetLostAt = -1L;
 		this.shotReleased = false;
-		this.drawStartedFromBowReady = false;
+		this.aimTargetUuid = null;
+		this.committedAimTarget = null;
 		this.pendingBackstep = false;
 		stopMovementIntent();
-		this.triggerAnim(ACTION_CONTROLLER, RELOAD_CANCEL_TRIGGERS[variant]);
+		extendPostCombatVisualSettleThrough(this.actionEndsAt + BOW_LOWER_TICKS
+				+ POST_BOW_VISUAL_RELEASE_GRACE_TICKS);
+		this.triggerAnim(ACTION_CONTROLLER, UNNOCK_TRIGGER);
 		EchoWarrior.LOGGER.info(
-				"[EgyptianArcherRangedState] archer={} tick={} event=reload_cancel variant={} phaseSeconds={} durationTicks={}",
-				this.getId(), now, variant, String.format(Locale.ROOT, "%.3f", reloadSeconds), cancelTicks);
-	}
-
-	private float reloadAnimationSeconds(long now) {
-		return Math.max(0.0F, (now - this.actionStartedAt) / 20.0F * 61.6F / Math.max(1, attackInterval()));
+				"[EgyptianArcherRangedState] archer={} tick={} event=un_nock_start duration={} settleUntil={}",
+				this.getId(), now, UNNOCK_TICKS, this.postCombatVisualSettleUntil);
 	}
 
 	private void stopBowAnimations() {
-		this.stopTriggeredAnim(ACTION_CONTROLLER, DRAW_TRIGGER);
-		this.stopTriggeredAnim(ACTION_CONTROLLER, RELOAD_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, FIRST_NOCK_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, RELOAD_NOCK_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, FIRST_DRAW_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, RELOAD_DRAW_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, BOW_AIM_TRIGGER);
 		this.stopTriggeredAnim(ACTION_CONTROLLER, SHOOT_TRIGGER);
-		this.stopTriggeredAnim(ACTION_CONTROLLER, BOW_READY_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, UNNOCK_TRIGGER);
 		this.stopTriggeredAnim(ACTION_CONTROLLER, BOW_LOWER_TRIGGER);
 		this.stopTriggeredAnim(ACTION_CONTROLLER, BOW_RECOVER_TRIGGER);
-		for (String trigger : RELOAD_CANCEL_TRIGGERS) this.stopTriggeredAnim(ACTION_CONTROLLER, trigger);
 	}
 
 	private boolean shouldBackstep(LivingEntity target, ItemStack relic) {
@@ -1090,8 +1178,10 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.setYHeadRot(this.backstepYaw);
 		this.actionStartedAt = level.getGameTime();
 		this.actionEndsAt = this.actionStartedAt + BACKSTEP_TICKS;
+		this.entityData.set(ACTION_DURATION_TICKS, BACKSTEP_TICKS);
 		this.targetLostAt = -1L;
-		this.drawStartedFromBowReady = false;
+		this.aimTargetUuid = null;
+		this.committedAimTarget = null;
 		this.backstepVolleyReleased = false;
 		this.entityData.set(ACTION, ACTION_BACKSTEP);
 		this.setNoGravity(true);
@@ -1208,8 +1298,12 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 
 	private void tickMovement(ServerLevel level, LivingEntity owner) {
 		if (action() == ACTION_BACKSTEP || action() == ACTION_RECOVER || action() == ACTION_BOW_LOWER
-				|| action() == ACTION_RELOAD_CANCEL
+				|| action() == ACTION_UNNOCK
 				|| isVisualInteractionMovementOwned()) return;
+		if (action() == ACTION_NOCK && this.getTarget() == null) {
+			stopMovementIntent();
+			return;
+		}
 		LivingEntity target = (action() == ACTION_MELEE || action() == ACTION_BACKSTEP)
 				&& canDefendAgainst(this.actionTarget)
 				? this.actionTarget : this.getTarget();
@@ -1629,8 +1723,11 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private void beginPostCombatVisualSettle(long now) {
-		this.postCombatVisualSettleUntil = now + POST_COMBAT_VISUAL_SETTLE_TICKS;
-		this.postCombatVisualDiagnosticUntil = now + POST_COMBAT_VISUAL_DIAGNOSTIC_TICKS;
+		long settleUntil = Math.max(now + POST_COMBAT_VISUAL_SETTLE_TICKS,
+				projectedPostBowVisualSettleUntil(now));
+		this.postCombatVisualSettleUntil = Math.max(this.postCombatVisualSettleUntil, settleUntil);
+		this.postCombatVisualDiagnosticUntil = Math.max(this.postCombatVisualDiagnosticUntil,
+				settleUntil + POST_COMBAT_VISUAL_DIAGNOSTIC_TICKS);
 		Vec3 lastCombatDirection = this.attentionPoint.subtract(this.getEyePosition());
 		if (lastCombatDirection.lengthSqr() <= 1.0E-4) {
 			float yaw = this.yBodyRot * ((float)Math.PI / 180.0F);
@@ -1642,12 +1739,47 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.playerGazeProgress.clear();
 	}
 
+	private long projectedPostBowVisualSettleUntil(long now) {
+		return switch (action()) {
+			case ACTION_NOCK -> this.actionEndsAt + UNNOCK_TICKS + BOW_LOWER_TICKS
+					+ POST_BOW_VISUAL_RELEASE_GRACE_TICKS;
+			case ACTION_DRAW -> this.actionEndsAt + BOW_RECOVERY_TICKS
+					+ POST_BOW_VISUAL_RELEASE_GRACE_TICKS;
+			case ACTION_AIM -> now + TARGET_LOSS_GRACE_TICKS + BOW_RECOVERY_TICKS
+					+ POST_BOW_VISUAL_RELEASE_GRACE_TICKS;
+			case ACTION_SHOOT -> this.actionEndsAt + BOW_LOWER_TICKS
+					+ POST_BOW_VISUAL_RELEASE_GRACE_TICKS;
+			case ACTION_UNNOCK -> this.actionEndsAt + BOW_LOWER_TICKS
+					+ POST_BOW_VISUAL_RELEASE_GRACE_TICKS;
+			case ACTION_BOW_LOWER, ACTION_RECOVER -> this.actionEndsAt
+					+ POST_BOW_VISUAL_RELEASE_GRACE_TICKS;
+			default -> now;
+		};
+	}
+
+	private void extendPostCombatVisualSettleThrough(long settleUntil) {
+		this.postCombatVisualSettleUntil = Math.max(this.postCombatVisualSettleUntil, settleUntil);
+		this.postCombatVisualDiagnosticUntil = Math.max(this.postCombatVisualDiagnosticUntil,
+				settleUntil + 20L);
+		if (this.headAttentionKind == AttentionKind.POST_COMBAT) {
+			this.attentionExpiresAt = Math.max(this.attentionExpiresAt, settleUntil);
+		}
+		if (this.eyeAttentionKind == AttentionKind.POST_COMBAT) {
+			this.eyeAttentionExpiresAt = Math.max(this.eyeAttentionExpiresAt, settleUntil);
+		}
+	}
+
 	private boolean isTransientBowTargetLoss(long now) {
-		return (action() == ACTION_DRAW || action() == ACTION_SHOOT || action() == ACTION_BOW_READY)
+		return (action() == ACTION_NOCK || action() == ACTION_DRAW || action() == ACTION_AIM || action() == ACTION_SHOOT)
 				&& this.targetLostAt >= 0L && now - this.targetLostAt < TARGET_LOSS_GRACE_TICKS;
 	}
 
 	private @Nullable LivingEntity resolveCombatGazeTarget(long now) {
+		if (action() == ACTION_SHOOT && isCommittedTargetAlive(this.actionTarget)) {
+			this.combatGazeTarget = this.actionTarget;
+			this.combatGazeTargetUntil = now + COMBAT_GAZE_TARGET_GRACE_TICKS;
+			return this.actionTarget;
+		}
 		if ((action() == ACTION_MELEE || action() == ACTION_BACKSTEP)
 				&& canDefendAgainst(this.actionTarget)) {
 			this.combatGazeTarget = this.actionTarget;
@@ -1675,13 +1807,15 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private boolean canLockCombatGazeTo(@Nullable LivingEntity target) {
-		return (action() == ACTION_MELEE || action() == ACTION_BACKSTEP) && target == this.actionTarget
+		return action() == ACTION_SHOOT && target == this.actionTarget
+				? isCommittedTargetAlive(target)
+				: (action() == ACTION_MELEE || action() == ACTION_BACKSTEP) && target == this.actionTarget
 				? canDefendAgainst(target)
 				: canContinueCombatAgainst(target);
 	}
 
 	private boolean isCombatGazeAction() {
-		return action() == ACTION_DRAW || action() == ACTION_SHOOT || action() == ACTION_BOW_READY
+		return action() == ACTION_NOCK || action() == ACTION_DRAW || action() == ACTION_AIM || action() == ACTION_SHOOT
 				|| action() == ACTION_BACKSTEP || action() == ACTION_MELEE;
 	}
 
@@ -1706,16 +1840,21 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 
 	private static String actionName(byte action) {
 		return switch (action) {
+			case ACTION_NOCK -> "nock";
 			case ACTION_DRAW -> "draw";
+			case ACTION_AIM -> "aim";
 			case ACTION_SHOOT -> "shoot";
 			case ACTION_BACKSTEP -> "backstep";
 			case ACTION_MELEE -> "melee";
-			case ACTION_BOW_READY -> "bow_ready";
 			case ACTION_BOW_LOWER -> "bow_lower";
 			case ACTION_RECOVER -> "recover";
-			case ACTION_RELOAD_CANCEL -> "reload_cancel";
+			case ACTION_UNNOCK -> "un_nock";
 			default -> "idle";
 		};
+	}
+
+	private static boolean isBowReturnActionState(byte action) {
+		return action == ACTION_UNNOCK || action == ACTION_BOW_LOWER || action == ACTION_RECOVER;
 	}
 
 	private void lockVisualAttentionToCombatTarget(LivingEntity combatTarget, long now) {
@@ -1723,7 +1862,10 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (isCaughtExitActive()) endCaughtExit(now, true);
 		this.playerGazeProgress.clear();
 
-		Entity aimTarget = combatTarget instanceof EnderDragon ? rangedAimTarget(combatTarget) : combatTarget;
+		Entity aimTarget = action() == ACTION_SHOOT && combatTarget == this.actionTarget
+				&& this.committedAimTarget != null && !this.committedAimTarget.isRemoved()
+				? this.committedAimTarget
+				: combatTarget instanceof EnderDragon ? rangedAimTarget(combatTarget) : combatTarget;
 		if (aimTarget == null) aimTarget = combatTarget;
 		Vec3 point = aimTarget instanceof LivingEntity living
 				? living.getEyePosition()
@@ -2958,9 +3100,9 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	public boolean isRangedHeadFrameStabilized() {
-		return action() == ACTION_DRAW || action() == ACTION_SHOOT || action() == ACTION_BOW_READY
+		return action() == ACTION_NOCK || action() == ACTION_DRAW || action() == ACTION_AIM || action() == ACTION_SHOOT
 				|| action() == ACTION_BOW_LOWER || action() == ACTION_RECOVER
-				|| action() == ACTION_RELOAD_CANCEL;
+				|| action() == ACTION_UNNOCK;
 	}
 
 	public byte getActionStateForDiagnostics() {
@@ -3465,18 +3607,37 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private int attackInterval() { return this.entityData.get(ATTACK_INTERVAL); }
 	private boolean skillEnabled(int skill) { return (this.enabledSkills & 1 << skill) != 0; }
 	private void finishAction() {
-		stopBowAnimations();
-		this.stopTriggeredAnim(ACTION_CONTROLLER, BACKSTEP_TRIGGER);
-		this.stopTriggeredAnim(ACTION_CONTROLLER, MELEE_TRIGGER);
+		byte completedAction = action();
+		long now = this.level().getGameTime();
+		// A completed PLAY_ONCE bow-return clip has already left the rendered
+		// timeline. Calling stopTriggeredAnim here makes GeckoLib rebuild an
+		// AnimationPoint from that completed clip and can expose one stale pose for
+		// a frame. Leave naturally completed return clips alone; the next trigger
+		// replaces the stale controller reference directly.
+		if (!isBowReturnActionState(completedAction)) {
+			stopBowAnimations();
+			this.stopTriggeredAnim(ACTION_CONTROLLER, BACKSTEP_TRIGGER);
+			this.stopTriggeredAnim(ACTION_CONTROLLER, MELEE_TRIGGER);
+		}
 		this.entityData.set(ACTION, ACTION_IDLE);
+		this.entityData.set(ACTION_DURATION_TICKS, 1);
+		this.entityData.set(RANGED_RELOAD_STYLE, false);
 		this.actionTarget = null;
 		this.shotReleased = false;
-		this.drawStartedFromBowReady = false;
+		this.aimTicksRemaining = 0;
+		this.aimTargetUuid = null;
+		this.committedAimTarget = null;
 		this.pendingBackstep = false;
 		this.targetLostAt = -1L;
 		this.meleeRetargetUsed = false;
 		this.meleeHitAgainDuringAction = false;
 		this.combatFacingInitialized = false;
+		if (isBowReturnActionState(completedAction)) {
+			EchoWarrior.LOGGER.info(
+					"[EgyptianArcherRangedState] archer={} tick={} event=bow_return_finish previousAction={} settleRemaining={}",
+					this.getId(), now, actionName(completedAction),
+					Math.max(0L, this.postCombatVisualSettleUntil - now));
+		}
 	}
 
 	@Override
@@ -3606,26 +3767,64 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		controllers.add(new AnimationController<EgyptianArcherEchoEntity>("movement", 3, this::selectMovementAnimation));
 		AnimationController<EgyptianArcherEchoEntity> actionController =
 				new AnimationController<EgyptianArcherEchoEntity>(ACTION_CONTROLLER, 1, this::selectActionAnimation)
-				.triggerableAnim(DRAW_TRIGGER, DRAW_BOW_UPPER)
-				.triggerableAnim(RELOAD_TRIGGER, RELOAD_BOW_UPPER)
+				.triggerableAnim(FIRST_NOCK_TRIGGER, FIRST_NOCK_UPPER)
+				.triggerableAnim(RELOAD_NOCK_TRIGGER, RELOAD_NOCK_UPPER)
+				.triggerableAnim(FIRST_DRAW_TRIGGER, FIRST_DRAW_UPPER)
+				.triggerableAnim(RELOAD_DRAW_TRIGGER, RELOAD_DRAW_UPPER)
+				.triggerableAnim(BOW_AIM_TRIGGER, BOW_AIM_UPPER)
 				.triggerableAnim(SHOOT_TRIGGER, SHOOT_UPPER)
-				.triggerableAnim(BOW_READY_TRIGGER, BOW_READY_UPPER)
+				.triggerableAnim(UNNOCK_TRIGGER, UNNOCK_UPPER)
 				.triggerableAnim(BOW_LOWER_TRIGGER, BOW_LOWER_UPPER)
 				.triggerableAnim(BOW_RECOVER_TRIGGER, BOW_RECOVER_UPPER)
 				.triggerableAnim(BACKSTEP_TRIGGER, BACKSTEP)
 				.triggerableAnim(MELEE_TRIGGER, MELEE)
 				.triggerableAnim(HURT_TRIGGER, HURT);
-		for (int index = 0; index < RELOAD_CANCEL_TRIGGERS.length; index++) {
-			actionController.triggerableAnim(RELOAD_CANCEL_TRIGGERS[index], RELOAD_CANCEL_UPPER[index]);
-		}
 		controllers.add(actionController);
 	}
 
 	private PlayState selectMovementAnimation(AnimationTest<EgyptianArcherEchoEntity> test) {
-		int currentTick = test.animatable().tickCount;
-		double horizontalSpeed = test.animatable().getDeltaMovement().horizontalDistance();
+		EgyptianArcherEchoEntity archer = test.animatable();
+		int currentTick = archer.tickCount;
+		double horizontalSpeed = archer.getDeltaMovement().horizontalDistance();
+		if (isBowReturnActionState(archer.action())) {
+			if (!this.bowReturnMovementFrameLocked) {
+				this.bowReturnMovementFrameLocked = true;
+				this.movementAnimationActive = false;
+				EchoWarrior.LOGGER.info(
+						"[EgyptianArcherBowBoundaryClient] archer={} tick={} event=idle_base_lock action={}",
+						archer.getId(), archer.level().getGameTime(), actionName(archer.action()));
+			}
+			this.bowReturnMovementReleaseDeferredAtTick = Integer.MIN_VALUE;
+			PlayState playState = test.setAndContinue(IDLE);
+			test.controller().setTimelineTime(0.0D);
+			test.setControllerSpeed(0.0F);
+			return playState;
+		}
+		if (this.bowReturnMovementFrameLocked) {
+			if (this.bowReturnMovementReleaseDeferredAtTick == Integer.MIN_VALUE) {
+				this.bowReturnMovementReleaseDeferredAtTick = currentTick;
+				EchoWarrior.LOGGER.info(
+						"[EgyptianArcherBowBoundaryClient] archer={} tick={} event=idle_base_release_deferred action={}",
+						archer.getId(), archer.level().getGameTime(), actionName(archer.action()));
+			}
+			// Entity-data synchronization and the action controller can cross the
+			// PLAY_ONCE end boundary on different render frames inside the same game
+			// tick. Keep the matching idle frame underneath for that whole tick so no
+			// interpolation frame can expose the model's reset pose.
+			if (currentTick <= this.bowReturnMovementReleaseDeferredAtTick) {
+				PlayState playState = test.setAndContinue(IDLE);
+				test.controller().setTimelineTime(0.0D);
+				test.setControllerSpeed(0.0F);
+				return playState;
+			}
+			this.bowReturnMovementFrameLocked = false;
+			this.bowReturnMovementReleaseDeferredAtTick = Integer.MIN_VALUE;
+			EchoWarrior.LOGGER.info(
+					"[EgyptianArcherBowBoundaryClient] archer={} tick={} event=idle_base_release action={}",
+					archer.getId(), archer.level().getGameTime(), actionName(archer.action()));
+		}
 		boolean visiblyMoving = test.isMoving() && horizontalSpeed > 0.025;
-		if (visiblyMoving && test.animatable().action() != ACTION_BACKSTEP) {
+		if (visiblyMoving && archer.action() != ACTION_BACKSTEP) {
 			this.movementAnimationActive = true;
 			this.movementAnimationLastMovingTick = currentTick;
 		} else if (this.movementAnimationActive && currentTick - this.movementAnimationLastMovingTick >= 4) {
@@ -3640,9 +3839,18 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private PlayState selectActionAnimation(AnimationTest<EgyptianArcherEchoEntity> test) {
-		if (test.animatable().action() == ACTION_DRAW || test.animatable().action() == ACTION_SHOOT
-				|| test.animatable().action() == ACTION_RELOAD_CANCEL) {
-			test.setControllerSpeed(61.6F / Math.max(1, test.animatable().attackInterval()));
+		EgyptianArcherEchoEntity archer = test.animatable();
+		float sourceSeconds = switch (archer.action()) {
+			case ACTION_NOCK -> archer.entityData.get(RANGED_RELOAD_STYLE)
+					? RELOAD_NOCK_ANIMATION_SECONDS : FIRST_NOCK_ANIMATION_SECONDS;
+			case ACTION_DRAW -> DRAW_ANIMATION_SECONDS;
+			case ACTION_SHOOT -> RELEASE_ANIMATION_SECONDS;
+			case ACTION_UNNOCK -> RELOAD_NOCK_ANIMATION_SECONDS;
+			default -> 0.0F;
+		};
+		if (sourceSeconds > 0.0F) {
+			test.setControllerSpeed(sourceSeconds * 20.0F
+					/ Math.max(1, archer.entityData.get(ACTION_DURATION_TICKS)));
 		} else test.setControllerSpeed(1.0F);
 		return PlayState.STOP;
 	}
@@ -3654,6 +3862,9 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private record RetreatPath(Vec3 destination, Path path, Vec3 direction) {
+	}
+
+	private record RangedPhaseBudget(int interval, int nockTicks, int drawTicks, int aimTicks, int releaseTicks) {
 	}
 
 	private enum DirectRetreatClearance {

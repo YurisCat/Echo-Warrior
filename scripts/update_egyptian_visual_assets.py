@@ -48,7 +48,6 @@ LOWER_BODY_BONES = {
     "bone3",
     "Leg_Left_Lower",
 }
-RELOAD_CANCEL_VARIANTS = 8
 DERIVED_ANIMATIONS = {
     f"{NAMES[short_name]}_{layer}"
     for short_name in ("draw_bow", "shoot")
@@ -58,26 +57,28 @@ DERIVED_ANIMATIONS = {
     for layer in ("upper", "lower")
 } | {
     "animation.egyptian_archer.reload_bow_upper",
-    "animation.egyptian_archer.bow_ready_upper",
+    "animation.egyptian_archer.draw_bow_nock_upper",
+    "animation.egyptian_archer.reload_bow_nock_upper",
+    "animation.egyptian_archer.draw_bow_pull_upper",
+    "animation.egyptian_archer.reload_bow_pull_upper",
+    "animation.egyptian_archer.bow_aim_upper",
+    "animation.egyptian_archer.un_nock_upper",
     "animation.egyptian_archer.bow_lower_upper",
     "animation.egyptian_archer.melee_attack_upper",
-} | {
-    f"animation.egyptian_archer.reload_cancel_{index}_upper"
-    for index in range(RELOAD_CANCEL_VARIANTS)
 }
 
 SHOOT_READY_TIME = 0.33333
+SHOOT_RELEASE_START = 0.08333
 RELOAD_SOURCE_START = 0.16667
 RELOAD_BLEND_IN = 0.15
-RELOAD_DRAW_START_SOURCE = 1.70833
+DRAW_PULL_START = 1.70833
 RIGHT_RELOAD_BONES = {"Arm_Right", "Upper Right Arm", "Lower Right Arm", "bone7"}
 RELOAD_HAND_BONE = "Lower Right Arm"
 RELOAD_ARROW_BONE = "bone7"
 RELOAD_ARROW_VISIBLE_AT = 0.70833
 RELOAD_ARROW_BAKE_STEP = 1.0 / 48.0
 RELOAD_ARROW_VALIDATION_STEP = 1.0 / 240.0
-RELOAD_CANCEL_STEP = 0.1
-RELOAD_CANCEL_DURATION = 0.25
+UNNOCK_BAKE_STEP = 1.0 / 48.0
 
 
 def extract_texture(model: dict) -> None:
@@ -434,11 +435,52 @@ def static_pose_animation(source: dict, time: float) -> dict:
     return ready
 
 
-def add_reload_animation(animation_map: dict, ready_source: dict, geometry: dict) -> None:
+def reverse_baked_animation(source: dict, step: float) -> dict:
+    """Bake a stable reverse clip instead of relying on reversed spline metadata."""
+    duration = float(source["animation_length"])
+    reversed_animation = {
+        "animation_length": duration,
+        "loop": "once",
+        "bones": {},
+    }
+    sample_times = [0.0]
+    sample_time = step
+    while sample_time < duration - 1.0e-6:
+        sample_times.append(sample_time)
+        sample_time += step
+    sample_times.append(duration)
+    for bone, channels in source.get("bones", {}).items():
+        reversed_channels = {}
+        for channel, keyframes in channels.items():
+            if not isinstance(keyframes, dict) or not keyframes:
+                reversed_channels[channel] = copy.deepcopy(keyframes)
+                continue
+            reversed_channels[channel] = {
+                time_key(time): sample_channel(keyframes, duration - time)
+                for time in sample_times
+            }
+        reversed_animation["bones"][bone] = reversed_channels
+    return reversed_animation
+
+
+def normalize_held_arrow_visibility(model: dict) -> None:
+    """Prevent the held arrow's visibility curve from scaling past one."""
+    for animation in model.get("animations", []):
+        if animation.get("name") != NAMES["draw_bow"]:
+            continue
+        for animator in animation.get("animators", {}).values():
+            if animator.get("name") != RELOAD_ARROW_BONE:
+                continue
+            for keyframe in animator.get("keyframes", []):
+                if keyframe.get("channel") == "scale":
+                    keyframe["interpolation"] = "linear"
+
+
+def add_reload_animation(animation_map: dict, ready_source: dict, geometry: dict) -> tuple[dict, float]:
     draw = animation_map[f"{NAMES['draw_bow']}_upper"]
     reload_length = float(draw["animation_length"]) - RELOAD_SOURCE_START + RELOAD_BLEND_IN
     right_offset = RELOAD_BLEND_IN - RELOAD_SOURCE_START
-    left_draw_start = RELOAD_DRAW_START_SOURCE + right_offset
+    left_draw_start = DRAW_PULL_START + right_offset
     reload_animation = {
         "animation_length": reload_length,
         "loop": "hold_on_last_frame",
@@ -473,56 +515,87 @@ def add_reload_animation(animation_map: dict, ready_source: dict, geometry: dict
         reload_animation["bones"][bone] = built_channels
     retarget_reload_arrow(draw, reload_animation, geometry, right_offset)
     animation_map["animation.egyptian_archer.reload_bow_upper"] = reload_animation
-    add_reload_cancel_animations(animation_map, reload_animation)
-
-
-def add_reload_cancel_animations(animation_map: dict, reload_animation: dict) -> None:
-    """Bake phase-matched early-reload cancellations back to bow-ready.
-
-    GeckoLib trigger animations cannot reverse an arbitrary running clip from its
-    exact clock position. Closely spaced source checkpoints keep the transition to
-    a cancellation clip below one server animation tick, then return the right arm
-    and held arrow to the authored raised-bow ready pose before normal lowering.
-    """
-    for index in range(RELOAD_CANCEL_VARIANTS):
-        source_time = min(index * RELOAD_CANCEL_STEP, float(reload_animation["animation_length"]))
-        cancellation = {
-            "animation_length": RELOAD_CANCEL_DURATION,
-            "loop": "once",
-            "bones": {},
-        }
-        for bone, channels in reload_animation.get("bones", {}).items():
-            cancelled_channels = {}
-            for channel, keyframes in channels.items():
-                if not isinstance(keyframes, dict) or not keyframes:
-                    cancelled_channels[channel] = copy.deepcopy(keyframes)
-                    continue
-                cancelled_channels[channel] = {
-                    "0": sample_channel(keyframes, source_time),
-                    time_key(RELOAD_CANCEL_DURATION): sample_channel(keyframes, 0.0),
-                }
-            cancellation["bones"][bone] = cancelled_channels
-        animation_map[f"animation.egyptian_archer.reload_cancel_{index}_upper"] = cancellation
+    return reload_animation, left_draw_start
 
 
 def add_post_shot_layers(animations: dict, geometry: dict) -> None:
-    """Split the authored release into fire, raised-ready, and gentle lowering.
-
-    The source SHOOT has a natural undrawn-bow pose at 0.33333 seconds: the
-    left arm still presents the bow, the string has relaxed, and the right arm
-    has left the release pose. Reusing that exact frame keeps all transitions
-    continuous and leaves the original final half-second as the no-target bow
-    lowering animation.
-    """
+    """Build semantic nock, draw, aim, release, un-nock, and lower clips."""
     animation_map = animations.get("animations", {})
+    first_draw_upper = copy.deepcopy(animation_map[f"{NAMES['draw_bow']}_upper"])
     original_shoot_upper = copy.deepcopy(animation_map[f"{NAMES['shoot']}_upper"])
+    reload_upper, reload_pull_start = add_reload_animation(animation_map, original_shoot_upper, geometry)
+
+    animation_map["animation.egyptian_archer.draw_bow_nock_upper"] = clip_animation(
+        first_draw_upper, 0.0, DRAW_PULL_START)
+    animation_map["animation.egyptian_archer.draw_bow_pull_upper"] = clip_animation(
+        first_draw_upper, DRAW_PULL_START, float(first_draw_upper["animation_length"]))
+    reload_nock = clip_animation(reload_upper, 0.0, reload_pull_start)
+    animation_map["animation.egyptian_archer.reload_bow_nock_upper"] = reload_nock
+    animation_map["animation.egyptian_archer.reload_bow_pull_upper"] = clip_animation(
+        reload_upper, reload_pull_start, float(reload_upper["animation_length"]))
+    animation_map["animation.egyptian_archer.bow_aim_upper"] = static_pose_animation(
+        first_draw_upper, float(first_draw_upper["animation_length"]))
+    animation_map["animation.egyptian_archer.un_nock_upper"] = reverse_baked_animation(
+        reload_nock, UNNOCK_BAKE_STEP)
     animation_map[f"{NAMES['shoot']}_upper"] = clip_animation(
-        original_shoot_upper, 0.0, SHOOT_READY_TIME)
-    animation_map["animation.egyptian_archer.bow_ready_upper"] = static_pose_animation(
-        original_shoot_upper, SHOOT_READY_TIME)
+        original_shoot_upper, SHOOT_RELEASE_START, SHOOT_READY_TIME)
     animation_map["animation.egyptian_archer.bow_lower_upper"] = clip_animation(
         original_shoot_upper, SHOOT_READY_TIME, float(original_shoot_upper["animation_length"]))
-    add_reload_animation(animation_map, original_shoot_upper, geometry)
+
+
+def phase_boundary_error(first: dict, second: dict, ignored_bones: set[str] | None = None) -> float:
+    ignored = ignored_bones or set()
+    defaults = {"position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]}
+    worst = 0.0
+    bones = set(first.get("bones", {})) | set(second.get("bones", {}))
+    for bone in bones - ignored:
+        channels = set(first.get("bones", {}).get(bone, {})) \
+            | set(second.get("bones", {}).get(bone, {}))
+        for channel in channels:
+            fallback = defaults.get(channel, [0.0, 0.0, 0.0])
+            first_pose = sample_vector(first, bone, channel, float(first["animation_length"]), fallback)
+            second_pose = sample_vector(second, bone, channel, 0.0, fallback)
+            worst = max(worst, max(abs(left - right) for left, right in zip(first_pose, second_pose)))
+    return worst
+
+
+def validate_phase_animations(animation_map: dict) -> None:
+    names = {
+        short_name: animation_map[f"animation.egyptian_archer.{short_name}"]
+        for short_name in (
+            "draw_bow_nock_upper", "draw_bow_pull_upper", "reload_bow_nock_upper",
+            "reload_bow_pull_upper", "bow_aim_upper", "shoot_upper", "un_nock_upper",
+            "bow_lower_upper",
+        )
+    }
+    boundaries = (
+        ("draw_bow_nock_upper", "draw_bow_pull_upper", set()),
+        ("reload_bow_nock_upper", "reload_bow_pull_upper", set()),
+        ("draw_bow_pull_upper", "bow_aim_upper", set()),
+        ("bow_aim_upper", "shoot_upper", set()),
+        # The held arrow is scale-zero at both sides of this boundary; its hidden
+        # transform can differ without producing a visible discontinuity.
+        ("un_nock_upper", "bow_lower_upper", {RELOAD_ARROW_BONE}),
+    )
+    for first_name, second_name, ignored_bones in boundaries:
+        error = phase_boundary_error(names[first_name], names[second_name], ignored_bones)
+        if error > 1.0e-4:
+            raise ValueError(f"Animation phase boundary {first_name}->{second_name} drifted by {error:.6f}")
+
+    for animation_name in (f"{NAMES['draw_bow']}_upper", "animation.egyptian_archer.reload_bow_upper"):
+        animation = animation_map[animation_name]
+        time = 0.0
+        while time <= float(animation["animation_length"]) + 1.0e-6:
+            scale = sample_vector(animation, RELOAD_ARROW_BONE, "scale", time, [1.0, 1.0, 1.0])
+            if min(scale) < -1.0e-5 or max(scale) > 1.00001:
+                raise ValueError(f"Held arrow visibility scale overshot in {animation_name} at {time:.5f}: {scale}")
+            time += RELOAD_ARROW_VALIDATION_STEP
+
+    release_scale = sample_vector(names["shoot_upper"], RELOAD_ARROW_BONE, "scale",
+                                  float(names["shoot_upper"]["animation_length"]) * 0.5,
+                                  [1.0, 1.0, 1.0])
+    if max(release_scale) > 1.0e-4:
+        raise ValueError(f"Held arrow has not disappeared at the release midpoint: {release_scale}")
 
 
 def add_bow_recovery_layers(animations: dict) -> None:
@@ -560,12 +633,14 @@ def main() -> int:
                 "animation.egyptian_archer.backstep_shoot",
         }:
             animation["loop"] = "once"
+    normalize_held_arrow_visibility(model)
     geometry = exporter.export_geometry(model)
     geometry["minecraft:geometry"][0]["description"]["identifier"] = "geometry.egyptian_archer"
     animations = exporter.export_animations(model)
     add_ranged_animation_layers(animations)
     add_post_shot_layers(animations, geometry)
     add_bow_recovery_layers(animations)
+    validate_phase_animations(animations.get("animations", {}))
     extract_texture(model)
     exporter.write_json(BBMODEL, model)
     exporter.write_json(GEO, geometry)
