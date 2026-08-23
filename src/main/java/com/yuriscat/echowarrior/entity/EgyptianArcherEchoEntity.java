@@ -8,6 +8,7 @@ import com.geckolib.animation.RawAnimation;
 import com.geckolib.animation.object.PlayState;
 import com.geckolib.animation.state.AnimationTest;
 import com.geckolib.util.GeckoLibUtil;
+import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.ModEntities;
 import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
@@ -46,6 +47,7 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
@@ -93,17 +95,23 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private static final EntityDataAccessor<Integer> VISUAL_SEQUENCE = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Long> ATTENTION_STARTED_AT = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.LONG);
 	private static final EntityDataAccessor<Long> CAUGHT_REACTION_START = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Boolean> COMBAT_GAZE_LOCKED = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Integer> COMBAT_GAZE_TARGET_ID = SynchedEntityData.defineId(EgyptianArcherEchoEntity.class, EntityDataSerializers.INT);
 
 	private static final double HEAD_GAZE_RADIUS = 0.35;
 	private static final double VISUAL_HEAD_CENTER_HEIGHT = 27.5 / 16.0;
 	private static final double INVISIBLE_GAZE_RANGE = 4.0;
 	private static final int GAZE_MISS_TOLERANCE_TICKS = 2;
+	private static final int COMBAT_GAZE_TARGET_GRACE_TICKS = 3;
 	private static final int COMBAT_GAZE_SUPPRESSION_TICKS = 20 * 3;
+	private static final int POST_COMBAT_VISUAL_SETTLE_TICKS = 30;
+	private static final int POST_COMBAT_VISUAL_DIAGNOSTIC_TICKS = 80;
 	private static final int MUTUAL_GAZE_PRIORITY = 790;
 	private static final int EYE_STICKY_TICKS = 5;
 	private static final int HEAD_STICKY_TICKS = 10;
 	private static final int LOCOMOTION_ATTENTION_PRIORITY = 320;
 	private static final int LOCOMOTION_ATTENTION_TICKS = 6;
+	private static final int LOCOMOTION_ATTENTION_RELEASE_TICKS = 20;
 	private static final int CAUGHT_PREWATCH_TICKS = 8;
 	private static final int CAUGHT_GLANCE_START_TICKS = 18;
 	private static final double CAUGHT_MAX_OWNER_DISTANCE_SQR = 16.0 * 16.0;
@@ -123,7 +131,9 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private static final byte ACTION_SHOOT = 2;
 	private static final byte ACTION_BACKSTEP = 3;
 	private static final byte ACTION_MELEE = 4;
-	private static final byte ACTION_RECOVER = 5;
+	private static final byte ACTION_BOW_READY = 5;
+	private static final byte ACTION_BOW_LOWER = 6;
+	private static final byte ACTION_RECOVER = 7;
 	private static final EntityDataAccessor<Byte> ACTION = SynchedEntityData.defineId(
 			EgyptianArcherEchoEntity.class, EntityDataSerializers.BYTE);
 	private static final EntityDataAccessor<Integer> ATTACK_INTERVAL = SynchedEntityData.defineId(
@@ -134,17 +144,20 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.egyptian_archer.idle");
 	private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.egyptian_archer.walk");
 	private static final RawAnimation DRAW_BOW_UPPER = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.draw_bow_upper");
-	private static final RawAnimation DRAW_BOW_LOWER = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.draw_bow_lower");
-	private static final RawAnimation SHOOT_UPPER = RawAnimation.begin().thenPlay("animation.egyptian_archer.shoot_upper");
-	private static final RawAnimation SHOOT_LOWER = RawAnimation.begin().thenPlay("animation.egyptian_archer.shoot_lower");
+	private static final RawAnimation RELOAD_BOW_UPPER = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.reload_bow_upper");
+	private static final RawAnimation SHOOT_UPPER = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.shoot_upper");
+	private static final RawAnimation BOW_READY_UPPER = RawAnimation.begin().thenLoop("animation.egyptian_archer.bow_ready_upper");
+	private static final RawAnimation BOW_LOWER_UPPER = RawAnimation.begin().thenPlay("animation.egyptian_archer.bow_lower_upper");
 	private static final RawAnimation BOW_RECOVER_UPPER = RawAnimation.begin().thenPlay("animation.egyptian_archer.bow_recover_upper");
-	private static final RawAnimation BOW_RECOVER_LOWER = RawAnimation.begin().thenPlay("animation.egyptian_archer.bow_recover_lower");
 	private static final RawAnimation BACKSTEP = RawAnimation.begin().thenPlay("animation.egyptian_archer.backstep_jump");
-	private static final RawAnimation MELEE = RawAnimation.begin().thenPlay("animation.egyptian_archer.melee_attack");
+	private static final RawAnimation MELEE = RawAnimation.begin().thenPlay("animation.egyptian_archer.melee_attack_upper");
 	private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.egyptian_archer.hurt");
 	private static final String ACTION_CONTROLLER = "action";
 	private static final String DRAW_TRIGGER = "draw_bow";
+	private static final String RELOAD_TRIGGER = "reload_bow";
 	private static final String SHOOT_TRIGGER = "shoot";
+	private static final String BOW_READY_TRIGGER = "bow_ready";
+	private static final String BOW_LOWER_TRIGGER = "bow_lower";
 	private static final String BOW_RECOVER_TRIGGER = "bow_recover";
 	private static final String BACKSTEP_TRIGGER = "backstep";
 	private static final String MELEE_TRIGGER = "melee";
@@ -164,12 +177,30 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private static final double ARROW_GRAVITY = 0.05;
 	private static final float COMBAT_TURN_SPEED = 45.0F;
 	private static final float FIRE_FACING_TOLERANCE = 20.0F;
-	private static final int MAX_FULL_DRAW_HOLD_TICKS = 6;
 	private static final int EMERGENCY_TARGET_TICKS = 60;
 	private static final int BOW_RECOVERY_TICKS = 8;
-	private static final int RETREAT_REPATH_TICKS = 20;
+	private static final int BOW_LOWER_TICKS = 10;
+	private static final int TARGET_LOSS_GRACE_TICKS = 6;
 	private static final double RETREAT_SCAN_RANGE = 12.0;
 	private static final double RETREAT_MIN_PROGRESS = 0.18;
+	private static final double DIRECT_RETREAT_LOOKAHEAD = 1.5;
+	private static final double[] DIRECT_RETREAT_PROBES = {0.45, 0.9, DIRECT_RETREAT_LOOKAHEAD};
+	private static final double DIRECT_RETREAT_SPEED_SCALE = 0.70;
+	private static final double MIN_DIRECT_RETREAT_SPEED = 0.15;
+	private static final double MAX_DIRECT_RETREAT_SPEED = 0.24;
+	private static final double MELEE_RETREAT_SPEED_SCALE = 0.85;
+	private static final double MAX_MELEE_RETREAT_SPEED = 0.32;
+	private static final double MELEE_ESCAPE_RELEASE_RANGE = 4.0;
+	private static final double SELF_DEFENSE_RELEASE_RANGE = CLOSE_THREAT_RELEASE_RANGE;
+	private static final double MELEE_HIGH_THREAT_RANGE = 6.0;
+	private static final int MELEE_BLOCKED_HIGH_THREAT_TICKS = 10;
+	private static final double RECENT_ATTACKER_RETREAT_WEIGHT = 2.5;
+	private static final double DIRECT_RETREAT_JUMP_VELOCITY = 0.42;
+	private static final int DIRECT_RETREAT_JUMP_TICKS = 12;
+	private static final double MELEE_KNOCKBACK = 0.6;
+	private static final double IMMEDIATE_MELEE_BOUNDING_BOX_GAP = 2.1;
+	private static final double DIRECT_HIT_MELEE_BOUNDING_BOX_GAP = 2.5;
+	private static final double COMMITTED_MELEE_HIT_RANGE = 4.0;
 	private static final int VOLLEY_PARTICLE_COLOR = 0xE6C84E;
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
@@ -246,7 +277,13 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private long shotReleaseAt;
 	private boolean shotReleased;
 	private boolean pendingBackstep;
+	private long targetLostAt = -1L;
 	private @Nullable LivingEntity actionTarget;
+	private @Nullable LivingEntity selfDefenseTarget;
+	private boolean meleeEscapeActive;
+	private boolean meleeRetargetUsed;
+	private boolean meleeHitAgainDuringAction;
+	private long meleeRetreatBlockedSince = -1L;
 	private @Nullable Monster highThreatTarget;
 	private @Nullable LivingEntity resumeTargetAfterThreat;
 	private @Nullable LivingEntity emergencyTarget;
@@ -262,11 +299,27 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private boolean combatApproaching;
 	private boolean combatKiting;
 	private Vec3 combatRetreatDestination = Vec3.ZERO;
+	private Vec3 combatRetreatDirection = Vec3.ZERO;
+	private Vec3 combatRetreatVelocity = Vec3.ZERO;
 	private Vec3 combatRetreatProgressPosition = Vec3.ZERO;
 	private long combatRetreatRepathAt;
 	private long combatRetreatProgressAt;
+	private long combatDirectRetreatBlockedUntil;
+	private long combatStepJumpUntil;
 	private float combatFacingYaw;
 	private boolean combatFacingInitialized;
+	private @Nullable LivingEntity combatGazeTarget;
+	private long combatGazeTargetUntil;
+	private long postCombatVisualSettleUntil;
+	private long postCombatVisualDiagnosticUntil;
+	private Vec3 postCombatVisualSettleDirection = Vec3.ZERO;
+	private @Nullable AttentionKind lastLoggedPostCombatAttentionKind;
+	private int lastLoggedPostCombatAttentionTargetId = Integer.MIN_VALUE;
+	private int lastLoggedCombatGazeTargetId = Integer.MIN_VALUE;
+	private boolean lastLoggedCombatGazeLocked;
+	private byte lastLoggedCombatGazeAction = Byte.MIN_VALUE;
+	private long locomotionAttentionUntil;
+	private Vec3 locomotionAttentionDirection = Vec3.ZERO;
 
 	public EgyptianArcherEchoEntity(EntityType<? extends EgyptianArcherEchoEntity> type, Level level) {
 		super(type, level);
@@ -303,6 +356,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		builder.define(VISUAL_SEQUENCE, 0);
 		builder.define(ATTENTION_STARTED_AT, 0L);
 		builder.define(CAUGHT_REACTION_START, -100L);
+		builder.define(COMBAT_GAZE_LOCKED, false);
+		builder.define(COMBAT_GAZE_TARGET_ID, -1);
 	}
 
 	@Override
@@ -336,9 +391,19 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 				tickNaturalHealing(level, relic);
 			}
 		}
-		boolean committedShotLostTarget = (action() == ACTION_DRAW || action() == ACTION_SHOOT && !this.shotReleased)
-				&& !canProtectAgainst(this.getTarget());
-		if ((this.tickCount & 1) == 0 || committedShotLostTarget) {
+		validateSelfDefenseTarget();
+		boolean committedShotLostTarget = (action() == ACTION_DRAW || action() == ACTION_BOW_READY)
+				&& !canContinueCombatAgainst(this.getTarget());
+		if (action() == ACTION_SHOOT && canContinueCombatAgainst(this.actionTarget)) {
+			// SHOOT is a committed release. Ordinary scans must not replace its target midway
+			// through the authored release and make the face snap toward an unrelated enemy.
+			if (this.getTarget() != this.actionTarget) this.setTarget(this.actionTarget);
+		} else if (action() == ACTION_BACKSTEP && canDefendAgainst(this.actionTarget)) {
+			// Backstep is another committed combat action. Keep the triggering threat stable
+			// even when the jump crosses a WAIT/WANDER activity boundary.
+			if (this.getTarget() != this.actionTarget) this.setTarget(this.actionTarget);
+		} else if (action() != ACTION_MELEE && action() != ACTION_SHOOT
+				&& ((this.tickCount & 1) == 0 || committedShotLostTarget)) {
 			this.setTarget(selectProtectiveTarget(owner));
 			if ((this.tickCount & 3) == 0) enforceActivityBoundary(owner);
 		}
@@ -353,8 +418,12 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		tickVisualAwareness(level, owner);
 		EchoWaterSafety.tick(level, this, owner, this.activityMode == EchoRelicState.ActivityMode.FOLLOW
 				&& action() != ACTION_BACKSTEP && !isVisualInteractionMovementOwned());
-		LivingEntity facingTarget = this.getTarget();
-		if (facingTarget != null && (action() == ACTION_DRAW || action() == ACTION_SHOOT || action() == ACTION_MELEE)) {
+		LivingEntity facingTarget = (action() == ACTION_MELEE || action() == ACTION_BACKSTEP)
+				&& canDefendAgainst(this.actionTarget)
+				? this.actionTarget
+				: this.getTarget();
+		if (action() == ACTION_MELEE || action() == ACTION_BACKSTEP
+				? canDefendAgainst(facingTarget) : canContinueCombatAgainst(facingTarget)) {
 			faceTarget(facingTarget);
 		}
 	}
@@ -362,21 +431,65 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private void tickCombat(ServerLevel level, ItemStack relic) {
 		long now = level.getGameTime();
 		LivingEntity target = this.getTarget();
-		if (action() == ACTION_RECOVER) {
-			this.getNavigation().stop();
+		if (action() != ACTION_MELEE && action() != ACTION_BACKSTEP) {
+			LivingEntity meleeThreat = selectImmediateMeleeThreat(level, target);
+			if (meleeThreat != null) {
+				// Point-blank danger is evaluated before target-loss recovery and every bow
+				// phase, so a dead ranged target or a ready/reload boundary cannot leave the
+				// archer passively playing hurt while a melee attacker keeps connecting.
+				startMeleeAttack(now, meleeThreat);
+				return;
+			}
+		}
+		if (action() == ACTION_MELEE) {
+			tickCommittedMelee(level, now, relic);
+			return;
+		}
+		if (action() == ACTION_RECOVER || action() == ACTION_BOW_LOWER) {
+			stopMovementIntent();
 			if (now >= this.actionEndsAt) finishAction();
 			return;
 		}
-		if (target == null || !canProtectAgainst(target)) {
+		if (action() == ACTION_SHOOT && !canContinueCombatAgainst(this.actionTarget)) {
+			// The target died after the release animation was committed. Finish that exact
+			// release pose without spawning an orphan arrow, then let BOW_READY reacquire on
+			// the next tick. This avoids both a frozen full draw and a mid-release target snap.
 			this.setTarget(null);
-			if (action() == ACTION_DRAW || action() == ACTION_SHOOT && !this.shotReleased) {
-				startBowRecovery(now);
-			}
-			if (action() == ACTION_BACKSTEP) tickBackstep(level, relic);
-			if ((action() == ACTION_SHOOT || action() == ACTION_MELEE) && now >= this.actionEndsAt) finishAction();
+			this.shotReleased = true;
+			stopMovementIntent();
+			if (now >= this.actionEndsAt) startBowReady(now, null);
 			return;
 		}
-		if ((action() == ACTION_DRAW || action() == ACTION_SHOOT) && this.actionTarget != target) {
+		if (target == null || !canContinueCombatAgainst(target)) {
+			this.setTarget(null);
+			if (action() == ACTION_DRAW || action() == ACTION_SHOOT || action() == ACTION_BOW_READY) {
+				if (this.targetLostAt < 0L) this.targetLostAt = now;
+				if (now - this.targetLostAt < TARGET_LOSS_GRACE_TICKS) {
+					// Keep the committed bow phase visually stable while the target selector
+					// gets a few ticks to find a replacement. Falling back to follow/wander
+					// navigation here made the grace period look like another animation twitch.
+					stopMovementIntent();
+					return;
+				}
+			}
+			if (action() == ACTION_DRAW) {
+				// Do not jump from a partial draw directly to a recovery animation whose
+				// first frame is the full-draw pose. Finish the draw phase without firing,
+				// then lower the bow from the pose the model has actually reached.
+				stopMovementIntent();
+				if (now >= this.actionEndsAt) startBowRecovery(now);
+				return;
+			}
+			if (action() == ACTION_BOW_READY) {
+				startBowLower(now);
+				return;
+			}
+			if (action() == ACTION_BACKSTEP) tickBackstep(level, relic);
+			return;
+		}
+		this.targetLostAt = -1L;
+		if ((action() == ACTION_DRAW || action() == ACTION_BOW_READY)
+				&& this.actionTarget != target) {
 			// A dying or newly urgent target must not restart the draw. Keep the current
 			// progress and smoothly redirect the committed shot to the replacement.
 			this.actionTarget = target;
@@ -392,75 +505,141 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 				startBackstep(level, relic, target);
 				return;
 			}
-			if (now >= this.actionEndsAt && (isFacingTarget(target)
-					|| now >= this.actionEndsAt + MAX_FULL_DRAW_HOLD_TICKS)) enterShoot(now);
+			if (now >= this.actionEndsAt && isFacingTarget(target)) enterShoot(now);
 			return;
 		}
 		if (action() == ACTION_SHOOT) {
 			boolean waitingForAim = false;
 			if (!this.shotReleased && now >= this.shotReleaseAt) {
-				if (isFacingTarget(target) || now >= this.shotReleaseAt + MAX_FULL_DRAW_HOLD_TICKS) {
+				if (isFacingTarget(target)) {
 					this.shotReleased = true;
 					fireMainShot(level, target);
 				} else waitingForAim = true;
 			}
 			if (shouldBackstep(target, relic)) this.pendingBackstep = true;
 			if (now >= this.actionEndsAt && !waitingForAim) {
-				finishAction();
 				if (this.pendingBackstep) {
 					this.pendingBackstep = false;
+					finishAction();
 					startBackstep(level, relic, target);
-				}
+				} else startBowReady(now, target);
 			}
 			return;
 		}
-		if (action() == ACTION_MELEE) {
-			if (!this.shotReleased && now >= this.shotReleaseAt) {
-				this.shotReleased = true;
-				if (this.distanceToSqr(target) <= 7.0 && this.hasLineOfSight(target)) {
-					float damage = target.getType().builtInRegistryHolder().is(EntityTypeTags.UNDEAD) ? 3.6F : 3.0F;
-					target.hurtServer(level, level.damageSources().mobAttack(this), damage);
-				}
-			}
-			if (now >= this.actionEndsAt) finishAction();
-			return;
-		}
-
-		if (shouldBackstep(target, relic)) {
-			if (startBackstep(level, relic, target)) return;
-			if (this.distanceToSqr(target) <= 7.0) {
+		if (action() == ACTION_BOW_READY) {
+			if (shouldBackstep(target, relic) && startBackstep(level, relic, target)) return;
+			if (isInMeleeRange(target)) {
 				startMeleeAttack(now, target);
 				return;
 			}
+			if (now >= this.nextAttackAt && canRangedAttack(target)) startReloadAttack(now, target);
+			return;
+		}
+		if (this.meleeEscapeActive) {
+			LivingEntity closeThreat = nearestMeleeEscapeThreat(level, target);
+			if (closeThreat == null || this.distanceTo(closeThreat) >= MELEE_ESCAPE_RELEASE_RANGE) {
+				clearMeleeEscape();
+			} else {
+				retainSelfDefenseTarget(closeThreat, "melee_escape");
+				this.setTarget(closeThreat);
+				if (now >= this.nextAttackAt && isInMeleeRange(closeThreat)) startMeleeAttack(now, closeThreat);
+				return;
+			}
+		}
+		if (shouldBackstep(target, relic) && startBackstep(level, relic, target)) return;
+		// Emergency melee owns the close-range decision before ranged attacks.
+		// Otherwise a disabled/blocked Backstep lets the always-valid bow attack
+		// starve melee forever while an enemy is already touching the archer.
+		if (isInMeleeRange(target)) {
+			startMeleeAttack(now, target);
+			return;
 		}
 		if (now >= this.nextAttackAt && canRangedAttack(target)) {
 			startRangedAttack(now, target);
+		}
+	}
+
+	private void tickCommittedMelee(ServerLevel level, long now, ItemStack relic) {
+		LivingEntity meleeTarget = this.actionTarget;
+		if (!this.shotReleased && !canDefendAgainst(meleeTarget) && !this.meleeRetargetUsed) {
+			LivingEntity replacement = selectCommittedMeleeReplacement(level, meleeTarget);
+			if (replacement != null) {
+				this.meleeRetargetUsed = true;
+				this.actionTarget = replacement;
+				this.setTarget(replacement);
+				retainSelfDefenseTarget(replacement, "melee_retarget");
+				meleeTarget = replacement;
+			}
+		}
+		if (canDefendAgainst(meleeTarget)) {
+			this.getLookControl().setLookAt(meleeTarget, 90.0F, 90.0F);
+		}
+		if (!this.shotReleased && now >= this.shotReleaseAt) {
+			this.shotReleased = true;
+			boolean eligible = canLandCommittedMeleeHit(meleeTarget);
+			boolean damaged = false;
+			if (eligible) {
+				float damage = meleeTarget.getType().builtInRegistryHolder().is(EntityTypeTags.UNDEAD) ? 3.6F : 3.0F;
+				damaged = meleeTarget.hurtServer(level, level.damageSources().mobAttack(this), damage);
+				if (damaged) {
+					meleeTarget.knockback(MELEE_KNOCKBACK, this.getX() - meleeTarget.getX(), this.getZ() - meleeTarget.getZ());
+				}
+			}
+			EchoWarrior.LOGGER.info(
+					"[EgyptianArcherMelee] archer={} tick={} event=release target={} eligible={} damaged={} centerDistance={} boxGap={}",
+					this.getId(), now, entityId(meleeTarget), eligible, damaged,
+					formatDistance(meleeTarget == null ? Double.NaN : Math.sqrt(this.distanceToSqr(meleeTarget))),
+					formatDistance(meleeTarget == null ? Double.NaN : Math.sqrt(boundingBoxDistanceSqr(meleeTarget))));
+		}
+		if (now < this.actionEndsAt) return;
+
+		LivingEntity nearestThreat = nearestMeleeEscapeThreat(level, meleeTarget);
+		boolean stillPressured = nearestThreat != null && this.distanceTo(nearestThreat) < MELEE_ESCAPE_RELEASE_RANGE;
+		boolean retreatBlocked = this.meleeRetreatBlockedSince >= 0L
+				&& now - this.meleeRetreatBlockedSince >= MELEE_BLOCKED_HIGH_THREAT_TICKS;
+		boolean highThreat = isHighMeleeThreat(level) || retreatBlocked;
+		boolean shouldSpendBackstep = nearestThreat != null && (highThreat
+				|| stillPressured || retreatBlocked || this.meleeHitAgainDuringAction);
+		if (nearestThreat != null) retainSelfDefenseTarget(nearestThreat, "melee_finish");
+		finishAction();
+		if (shouldSpendBackstep && startBackstep(level, relic, nearestThreat)) {
 			return;
 		}
-		if (this.distanceToSqr(target) <= 7.0 && !canBackstep(relic)) startMeleeAttack(now, target);
+		if (!stillPressured) clearMeleeEscape();
 	}
 
 	private void startRangedAttack(long now, LivingEntity target) {
+		startDraw(now, target, false);
+	}
+
+	private void startReloadAttack(long now, LivingEntity target) {
+		startDraw(now, target, true);
+	}
+
+	private void startDraw(long now, LivingEntity target, boolean bowAlreadyRaised) {
 		int interval = attackInterval();
 		int drawTicks = Math.max(8, Math.round(31.0F * interval / 42.0F));
+		stopBowAnimations();
 		this.entityData.set(ACTION, ACTION_DRAW);
 		this.actionStartedAt = now;
 		this.actionEndsAt = now + drawTicks;
 		this.actionTarget = target;
+		this.targetLostAt = -1L;
 		beginCombatFacing();
 		this.shotReleased = false;
 		this.nextAttackAt = now + interval;
-		this.triggerAnim(ACTION_CONTROLLER, DRAW_TRIGGER);
+		this.triggerAnim(ACTION_CONTROLLER, bowAlreadyRaised ? RELOAD_TRIGGER : DRAW_TRIGGER);
 	}
 
 	private void enterShoot(long now) {
 		int interval = attackInterval();
-		int shootTicks = Math.max(4, interval - Math.max(8, Math.round(31.0F * interval / 42.0F)));
+		int shootTicks = Math.max(4, Math.round(5.0F * interval / 42.0F));
+		stopBowAnimations();
 		this.entityData.set(ACTION, ACTION_SHOOT);
 		this.actionStartedAt = now;
 		this.actionEndsAt = now + shootTicks;
 		this.shotReleaseAt = now + Math.max(1, Math.round(4.0F * interval / 42.0F));
-		this.stopTriggeredAnim(ACTION_CONTROLLER, DRAW_TRIGGER);
+		this.targetLostAt = -1L;
 		this.triggerAnim(ACTION_CONTROLLER, SHOOT_TRIGGER);
 	}
 
@@ -556,28 +735,154 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private void startMeleeAttack(long now, LivingEntity target) {
+		byte previousAction = action();
+		stopBowAnimations();
+		this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+		this.setTarget(target);
 		this.entityData.set(ACTION, ACTION_MELEE);
 		this.actionStartedAt = now;
 		this.actionEndsAt = now + 20L;
 		this.shotReleaseAt = now + 8L;
 		this.shotReleased = false;
+		this.pendingBackstep = false;
+		this.targetLostAt = -1L;
 		this.actionTarget = target;
+		retainSelfDefenseTarget(target, "melee_start");
+		this.meleeEscapeActive = true;
+		this.meleeRetargetUsed = false;
+		this.meleeHitAgainDuringAction = false;
 		beginCombatFacing();
 		this.nextAttackAt = now + 20L;
 		this.triggerAnim(ACTION_CONTROLLER, MELEE_TRIGGER);
+		EchoWarrior.LOGGER.info(
+				"[EgyptianArcherMelee] archer={} tick={} event=start target={} type={} previousAction={} centerDistance={} boxGap={} activity={}",
+				this.getId(), now, target.getId(), target.getType(), actionName(previousAction),
+				formatDistance(Math.sqrt(this.distanceToSqr(target))),
+				formatDistance(Math.sqrt(boundingBoxDistanceSqr(target))), this.activityMode);
+	}
+
+	private boolean isInMeleeRange(LivingEntity target) {
+		return canDefendAgainst(target)
+				&& boundingBoxDistanceSqr(target) <= IMMEDIATE_MELEE_BOUNDING_BOX_GAP * IMMEDIATE_MELEE_BOUNDING_BOX_GAP
+				&& this.hasLineOfSight(target);
+	}
+
+	private boolean canLandCommittedMeleeHit(@Nullable LivingEntity target) {
+		return canDefendAgainst(target)
+				&& this.distanceToSqr(target) <= COMMITTED_MELEE_HIT_RANGE * COMMITTED_MELEE_HIT_RANGE
+				&& this.hasLineOfSight(target);
+	}
+
+	private double boundingBoxDistanceSqr(Entity target) {
+		AABB ownBox = this.getBoundingBox();
+		AABB targetBox = target.getBoundingBox();
+		double dx = Math.max(0.0, Math.max(ownBox.minX - targetBox.maxX, targetBox.minX - ownBox.maxX));
+		double dy = Math.max(0.0, Math.max(ownBox.minY - targetBox.maxY, targetBox.minY - ownBox.maxY));
+		double dz = Math.max(0.0, Math.max(ownBox.minZ - targetBox.maxZ, targetBox.minZ - ownBox.maxZ));
+		return dx * dx + dy * dy + dz * dz;
+	}
+
+	private static String formatDistance(double distance) {
+		return Double.isFinite(distance) ? String.format(Locale.ROOT, "%.2f", distance) : "n/a";
+	}
+
+	private @Nullable LivingEntity selectImmediateMeleeThreat(ServerLevel level, @Nullable LivingEntity currentTarget) {
+		LivingEntity owner = this.getOwner();
+		LivingEntity recentAttacker = this.getLastHurtByMob();
+		boolean recentDamage = isRecentWithin(this, this.getLastHurtByMobTimestamp(), 20);
+		return level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(3.0), candidate ->
+				(candidate instanceof Enemy || candidate == currentTarget)
+						&& isInMeleeRange(candidate)
+						&& (!(candidate instanceof Creeper creeper) || !CatGodCreeperSystem.isPanicking(creeper)
+								|| recentDamage && candidate == recentAttacker))
+				.stream()
+				.min(Comparator.comparingInt((LivingEntity candidate) -> {
+					if (recentDamage && candidate == recentAttacker) return 0;
+					if (candidate instanceof Monster monster
+							&& (monster.getTarget() == this || monster.getTarget() == owner)) return 1;
+					return candidate == currentTarget ? 2 : 3;
+				}).thenComparingDouble(this::distanceToSqr))
+				.orElse(null);
+	}
+
+	private @Nullable LivingEntity selectCommittedMeleeReplacement(ServerLevel level,
+			@Nullable LivingEntity previousTarget) {
+		return level.getEntitiesOfClass(LivingEntity.class,
+				this.getBoundingBox().inflate(MELEE_ESCAPE_RELEASE_RANGE), candidate ->
+						candidate != previousTarget && canDefendAgainst(candidate)
+								&& this.distanceToSqr(candidate) <= MELEE_ESCAPE_RELEASE_RANGE * MELEE_ESCAPE_RELEASE_RANGE
+								&& this.hasLineOfSight(candidate)
+								&& (candidate instanceof Enemy || candidate == this.getTarget()
+										|| candidate == this.getLastHurtByMob()))
+				.stream().min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
+	}
+
+	private @Nullable LivingEntity nearestMeleeEscapeThreat(ServerLevel level,
+			@Nullable LivingEntity preferredTarget) {
+		return meleeRetreatThreats(level, preferredTarget).stream()
+				.min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
+	}
+
+	private boolean isHighMeleeThreat(ServerLevel level) {
+		long nearbyThreats = meleeRetreatThreats(level, this.actionTarget).stream()
+				.filter(threat -> this.distanceToSqr(threat) <= MELEE_HIGH_THREAT_RANGE * MELEE_HIGH_THREAT_RANGE)
+				.limit(2L).count();
+		return nearbyThreats >= 2L || this.getHealth() <= this.getMaxHealth() * 0.4F;
+	}
+
+	private void clearMeleeEscape() {
+		this.meleeEscapeActive = false;
+		this.meleeRetargetUsed = false;
+		this.meleeHitAgainDuringAction = false;
+		this.meleeRetreatBlockedSince = -1L;
+		resetCombatRetreat();
+	}
+
+	private void startBowReady(long now, @Nullable LivingEntity target) {
+		stopBowAnimations();
+		this.entityData.set(ACTION, ACTION_BOW_READY);
+		this.actionStartedAt = now;
+		this.actionEndsAt = Long.MAX_VALUE;
+		this.actionTarget = target;
+		this.targetLostAt = -1L;
+		this.shotReleased = false;
+		this.pendingBackstep = false;
+		this.triggerAnim(ACTION_CONTROLLER, BOW_READY_TRIGGER);
+	}
+
+	private void startBowLower(long now) {
+		stopBowAnimations();
+		this.entityData.set(ACTION, ACTION_BOW_LOWER);
+		this.actionStartedAt = now;
+		this.actionEndsAt = now + BOW_LOWER_TICKS;
+		this.actionTarget = null;
+		this.targetLostAt = -1L;
+		this.shotReleased = false;
+		this.pendingBackstep = false;
+		stopMovementIntent();
+		this.triggerAnim(ACTION_CONTROLLER, BOW_LOWER_TRIGGER);
 	}
 
 	private void startBowRecovery(long now) {
-		this.stopTriggeredAnim(ACTION_CONTROLLER, DRAW_TRIGGER);
-		this.stopTriggeredAnim(ACTION_CONTROLLER, SHOOT_TRIGGER);
+		stopBowAnimations();
 		this.entityData.set(ACTION, ACTION_RECOVER);
 		this.actionStartedAt = now;
 		this.actionEndsAt = now + BOW_RECOVERY_TICKS;
 		this.actionTarget = null;
+		this.targetLostAt = -1L;
 		this.shotReleased = false;
 		this.pendingBackstep = false;
-		this.getNavigation().stop();
+		stopMovementIntent();
 		this.triggerAnim(ACTION_CONTROLLER, BOW_RECOVER_TRIGGER);
+	}
+
+	private void stopBowAnimations() {
+		this.stopTriggeredAnim(ACTION_CONTROLLER, DRAW_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, RELOAD_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, SHOOT_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, BOW_READY_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, BOW_LOWER_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, BOW_RECOVER_TRIGGER);
 	}
 
 	private boolean shouldBackstep(LivingEntity target, ItemStack relic) {
@@ -592,6 +897,11 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private boolean startBackstep(ServerLevel level, ItemStack relic, LivingEntity nearestEnemy) {
 		Vec3 landing = findBackstepLanding(level, nearestEnemy);
 		if (landing == null || !EchoRelicState.consumeBackstepCharge(relic, level.getGameTime())) return false;
+		stopBowAnimations();
+		clearMeleeEscape();
+		retainSelfDefenseTarget(nearestEnemy, "backstep_start");
+		this.actionTarget = nearestEnemy;
+		this.setTarget(nearestEnemy);
 		persistCurrentRelic(relic);
 		this.backstepStart = this.position();
 		this.backstepLanding = landing;
@@ -604,6 +914,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.setYHeadRot(this.backstepYaw);
 		this.actionStartedAt = level.getGameTime();
 		this.actionEndsAt = this.actionStartedAt + BACKSTEP_TICKS;
+		this.targetLostAt = -1L;
 		this.backstepVolleyReleased = false;
 		this.entityData.set(ACTION, ACTION_BACKSTEP);
 		this.setNoGravity(true);
@@ -715,11 +1026,29 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private void tickMovement(ServerLevel level, LivingEntity owner) {
-		if (action() == ACTION_BACKSTEP || action() == ACTION_RECOVER || isVisualInteractionMovementOwned()) return;
-		LivingEntity target = this.getTarget();
+		if (action() == ACTION_BACKSTEP || action() == ACTION_RECOVER || action() == ACTION_BOW_LOWER
+				|| isVisualInteractionMovementOwned()) return;
+		LivingEntity target = (action() == ACTION_MELEE || action() == ACTION_BACKSTEP)
+				&& canDefendAgainst(this.actionTarget)
+				? this.actionTarget : this.getTarget();
+		if (action() == ACTION_MELEE || this.meleeEscapeActive) {
+			List<LivingEntity> meleeThreats = meleeRetreatThreats(level, target);
+			double nearestThreatDistance = meleeThreats.stream().mapToDouble(this::distanceTo)
+					.min().orElse(Double.MAX_VALUE);
+			if (nearestThreatDistance < MELEE_ESCAPE_RELEASE_RANGE) {
+				tickCombatRetreat(level, meleeThreats, this.combatRetreatProgressPosition == Vec3.ZERO,
+						MELEE_RETREAT_SPEED_SCALE, MAX_MELEE_RETREAT_SPEED, MELEE_RETREAT_SPEED_SCALE, true);
+			} else {
+				stopMovementIntent();
+				this.meleeRetreatBlockedSince = -1L;
+			}
+			return;
+		}
 		if (target != null) {
 			double distance = this.distanceTo(target);
 			boolean hasSight = rangedAimTarget(target) != null;
+			boolean boundaryIndependentSelfDefense = isRetainedSelfDefenseTarget(target)
+					&& !canProtectAgainst(target);
 			List<LivingEntity> threats = retreatThreats(level, target);
 			double nearestThreatDistance = threats.stream().mapToDouble(this::distanceTo).min().orElse(Double.MAX_VALUE);
 			if (skillEnabled(SKILL_CHARIOT_VOLLEY)) {
@@ -731,12 +1060,15 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 				}
 				if (this.combatKiting) {
 					this.combatApproaching = false;
-					tickCombatRetreat(level, threats, !wasKiting);
+					tickCombatRetreat(level, threats, !wasKiting, DIRECT_RETREAT_SPEED_SCALE,
+							MAX_DIRECT_RETREAT_SPEED, 1.05, false);
 				} else {
 					if (wasKiting) resetCombatRetreat();
-					tickCombatApproach(target, distance, hasSight);
+					if (boundaryIndependentSelfDefense) stopMovementIntent();
+					else tickCombatApproach(target, distance, hasSight);
 				}
-			} else tickCombatApproach(target, distance, hasSight);
+			} else if (boundaryIndependentSelfDefense) stopMovementIntent();
+			else tickCombatApproach(target, distance, hasSight);
 			return;
 		}
 		this.combatApproaching = false;
@@ -754,7 +1086,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (!hasSight || distance > 20.0) this.combatApproaching = true;
 		else if (distance <= 18.0) this.combatApproaching = false;
 		if (this.combatApproaching) this.getNavigation().moveTo(target, 1.0);
-		else this.getNavigation().stop();
+		else stopMovementIntent();
 	}
 
 	private List<LivingEntity> retreatThreats(ServerLevel level, LivingEntity primaryTarget) {
@@ -763,20 +1095,37 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 						candidate != this && candidate.distanceToSqr(this) <= RETREAT_SCAN_RANGE * RETREAT_SCAN_RANGE
 								&& canProtectAgainst(candidate)
 								&& (candidate instanceof Enemy || candidate == primaryTarget)));
-		if (canProtectAgainst(primaryTarget) && !threats.contains(primaryTarget)) threats.add(primaryTarget);
+		if (canContinueCombatAgainst(primaryTarget) && !threats.contains(primaryTarget)) threats.add(primaryTarget);
 		return threats;
 	}
 
-	private void tickCombatRetreat(ServerLevel level, List<LivingEntity> threats, boolean enteringRetreat) {
+	private List<LivingEntity> meleeRetreatThreats(ServerLevel level, @Nullable LivingEntity primaryTarget) {
+		LivingEntity recentAttacker = this.getLastHurtByMob();
+		boolean recentDamage = isRecentWithin(this, this.getLastHurtByMobTimestamp(), 40);
+		List<LivingEntity> threats = new ArrayList<>(level.getEntitiesOfClass(LivingEntity.class,
+				this.getBoundingBox().inflate(CLOSE_THREAT_TRIGGER_RANGE), candidate ->
+						candidate != this && candidate.distanceToSqr(this) <= CLOSE_THREAT_TRIGGER_RANGE * CLOSE_THREAT_TRIGGER_RANGE
+								&& canDefendAgainst(candidate)
+								&& (candidate instanceof Enemy || candidate == primaryTarget
+										|| recentDamage && candidate == recentAttacker)
+								&& (!(candidate instanceof Creeper creeper) || !CatGodCreeperSystem.isPanicking(creeper)
+										|| recentDamage && candidate == recentAttacker)));
+		if (canDefendAgainst(primaryTarget) && this.distanceToSqr(primaryTarget)
+				<= CLOSE_THREAT_TRIGGER_RANGE * CLOSE_THREAT_TRIGGER_RANGE && !threats.contains(primaryTarget)) {
+			threats.add(primaryTarget);
+		}
+		return threats;
+	}
+
+	private void tickCombatRetreat(ServerLevel level, List<LivingEntity> threats, boolean enteringRetreat,
+			double speedScale, double maximumSpeed, double pathSpeed, boolean meleeRetreat) {
 		long now = level.getGameTime();
 		if (threats.isEmpty()) {
 			this.combatKiting = false;
 			resetCombatRetreat();
-			this.getNavigation().stop();
+			stopMovementIntent();
 			return;
 		}
-		if (this.horizontalCollision && this.onGround()) this.getJumpControl().jump();
-
 		if (this.combatRetreatProgressPosition == Vec3.ZERO) {
 			this.combatRetreatProgressPosition = this.position();
 			this.combatRetreatProgressAt = now;
@@ -787,22 +1136,150 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 					< RETREAT_MIN_PROGRESS * RETREAT_MIN_PROGRESS;
 			this.combatRetreatProgressPosition = this.position();
 			this.combatRetreatProgressAt = now;
+			if (stuck) this.combatDirectRetreatBlockedUntil = now + 20L;
 		}
 
-		boolean replan = enteringRetreat || stuck || now >= this.combatRetreatRepathAt
-				|| this.getNavigation().isDone() || !retreatDestinationStillUseful(threats);
+		Vec3 directAway = stableRetreatDirection(threats);
+		DirectRetreatClearance directClearance = directAway == Vec3.ZERO
+				? DirectRetreatClearance.BLOCKED
+				: directRetreatClearance(level, directAway, now);
+		if (meleeRetreat) {
+			if (stuck || directClearance == DirectRetreatClearance.BLOCKED) {
+				if (this.meleeRetreatBlockedSince < 0L) this.meleeRetreatBlockedSince = now;
+			} else {
+				this.meleeRetreatBlockedSince = -1L;
+			}
+		}
+		if (!stuck && now >= this.combatDirectRetreatBlockedUntil
+				&& directClearance != DirectRetreatClearance.BLOCKED) {
+			this.getNavigation().stop();
+			this.getMoveControl().setWait();
+			this.setSpeed(0.0F);
+			this.setXxa(0.0F);
+			this.setZza(0.0F);
+			Vec3 wanted = this.position().add(directAway.scale(2.5));
+			this.combatRetreatDestination = wanted;
+			double minimumSpeed = meleeRetreat ? 0.0 : MIN_DIRECT_RETREAT_SPEED;
+			double retreatSpeed = Mth.clamp(this.getAttributeValue(Attributes.MOVEMENT_SPEED)
+					* speedScale, minimumSpeed, maximumSpeed);
+			this.combatRetreatVelocity = directAway.scale(retreatSpeed);
+			Vec3 currentVelocity = this.getDeltaMovement();
+			double verticalVelocity = currentVelocity.y;
+			if (directClearance == DirectRetreatClearance.STEP_UP && this.onGround()) {
+				// aiStep runs after vanilla has already consumed JumpControl for this tick.
+				// Give the retreat its ordinary jump impulse now as well as requesting the
+				// controller jump, so a one-block wall cannot hold it in place for a tick.
+				this.getJumpControl().jump();
+				verticalVelocity = Math.max(verticalVelocity, DIRECT_RETREAT_JUMP_VELOCITY);
+				this.combatStepJumpUntil = now + DIRECT_RETREAT_JUMP_TICKS;
+				this.combatRetreatProgressPosition = this.position();
+				this.combatRetreatProgressAt = now;
+			}
+			this.setDeltaMovement(this.combatRetreatVelocity.x, verticalVelocity, this.combatRetreatVelocity.z);
+			return;
+		}
+		clearDirectRetreatMotion();
+
+		boolean replan = enteringRetreat || stuck || this.getNavigation().isDone()
+				|| !retreatDestinationStillUseful(threats);
 		if (!replan) return;
+		if (!enteringRetreat && !stuck && now < this.combatRetreatRepathAt) return;
 
 		RetreatPath retreat = findRetreatPath(level, threats);
 		if (retreat == null) {
-			this.getNavigation().stop();
+			stopMovementIntent();
 			this.combatRetreatDestination = Vec3.ZERO;
 			this.combatRetreatRepathAt = now + 6L;
 			return;
 		}
 		this.combatRetreatDestination = retreat.destination();
-		this.combatRetreatRepathAt = now + RETREAT_REPATH_TICKS;
-		this.getNavigation().moveTo(retreat.path(), 1.05);
+		this.combatRetreatDirection = retreat.direction();
+		this.combatRetreatRepathAt = now + 8L;
+		this.getNavigation().moveTo(retreat.path(), pathSpeed);
+	}
+
+	private Vec3 stableRetreatDirection(List<LivingEntity> threats) {
+		Vec3 desired = rawRetreatDirection(threats);
+		if (desired == Vec3.ZERO) return Vec3.ZERO;
+		if (this.combatRetreatDirection == Vec3.ZERO
+				|| this.combatRetreatDirection.dot(desired) < 0.2) {
+			this.combatRetreatDirection = desired;
+		} else {
+			this.combatRetreatDirection = this.combatRetreatDirection.scale(0.8)
+					.add(desired.scale(0.2)).normalize();
+		}
+		return this.combatRetreatDirection;
+	}
+
+	private Vec3 rawRetreatDirection(List<LivingEntity> threats) {
+		Vec3 away = Vec3.ZERO;
+		LivingEntity recentAttacker = this.getLastHurtByMob();
+		boolean recentDamage = isRecentWithin(this, this.getLastHurtByMobTimestamp(), 40);
+		for (LivingEntity threat : threats) {
+			Vec3 delta = this.position().subtract(threat.position()).multiply(1.0, 0.0, 1.0);
+			double horizontalSqr = delta.horizontalDistanceSqr();
+			if (horizontalSqr > 1.0E-5) {
+				double weight = 1.0 / horizontalSqr;
+				if (recentDamage && threat == recentAttacker) weight *= RECENT_ATTACKER_RETREAT_WEIGHT;
+				away = away.add(delta.scale(weight));
+			}
+		}
+		if (away.horizontalDistanceSqr() < 1.0E-5) {
+			LivingEntity nearest = threats.stream().min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
+			if (nearest == null) return Vec3.ZERO;
+			away = this.position().subtract(nearest.position()).multiply(1.0, 0.0, 1.0);
+		}
+		return away.horizontalDistanceSqr() < 1.0E-5 ? Vec3.ZERO : away.normalize();
+	}
+
+	private DirectRetreatClearance directRetreatClearance(ServerLevel level, Vec3 direction, long now) {
+		boolean stepUp = false;
+		for (double distance : DIRECT_RETREAT_PROBES) {
+			Vec3 candidate = this.position().add(direction.scale(distance));
+			AABB moved = this.getBoundingBox().move(candidate.subtract(this.position()));
+			if (level.noCollision(this, moved) && hasRetreatSupport(level, candidate)
+					&& !containsBackstepHazard(level, moved)) continue;
+
+			// A one-block step is traversable only when the whole collision box is clear
+			// one block higher and that raised position has safe support. While the jump
+			// is already airborne, keep the horizontal retreat intent until the box has
+			// actually risen above the step instead of cancelling it mid-jump.
+			AABB stepped = moved.move(0.0, 1.0, 0.0);
+			Vec3 steppedCandidate = candidate.add(0.0, 1.0, 0.0);
+			boolean mayStep = this.onGround() || now < this.combatStepJumpUntil;
+			if (!mayStep || level.noCollision(this, moved)
+					|| !level.noCollision(this, stepped) || !hasRetreatSupport(level, steppedCandidate)
+					|| containsBackstepHazard(level, stepped)) return DirectRetreatClearance.BLOCKED;
+			stepUp = true;
+		}
+		return stepUp ? DirectRetreatClearance.STEP_UP : DirectRetreatClearance.CLEAR;
+	}
+
+	private boolean hasRetreatSupport(ServerLevel level, Vec3 candidate) {
+		BlockPos feet = BlockPos.containing(candidate);
+		BlockPos floor = feet.below();
+		if (level.getBlockState(floor).isFaceSturdy(level, floor, Direction.UP)) return true;
+		BlockPos lowerFloor = floor.below();
+		if (!level.getBlockState(lowerFloor).isFaceSturdy(level, lowerFloor, Direction.UP)) return false;
+		AABB lowered = this.getBoundingBox().move(candidate.subtract(this.position())).move(0.0, -1.0, 0.0);
+		return level.noCollision(this, lowered) && !containsBackstepHazard(level, lowered);
+	}
+
+	private void stopMovementIntent() {
+		this.getNavigation().stop();
+		this.getMoveControl().setWait();
+		this.setSpeed(0.0F);
+		this.setXxa(0.0F);
+		this.setZza(0.0F);
+		clearDirectRetreatMotion();
+	}
+
+	private void clearDirectRetreatMotion() {
+		this.combatStepJumpUntil = 0L;
+		if (this.combatRetreatVelocity == Vec3.ZERO) return;
+		Vec3 currentVelocity = this.getDeltaMovement();
+		this.setDeltaMovement(0.0, currentVelocity.y, 0.0);
+		this.combatRetreatVelocity = Vec3.ZERO;
 	}
 
 	private boolean retreatDestinationStillUseful(List<LivingEntity> threats) {
@@ -815,26 +1292,25 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private @Nullable RetreatPath findRetreatPath(ServerLevel level, List<LivingEntity> threats) {
-		Vec3 away = Vec3.ZERO;
-		for (LivingEntity threat : threats) {
-			Vec3 delta = this.position().subtract(threat.position());
-			double horizontalSqr = delta.x * delta.x + delta.z * delta.z;
-			if (horizontalSqr > 1.0E-5) away = away.add(delta.x / horizontalSqr, 0.0, delta.z / horizontalSqr);
-		}
-		if (away.horizontalDistanceSqr() < 1.0E-5) {
-			LivingEntity nearest = threats.stream().min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
-			if (nearest == null) return null;
-			away = this.position().subtract(nearest.position()).multiply(1.0, 0.0, 1.0);
-		}
-		away = away.normalize();
+		Vec3 away = stableRetreatDirection(threats);
+		if (away == Vec3.ZERO) return null;
 		double baseAngle = Math.atan2(away.z, away.x);
 		double currentMinimum = threats.stream().mapToDouble(threat -> threat.distanceToSqr(this)).min().orElse(0.0);
+		RetreatPath best = findRetreatPath(level, threats, away, baseAngle, currentMinimum,
+				new int[] {0, 20, -20, 40, -40, 60, -60});
+		if (best != null) return best;
+		return findRetreatPath(level, threats, away, baseAngle, currentMinimum,
+				new int[] {90, -90, 120, -120, 180});
+	}
+
+	private @Nullable RetreatPath findRetreatPath(ServerLevel level, List<LivingEntity> threats, Vec3 away,
+			double baseAngle, double currentMinimum, int[] angleOffsets) {
 		RetreatPath best = null;
-		double bestScore = currentMinimum;
-		int[] angleOffsets = {0, 30, -30, 60, -60, 90, -90, 120, -120, 180};
+		double bestScore = Double.NEGATIVE_INFINITY;
 		for (double distance : new double[] {8.0, 6.0, 4.0}) {
 			for (int angleOffset : angleOffsets) {
 				double angle = baseAngle + Math.toRadians(angleOffset);
+				Vec3 direction = new Vec3(Math.cos(angle), 0.0, Math.sin(angle));
 				double x = this.getX() + Math.cos(angle) * distance;
 				double z = this.getZ() + Math.sin(angle) * distance;
 				for (int dy : new int[] {0, 1, -1, 2, -2}) {
@@ -842,11 +1318,15 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 					if (!isSafeRetreatDestination(level, candidate)) continue;
 					double minimumDistance = threats.stream()
 							.mapToDouble(threat -> threat.position().distanceToSqr(candidate)).min().orElse(0.0);
-					if (minimumDistance <= bestScore + 1.0) continue;
+					if (minimumDistance <= currentMinimum + 1.0) continue;
 					Path path = this.getNavigation().createPath(BlockPos.containing(candidate), 0);
 					if (path == null || !path.canReach()) continue;
-					bestScore = minimumDistance;
-					best = new RetreatPath(candidate, path);
+					double distanceGain = Math.sqrt(minimumDistance) - Math.sqrt(currentMinimum);
+					double alignment = direction.dot(away);
+					double score = distanceGain * 4.0 + alignment * 3.0 + distance * 0.05 - Math.abs(dy) * 0.2;
+					if (score <= bestScore) continue;
+					bestScore = score;
+					best = new RetreatPath(candidate, path, direction);
 				}
 			}
 		}
@@ -865,9 +1345,12 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 
 	private void resetCombatRetreat() {
 		this.combatRetreatDestination = Vec3.ZERO;
+		this.combatRetreatDirection = Vec3.ZERO;
+		clearDirectRetreatMotion();
 		this.combatRetreatProgressPosition = Vec3.ZERO;
 		this.combatRetreatRepathAt = 0L;
 		this.combatRetreatProgressAt = 0L;
+		this.combatDirectRetreatBlockedUntil = 0L;
 	}
 
 	private static double horizontalDistanceSqr(Vec3 first, Vec3 second) {
@@ -893,14 +1376,31 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private void tickVisualAwareness(ServerLevel level, LivingEntity owner) {
 		long now = level.getGameTime();
 		tickBlinkClock(now);
-
-		if (this.forcedVisualUntil > now) {
-			return;
-		}
-
 		if (this.entityData.get(VISUAL_REACTION_UNTIL) <= now && this.entityData.get(VISUAL_REACTION) != VISUAL_NORMAL) {
 			this.entityData.set(VISUAL_REACTION, VISUAL_NORMAL);
 			this.entityData.set(CURIOUS_TILT, (byte)0);
+		}
+		boolean wasCombatGazeLocked = this.entityData.get(COMBAT_GAZE_LOCKED);
+		LivingEntity combatTarget = resolveCombatGazeTarget(now);
+		boolean combatGazeLocked = canLockCombatGazeTo(combatTarget);
+		this.entityData.set(COMBAT_GAZE_LOCKED, combatGazeLocked);
+		this.entityData.set(COMBAT_GAZE_TARGET_ID, combatGazeLocked ? entityId(combatTarget) : -1);
+		logCombatGazeTransition(now, combatTarget, combatGazeLocked);
+		if (combatGazeLocked) {
+			this.postCombatVisualSettleUntil = 0L;
+			lockVisualAttentionToCombatTarget(combatTarget, now);
+			return;
+		}
+		if (wasCombatGazeLocked) beginPostCombatVisualSettle(now);
+		if (isTransientBowTargetLoss(now)) {
+			// A selector gap during a committed draw must not hand the head to idle/wander
+			// awareness for a few frames and then snap it back when the same target returns.
+			// Keep the last synchronized combat point until the bow state resolves.
+			return;
+		}
+
+		if (this.forcedVisualUntil > now) {
+			return;
 		}
 
 		boolean combatSuppressed = isMutualGazeCombatSuppressed(owner);
@@ -943,6 +1443,133 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		}
 
 		considerAttentionCandidate(candidate, now);
+	}
+
+	private void beginPostCombatVisualSettle(long now) {
+		this.postCombatVisualSettleUntil = now + POST_COMBAT_VISUAL_SETTLE_TICKS;
+		this.postCombatVisualDiagnosticUntil = now + POST_COMBAT_VISUAL_DIAGNOSTIC_TICKS;
+		Vec3 lastCombatDirection = this.attentionPoint.subtract(this.getEyePosition());
+		if (lastCombatDirection.lengthSqr() <= 1.0E-4) {
+			float yaw = this.yBodyRot * ((float)Math.PI / 180.0F);
+			lastCombatDirection = new Vec3(-Math.sin(yaw), 0.0, Math.cos(yaw));
+		}
+		this.postCombatVisualSettleDirection = lastCombatDirection.normalize();
+		this.lastLoggedPostCombatAttentionKind = null;
+		this.lastLoggedPostCombatAttentionTargetId = Integer.MIN_VALUE;
+		this.playerGazeProgress.clear();
+	}
+
+	private boolean isTransientBowTargetLoss(long now) {
+		return (action() == ACTION_DRAW || action() == ACTION_SHOOT || action() == ACTION_BOW_READY)
+				&& this.targetLostAt >= 0L && now - this.targetLostAt < TARGET_LOSS_GRACE_TICKS;
+	}
+
+	private @Nullable LivingEntity resolveCombatGazeTarget(long now) {
+		if ((action() == ACTION_MELEE || action() == ACTION_BACKSTEP)
+				&& canDefendAgainst(this.actionTarget)) {
+			this.combatGazeTarget = this.actionTarget;
+			this.combatGazeTargetUntil = now + COMBAT_GAZE_TARGET_GRACE_TICKS;
+			return this.actionTarget;
+		}
+		LivingEntity currentTarget = this.getTarget();
+		if (canContinueCombatAgainst(currentTarget)) {
+			this.combatGazeTarget = currentTarget;
+			this.combatGazeTargetUntil = now + COMBAT_GAZE_TARGET_GRACE_TICKS;
+			return currentTarget;
+		}
+		if (isCombatGazeAction() && canContinueCombatAgainst(this.actionTarget)) {
+			this.combatGazeTarget = this.actionTarget;
+			this.combatGazeTargetUntil = now + COMBAT_GAZE_TARGET_GRACE_TICKS;
+			return this.actionTarget;
+		}
+		if (isCombatGazeAction() && now <= this.combatGazeTargetUntil
+				&& canContinueCombatAgainst(this.combatGazeTarget)) {
+			return this.combatGazeTarget;
+		}
+		this.combatGazeTarget = null;
+		this.combatGazeTargetUntil = 0L;
+		return null;
+	}
+
+	private boolean canLockCombatGazeTo(@Nullable LivingEntity target) {
+		return (action() == ACTION_MELEE || action() == ACTION_BACKSTEP) && target == this.actionTarget
+				? canDefendAgainst(target)
+				: canContinueCombatAgainst(target);
+	}
+
+	private boolean isCombatGazeAction() {
+		return action() == ACTION_DRAW || action() == ACTION_SHOOT || action() == ACTION_BOW_READY
+				|| action() == ACTION_BACKSTEP || action() == ACTION_MELEE;
+	}
+
+	private void logCombatGazeTransition(long now, @Nullable LivingEntity resolvedTarget, boolean locked) {
+		int resolvedId = resolvedTarget == null ? -1 : resolvedTarget.getId();
+		byte currentAction = action();
+		if (resolvedId == this.lastLoggedCombatGazeTargetId && locked == this.lastLoggedCombatGazeLocked
+				&& currentAction == this.lastLoggedCombatGazeAction) return;
+		LivingEntity selectedTarget = this.getTarget();
+		EchoWarrior.LOGGER.info(
+				"[EgyptianArcherGaze] archer={} tick={} action={} locked={} selected={} committed={} resolved={}",
+				this.getId(), now, actionName(action()), locked, entityId(selectedTarget),
+				entityId(this.actionTarget), resolvedId);
+		this.lastLoggedCombatGazeTargetId = resolvedId;
+		this.lastLoggedCombatGazeLocked = locked;
+		this.lastLoggedCombatGazeAction = currentAction;
+	}
+
+	private static int entityId(@Nullable Entity entity) {
+		return entity == null ? -1 : entity.getId();
+	}
+
+	private static String actionName(byte action) {
+		return switch (action) {
+			case ACTION_DRAW -> "draw";
+			case ACTION_SHOOT -> "shoot";
+			case ACTION_BACKSTEP -> "backstep";
+			case ACTION_MELEE -> "melee";
+			case ACTION_BOW_READY -> "bow_ready";
+			case ACTION_BOW_LOWER -> "bow_lower";
+			case ACTION_RECOVER -> "recover";
+			default -> "idle";
+		};
+	}
+
+	private void lockVisualAttentionToCombatTarget(LivingEntity combatTarget, long now) {
+		if (this.mutualGazePlayerUuid != null) endMutualGaze(now);
+		if (isCaughtExitActive()) endCaughtExit(now, true);
+		this.playerGazeProgress.clear();
+
+		Entity aimTarget = combatTarget instanceof EnderDragon ? rangedAimTarget(combatTarget) : combatTarget;
+		if (aimTarget == null) aimTarget = combatTarget;
+		Vec3 point = aimTarget instanceof LivingEntity living
+				? living.getEyePosition()
+				: aimTarget.getBoundingBox().getCenter();
+		this.eyeAttentionTarget = combatTarget;
+		this.eyeAttentionPoint = point;
+		this.eyeAttentionPriority = 2000;
+		this.eyeAttentionExpiresAt = now + 2L;
+		this.eyeAttentionKind = AttentionKind.COMBAT_TARGET;
+		this.eyeStickyUntil = now + 2L;
+		this.attentionTarget = combatTarget;
+		this.attentionPoint = point;
+		this.attentionPriority = 2000;
+		this.attentionExpiresAt = now + 2L;
+		this.headAttentionKind = AttentionKind.COMBAT_TARGET;
+		this.headStickyUntil = now + 2L;
+		this.pendingHeadTarget = combatTarget;
+		this.pendingHeadKind = AttentionKind.COMBAT_TARGET;
+		this.pendingHeadSince = now;
+		this.bodyAttentionTarget = null;
+		this.bodyAttentionKind = AttentionKind.NORMAL;
+		this.bodyAttentionExpiresAt = now;
+		setEyeAttentionPoint(point);
+		setAttentionPoint(point);
+		this.entityData.set(CURIOUS_TILT, (byte)0);
+		byte reaction = this.entityData.get(VISUAL_REACTION);
+		if (reaction == VISUAL_NORMAL || reaction == VISUAL_CURIOUS || reaction == VISUAL_MUTUAL_GAZE
+				|| reaction == VISUAL_CAUGHT || reaction == VISUAL_LOCOMOTION) {
+			setReaction(VISUAL_ALERT, now + 2L);
+		}
 	}
 
 	private @Nullable Player tickPlayerGazeAcquisition(ServerLevel level, LivingEntity owner, boolean combatSuppressed, long now) {
@@ -1739,15 +2366,23 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			this.caughtExitOwnerAvoidPoint = createCaughtExitFallbackPoint(owner);
 		}
 		LivingEntity combatTarget = this.getTarget();
+		boolean activelyMoving = isActuallyMovingForAttention();
 		boolean locomotionAttention = shouldUseLocomotionAttention();
+		boolean postCombatSettling = now < this.postCombatVisualSettleUntil;
 		AttentionCandidate best = isVisibleAttentionTarget(combatTarget)
 				? new AttentionCandidate(combatTarget, combatTarget.getEyePosition(), 800, VISUAL_ALERT, 30, false, AttentionKind.COMBAT_TARGET)
 				: now < this.caughtExitOwnerAvoidUntil
 						? new AttentionCandidate(null, this.caughtExitOwnerAvoidPoint, 220, VISUAL_NORMAL,
 								35 + this.random.nextInt(36), false, AttentionKind.NORMAL)
-						: locomotionAttention
-								? new AttentionCandidate(null, createLocomotionAttentionPoint(), LOCOMOTION_ATTENTION_PRIORITY,
-										VISUAL_LOCOMOTION, LOCOMOTION_ATTENTION_TICKS, false, AttentionKind.LOCOMOTION)
+						: postCombatSettling
+								? activelyMoving
+										? new AttentionCandidate(null, createLocomotionAttentionPoint(), LOCOMOTION_ATTENTION_PRIORITY,
+												VISUAL_LOCOMOTION, LOCOMOTION_ATTENTION_TICKS, false, AttentionKind.LOCOMOTION)
+										: new AttentionCandidate(null, createPostCombatVisualSettlePoint(), LOCOMOTION_ATTENTION_PRIORITY,
+												VISUAL_LOCOMOTION, POST_COMBAT_VISUAL_SETTLE_TICKS, false, AttentionKind.POST_COMBAT)
+								: locomotionAttention
+										? new AttentionCandidate(null, createLocomotionAttentionPoint(), LOCOMOTION_ATTENTION_PRIORITY,
+												VISUAL_LOCOMOTION, LOCOMOTION_ATTENTION_TICKS, false, AttentionKind.LOCOMOTION)
 								: new AttentionCandidate(owner, owner.getEyePosition(), 220, VISUAL_NORMAL,
 										35 + this.random.nextInt(36), false, AttentionKind.NORMAL);
 
@@ -1872,11 +2507,26 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			setAttentionPoint(candidate.point());
 			this.entityData.set(CURIOUS_TILT, candidate.curious() ? (byte)(this.random.nextBoolean() ? 1 : -1) : (byte)0);
 			this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
+			logPostCombatAttentionTransition(candidate, now);
 		} else if (sameHeadTarget && this.attentionTarget.isAlive()) {
 			setAttentionPoint(this.attentionTarget.getEyePosition());
 		}
 
 		configureBodyAttention(candidate, now);
+	}
+
+	private void logPostCombatAttentionTransition(AttentionCandidate candidate, long now) {
+		if (now > this.postCombatVisualDiagnosticUntil) return;
+		int targetId = entityId(candidate.target());
+		if (candidate.kind() == this.lastLoggedPostCombatAttentionKind
+				&& targetId == this.lastLoggedPostCombatAttentionTargetId) return;
+		EchoWarrior.LOGGER.info(
+				"[EgyptianArcherPostCombatGaze] archer={} tick={} action={} kind={} target={} priority={} settleRemaining={} moving={}",
+				this.getId(), now, actionName(action()), candidate.kind().name().toLowerCase(Locale.ROOT),
+				targetId, candidate.priority(), Math.max(0L, this.postCombatVisualSettleUntil - now),
+				isActuallyMovingForAttention());
+		this.lastLoggedPostCombatAttentionKind = candidate.kind();
+		this.lastLoggedPostCombatAttentionTargetId = targetId;
 	}
 
 	private static boolean sameTarget(@Nullable LivingEntity first, @Nullable LivingEntity second) {
@@ -1927,10 +2577,27 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private boolean shouldUseLocomotionAttention() {
+		if (isVisualInteractionMovementOwned()) return false;
+		boolean moving = isActuallyMovingForAttention();
+		if (moving) {
+			Vec3 movement = this.getDeltaMovement();
+			Vec3 direction = new Vec3(movement.x, 0.0, movement.z);
+			if (direction.lengthSqr() <= 1.0E-4) {
+				float yaw = this.yBodyRot * ((float)Math.PI / 180.0F);
+				direction = new Vec3(-Math.sin(yaw), 0.0, Math.cos(yaw));
+			}
+			if (direction.lengthSqr() > 1.0E-4) this.locomotionAttentionDirection = direction.normalize();
+			this.locomotionAttentionUntil = this.level().getGameTime() + LOCOMOTION_ATTENTION_RELEASE_TICKS;
+			return true;
+		}
+		return this.level().getGameTime() < this.locomotionAttentionUntil;
+	}
+
+	private boolean isActuallyMovingForAttention() {
+		if (isVisualInteractionMovementOwned()) return false;
 		Vec3 movement = this.getDeltaMovement();
 		double horizontalSpeedSqr = movement.x * movement.x + movement.z * movement.z;
-		return !isVisualInteractionMovementOwned()
-				&& (!this.getNavigation().isDone() || horizontalSpeedSqr > 2.5E-4);
+		return !this.getNavigation().isDone() || horizontalSpeedSqr > 2.5E-4;
 	}
 
 	private Vec3 createLocomotionAttentionPoint() {
@@ -1938,7 +2605,19 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		Vec3 direction = new Vec3(movement.x, 0.0, movement.z);
 		if (direction.lengthSqr() > 1.0E-4) {
 			direction = direction.normalize();
+			this.locomotionAttentionDirection = direction;
+		} else if (this.locomotionAttentionDirection.lengthSqr() > 1.0E-4) {
+			direction = this.locomotionAttentionDirection;
 		} else {
+			float yaw = this.yBodyRot * ((float)Math.PI / 180.0F);
+			direction = new Vec3(-Math.sin(yaw), 0.0, Math.cos(yaw));
+		}
+		return this.getEyePosition().add(direction.scale(6.0));
+	}
+
+	private Vec3 createPostCombatVisualSettlePoint() {
+		Vec3 direction = this.postCombatVisualSettleDirection;
+		if (direction.lengthSqr() <= 1.0E-4) {
 			float yaw = this.yBodyRot * ((float)Math.PI / 180.0F);
 			direction = new Vec3(-Math.sin(yaw), 0.0, Math.cos(yaw));
 		}
@@ -2086,6 +2765,23 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		return this.entityData.get(VISUAL_REACTION);
 	}
 
+	public boolean isCombatGazeLocked() {
+		return this.entityData.get(COMBAT_GAZE_LOCKED);
+	}
+
+	public int getCombatGazeTargetIdForDiagnostics() {
+		return this.entityData.get(COMBAT_GAZE_TARGET_ID);
+	}
+
+	public boolean isRangedHeadFrameStabilized() {
+		return action() == ACTION_DRAW || action() == ACTION_SHOOT || action() == ACTION_BOW_READY
+				|| action() == ACTION_BOW_LOWER || action() == ACTION_RECOVER;
+	}
+
+	public byte getActionStateForDiagnostics() {
+		return action();
+	}
+
 	public long getVisualReactionUntil() {
 		return this.entityData.get(VISUAL_REACTION_UNTIL);
 	}
@@ -2175,6 +2871,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		MUTUAL_GAZE,
 		APPROACHING,
 		LOCOMOTION,
+		POST_COMBAT,
 		NORMAL
 	}
 
@@ -2218,6 +2915,13 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private @Nullable LivingEntity selectProtectiveTarget(LivingEntity owner) {
 		LivingEntity current = this.getTarget();
 		current = clearExpiredEmergencyTarget(current);
+		LivingEntity retainedSelfDefense = validateSelfDefenseTarget();
+		Monster boundaryThreat = selectBoundaryIndependentSelfDefenseTarget(owner, current, retainedSelfDefense);
+		if (boundaryThreat != null) {
+			retainSelfDefenseTarget(boundaryThreat, "boundary_close_threat");
+			return boundaryThreat;
+		}
+		if (retainedSelfDefense != null) return retainedSelfDefense;
 		LivingEntity emergency = this.emergencyTarget;
 		Monster closeThreat = selectCloseThreat(owner, current, emergency == null);
 		if (closeThreat != null) {
@@ -2236,7 +2940,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			if (canProtectAgainst(resumeTarget)) return resumeTarget;
 			if (current == oldHighThreat) current = null;
 		}
-		if (canProtectAgainst(current)) return current;
+		if (canContinueCombatAgainst(current)) return current;
 		LivingEntity ownAttacker = this.getLastHurtByMob();
 		if (isRecent(this, this.getLastHurtByMobTimestamp()) && canProtectAgainst(ownAttacker)) return ownAttacker;
 		if (this.alertMode == EchoRelicState.AlertMode.PEACEFUL) return null;
@@ -2247,7 +2951,9 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (this.alertMode != EchoRelicState.AlertMode.AGGRESSIVE) return null;
 		double range = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 6.0 : MAX_RANGE;
 		return this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(range),
-				candidate -> candidate instanceof Enemy && canProtectAgainst(candidate))
+				candidate -> candidate instanceof Enemy
+						&& this.distanceToSqr(candidate) <= range * range
+						&& canProtectAgainst(candidate))
 				.stream().min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
 	}
 
@@ -2255,7 +2961,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (this.emergencyTarget == null) return current;
 		LivingEntity oldEmergency = this.emergencyTarget;
 		boolean active = this.level().getGameTime() < this.emergencyTargetUntil
-				&& canProtectAgainst(oldEmergency)
+				&& canContinueCombatAgainst(oldEmergency)
 				&& this.distanceToSqr(oldEmergency) <= MAX_RANGE * MAX_RANGE;
 		if (active) return current;
 		this.emergencyTarget = null;
@@ -2263,14 +2969,48 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		LivingEntity resumeTarget = this.resumeTargetAfterEmergency;
 		this.resumeTargetAfterEmergency = null;
 		if (this.resumeTargetAfterThreat == oldEmergency) {
-			this.resumeTargetAfterThreat = canProtectAgainst(resumeTarget) ? resumeTarget : null;
+			this.resumeTargetAfterThreat = canContinueCombatAgainst(resumeTarget) ? resumeTarget : null;
 		}
-		return current == oldEmergency ? canProtectAgainst(resumeTarget) ? resumeTarget : null : current;
+		return current == oldEmergency ? canContinueCombatAgainst(resumeTarget) ? resumeTarget : null : current;
+	}
+
+	private @Nullable Monster selectBoundaryIndependentSelfDefenseTarget(LivingEntity owner,
+			@Nullable LivingEntity current, @Nullable LivingEntity retainedSelfDefense) {
+		LivingEntity ownAttacker = this.getLastHurtByMob();
+		LivingEntity ownerAttacker = owner.getLastHurtByMob();
+		boolean ownDamageRecent = isRecent(this, this.getLastHurtByMobTimestamp());
+		boolean ownerDamageRecent = isRecent(owner, owner.getLastHurtByMobTimestamp());
+		List<Monster> candidates = this.level().getEntitiesOfClass(Monster.class,
+				this.getBoundingBox().inflate(BACKSTEP_TRIGGER_RANGE), candidate -> {
+					if (candidate.distanceToSqr(this) > BACKSTEP_TRIGGER_RANGE * BACKSTEP_TRIGGER_RANGE
+							|| canProtectAgainst(candidate) || !canDefendAgainst(candidate)) return false;
+					boolean ownDamager = ownDamageRecent && candidate == ownAttacker;
+					if (candidate instanceof Creeper creeper && CatGodCreeperSystem.isPanicking(creeper)
+							&& !ownDamager) return false;
+					if (this.alertMode == EchoRelicState.AlertMode.PEACEFUL) return ownDamager;
+					return this.alertMode == EchoRelicState.AlertMode.AGGRESSIVE
+							|| ownDamager || ownerDamageRecent && candidate == ownerAttacker
+							|| candidate == current || candidate == retainedSelfDefense
+							|| candidate.getTarget() == this || candidate.getTarget() == owner;
+				});
+		if (candidates.isEmpty()) return null;
+
+		Comparator<Monster> threatOrder = Comparator.comparingInt((Monster candidate) -> closeThreatPriority(
+				candidate, owner, ownAttacker, ownDamageRecent, ownerAttacker, ownerDamageRecent))
+				.thenComparingDouble(this::distanceToSqr);
+		Monster best = candidates.stream().min(threatOrder).orElse(null);
+		if (!(retainedSelfDefense instanceof Monster sticky) || !candidates.contains(sticky) || best == null) return best;
+		int bestPriority = closeThreatPriority(best, owner, ownAttacker, ownDamageRecent,
+				ownerAttacker, ownerDamageRecent);
+		int stickyPriority = closeThreatPriority(sticky, owner, ownAttacker, ownDamageRecent,
+				ownerAttacker, ownerDamageRecent);
+		return bestPriority < stickyPriority ? best : sticky;
 	}
 
 	private @Nullable Monster selectCloseThreat(LivingEntity owner, @Nullable LivingEntity current,
 			boolean allowLingeringThreat) {
-		boolean alreadyInCombat = canProtectAgainst(current) || this.alertMode == EchoRelicState.AlertMode.AGGRESSIVE;
+		boolean alreadyInCombat = canContinueCombatAgainst(current)
+				|| this.alertMode == EchoRelicState.AlertMode.AGGRESSIVE;
 		LivingEntity ownAttacker = this.getLastHurtByMob();
 		LivingEntity ownerAttacker = owner.getLastHurtByMob();
 		boolean ownDamageRecent = isRecent(this, this.getLastHurtByMobTimestamp());
@@ -2284,28 +3024,45 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 				&& !candidates.contains(this.highThreatTarget)) {
 			candidates.add(this.highThreatTarget);
 		}
-		return candidates.stream()
-				.filter(candidate -> {
+		candidates.removeIf(candidate -> {
 					boolean recentDamager = ownDamageRecent && candidate == ownAttacker
 							|| ownerDamageRecent && candidate == ownerAttacker;
 					if (this.alertMode == EchoRelicState.AlertMode.PEACEFUL
-							&& !(ownDamageRecent && candidate == ownAttacker)) return false;
-					if (!alreadyInCombat && !recentDamager) return false;
-					return !(candidate instanceof Creeper creeper && CatGodCreeperSystem.isPanicking(creeper))
-							|| recentDamager;
-				})
-				.min(Comparator.comparingInt((Monster candidate) -> closeThreatPriority(candidate, owner,
-						ownAttacker, ownDamageRecent, ownerAttacker, ownerDamageRecent))
-						.thenComparingDouble(this::distanceToSqr))
-				.orElse(null);
+							&& !(ownDamageRecent && candidate == ownAttacker)) return true;
+					if (!alreadyInCombat && !recentDamager) return true;
+					return candidate instanceof Creeper creeper && CatGodCreeperSystem.isPanicking(creeper)
+							&& !recentDamager;
+				});
+		if (candidates.isEmpty()) return null;
+
+		Comparator<Monster> threatOrder = Comparator.comparingInt((Monster candidate) -> closeThreatPriority(
+				candidate, owner, ownAttacker, ownDamageRecent, ownerAttacker, ownerDamageRecent))
+				.thenComparingDouble(this::distanceToSqr);
+		Monster best = candidates.stream().min(threatOrder).orElse(null);
+		Monster sticky = null;
+		if (allowLingeringThreat && this.highThreatTarget != null && candidates.contains(this.highThreatTarget)) {
+			sticky = this.highThreatTarget;
+		} else if (current instanceof Monster currentMonster && candidates.contains(currentMonster)) {
+			sticky = currentMonster;
+		}
+		if (best == null || sticky == null) return best;
+
+		int bestPriority = closeThreatPriority(best, owner, ownAttacker, ownDamageRecent,
+				ownerAttacker, ownerDamageRecent);
+		int stickyPriority = closeThreatPriority(sticky, owner, ownAttacker, ownDamageRecent,
+				ownerAttacker, ownerDamageRecent);
+		// Distance only breaks ties when acquiring a threat. Once acquired, an equal-tier
+		// enemy cannot steal focus every two ticks; only a strictly more dangerous enemy can.
+		return bestPriority < stickyPriority ? best : sticky;
 	}
 
 	private int closeThreatPriority(Monster candidate, LivingEntity owner,
 			@Nullable LivingEntity ownAttacker, boolean ownDamageRecent,
 			@Nullable LivingEntity ownerAttacker, boolean ownerDamageRecent) {
-		if (candidate.getTarget() == this || candidate.getTarget() == owner) return 0;
-		if (ownDamageRecent && candidate == ownAttacker || ownerDamageRecent && candidate == ownerAttacker) return 1;
-		return 2;
+		if (ownDamageRecent && candidate == ownAttacker || isInMeleeRange(candidate)) return 0;
+		if (candidate.getTarget() == this || candidate.getTarget() == owner) return 1;
+		if (ownerDamageRecent && candidate == ownerAttacker) return 2;
+		return 3;
 	}
 
 	private static boolean isRecent(LivingEntity source, int timestamp) {
@@ -2317,15 +3074,61 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private boolean canProtectAgainst(@Nullable LivingEntity target) {
-		if (target == null || !target.isAlive() || this.distanceToSqr(target) > 1024.0 || !this.canAttack(target)) return false;
+		if (!canDefendAgainst(target)) return false;
+		if (target instanceof Phantom && !canRangedAttack(target)) return false;
 		if (this.activityMode == EchoRelicState.ActivityMode.WAIT) return target.position().distanceToSqr(this.activityAnchor) <= 64.0;
 		if (this.activityMode == EchoRelicState.ActivityMode.WANDER) return target.position().distanceToSqr(this.activityAnchor) <= 256.0;
 		return true;
 	}
 
+	private boolean canContinueCombatAgainst(@Nullable LivingEntity target) {
+		return canProtectAgainst(target) || isRetainedSelfDefenseTarget(target);
+	}
+
+	private boolean isRetainedSelfDefenseTarget(@Nullable LivingEntity target) {
+		return target != null && target == this.selfDefenseTarget && canDefendAgainst(target)
+				&& this.distanceToSqr(target) <= SELF_DEFENSE_RELEASE_RANGE * SELF_DEFENSE_RELEASE_RANGE;
+	}
+
+	private @Nullable LivingEntity validateSelfDefenseTarget() {
+		LivingEntity target = this.selfDefenseTarget;
+		if (target == null) return null;
+		if (isRetainedSelfDefenseTarget(target)) return target;
+		EchoWarrior.LOGGER.info(
+				"[EgyptianArcherSelfDefense] archer={} tick={} event=release target={} distance={} anchorDistance={} activity={}",
+				this.getId(), this.level().getGameTime(), entityId(target),
+				formatDistance(Math.sqrt(this.distanceToSqr(target))),
+				formatDistance(Math.sqrt(target.position().distanceToSqr(this.activityAnchor))), this.activityMode);
+		this.selfDefenseTarget = null;
+		return null;
+	}
+
+	private void retainSelfDefenseTarget(@Nullable LivingEntity target, String reason) {
+		if (!canDefendAgainst(target)
+				|| this.distanceToSqr(target) > SELF_DEFENSE_RELEASE_RANGE * SELF_DEFENSE_RELEASE_RANGE) return;
+		if (this.distanceToSqr(target) < MELEE_ESCAPE_RELEASE_RANGE * MELEE_ESCAPE_RELEASE_RANGE) {
+			// Basic close-quarters survival retreat remains active even when Chariot Soul is
+			// disabled, and resumes automatically if a Backstep ends or is blocked inside 4 blocks.
+			this.meleeEscapeActive = true;
+		}
+		if (this.selfDefenseTarget == target) return;
+		LivingEntity previous = this.selfDefenseTarget;
+		this.selfDefenseTarget = target;
+		EchoWarrior.LOGGER.info(
+				"[EgyptianArcherSelfDefense] archer={} tick={} event=acquire target={} previous={} reason={} distance={} anchorDistance={} activity={}",
+				this.getId(), this.level().getGameTime(), entityId(target), entityId(previous), reason,
+				formatDistance(Math.sqrt(this.distanceToSqr(target))),
+				formatDistance(Math.sqrt(target.position().distanceToSqr(this.activityAnchor))), this.activityMode);
+	}
+
+	private boolean canDefendAgainst(@Nullable LivingEntity target) {
+		return target != null && target.isAlive() && this.distanceToSqr(target) <= 1024.0 && this.canAttack(target);
+	}
+
 	private void enforceActivityBoundary(LivingEntity owner) {
 		LivingEntity target = this.getTarget();
 		if (target == null) return;
+		if (isRetainedSelfDefenseTarget(target)) return;
 		Vec3 center = this.activityMode == EchoRelicState.ActivityMode.FOLLOW ? owner.position() : this.activityAnchor;
 		double giveUp = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 8.0
 				: this.activityMode == EchoRelicState.ActivityMode.WANDER ? 24.0 : 32.0;
@@ -2358,36 +3161,51 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		boolean hurt = super.hurtServer(level, source, damage);
 		if (hurt && damage > 0.0F) {
 			endCaughtExit(now, true);
-			triggerHurtPresentation(now, action() == ACTION_IDLE);
-			if (attacker instanceof LivingEntity living) {
+			if (attacker instanceof LivingEntity living && !isActivelyFighting()) {
 				applyAttention(new AttentionCandidate(living, living.getEyePosition(), 1100,
 						VISUAL_HURT, 16, false, AttentionKind.DAMAGE_SOURCE), now);
 			} else {
-				Vec3 point = this.position().add(this.getLookAngle().reverse());
-				setEyeAttentionPoint(point);
-				setAttentionPoint(point);
 				setReaction(VISUAL_HURT, now + 16);
 				this.entityData.set(CURIOUS_TILT, (byte)0);
 				this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
 			}
-			if (attacker instanceof LivingEntity livingAttacker && canProtectAgainst(livingAttacker)
+			if (attacker instanceof LivingEntity livingAttacker && canDefendAgainst(livingAttacker)
 					&& this.distanceToSqr(livingAttacker) <= MAX_RANGE * MAX_RANGE) {
-				if (this.emergencyTarget == null && livingAttacker != this.getTarget()
-						&& canProtectAgainst(this.getTarget())) {
-					this.resumeTargetAfterEmergency = this.getTarget();
+				if (action() == ACTION_MELEE) this.meleeHitAgainDuringAction = true;
+				Entity directAttacker = source.getDirectEntity();
+				boolean closePhysicalHit = (directAttacker == null || directAttacker == livingAttacker)
+						&& boundingBoxDistanceSqr(livingAttacker) <= DIRECT_HIT_MELEE_BOUNDING_BOX_GAP
+								* DIRECT_HIT_MELEE_BOUNDING_BOX_GAP;
+				if (this.distanceToSqr(livingAttacker) <= SELF_DEFENSE_RELEASE_RANGE * SELF_DEFENSE_RELEASE_RANGE) {
+					retainSelfDefenseTarget(livingAttacker, closePhysicalHit ? "direct_melee_hit" : "close_damage_source");
 				}
-				LivingEntity previousEmergency = this.emergencyTarget;
-				if (previousEmergency != null && previousEmergency != livingAttacker
-						&& this.resumeTargetAfterThreat == previousEmergency) {
-					this.resumeTargetAfterThreat = livingAttacker;
+				if (canContinueCombatAgainst(livingAttacker)) {
+					if (this.emergencyTarget == null && livingAttacker != this.getTarget()
+							&& canContinueCombatAgainst(this.getTarget())) {
+						this.resumeTargetAfterEmergency = this.getTarget();
+					}
+					LivingEntity previousEmergency = this.emergencyTarget;
+					if (previousEmergency != null && previousEmergency != livingAttacker
+							&& this.resumeTargetAfterThreat == previousEmergency) {
+						this.resumeTargetAfterThreat = livingAttacker;
+					}
+					this.emergencyTarget = livingAttacker;
+					this.emergencyTargetUntil = now + EMERGENCY_TARGET_TICKS;
+					LivingEntity current = this.getTarget();
+					if (action() != ACTION_MELEE && action() != ACTION_SHOOT
+							&& (current == null || this.distanceToSqr(current) > CLOSE_THREAT_TRIGGER_RANGE * CLOSE_THREAT_TRIGGER_RANGE)) {
+						this.setTarget(livingAttacker);
+					}
 				}
-				this.emergencyTarget = livingAttacker;
-				this.emergencyTargetUntil = now + EMERGENCY_TARGET_TICKS;
-				LivingEntity current = this.getTarget();
-				if (current == null || this.distanceToSqr(current) > CLOSE_THREAT_TRIGGER_RANGE * CLOSE_THREAT_TRIGGER_RANGE) {
-					this.setTarget(livingAttacker);
+				if (closePhysicalHit && action() != ACTION_MELEE && action() != ACTION_BACKSTEP) {
+					// A successful direct close-range hit is definitive evidence of an immediate
+					// melee threat. This self-defense path intentionally ignores WAIT/WANDER
+					// pursuit boundaries, and accepts a null direct entity because some melee
+					// damage sources only expose their owning attacker.
+					startMeleeAttack(now, livingAttacker);
 				}
 			}
+			triggerHurtPresentation(now, action() == ACTION_IDLE);
 		}
 		return hurt;
 	}
@@ -2415,14 +3233,16 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private int attackInterval() { return this.entityData.get(ATTACK_INTERVAL); }
 	private boolean skillEnabled(int skill) { return (this.enabledSkills & 1 << skill) != 0; }
 	private void finishAction() {
-		this.stopTriggeredAnim(ACTION_CONTROLLER, DRAW_TRIGGER);
-		this.stopTriggeredAnim(ACTION_CONTROLLER, SHOOT_TRIGGER);
-		this.stopTriggeredAnim(ACTION_CONTROLLER, BOW_RECOVER_TRIGGER);
+		stopBowAnimations();
 		this.stopTriggeredAnim(ACTION_CONTROLLER, BACKSTEP_TRIGGER);
 		this.stopTriggeredAnim(ACTION_CONTROLLER, MELEE_TRIGGER);
 		this.entityData.set(ACTION, ACTION_IDLE);
 		this.actionTarget = null;
 		this.shotReleased = false;
+		this.pendingBackstep = false;
+		this.targetLostAt = -1L;
+		this.meleeRetargetUsed = false;
+		this.meleeHitAgainDuringAction = false;
 		this.combatFacingInitialized = false;
 	}
 
@@ -2553,7 +3373,10 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		controllers.add(new AnimationController<EgyptianArcherEchoEntity>("movement", 3, this::selectMovementAnimation));
 		controllers.add(new AnimationController<EgyptianArcherEchoEntity>(ACTION_CONTROLLER, 1, this::selectActionAnimation)
 				.triggerableAnim(DRAW_TRIGGER, DRAW_BOW_UPPER)
+				.triggerableAnim(RELOAD_TRIGGER, RELOAD_BOW_UPPER)
 				.triggerableAnim(SHOOT_TRIGGER, SHOOT_UPPER)
+				.triggerableAnim(BOW_READY_TRIGGER, BOW_READY_UPPER)
+				.triggerableAnim(BOW_LOWER_TRIGGER, BOW_LOWER_UPPER)
 				.triggerableAnim(BOW_RECOVER_TRIGGER, BOW_RECOVER_UPPER)
 				.triggerableAnim(BACKSTEP_TRIGGER, BACKSTEP)
 				.triggerableAnim(MELEE_TRIGGER, MELEE)
@@ -2562,28 +3385,17 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 
 	private PlayState selectMovementAnimation(AnimationTest<EgyptianArcherEchoEntity> test) {
 		int currentTick = test.animatable().tickCount;
-		if (test.isMoving() && test.animatable().action() != ACTION_BACKSTEP) {
+		double horizontalSpeed = test.animatable().getDeltaMovement().horizontalDistance();
+		boolean visiblyMoving = test.isMoving() && horizontalSpeed > 0.025;
+		if (visiblyMoving && test.animatable().action() != ACTION_BACKSTEP) {
 			this.movementAnimationActive = true;
 			this.movementAnimationLastMovingTick = currentTick;
 		} else if (this.movementAnimationActive && currentTick - this.movementAnimationLastMovingTick >= 4) {
 			this.movementAnimationActive = false;
 		}
 		if (this.movementAnimationActive) {
-			double horizontalSpeed = test.animatable().getDeltaMovement().horizontalDistance();
 			test.setControllerSpeed(Mth.clamp((float)(horizontalSpeed / 0.12), 0.65F, 1.6F));
 			return test.setAndContinue(WALK);
-		}
-		if (test.animatable().action() == ACTION_DRAW) {
-			test.setControllerSpeed(61.6F / Math.max(1, test.animatable().attackInterval()));
-			return test.setAndContinue(DRAW_BOW_LOWER);
-		}
-		if (test.animatable().action() == ACTION_SHOOT) {
-			test.setControllerSpeed(61.6F / Math.max(1, test.animatable().attackInterval()));
-			return test.setAndContinue(SHOOT_LOWER);
-		}
-		if (test.animatable().action() == ACTION_RECOVER) {
-			test.setControllerSpeed(1.0F);
-			return test.setAndContinue(BOW_RECOVER_LOWER);
 		}
 		test.setControllerSpeed(1.0F);
 		return test.setAndContinue(IDLE);
@@ -2602,6 +3414,12 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		return (float)(Math.atan2(targetZ - fromZ, targetX - fromX) * 180.0 / Math.PI) - 90.0F;
 	}
 
-	private record RetreatPath(Vec3 destination, Path path) {
+	private record RetreatPath(Vec3 destination, Path path, Vec3 direction) {
+	}
+
+	private enum DirectRetreatClearance {
+		BLOCKED,
+		CLEAR,
+		STEP_UP
 	}
 }
