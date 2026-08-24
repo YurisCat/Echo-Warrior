@@ -159,7 +159,11 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private static final RawAnimation BOW_LOWER_UPPER = RawAnimation.begin().thenPlay("animation.egyptian_archer.bow_lower_upper");
 	private static final RawAnimation BOW_RECOVER_UPPER = RawAnimation.begin().thenPlay("animation.egyptian_archer.bow_recover_upper");
 	private static final RawAnimation BACKSTEP = RawAnimation.begin().thenPlay("animation.egyptian_archer.backstep_shoot");
-	private static final RawAnimation MELEE = RawAnimation.begin().thenPlay("animation.egyptian_archer.melee_attack_upper");
+	// The committed melee state intentionally lasts a few ticks beyond the source
+	// clip so its recovery cannot be interrupted. Hold the neutral final keyframe
+	// during that gap; a plain thenPlay lets the triggered controller briefly fall
+	// back to the previously cached bow clip when the melee timeline expires.
+	private static final RawAnimation MELEE = RawAnimation.begin().thenPlayAndHold("animation.egyptian_archer.melee_attack_upper");
 	private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.egyptian_archer.hurt");
 	private static final String ACTION_CONTROLLER = "action";
 	private static final String FIRST_NOCK_TRIGGER = "first_nock";
@@ -3611,10 +3615,13 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		long now = this.level().getGameTime();
 		// A completed PLAY_ONCE bow-return clip has already left the rendered
 		// timeline. Calling stopTriggeredAnim here makes GeckoLib rebuild an
-		// AnimationPoint from that completed clip and can expose one stale pose for
-		// a frame. Leave naturally completed return clips alone; the next trigger
-		// replaces the stale controller reference directly.
-		if (!isBowReturnActionState(completedAction)) {
+		// AnimationPoint from that completed clip and can expose one stale pose for a
+		// frame. Melee is different: its RawAnimation holds the neutral final frame,
+		// so clear that still-active hold when the committed action ends.
+		boolean naturallyCompletedMelee = completedAction == ACTION_MELEE;
+		if (naturallyCompletedMelee) {
+			this.stopTriggeredAnim(ACTION_CONTROLLER, MELEE_TRIGGER);
+		} else if (!isBowReturnActionState(completedAction)) {
 			stopBowAnimations();
 			this.stopTriggeredAnim(ACTION_CONTROLLER, BACKSTEP_TRIGGER);
 			this.stopTriggeredAnim(ACTION_CONTROLLER, MELEE_TRIGGER);
@@ -3632,6 +3639,11 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.meleeRetargetUsed = false;
 		this.meleeHitAgainDuringAction = false;
 		this.combatFacingInitialized = false;
+		if (naturallyCompletedMelee) {
+			EchoWarrior.LOGGER.info(
+					"[EgyptianArcherMelee] archer={} tick={} event=finish heldFinal=true controllerStopped=true",
+					this.getId(), now);
+		}
 		if (isBowReturnActionState(completedAction)) {
 			EchoWarrior.LOGGER.info(
 					"[EgyptianArcherRangedState] archer={} tick={} event=bow_return_finish previousAction={} settleRemaining={}",

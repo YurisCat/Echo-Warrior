@@ -28,6 +28,7 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 	private static final float NO_PARENT_COMPENSATION_DEGREES = 8.0F;
 	private static final float RANGED_HEAD_FRAME_RELEASE_GRACE_TICKS = 8.0F;
 	private static final byte ACTION_IDLE = 0;
+	private static final byte ACTION_MELEE = 6;
 	private static final byte ACTION_BOW_LOWER = 7;
 	private static final byte ACTION_BOW_RECOVER = 8;
 	private static final byte ACTION_UNNOCK = 9;
@@ -432,7 +433,17 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 		byte previousActionState = state.lastBoneDiagnosticActionState;
 		boolean actionChanged = previousActionState != actionState;
 		boolean bowReturnAction = isBowReturnAction(actionState);
-		if (bowReturnAction || actionChanged && actionState == ACTION_IDLE && isBowReturnAction(previousActionState)) {
+		boolean bowBoundary = bowReturnAction
+				|| actionChanged && actionState == ACTION_IDLE && isBowReturnAction(previousActionState);
+		boolean meleeBoundary = actionState == ACTION_MELEE
+				|| actionChanged && previousActionState == ACTION_MELEE;
+		if (bowBoundary || meleeBoundary) {
+			if (gameTime > state.bowBoneDiagnosticUntil) {
+				state.lastBowBonePoses.clear();
+				state.lastBowBoneDiagnosticAge = Float.NEGATIVE_INFINITY;
+			}
+			if (meleeBoundary) state.boneDiagnosticContext = "melee";
+			else if (bowBoundary) state.boneDiagnosticContext = "bow";
 			state.bowBoneDiagnosticUntil = Math.max(state.bowBoneDiagnosticUntil,
 					gameTime + BOW_BOUNDARY_DIAGNOSTIC_TICKS);
 		}
@@ -447,42 +458,59 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 		String maxDeltaBone = "none";
 		float maxRotationDelta = 0.0F;
 		float maxTranslationDelta = 0.0F;
+		float maxScaleDelta = 0.0F;
+		boolean maxVisibilityChanged = false;
 		float maxDeltaScore = 0.0F;
 		for (String boneName : BOW_BOUNDARY_DIAGNOSTIC_BONES) {
 			var snapshot = snapshots.get(boneName).orElse(null);
 			if (snapshot == null) continue;
 			BoneDiagnosticPose current = new BoneDiagnosticPose(
 					snapshot.getRotX(), snapshot.getRotY(), snapshot.getRotZ(),
-					snapshot.getTranslateX(), snapshot.getTranslateY(), snapshot.getTranslateZ());
+					snapshot.getTranslateX(), snapshot.getTranslateY(), snapshot.getTranslateZ(),
+					snapshot.getScaleX(), snapshot.getScaleY(), snapshot.getScaleZ(),
+					snapshot.isHidden(), snapshot.areChildrenHidden());
 			BoneDiagnosticPose previous = state.lastBowBonePoses.put(boneName, current);
 			if (previous != null) {
 				float rotationDelta = current.maximumRotationDeltaDegrees(previous);
 				float translationDelta = current.translationDelta(previous);
-				float score = Math.max(rotationDelta / 10.0F, translationDelta / 0.25F);
+				float scaleDelta = current.maximumScaleDelta(previous);
+				boolean visibilityChanged = current.visibilityChanged(previous);
+				float score = Math.max(Math.max(rotationDelta / 10.0F, translationDelta / 0.25F),
+						Math.max(scaleDelta / 0.1F, visibilityChanged ? 100.0F : 0.0F));
 				if (score > maxDeltaScore) {
 					maxDeltaScore = score;
 					maxDeltaBone = boneName;
 					maxRotationDelta = rotationDelta;
 					maxTranslationDelta = translationDelta;
+					maxScaleDelta = scaleDelta;
+					maxVisibilityChanged = visibilityChanged;
 				}
 			}
 			if (!poses.isEmpty()) poses.append(';');
 			poses.append(boneName).append('=')
-					.append(String.format(Locale.ROOT, "r(%.1f,%.1f,%.1f)p(%.2f,%.2f,%.2f)",
+					.append(String.format(Locale.ROOT,
+							"r(%.1f,%.1f,%.1f)p(%.2f,%.2f,%.2f)s(%.2f,%.2f,%.2f)h(%s,%s)",
 							current.rotX() * Mth.RAD_TO_DEG,
 							current.rotY() * Mth.RAD_TO_DEG,
 							current.rotZ() * Mth.RAD_TO_DEG,
-							current.translateX(), current.translateY(), current.translateZ()));
+							current.translateX(), current.translateY(), current.translateZ(),
+							current.scaleX(), current.scaleY(), current.scaleZ(),
+							current.hidden(), current.childrenHidden()));
 		}
 
+		String marker = "melee".equals(state.boneDiagnosticContext)
+				? "EgyptianArcherMeleeBonesClient" : "EgyptianArcherBowBonesClient";
 		EchoWarrior.LOGGER.info(
-				"[EgyptianArcherBowBonesClient] archer={} tick={} age={} action={} previousAction={} "
-						+ "target={} stabilized={} exactBlend={} maxBone={} maxRotDeg={} maxPos={} poses={}",
+				"[{}] archer={} tick={} age={} action={} previousAction={} "
+						+ "target={} stabilized={} exactBlend={} maxBone={} maxRotDeg={} maxPos={} "
+						+ "maxScale={} visibilityChanged={} poses={}",
+				marker,
 				entityId, gameTime, String.format(Locale.ROOT, "%.3f", age), actionState, previousActionState,
 				targetId, rangedHeadFrameStabilized,
 				String.format(Locale.ROOT, "%.3f", state.exactHeadFrameBlend), maxDeltaBone,
 				String.format(Locale.ROOT, "%.2f", maxRotationDelta),
-				String.format(Locale.ROOT, "%.3f", maxTranslationDelta), poses);
+				String.format(Locale.ROOT, "%.3f", maxTranslationDelta),
+				String.format(Locale.ROOT, "%.3f", maxScaleDelta), maxVisibilityChanged, poses);
 	}
 
 	private static boolean isBowReturnAction(byte actionState) {
@@ -492,7 +520,9 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 	}
 
 	private record BoneDiagnosticPose(float rotX, float rotY, float rotZ,
-			float translateX, float translateY, float translateZ) {
+			float translateX, float translateY, float translateZ,
+			float scaleX, float scaleY, float scaleZ,
+			boolean hidden, boolean childrenHidden) {
 		private float maximumRotationDeltaDegrees(BoneDiagnosticPose previous) {
 			float x = Math.abs(Mth.wrapDegrees((this.rotX - previous.rotX) * Mth.RAD_TO_DEG));
 			float y = Math.abs(Mth.wrapDegrees((this.rotY - previous.rotY) * Mth.RAD_TO_DEG));
@@ -505,6 +535,17 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 			float y = this.translateY - previous.translateY;
 			float z = this.translateZ - previous.translateZ;
 			return Mth.sqrt(x * x + y * y + z * z);
+		}
+
+		private float maximumScaleDelta(BoneDiagnosticPose previous) {
+			float x = Math.abs(this.scaleX - previous.scaleX);
+			float y = Math.abs(this.scaleY - previous.scaleY);
+			float z = Math.abs(this.scaleZ - previous.scaleZ);
+			return Math.max(x, Math.max(y, z));
+		}
+
+		private boolean visibilityChanged(BoneDiagnosticPose previous) {
+			return this.hidden != previous.hidden || this.childrenHidden != previous.childrenHidden;
 		}
 	}
 
@@ -712,6 +753,7 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 		private long bowBoneDiagnosticUntil = Long.MIN_VALUE;
 		private float lastBowBoneDiagnosticAge = Float.NEGATIVE_INFINITY;
 		private final Map<String, BoneDiagnosticPose> lastBowBonePoses = new HashMap<>();
+		private String boneDiagnosticContext = "bow";
 		private final Map<String, BoneBoundaryPose> lastBowReturnRawPoses = new HashMap<>();
 		private final Map<String, BoneBoundaryPose> bowReturnReplayGuardPose = new HashMap<>();
 		private boolean bowReturnReplayGuardActive;
