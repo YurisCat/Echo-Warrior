@@ -38,6 +38,18 @@ public enum EchoHeroType {
 			0.15,
 			42,
 			4
+	),
+	GUANDAO_WARRIOR(
+			"guandao_warrior",
+			"关刀甲胄战士",
+			"Guandao Warrior",
+			30.0,
+			7.0,
+			12.0,
+			0.26,
+			0.30,
+			34,
+			4
 	);
 
 	private final String id;

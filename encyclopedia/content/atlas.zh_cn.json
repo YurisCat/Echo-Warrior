@@ -95,7 +95,7 @@
             "items": [
               { "title": "理解核心循环", "body": "从探索、考古、遗物和召唤开始，先建立整体认识。" },
               { "title": "进入召唤系统", "body": "了解召唤器、燃料、活动模式与警戒状态。" },
-              { "title": "选择英灵", "body": "查看已可运行的罗马军团兵与阿兹特克勇士，以及后续候选英灵。" }
+              { "title": "选择英灵", "body": "查看罗马军团兵、阿兹特克勇士、埃及弓箭手与关刀甲胄战士，以及后续候选英灵。" }
             ]
           },
           {
@@ -139,7 +139,7 @@
             "type": "callout",
             "tone": "warning",
             "title": "当前进度",
-            "body": "召唤器与罗马军团兵闭环已有可运行版本；阿兹特克勇士已进入功能实装与实机调试；考古、回声罗盘和第三位英灵仍属于比赛 MVP 主线。"
+            "body": "四位英灵均已有开发版战斗闭环；比赛 MVP 的最低验收仍为前三英灵、考古、回声罗盘与基础升级，关刀甲胄战士是用户批准加入的第四位正式开发英灵。"
           }
         ],
         "related": ["echo_compass", "relics_overview", "summoner", "roman_legionary"]
@@ -307,7 +307,8 @@
             "items": [
               { "title": "罗马军团兵遗物", "meta": "已实装", "body": "召唤罗马军团兵英灵。", "icon": "/assets/echo-warrior/item/roman_legionary_relic.png" },
               { "title": "阿兹特克勇士遗物", "meta": "开发版可用", "body": "召唤阿兹特克勇士英灵，保存五项技能开关与追猎充能。", "icon": "/assets/echo-warrior/item/aztec_warrior_relic.png" },
-              { "title": "埃及弓箭手遗物", "meta": "开发版可用", "body": "召唤埃及弓箭手，保存箭型选择、四项技能状态与后撤步充能。", "icon": "/assets/echo-warrior/item/egyptian_archer_relic.png" }
+              { "title": "埃及弓箭手遗物", "meta": "开发版可用", "body": "召唤埃及弓箭手，保存箭型选择、四项技能状态与后撤步充能。", "icon": "/assets/echo-warrior/item/egyptian_archer_relic.png" },
+              { "title": "关刀甲胄战士遗物", "meta": "开发版可用", "body": "召唤关刀甲胄战士，保存四项技能状态与连招冷却。", "icon": "/assets/echo-warrior/item/guandao_warrior_relic.png" }
             ]
           }
         ],
@@ -431,7 +432,7 @@
             ]
           }
         ],
-        "related": ["fuel", "activity_modes", "alert_modes", "relics_overview", "roman_legionary", "aztec_warrior", "egyptian_archer"]
+        "related": ["fuel", "activity_modes", "alert_modes", "relics_overview", "roman_legionary", "aztec_warrior", "egyptian_archer", "guandao_warrior"]
       }
     },
     {
@@ -503,7 +504,7 @@
             "body": "英灵通常停留 2～5 秒，再选择一处可安全到达的陆地位置步行前往；单次移动以约 4～8 格为主，偶尔走得更远。接近活动区边缘时会偏向锚点方向，越界、战斗结束、路径失败或卡住时会重新归位或选择目标。战斗、主动技能、视觉互动和浮水行为始终拥有更高优先级。"
           }
         ],
-        "related": ["summoner", "alert_modes", "roman_legionary", "aztec_warrior"]
+        "related": ["summoner", "alert_modes", "roman_legionary", "aztec_warrior", "guandao_warrior"]
       }
     },
     {
@@ -533,7 +534,7 @@
             ]
           }
         ],
-        "related": ["summoner", "activity_modes", "roman_legionary", "aztec_warrior"]
+        "related": ["summoner", "activity_modes", "roman_legionary", "aztec_warrior", "guandao_warrior"]
       }
     },
     {
@@ -783,6 +784,7 @@
       "connections": [
         { "targetId": "roman_legionary", "kind": "related" },
         { "targetId": "aztec_warrior", "kind": "related" },
+        { "targetId": "guandao_warrior", "kind": "related" },
         { "targetId": "future_roster", "kind": "related" }
       ],
       "article": {
@@ -831,14 +833,71 @@
             "body": "赞美猫神、叶形箭、锥锋箭、战车与齐射之魂和后撤步均已使用用户人工绘制的 16×16 正式图标；游戏召唤器与网页百科复用同一套映射。"
           }
         ],
-        "related": ["summoner", "roman_legionary", "aztec_warrior", "leveling", "future_roster"]
+        "related": ["summoner", "roman_legionary", "aztec_warrior", "guandao_warrior", "leveling", "future_roster"]
+      }
+    },
+    {
+      "id": "guandao_warrior",
+      "categoryId": "heroes",
+      "title": "关刀甲胄战士",
+      "subtitle": "重甲、范围斩击与四段推进连招",
+      "status": "development",
+      "x": 705,
+      "y": 595,
+      "icon": "/assets/echo-warrior/item/guandao_warrior_relic.png",
+      "symbol": "关",
+      "connections": [
+        { "targetId": "egyptian_archer", "kind": "related" },
+        { "targetId": "summoner", "kind": "related" },
+        { "targetId": "future_roster", "kind": "related" }
+      ],
+      "article": {
+        "summary": "第四位正式开发英灵。以高护甲与远程抗性承受压力，用大范围偃月刀斩击积累攻势，并智能施展完整四段连招穿入敌群。",
+        "tags": ["第四英灵", "近战", "重甲", "范围伤害", "连招", "开发中"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "基础属性",
+            "items": [
+              { "label": "生命", "value": "30", "note": "满级 60", "icon": "/assets/echo-warrior/gui/attributes/health.png" },
+              { "label": "护甲", "value": "12", "note": "高护甲前排", "icon": "/assets/echo-warrior/gui/attributes/armor.png" },
+              { "label": "攻击", "value": "7", "note": "满级 14", "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png" },
+              { "label": "移速", "value": "0.26", "note": "重甲步战", "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png" },
+              { "label": "击退抗性", "value": "30%", "note": "投射物最终击退仅保留 5%" },
+              { "label": "攻击间隔", "value": "34 tick", "note": "约 1.7 秒" }
+            ]
+          },
+          {
+            "type": "cards",
+            "title": "四个技能槽",
+            "items": [
+              { "title": "甲胄傍身", "meta": "始终生效", "body": "受到的投射物伤害降低 50%，投射物造成的最终击退降低 95%。", "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/armor_clad.png" },
+              { "title": "越战越勇", "meta": "最多 5 层", "body": "每次有效挥击获得一层 6% 攻击增幅，持续 8 秒且命中刷新全部层数；同一挥击命中多人只增加一层。刀刃火焰随层数由零星小火逐渐增强，五层变为灵魂火焰。生命越低还会获得越高的最终减伤，濒死时最多 30%。", "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/growing_valor.png" },
+              { "title": "偃月刀", "meta": "220° 范围普攻", "body": "普通攻击在动画伤害帧对前方 3.25 格扇区内所有有视线的合法目标造成完整伤害，每次挥击只结算一次。", "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/crescent_blade.png" },
+              { "title": "关刀连段招式", "meta": "自动主动技能 · 10 秒冷却", "body": "目标在 4.5 格内，且附近至少有两个敌人或强敌无法被约两次普攻击杀时起手。四段范围伤害为 70%／100%／70%／180%，随动作共前进 3 格；第一段短暂浮空，第二段弹开正面来袭的敌方投射物。每次实际受到近战或投射物伤害都会令剩余冷却缩短 0.5 秒。", "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/guandao_combo.png" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "动作与命中判定",
+            "body": "连招命中窗口位于起手后的第 23、43、58、77 tick，各允许前后 1 tick 容差，同一阶段对同一目标只命中一次。服务器根据每段动作的大致方向使用不同大小、位置与朝向的扇区，而不维护逐帧刀刃网格碰撞；段间可向新目标最多转向约 40°，挥击期间锁定朝向。一格高低差可平滑通过，墙体或超过一格的落差只停止该段前进，不中断整套连招。"
+          },
+          {
+            "type": "callout",
+            "tone": "success",
+            "title": "人工美术与模型已接入",
+            "body": "遗物图标、四个 16×16 技能图标和模型师提供的 5 段动画均已规范化接入。刀刃粒子通过武器骨骼下的专用锚点跟随真实动画位置。后续只需提供 BBModel，GLTF 不再是必需交付物。"
+          }
+        ],
+        "related": ["summoner", "relics_overview", "egyptian_archer", "leveling", "future_roster"]
       }
     },
     {
       "id": "future_roster",
       "categoryId": "heroes",
       "title": "后续英灵候选",
-      "subtitle": "日本与中国战士",
+      "subtitle": "日本武士",
       "status": "planned",
       "x": 705,
       "y": 210,
@@ -846,22 +905,22 @@
       "connections": [
         { "targetId": "roman_legionary", "kind": "related" },
         { "targetId": "aztec_warrior", "kind": "related" },
-        { "targetId": "egyptian_archer", "kind": "related" }
+        { "targetId": "egyptian_archer", "kind": "related" },
+        { "targetId": "guandao_warrior", "kind": "related" }
       ],
       "article": {
-        "summary": "埃及弓箭手已进入第三英灵的正式开发范围。骑士与阵线步枪兵已从当前开发队列移除；后续候选暂为日本武士和中国武士。",
+        "summary": "关刀甲胄战士已从中国武士候选冻结为第四位正式开发英灵。骑士与阵线步枪兵已从当前开发队列移除；当前尚未排期的候选仅保留日本武士。",
         "tags": ["候选", "后续", "未排期"],
         "sections": [
           {
             "type": "cards",
             "title": "候选方向",
             "items": [
-              { "title": "日本武士", "meta": "候选", "body": "具体定位和技能待后续冻结。" },
-              { "title": "中国武士", "meta": "候选", "body": "具体时代、武器与战斗定位待确认。" }
+              { "title": "日本武士", "meta": "候选", "body": "具体定位和技能待后续冻结。" }
             ]
           }
         ],
-        "related": ["roman_legionary", "aztec_warrior", "egyptian_archer"]
+        "related": ["roman_legionary", "aztec_warrior", "egyptian_archer", "guandao_warrior"]
       }
     },
     {

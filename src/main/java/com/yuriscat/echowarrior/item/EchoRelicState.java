@@ -26,6 +26,7 @@ public final class EchoRelicState {
 	private static final String EGYPTIAN_ARROW_SWITCH_TIME_KEY = "EchoWarriorEgyptianArrowSwitchTime";
 	private static final String BACKSTEP_CHARGES_KEY = "EchoWarriorBackstepCharges";
 	private static final String BACKSTEP_CHARGE_TIME_KEY = "EchoWarriorBackstepChargeTime";
+	private static final String GUANDAO_COMBO_COOLDOWN_END_KEY = "EchoWarriorGuandaoComboCooldownEnd";
 
 	public static final int SKILL_COUNT = 5;
 	public static final int ALL_SKILLS_ENABLED = (1 << SKILL_COUNT) - 1;
@@ -36,6 +37,7 @@ public final class EchoRelicState {
 	public static final int MAX_BACKSTEP_CHARGES = 2;
 	public static final long BACKSTEP_CHARGE_TICKS = 120L;
 	public static final long EGYPTIAN_ARROW_SWITCH_COOLDOWN_TICKS = 10L;
+	public static final long GUANDAO_COMBO_COOLDOWN_TICKS = 200L;
 
 	private EchoRelicState() {
 	}
@@ -68,6 +70,7 @@ public final class EchoRelicState {
 			tag.putLong(EGYPTIAN_ARROW_SWITCH_TIME_KEY, Long.MIN_VALUE / 2L);
 			tag.putInt(BACKSTEP_CHARGES_KEY, MAX_BACKSTEP_CHARGES);
 			tag.putLong(BACKSTEP_CHARGE_TIME_KEY, gameTime);
+			tag.putLong(GUANDAO_COMBO_COOLDOWN_END_KEY, 0L);
 		});
 		return true;
 	}
@@ -143,7 +146,8 @@ public final class EchoRelicState {
 	public static int enabledSkills(ItemStack relic) {
 		EchoHeroType heroType = EchoHeroType.fromRelic(relic);
 		int allowed = heroType.allSkillsEnabledMask();
-		return intValue(relic, ENABLED_SKILLS_KEY, heroType.defaultEnabledSkillsMask()) & allowed;
+		int enabled = intValue(relic, ENABLED_SKILLS_KEY, heroType.defaultEnabledSkillsMask()) & allowed;
+		return heroType == EchoHeroType.GUANDAO_WARRIOR ? enabled | 0b0111 : enabled;
 	}
 
 	public static boolean skillEnabled(ItemStack relic, int skill) {
@@ -153,6 +157,9 @@ public final class EchoRelicState {
 
 	public static void toggleSkill(ItemStack relic, int skill) {
 		if (skill < 0 || skill >= EchoHeroType.fromRelic(relic).skillCount()) {
+			return;
+		}
+		if (EchoHeroType.fromRelic(relic) == EchoHeroType.GUANDAO_WARRIOR && skill != 3) {
 			return;
 		}
 		int updated = enabledSkills(relic) ^ 1 << skill;
@@ -304,6 +311,7 @@ public final class EchoRelicState {
 			case ROMAN_LEGIONARY -> shieldCharges(relic, gameTime);
 			case AZTEC_WARRIOR -> pursuitCharges(relic, gameTime);
 			case EGYPTIAN_ARCHER -> backstepCharges(relic, gameTime);
+			case GUANDAO_WARRIOR -> guandaoComboCooldownEnd(relic) <= gameTime ? 1 : 0;
 		};
 	}
 
@@ -312,6 +320,7 @@ public final class EchoRelicState {
 			case ROMAN_LEGIONARY -> MAX_SHIELD_CHARGES;
 			case AZTEC_WARRIOR -> MAX_PURSUIT_CHARGES;
 			case EGYPTIAN_ARCHER -> MAX_BACKSTEP_CHARGES;
+			case GUANDAO_WARRIOR -> 1;
 		};
 	}
 
@@ -320,7 +329,25 @@ public final class EchoRelicState {
 			case ROMAN_LEGIONARY -> shieldChargeProgress(relic, gameTime);
 			case AZTEC_WARRIOR -> pursuitChargeProgress(relic, gameTime);
 			case EGYPTIAN_ARCHER -> backstepChargeProgress(relic, gameTime);
+			case GUANDAO_WARRIOR -> guandaoComboCooldownProgress(relic, gameTime);
 		};
+	}
+
+	public static long guandaoComboCooldownEnd(ItemStack relic) {
+		return longValue(relic, GUANDAO_COMBO_COOLDOWN_END_KEY, 0L);
+	}
+
+	public static void setGuandaoComboCooldownEnd(ItemStack relic, long end) {
+		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> tag.putLong(GUANDAO_COMBO_COOLDOWN_END_KEY, end));
+	}
+
+	public static int guandaoComboCooldownProgress(ItemStack relic, long gameTime) {
+		long remaining = Math.max(0L, guandaoComboCooldownEnd(relic) - gameTime);
+		return (int)Math.clamp(
+				(GUANDAO_COMBO_COOLDOWN_TICKS - remaining) * 1000L / GUANDAO_COMBO_COOLDOWN_TICKS,
+				0L,
+				1000L
+		);
 	}
 
 	public static long legionCooldownEnd(ItemStack relic) {

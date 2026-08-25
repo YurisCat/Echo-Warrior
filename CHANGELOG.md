@@ -10,6 +10,9 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Added
 
+- Added the first playable implementation of the Guandao Warrior Echo, including its relic, model, five normalized animations, summoner preview, localization, and four hand-drawn skill icons.
+- Added projectile resistance, Growing Valor stacks, low-health damage reduction, full-damage crescent-blade sweeps, and the four-stage advancing Guandao combo with launch and projectile deflection windows.
+- Added Guandao Warrior documentation and interactive encyclopedia content, plus a repeatable BBModel-to-GeckoLib asset export script.
 - Head-centred player-gaze acquisition with distance-scaled timing, two-tick mouse tolerance, line-of-sight validation, multiplayer owner priority, and close-range handling for invisible players.
 - A mutual-gaze state with randomized hold and renewal durations, occasional glance-away breaks, last-seen-position persistence, combat suppression, and threat interruption.
 - Independent pupil, head, and body attention layers with explicit threat priorities and minimum target-hold windows.
@@ -21,6 +24,7 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Changed
 
+- Guandao Warrior passive skills are permanently enabled; only the automatic combo can be toggled, and its remaining ten-second cooldown is shown in the summoner GUI.
 - Mutual gaze now moves pupils first, then the head, and gently aligns the body only when the player lies well outside the forward cone.
 - Removed SmartBrainLib's generic always-running look behaviour so it no longer competes with the code-owned visual-attention layer.
 - Moved mutual-gaze body correction to the end of the entity tick so vanilla body-rotation control cannot overwrite it.

@@ -27,6 +27,10 @@ public final class ModItems {
 			"egyptian_archer_relic",
 			properties -> new EchoRelicItem(properties.stacksTo(1), EchoHeroType.EGYPTIAN_ARCHER)
 	);
+	public static final EchoRelicItem GUANDAO_WARRIOR_RELIC = register(
+			"guandao_warrior_relic",
+			properties -> new EchoRelicItem(properties.stacksTo(1), EchoHeroType.GUANDAO_WARRIOR)
+	);
 
 	private ModItems() {
 	}

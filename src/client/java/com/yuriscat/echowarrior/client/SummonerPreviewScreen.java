@@ -69,6 +69,12 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					icon("skills/egyptian_archer/leaf_arrow.png"),
 					icon("skills/egyptian_archer/chariot_volley.png"),
 					icon("skills/egyptian_archer/backstep.png")
+			},
+			{
+					icon("skills/guandao_warrior/armor_clad.png"),
+					icon("skills/guandao_warrior/growing_valor.png"),
+					icon("skills/guandao_warrior/crescent_blade.png"),
+					icon("skills/guandao_warrior/guandao_combo.png")
 			}
 	};
 	private static final Identifier EGYPTIAN_LEAF_ARROW_ICON = icon("skills/egyptian_archer/leaf_arrow.png");
@@ -88,6 +94,13 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			"gui.echo_warrior.summoner.skill.egyptian.backstep"
 	};
 	private static final int[] EGYPTIAN_SKILL_DESCRIPTION_LINES = {3, 2, 2, 2};
+	private static final String[] GUANDAO_SKILL_TRANSLATION_KEYS = {
+			"gui.echo_warrior.summoner.skill.guandao.armor_clad",
+			"gui.echo_warrior.summoner.skill.guandao.growing_valor",
+			"gui.echo_warrior.summoner.skill.guandao.crescent_blade",
+			"gui.echo_warrior.summoner.skill.guandao.combo"
+	};
+	private static final int[] GUANDAO_SKILL_DESCRIPTION_LINES = {2, 3, 2, 5};
 	private static final Identifier[] TALENT_ICONS = {
 			icon("traits/bad_temper.png"),
 			icon("traits/lazy.png"),
@@ -402,6 +415,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			case ROMAN_LEGIONARY -> ModEntities.ROMAN_LEGIONARY_ECHO.create(this.minecraft.level, EntitySpawnReason.LOAD);
 			case AZTEC_WARRIOR -> ModEntities.AZTEC_WARRIOR_ECHO.create(this.minecraft.level, EntitySpawnReason.LOAD);
 			case EGYPTIAN_ARCHER -> ModEntities.EGYPTIAN_ARCHER_ECHO.create(this.minecraft.level, EntitySpawnReason.LOAD);
+			case GUANDAO_WARRIOR -> ModEntities.GUANDAO_WARRIOR_ECHO.create(this.minecraft.level, EntitySpawnReason.LOAD);
 		};
 	}
 
@@ -441,8 +455,14 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			boolean activeChargeSkill = switch (EchoHeroType.values()[Math.clamp(this.menu.heroType(), 0, EchoHeroType.values().length - 1)]) {
 				case ROMAN_LEGIONARY -> index == 1;
 				case AZTEC_WARRIOR, EGYPTIAN_ARCHER -> index == 3;
+				case GUANDAO_WARRIOR -> index == 3;
 			};
-			int maximumCharges = this.menu.heroType() == EchoHeroType.ROMAN_LEGIONARY.ordinal() ? 3 : 2;
+			int maximumCharges = switch (EchoHeroType.values()[Math.clamp(
+					this.menu.heroType(), 0, EchoHeroType.values().length - 1)]) {
+				case ROMAN_LEGIONARY -> 3;
+				case AZTEC_WARRIOR, EGYPTIAN_ARCHER -> 2;
+				case GUANDAO_WARRIOR -> 1;
+			};
 			if (activeChargeSkill && this.menu.shieldCharges() < maximumCharges) {
 				renderRadialCooldown(graphics, iconX, iconY, this.menu.shieldChargeProgress() / 1000.0F);
 			}
@@ -459,7 +479,14 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				drawBorder(graphics, iconX - 1, iconY - 1, iconX + 17, iconY + 17, 0xFFD8B55A);
 			}
 			if (activeChargeSkill) {
-				graphics.text(this.font, Integer.toString(this.menu.shieldCharges()), iconX + 10, iconY + 8, 0xFFFFFFFF, true);
+				String counter = Integer.toString(this.menu.shieldCharges());
+				if (this.menu.heroType() == EchoHeroType.GUANDAO_WARRIOR.ordinal()
+						&& this.menu.shieldCharges() == 0) {
+					int remainingTicks = Math.max(1, (int)Math.ceil(
+							(1000 - this.menu.shieldChargeProgress()) * 200.0 / 1000.0));
+					counter = Integer.toString(Math.max(1, (remainingTicks + 19) / 20));
+				}
+				graphics.text(this.font, counter, iconX + 10, iconY + 8, 0xFFFFFFFF, true);
 			}
 		}
 	}
@@ -699,6 +726,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 
 			boolean aztec = this.menu.heroType() == EchoHeroType.AZTEC_WARRIOR.ordinal();
 			boolean egyptian = this.menu.heroType() == EchoHeroType.EGYPTIAN_ARCHER.ordinal();
+			boolean guandao = this.menu.heroType() == EchoHeroType.GUANDAO_WARRIOR.ordinal();
 			if (aztec) {
 				for (int index = 0; index < Math.min(this.menu.skillCount(), AZTEC_SKILL_TRANSLATION_KEYS.length); index++) {
 					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
@@ -710,6 +738,14 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				for (int index = 0; index < Math.min(this.menu.skillCount(), EGYPTIAN_SKILL_TRANSLATION_KEYS.length); index++) {
 					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
 						showEgyptianSkillTooltip(graphics, mouseX, mouseY, index,
+								(this.menu.enabledSkills() & 1 << index) != 0);
+						return;
+					}
+				}
+			} else if (guandao) {
+				for (int index = 0; index < Math.min(this.menu.skillCount(), GUANDAO_SKILL_TRANSLATION_KEYS.length); index++) {
+					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
+						showGuandaoSkillTooltip(graphics, mouseX, mouseY, index,
 								(this.menu.enabledSkills() & 1 << index) != 0);
 						return;
 					}
@@ -852,6 +888,24 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				default -> "gui.echo_warrior.summoner.skill.egyptian.arrow_mode.off";
 			};
 			lines.add(Component.translatable(stateKey).withStyle(ChatFormatting.GRAY));
+		} else {
+			lines.add(Component.translatable(enabled
+					? "gui.echo_warrior.summoner.skill.enabled"
+					: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
+		}
+		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
+	}
+
+	private void showGuandaoSkillTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int skill, boolean enabled) {
+		String key = GUANDAO_SKILL_TRANSLATION_KEYS[skill];
+		List<Component> lines = new java.util.ArrayList<>();
+		lines.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
+		for (int line = 1; line <= GUANDAO_SKILL_DESCRIPTION_LINES[skill]; line++) {
+			lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
+		}
+		if (skill < 3) {
+			lines.add(Component.translatable("gui.echo_warrior.summoner.skill.passive_locked")
+					.withStyle(ChatFormatting.DARK_GRAY));
 		} else {
 			lines.add(Component.translatable(enabled
 					? "gui.echo_warrior.summoner.skill.enabled"
@@ -1055,6 +1109,9 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					}
 					for (int index = 0; index < this.menu.skillCount(); index++) {
 						if (isInside(event.x(), event.y(), x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
+							if (this.menu.heroType() == EchoHeroType.GUANDAO_WARRIOR.ordinal() && index < 3) {
+								return true;
+							}
 							sendMenuButton(SummonerMenu.BUTTON_SKILL_START + index);
 							return true;
 						}
