@@ -452,18 +452,21 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			int iconX = x(Element.SKILLS, 63 + index * 22);
 			int iconY = y(Element.SKILLS, 73);
 			blit16(graphics, icons[index], iconX, iconY);
-			boolean activeChargeSkill = switch (EchoHeroType.values()[Math.clamp(this.menu.heroType(), 0, EchoHeroType.values().length - 1)]) {
+			EchoHeroType heroType = EchoHeroType.values()[Math.clamp(
+					this.menu.heroType(), 0, EchoHeroType.values().length - 1)];
+			boolean activeChargeSkill = switch (heroType) {
 				case ROMAN_LEGIONARY -> index == 1;
 				case AZTEC_WARRIOR, EGYPTIAN_ARCHER -> index == 3;
-				case GUANDAO_WARRIOR -> index == 3;
+				case GUANDAO_WARRIOR -> false;
 			};
-			int maximumCharges = switch (EchoHeroType.values()[Math.clamp(
-					this.menu.heroType(), 0, EchoHeroType.values().length - 1)]) {
+			boolean activeCooldownSkill = heroType == EchoHeroType.GUANDAO_WARRIOR && index == 3;
+			int maximumCharges = switch (heroType) {
 				case ROMAN_LEGIONARY -> 3;
 				case AZTEC_WARRIOR, EGYPTIAN_ARCHER -> 2;
-				case GUANDAO_WARRIOR -> 1;
+				case GUANDAO_WARRIOR -> 0;
 			};
-			if (activeChargeSkill && this.menu.shieldCharges() < maximumCharges) {
+			if ((activeChargeSkill && this.menu.shieldCharges() < maximumCharges)
+					|| (activeCooldownSkill && this.menu.shieldChargeProgress() < 1000)) {
 				renderRadialCooldown(graphics, iconX, iconY, this.menu.shieldChargeProgress() / 1000.0F);
 			}
 			if (index == 2 && this.menu.legionCooldownTicks() > 0) {
@@ -479,14 +482,8 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				drawBorder(graphics, iconX - 1, iconY - 1, iconX + 17, iconY + 17, 0xFFD8B55A);
 			}
 			if (activeChargeSkill) {
-				String counter = Integer.toString(this.menu.shieldCharges());
-				if (this.menu.heroType() == EchoHeroType.GUANDAO_WARRIOR.ordinal()
-						&& this.menu.shieldCharges() == 0) {
-					int remainingTicks = Math.max(1, (int)Math.ceil(
-							(1000 - this.menu.shieldChargeProgress()) * 200.0 / 1000.0));
-					counter = Integer.toString(Math.max(1, (remainingTicks + 19) / 20));
-				}
-				graphics.text(this.font, counter, iconX + 10, iconY + 8, 0xFFFFFFFF, true);
+				graphics.text(this.font, Integer.toString(this.menu.shieldCharges()),
+						iconX + 10, iconY + 8, 0xFFFFFFFF, true);
 			}
 		}
 	}

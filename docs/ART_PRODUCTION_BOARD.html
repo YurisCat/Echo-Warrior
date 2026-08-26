@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#161713">
+  <title>Echo Warrior · 美术制作任务板</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #11120f;
+      --bg-soft: #171814;
+      --panel: #1d1e19;
+      --panel-raised: #24251f;
+      --panel-hover: #2a2b24;
+      --line: #3a3c32;
+      --line-strong: #555746;
+      --text: #f1eee2;
+      --muted: #abae9d;
+      --faint: #777b6d;
+      --gold: #e2b65d;
+      --gold-soft: #795f2e;
+      --green: #79bb86;
+      --blue: #7ea6c9;
+      --purple: #aa8dc8;
+      --red: #d8796e;
+      --orange: #d7995c;
+      --shadow: 0 18px 45px rgba(0, 0, 0, .28);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-width: 320px; background: var(--bg); }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% -10%, rgba(226, 182, 93, .13), transparent 28rem),
+        radial-gradient(circle at 94% 4%, rgba(126, 166, 201, .08), transparent 25rem),
+        linear-gradient(180deg, #181914 0, var(--bg) 26rem);
+      font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button, .button-like {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #2a2b24;
+      color: var(--text);
+      min-height: 38px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: border-color .16s ease, background .16s ease, transform .16s ease;
+    }
+
+    button:hover, .button-like:hover { border-color: var(--line-strong); background: #313329; }
+    button:active, .button-like:active { transform: translateY(1px); }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    button.primary { border-color: #a68443; background: linear-gradient(180deg, #947037, #74562a); color: #fff8e3; font-weight: 760; }
+    button.primary:hover { border-color: var(--gold); background: linear-gradient(180deg, #a37c3d, #815f2d); }
+    button.ghost { background: transparent; }
+    button.danger { color: #ffc7c1; border-color: #6e3e39; background: #3b2421; }
+    button.small { min-height: 30px; padding: 4px 9px; border-radius: 7px; font-size: 12px; }
+    button.icon-button { width: 34px; min-height: 34px; padding: 0; display: inline-grid; place-items: center; }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    input, select, textarea {
+      width: 100%;
+      color: var(--text);
+      background: #141510;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 9px 10px;
+    }
+
+    input::placeholder, textarea::placeholder { color: #6e7165; }
+    textarea { resize: vertical; min-height: 88px; }
+    select { cursor: pointer; }
+
+    .app-shell { width: min(1760px, 100%); margin: 0 auto; padding: 24px clamp(14px, 2.2vw, 34px) 52px; }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+
+    .eyebrow { color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 4px 0 2px; font-size: clamp(25px, 3vw, 38px); line-height: 1.16; letter-spacing: -.03em; }
+    .subtitle { margin: 6px 0 0; color: var(--muted); max-width: 750px; }
+
+    .top-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+    #import-file { display: none; }
+
+    .notice {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 18px;
+      padding: 10px 13px;
+      border: 1px solid #4f472f;
+      border-radius: 10px;
+      color: #d8ceb2;
+      background: rgba(89, 69, 34, .23);
+    }
+
+    .notice strong { color: #f1d99c; }
+    .notice-icon { color: var(--gold); font-size: 17px; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.5fr) repeat(4, minmax(130px, .7fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .summary-card {
+      min-height: 92px;
+      padding: 14px 15px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, rgba(39, 40, 33, .96), rgba(27, 28, 23, .96));
+      box-shadow: 0 10px 28px rgba(0, 0, 0, .16);
+    }
+
+    .summary-card.progress-card { display: grid; align-content: center; }
+    .summary-label { color: var(--muted); font-size: 12px; }
+    .summary-value { margin-top: 3px; font-size: 25px; font-weight: 800; line-height: 1.2; }
+    .summary-value small { font-size: 12px; font-weight: 600; color: var(--muted); }
+
+    .progress-track { height: 8px; margin-top: 10px; overflow: hidden; border-radius: 999px; background: #0d0e0b; border: 1px solid #323429; }
+    .progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, #8b6a32, var(--gold), var(--green)); transition: width .24s ease; }
+
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(230px, 1.6fr) repeat(4, minmax(135px, .72fr)) auto;
+      gap: 9px;
+      margin-bottom: 15px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(26, 27, 22, .88);
+    }
+
+    .search-wrap { position: relative; }
+    .search-wrap input { padding-left: 34px; }
+    .search-wrap::before { content: "⌕"; position: absolute; left: 11px; top: 7px; z-index: 1; color: var(--muted); font-size: 19px; }
+
+    .board-wrap { overflow-x: auto; padding: 1px 1px 14px; }
+    .board { display: grid; grid-template-columns: repeat(4, minmax(285px, 1fr)); gap: 12px; min-width: 1180px; }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      min-height: 460px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(24, 25, 20, .82);
+      overflow: hidden;
+    }
+
+    .column.drag-over { border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(226, 182, 93, .48); }
+    .column-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 14px; border-bottom: 1px solid var(--line); background: rgba(40, 41, 34, .72); }
+    .column-title { display: flex; align-items: center; gap: 8px; font-weight: 790; }
+    .status-dot { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 0 4px rgba(255,255,255,.035); }
+    .column[data-status="todo"] .status-dot { background: var(--faint); }
+    .column[data-status="doing"] .status-dot { background: var(--blue); }
+    .column[data-status="review"] .status-dot { background: var(--purple); }
+    .column[data-status="done"] .status-dot { background: var(--green); }
+    .column-count { min-width: 27px; padding: 2px 7px; border-radius: 999px; color: var(--muted); background: #151611; text-align: center; font-size: 12px; }
+    .column-list { display: flex; flex-direction: column; gap: 9px; flex: 1; padding: 10px; }
+
+    .empty-column { display: grid; place-items: center; min-height: 140px; border: 1px dashed #383a31; border-radius: 10px; color: #74776b; text-align: center; white-space: pre-line; padding: 20px; }
+
+    .task-card {
+      position: relative;
+      padding: 12px;
+      border: 1px solid #3d3f35;
+      border-radius: 11px;
+      background: linear-gradient(150deg, #282921, #21221c);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .18);
+      cursor: grab;
+    }
+
+    .task-card:hover { border-color: #555848; background: linear-gradient(150deg, #2d2f26, #24251e); }
+    .task-card.dragging { opacity: .42; }
+    .task-card.overdue { border-color: #70443e; }
+
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 9px; }
+    .card-project { color: var(--gold); font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+    .card-menu { display: flex; gap: 4px; opacity: .56; transition: opacity .15s; }
+    .task-card:hover .card-menu, .task-card:focus-within .card-menu { opacity: 1; }
+    .card-menu button { width: 27px; min-height: 27px; border-radius: 6px; padding: 0; font-size: 13px; }
+    .card-title { margin: 7px 0 6px; font-size: 16px; line-height: 1.35; }
+    .card-description { display: -webkit-box; overflow: hidden; margin: 0 0 10px; color: var(--muted); -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .chip { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 7px; border: 1px solid #424439; border-radius: 999px; color: #c6c8b8; background: #191a15; font-size: 11px; }
+    .chip.priority-urgent { color: #ffd1cc; border-color: #774740; background: #38231f; }
+    .chip.priority-high { color: #f4c89e; border-color: #6b4d31; background: #31251a; }
+    .chip.priority-medium { color: #d5d8ca; }
+    .chip.priority-low { color: #999d90; }
+    .chip.overdue-chip { color: #ffc3bd; border-color: #71423c; background: #3a2421; }
+
+    .acceptance { margin: 11px 0 0; padding-top: 9px; border-top: 1px solid rgba(255, 255, 255, .065); }
+    .acceptance-summary { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11px; }
+    .mini-progress { height: 4px; margin: 6px 0 8px; overflow: hidden; border-radius: 10px; background: #11120e; }
+    .mini-progress span { display: block; height: 100%; background: var(--green); }
+    .acceptance-item { display: flex; gap: 7px; align-items: flex-start; margin: 5px 0; color: #c7c9ba; font-size: 12px; cursor: pointer; }
+    .acceptance-item input { width: 15px; height: 15px; margin: 2px 0 0; padding: 0; accent-color: var(--green); flex: none; }
+    .acceptance-item.done span { color: #787c70; text-decoration: line-through; }
+    .more-checks { color: var(--faint); font-size: 11px; }
+
+    .card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 11px; color: var(--faint); font-size: 11px; }
+    .owner { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .due { flex: none; }
+
+    dialog {
+      width: min(760px, calc(100vw - 24px));
+      max-height: min(900px, calc(100vh - 24px));
+      padding: 0;
+      overflow: hidden;
+      color: var(--text);
+      background: var(--panel);
+      border: 1px solid var(--line-strong);
+      border-radius: 15px;
+      box-shadow: 0 30px 100px rgba(0,0,0,.64);
+    }
+
+    dialog::backdrop { background: rgba(4, 5, 3, .76); backdrop-filter: blur(4px); }
+    .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 18px; border-bottom: 1px solid var(--line); background: #25261f; }
+    .dialog-head h2 { margin: 0; font-size: 19px; }
+    .dialog-body { max-height: calc(100vh - 170px); overflow-y: auto; padding: 18px; }
+    .dialog-foot { display: flex; justify-content: space-between; gap: 10px; padding: 13px 18px; border-top: 1px solid var(--line); background: #191a15; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+    .form-field { display: grid; gap: 6px; }
+    .form-field.full { grid-column: 1 / -1; }
+    .form-field label { color: #d1d3c4; font-size: 12px; font-weight: 700; }
+    .field-help { color: var(--faint); font-size: 11px; font-weight: 400; }
+
+    .footer-note { margin: 16px 2px 0; color: var(--faint); font-size: 12px; }
+    .footer-note code { color: #c9b886; }
+
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 10;
+      max-width: min(390px, calc(100vw - 30px));
+      padding: 10px 13px;
+      color: #f7f4e8;
+      background: #303228;
+      border: 1px solid #5c604e;
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1080px) {
+      .summary-grid { grid-template-columns: repeat(4, 1fr); }
+      .progress-card { grid-column: 1 / -1; }
+      .filters { grid-template-columns: repeat(3, 1fr); }
+      .search-wrap { grid-column: span 2; }
+    }
+
+    @media (max-width: 720px) {
+      .app-shell { padding-top: 16px; }
+      .topbar { display: grid; gap: 15px; }
+      .top-actions { justify-content: flex-start; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .progress-card { grid-column: 1 / -1; }
+      .filters { grid-template-columns: 1fr 1fr; }
+      .search-wrap { grid-column: 1 / -1; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-field.full { grid-column: auto; }
+      .dialog-foot { align-items: stretch; flex-direction: column-reverse; }
+      .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; }
+      .dialog-actions button { width: 100%; }
+    }
+
+    @media print {
+      :root { color-scheme: light; }
+      body { color: #171713; background: #fff; }
+      .app-shell { width: 100%; padding: 0; }
+      .top-actions, .notice, .filters, .card-menu, .footer-note { display: none !important; }
+      .summary-card, .column, .task-card { color: #171713; background: #fff; box-shadow: none; border-color: #aaa; }
+      .summary-label, .subtitle, .card-description, .card-footer, .acceptance-summary { color: #555; }
+      .board-wrap { overflow: visible; }
+      .board { min-width: 0; grid-template-columns: repeat(2, 1fr); }
+      .column { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Echo Warrior · Art Pipeline</div>
+        <h1>美术制作任务板</h1>
+        <p class="subtitle">给模型师、美工与验收人员共用的单文件看板。模型、贴图、动画、UI 图标和交付规范统一在这里跟踪。</p>
+      </div>
+      <div class="top-actions" aria-label="任务板操作">
+        <button type="button" id="copy-summary" class="ghost">复制摘要</button>
+        <button type="button" id="export-data" class="ghost">导出 JSON</button>
+        <label class="button-like ghost" for="import-file">导入 JSON</label>
+        <input id="import-file" type="file" accept="application/json,.json">
+        <button type="button" id="new-task" class="primary">＋ 新建任务</button>
+      </div>
+    </header>
+
+    <div class="notice">
+      <span class="notice-icon" aria-hidden="true">◆</span>
+      <span><strong>本地协作方式：</strong>进度自动保存在当前浏览器；换电脑或交接给他人时，请先导出 JSON，对方再导入。</span>
+    </div>
+
+    <section class="summary-grid" aria-label="进度概览">
+      <article class="summary-card progress-card">
+        <div class="summary-label">整体完成度</div>
+        <div class="summary-value"><span id="progress-value">0%</span> <small id="progress-detail">0 / 0 项</small></div>
+        <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+      </article>
+      <article class="summary-card"><div class="summary-label">待制作</div><div class="summary-value" id="count-todo">0</div></article>
+      <article class="summary-card"><div class="summary-label">制作中</div><div class="summary-value" id="count-doing">0</div></article>
+      <article class="summary-card"><div class="summary-label">待验收</div><div class="summary-value" id="count-review">0</div></article>
+      <article class="summary-card"><div class="summary-label">已完成</div><div class="summary-value" id="count-done">0</div></article>
+    </section>
+
+    <section class="filters" aria-label="任务筛选">
+      <div class="search-wrap"><input id="filter-search" type="search" placeholder="搜索标题、说明、路径、负责人…" aria-label="搜索任务"></div>
+      <select id="filter-project" aria-label="按项目筛选"><option value="">全部项目</option></select>
+      <select id="filter-type" aria-label="按类型筛选"><option value="">全部类型</option></select>
+      <select id="filter-owner" aria-label="按负责人筛选"><option value="">全部负责人</option></select>
+      <select id="filter-priority" aria-label="按优先级筛选">
+        <option value="">全部优先级</option>
+        <option value="urgent">紧急</option>
+        <option value="high">高</option>
+        <option value="medium">中</option>
+        <option value="low">低</option>
+      </select>
+      <button type="button" id="clear-filters" class="ghost">清除筛选</button>
+    </section>
+
+    <div class="board-wrap">
+      <section class="board" id="board" aria-label="美术制作看板">
+        <section class="column" data-status="todo">
+          <header class="column-head"><div class="column-title"><span class="status-dot"></span>待制作</div><span class="column-count" data-count="todo">0</span></header>
+          <div class="column-list" data-list="todo"></div>
+        </section>
+        <section class="column" data-status="doing">
+          <header class="column-head"><div class="column-title"><span class="status-dot"></span>制作中</div><span class="column-count" data-count="doing">0</span></header>
+          <div class="column-list" data-list="doing"></div>
+        </section>
+        <section class="column" data-status="review">
+          <header class="column-head"><div class="column-title"><span class="status-dot"></span>待验收</div><span class="column-count" data-count="review">0</span></header>
+          <div class="column-list" data-list="review"></div>
+        </section>
+        <section class="column" data-status="done">
+          <header class="column-head"><div class="column-title"><span class="status-dot"></span>已完成</div><span class="column-count" data-count="done">0</span></header>
+          <div class="column-list" data-list="done"></div>
+        </section>
+      </section>
+    </div>
+
+    <p class="footer-note">独立文件：复制 <code>ART_PRODUCTION_BOARD.html</code> 到任意位置仍可使用。任务数据不写入项目文件，只有“导出 JSON”会生成可传递的进度文件。</p>
+  </main>
+
+  <dialog id="task-dialog" aria-labelledby="dialog-title">
+    <form id="task-form">
+      <div class="dialog-head">
+        <h2 id="dialog-title">新建美术任务</h2>
+        <button type="button" class="icon-button ghost" id="close-dialog" aria-label="关闭">×</button>
+      </div>
+      <div class="dialog-body">
+        <input id="task-id" type="hidden">
+        <div class="form-grid">
+          <div class="form-field full">
+            <label for="task-title">任务标题</label>
+            <input id="task-title" required maxlength="120" placeholder="例如：罗马军团兵 · 盾击动画">
+          </div>
+          <div class="form-field">
+            <label for="task-project">所属项目 / 角色</label>
+            <input id="task-project" required maxlength="60" list="project-suggestions" placeholder="例如：罗马军团兵">
+            <datalist id="project-suggestions">
+              <option value="公共规范"><option value="罗马军团兵"><option value="阿兹特克勇士"><option value="埃及弓箭手"><option value="召唤器与 UI">
+            </datalist>
+          </div>
+          <div class="form-field">
+            <label for="task-type">制作类型</label>
+            <input id="task-type" required maxlength="40" list="type-suggestions" placeholder="例如：动画">
+            <datalist id="type-suggestions">
+              <option value="模型"><option value="贴图"><option value="动画"><option value="UI / 图标"><option value="特效"><option value="交付规范">
+            </datalist>
+          </div>
+          <div class="form-field">
+            <label for="task-status">当前状态</label>
+            <select id="task-status">
+              <option value="todo">待制作</option>
+              <option value="doing">制作中</option>
+              <option value="review">待验收</option>
+              <option value="done">已完成</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="task-priority">优先级</label>
+            <select id="task-priority">
+              <option value="medium">中</option>
+              <option value="high">高</option>
+              <option value="urgent">紧急</option>
+              <option value="low">低</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="task-owner">负责人</label>
+            <input id="task-owner" maxlength="60" placeholder="未分配">
+          </div>
+          <div class="form-field">
+            <label for="task-due">期望日期</label>
+            <input id="task-due" type="date">
+          </div>
+          <div class="form-field full">
+            <label for="task-description">制作说明</label>
+            <textarea id="task-description" maxlength="1600" placeholder="说明用途、动作语义、风格方向、不能改动的骨骼或其他上下文。"></textarea>
+          </div>
+          <div class="form-field full">
+            <label for="task-acceptance">验收清单 <span class="field-help">每行一项，卡片上可逐项勾选</span></label>
+            <textarea id="task-acceptance" maxlength="2400" placeholder="模型比例与碰撞箱预期一致&#10;动作首尾姿态可平滑衔接&#10;源文件与导出文件一并交付"></textarea>
+          </div>
+          <div class="form-field full">
+            <label for="task-files">文件与交付路径 <span class="field-help">每行一个路径或文件名</span></label>
+            <textarea id="task-files" maxlength="1800" placeholder="assets-source/blockbench/example.bbmodel&#10;src/main/resources/assets/echo_warrior/..."></textarea>
+          </div>
+          <div class="form-field full">
+            <label for="task-notes">备注 / 修改意见</label>
+            <textarea id="task-notes" maxlength="2000" placeholder="记录版本反馈、验收问题或需要开发配合的内容。"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button type="button" id="delete-task" class="danger" hidden>删除任务</button>
+        <div class="dialog-actions">
+          <button type="button" id="cancel-dialog" class="ghost">取消</button>
+          <button type="submit" class="primary">保存任务</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const STORAGE_KEY = "echo-warrior-art-production-board-v1";
+      const STATUS_ORDER = ["todo", "doing", "review", "done"];
+      const STATUS_LABELS = { todo: "待制作", doing: "制作中", review: "待验收", done: "已完成" };
+      const PRIORITY_LABELS = { urgent: "紧急", high: "高优先", medium: "中优先", low: "低优先" };
+      const PRIORITY_ORDER = { urgent: 0, high: 1, medium: 2, low: 3 };
+
+      const seedTasks = [
+        {
+          id: "seed-roman-package",
+          title: "罗马军团兵模型与基础动画交付包",
+          project: "罗马军团兵",
+          type: "模型 / 动画",
+          status: "done",
+          priority: "high",
+          owner: "模型师",
+          due: "",
+          description: "模型、贴图以及待机、行走、攻击、举盾、收盾、受伤动画已完成项目接入；程序控制头部、眼睛和眉毛骨骼。",
+          acceptance: [
+            { text: "可编辑 BBModel 源文件已保留", done: true },
+            { text: "运行时模型、贴图与动画已导出", done: true },
+            { text: "头、双眼和眉毛不含动作关键帧", done: true }
+          ],
+          files: [
+            "assets-source/blockbench/roman_legionary.bbmodel",
+            "outputs/roman_legionary_modeler_master.bbmodel",
+            "src/main/resources/assets/echo_warrior/geckolib/"
+          ],
+          notes: "当前状态依据 2026-08-25 项目文档初始化。",
+          updatedAt: "2026-08-25T00:00:00.000Z"
+        },
+        {
+          id: "seed-aztec-assets",
+          title: "阿兹特克勇士正式贴图与技能图标",
+          project: "阿兹特克勇士",
+          type: "贴图 / UI 图标",
+          status: "done",
+          priority: "high",
+          owner: "美工",
+          due: "",
+          description: "128×128 实体贴图、五个 16×16 技能图标与两个 18×18 状态效果图标已接入游戏和网页百科。",
+          acceptance: [
+            { text: "五个技能图标使用正式人工资源", done: true },
+            { text: "两个状态效果图标尺寸与映射正确", done: true },
+            { text: "实体贴图已写回 BBModel 并导出", done: true }
+          ],
+          files: [
+            "assets-source/textures/entity/aztec_warrior_echo.png",
+            "docs/AZTEC_ART_TODO.html",
+            "encyclopedia/public/assets/echo-warrior/"
+          ],
+          notes: "保留为已完成交付记录。",
+          updatedAt: "2026-08-25T00:00:00.000Z"
+        },
+        {
+          id: "seed-egyptian-review",
+          title: "埃及弓箭手模型动画实机验收",
+          project: "埃及弓箭手",
+          type: "模型 / 动画",
+          status: "review",
+          priority: "high",
+          owner: "模型师 + 开发",
+          due: "",
+          description: "源模型、贴图与核心动作已接入。重点验收连续取箭、满弓瞄准、松弦、收箭归袋、后撤步和近战撤退时的动作连续性。",
+          acceptance: [
+            { text: "连续射击时右手取箭全程贴合", done: false },
+            { text: "目标消失后自然收箭与放弓", done: false },
+            { text: "后撤步朝向和放箭帧一致", done: false },
+            { text: "头部与瞳孔不被父骨骼带偏", done: false }
+          ],
+          files: [
+            "assets-source/blockbench/egyptian_archer_echo.bbmodel",
+            "assets-source/gltf/egyptian_archer_echo.gltf",
+            "scripts/update_egyptian_visual_assets.py"
+          ],
+          notes: "这是当前仍需要人工视觉判断的部分；程序行为测试另见召唤器测试清单。",
+          updatedAt: "2026-08-25T00:00:00.000Z"
+        },
+        {
+          id: "seed-delivery-rules",
+          title: "统一美术交付命名与源文件清单",
+          project: "公共规范",
+          type: "交付规范",
+          status: "todo",
+          priority: "medium",
+          owner: "未分配",
+          due: "",
+          description: "为模型师和美工整理一页统一规范，明确源文件、导出文件、贴图尺寸、动画命名、禁止改动骨骼和版本说明。",
+          acceptance: [
+            { text: "模型、贴图、动画和图标分别有交付清单", done: false },
+            { text: "明确可编辑源文件必须保留", done: false },
+            { text: "明确文件命名与目标目录", done: false },
+            { text: "提供一次实际交付示例", done: false }
+          ],
+          files: ["docs/MODELER_PREVIEW.md", "assets-source/", "outputs/"],
+          notes: "此任务是工作流整理，不改变游戏内容或比赛 MVP 范围。",
+          updatedAt: "2026-08-25T00:00:00.000Z"
+        }
+      ];
+
+      const clone = value => JSON.parse(JSON.stringify(value));
+      const makeId = () => globalThis.crypto?.randomUUID?.() || `task-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const lineList = value => value.split(/\r?\n/).map(item => item.trim()).filter(Boolean);
+
+      function normalizeTask(raw) {
+        const task = raw && typeof raw === "object" ? raw : {};
+        return {
+          id: String(task.id || makeId()),
+          title: String(task.title || "未命名任务").slice(0, 120),
+          project: String(task.project || "未分类").slice(0, 60),
+          type: String(task.type || "其他").slice(0, 40),
+          status: STATUS_ORDER.includes(task.status) ? task.status : "todo",
+          priority: Object.hasOwn(PRIORITY_LABELS, task.priority) ? task.priority : "medium",
+          owner: String(task.owner || "未分配").slice(0, 60),
+          due: /^\d{4}-\d{2}-\d{2}$/.test(task.due || "") ? task.due : "",
+          description: String(task.description || "").slice(0, 1600),
+          acceptance: Array.isArray(task.acceptance) ? task.acceptance.slice(0, 40).map(item => ({
+            text: String(typeof item === "string" ? item : item?.text || "").slice(0, 240),
+            done: Boolean(typeof item === "object" && item?.done)
+          })).filter(item => item.text) : [],
+          files: Array.isArray(task.files) ? task.files.slice(0, 40).map(item => String(item).slice(0, 260)).filter(Boolean) : [],
+          notes: String(task.notes || "").slice(0, 2000),
+          updatedAt: typeof task.updatedAt === "string" ? task.updatedAt : new Date().toISOString()
+        };
+      }
+
+      function loadState() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          if (parsed && Array.isArray(parsed.tasks)) return { version: 1, tasks: parsed.tasks.map(normalizeTask) };
+        } catch (error) {
+          console.warn("任务板本地数据读取失败，将使用初始数据。", error);
+        }
+        return { version: 1, tasks: clone(seedTasks) };
+      }
+
+      let state = loadState();
+      let draggedTaskId = null;
+      let toastTimer = null;
+
+      const byId = id => document.getElementById(id);
+      const dialog = byId("task-dialog");
+      const form = byId("task-form");
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          return true;
+        } catch (error) {
+          console.error("任务板本地保存失败。", error);
+          showToast("浏览器未允许本地保存，请导出 JSON 留存进度");
+          return false;
+        }
+      }
+
+      function showToast(message) {
+        const toast = byId("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2300);
+      }
+
+      function formatDate(value) {
+        if (!value) return "";
+        const [year, month, day] = value.split("-");
+        return `${year}/${month}/${day}`;
+      }
+
+      function isOverdue(task) {
+        if (!task.due || task.status === "done") return false;
+        const today = new Date();
+        const localToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+        return task.due < localToday;
+      }
+
+      function acceptanceProgress(task) {
+        const total = task.acceptance.length;
+        const done = task.acceptance.filter(item => item.done).length;
+        return { done, total, percent: total ? Math.round(done * 100 / total) : 0 };
+      }
+
+      function makeElement(tag, className, text) {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        if (text !== undefined) element.textContent = text;
+        return element;
+      }
+
+      function makeChip(text, className = "") {
+        return makeElement("span", `chip ${className}`.trim(), text);
+      }
+
+      function taskMatches(task) {
+        const query = byId("filter-search").value.trim().toLocaleLowerCase("zh-CN");
+        const project = byId("filter-project").value;
+        const type = byId("filter-type").value;
+        const owner = byId("filter-owner").value;
+        const priority = byId("filter-priority").value;
+        const haystack = [task.title, task.project, task.type, task.owner, task.description, task.notes, ...task.files, ...task.acceptance.map(item => item.text)].join("\n").toLocaleLowerCase("zh-CN");
+        return (!query || haystack.includes(query)) && (!project || task.project === project) && (!type || task.type === type) && (!owner || task.owner === owner) && (!priority || task.priority === priority);
+      }
+
+      function renderTask(task) {
+        const card = makeElement("article", "task-card");
+        card.draggable = true;
+        card.dataset.id = task.id;
+        if (isOverdue(task)) card.classList.add("overdue");
+
+        const top = makeElement("div", "card-top");
+        top.append(makeElement("div", "card-project", task.project));
+        const menu = makeElement("div", "card-menu");
+        const duplicate = makeElement("button", "ghost", "⧉");
+        duplicate.type = "button";
+        duplicate.title = "复制任务";
+        duplicate.setAttribute("aria-label", `复制任务：${task.title}`);
+        duplicate.addEventListener("click", event => {
+          event.stopPropagation();
+          const copied = normalizeTask({ ...clone(task), id: makeId(), title: `${task.title}（副本）`, status: "todo", updatedAt: new Date().toISOString() });
+          state.tasks.push(copied);
+          saveState();
+          render();
+          showToast("任务副本已建立");
+        });
+        const edit = makeElement("button", "ghost", "✎");
+        edit.type = "button";
+        edit.title = "编辑任务";
+        edit.setAttribute("aria-label", `编辑任务：${task.title}`);
+        edit.addEventListener("click", event => { event.stopPropagation(); openTaskDialog(task.id); });
+        menu.append(duplicate, edit);
+        top.append(menu);
+        card.append(top, makeElement("h3", "card-title", task.title));
+        if (task.description) card.append(makeElement("p", "card-description", task.description));
+
+        const chips = makeElement("div", "chips");
+        chips.append(makeChip(task.type), makeChip(PRIORITY_LABELS[task.priority], `priority-${task.priority}`));
+        if (isOverdue(task)) chips.append(makeChip("已逾期", "overdue-chip"));
+        card.append(chips);
+
+        if (task.acceptance.length) {
+          const progress = acceptanceProgress(task);
+          const acceptance = makeElement("div", "acceptance");
+          const summary = makeElement("div", "acceptance-summary");
+          summary.append(makeElement("span", "", "验收清单"), makeElement("span", "", `${progress.done}/${progress.total}`));
+          const bar = makeElement("div", "mini-progress");
+          const fill = makeElement("span");
+          fill.style.width = `${progress.percent}%`;
+          bar.append(fill);
+          acceptance.append(summary, bar);
+          task.acceptance.slice(0, 3).forEach((item, index) => {
+            const label = makeElement("label", `acceptance-item${item.done ? " done" : ""}`);
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = item.done;
+            checkbox.addEventListener("click", event => event.stopPropagation());
+            checkbox.addEventListener("change", () => {
+              const liveTask = state.tasks.find(candidate => candidate.id === task.id);
+              if (!liveTask?.acceptance[index]) return;
+              liveTask.acceptance[index].done = checkbox.checked;
+              liveTask.updatedAt = new Date().toISOString();
+              saveState();
+              render();
+            });
+            label.addEventListener("click", event => event.stopPropagation());
+            label.append(checkbox, makeElement("span", "", item.text));
+            acceptance.append(label);
+          });
+          if (task.acceptance.length > 3) acceptance.append(makeElement("div", "more-checks", `另有 ${task.acceptance.length - 3} 项，打开任务查看`));
+          card.append(acceptance);
+        }
+
+        const footer = makeElement("div", "card-footer");
+        footer.append(makeElement("span", "owner", `负责人：${task.owner || "未分配"}`));
+        footer.append(makeElement("span", "due", task.due ? `日期：${formatDate(task.due)}` : "未设日期"));
+        card.append(footer);
+
+        card.addEventListener("click", () => openTaskDialog(task.id));
+        card.addEventListener("dragstart", event => {
+          draggedTaskId = task.id;
+          card.classList.add("dragging");
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", task.id);
+        });
+        card.addEventListener("dragend", () => {
+          draggedTaskId = null;
+          card.classList.remove("dragging");
+          document.querySelectorAll(".column.drag-over").forEach(column => column.classList.remove("drag-over"));
+        });
+        return card;
+      }
+
+      function updateFilterOptions() {
+        const configs = [
+          ["filter-project", "全部项目", [...new Set(state.tasks.map(task => task.project).filter(Boolean))]],
+          ["filter-type", "全部类型", [...new Set(state.tasks.map(task => task.type).filter(Boolean))]],
+          ["filter-owner", "全部负责人", [...new Set(state.tasks.map(task => task.owner || "未分配"))]]
+        ];
+        configs.forEach(([id, placeholder, values]) => {
+          const select = byId(id);
+          const current = select.value;
+          select.replaceChildren(new Option(placeholder, ""));
+          values.sort((a, b) => a.localeCompare(b, "zh-CN")).forEach(value => select.add(new Option(value, value)));
+          if ([...select.options].some(option => option.value === current)) select.value = current;
+        });
+      }
+
+      function renderSummary() {
+        const counts = Object.fromEntries(STATUS_ORDER.map(status => [status, state.tasks.filter(task => task.status === status).length]));
+        STATUS_ORDER.forEach(status => {
+          byId(`count-${status}`).textContent = counts[status];
+          document.querySelector(`[data-count="${status}"]`).textContent = counts[status];
+        });
+        const total = state.tasks.length;
+        const done = counts.done;
+        const percent = total ? Math.round(done * 100 / total) : 0;
+        byId("progress-value").textContent = `${percent}%`;
+        byId("progress-detail").textContent = `${done} / ${total} 项`;
+        byId("progress-fill").style.width = `${percent}%`;
+      }
+
+      function render() {
+        updateFilterOptions();
+        renderSummary();
+        STATUS_ORDER.forEach(status => {
+          const list = document.querySelector(`[data-list="${status}"]`);
+          list.replaceChildren();
+          const tasks = state.tasks
+            .filter(task => task.status === status && taskMatches(task))
+            .sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority] || (a.due || "9999").localeCompare(b.due || "9999") || b.updatedAt.localeCompare(a.updatedAt));
+          document.querySelector(`[data-count="${status}"]`).textContent = tasks.length;
+          if (!tasks.length) list.append(makeElement("div", "empty-column", "当前筛选下没有任务\n可拖入任务或新建一项"));
+          else tasks.forEach(task => list.append(renderTask(task)));
+        });
+      }
+
+      function openTaskDialog(taskId = "") {
+        const task = taskId ? state.tasks.find(item => item.id === taskId) : null;
+        byId("dialog-title").textContent = task ? "编辑美术任务" : "新建美术任务";
+        byId("task-id").value = task?.id || "";
+        byId("task-title").value = task?.title || "";
+        byId("task-project").value = task?.project || "";
+        byId("task-type").value = task?.type || "";
+        byId("task-status").value = task?.status || "todo";
+        byId("task-priority").value = task?.priority || "medium";
+        byId("task-owner").value = task?.owner === "未分配" ? "" : task?.owner || "";
+        byId("task-due").value = task?.due || "";
+        byId("task-description").value = task?.description || "";
+        byId("task-acceptance").value = task?.acceptance.map(item => item.text).join("\n") || "";
+        byId("task-files").value = task?.files.join("\n") || "";
+        byId("task-notes").value = task?.notes || "";
+        byId("delete-task").hidden = !task;
+        dialog.showModal();
+        setTimeout(() => byId("task-title").focus(), 0);
+      }
+
+      function closeDialog() {
+        if (dialog.open) dialog.close();
+      }
+
+      function deleteCurrentTask() {
+        const taskId = byId("task-id").value;
+        const task = state.tasks.find(item => item.id === taskId);
+        if (!task || !confirm(`确定删除“${task.title}”吗？`)) return;
+        state.tasks = state.tasks.filter(item => item.id !== taskId);
+        saveState();
+        closeDialog();
+        render();
+        showToast("任务已删除");
+      }
+
+      form.addEventListener("submit", event => {
+        event.preventDefault();
+        const taskId = byId("task-id").value;
+        const previous = state.tasks.find(item => item.id === taskId);
+        const previousChecks = new Map(previous?.acceptance.map(item => [item.text, item.done]) || []);
+        const acceptance = lineList(byId("task-acceptance").value).map(text => ({ text, done: previousChecks.get(text) || false }));
+        const task = normalizeTask({
+          id: taskId || makeId(),
+          title: byId("task-title").value.trim(),
+          project: byId("task-project").value.trim(),
+          type: byId("task-type").value.trim(),
+          status: byId("task-status").value,
+          priority: byId("task-priority").value,
+          owner: byId("task-owner").value.trim() || "未分配",
+          due: byId("task-due").value,
+          description: byId("task-description").value.trim(),
+          acceptance,
+          files: lineList(byId("task-files").value),
+          notes: byId("task-notes").value.trim(),
+          updatedAt: new Date().toISOString()
+        });
+        if (previous) state.tasks[state.tasks.indexOf(previous)] = task;
+        else state.tasks.push(task);
+        saveState();
+        closeDialog();
+        render();
+        showToast(previous ? "任务已更新" : "任务已建立");
+      });
+
+      document.querySelectorAll(".column").forEach(column => {
+        column.addEventListener("dragover", event => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+          column.classList.add("drag-over");
+        });
+        column.addEventListener("dragleave", event => {
+          if (!column.contains(event.relatedTarget)) column.classList.remove("drag-over");
+        });
+        column.addEventListener("drop", event => {
+          event.preventDefault();
+          column.classList.remove("drag-over");
+          const taskId = draggedTaskId || event.dataTransfer.getData("text/plain");
+          const task = state.tasks.find(item => item.id === taskId);
+          const nextStatus = column.dataset.status;
+          if (!task || !STATUS_ORDER.includes(nextStatus) || task.status === nextStatus) return;
+          task.status = nextStatus;
+          task.updatedAt = new Date().toISOString();
+          saveState();
+          render();
+          showToast(`已移动到“${STATUS_LABELS[nextStatus]}”`);
+        });
+      });
+
+      ["filter-search", "filter-project", "filter-type", "filter-owner", "filter-priority"].forEach(id => {
+        byId(id).addEventListener(id === "filter-search" ? "input" : "change", render);
+      });
+
+      byId("clear-filters").addEventListener("click", () => {
+        ["filter-search", "filter-project", "filter-type", "filter-owner", "filter-priority"].forEach(id => { byId(id).value = ""; });
+        render();
+      });
+      byId("new-task").addEventListener("click", () => openTaskDialog());
+      byId("close-dialog").addEventListener("click", closeDialog);
+      byId("cancel-dialog").addEventListener("click", closeDialog);
+      byId("delete-task").addEventListener("click", deleteCurrentTask);
+      dialog.addEventListener("click", event => {
+        const rect = dialog.getBoundingClientRect();
+        const outside = event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
+        if (outside) closeDialog();
+      });
+
+      byId("export-data").addEventListener("click", () => {
+        const payload = { version: 1, app: "Echo Warrior Art Production Board", exportedAt: new Date().toISOString(), tasks: state.tasks };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `echo-warrior-art-board-${new Date().toISOString().slice(0, 10)}.json`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 0);
+        showToast("任务板 JSON 已导出");
+      });
+
+      byId("import-file").addEventListener("change", async event => {
+        const file = event.target.files?.[0];
+        event.target.value = "";
+        if (!file) return;
+        try {
+          const parsed = JSON.parse(await file.text());
+          if (!parsed || !Array.isArray(parsed.tasks)) throw new Error("缺少 tasks 数组");
+          const imported = parsed.tasks.map(normalizeTask);
+          if (!confirm(`将用导入的 ${imported.length} 项任务替换当前任务板，是否继续？`)) return;
+          state = { version: 1, tasks: imported };
+          saveState();
+          render();
+          showToast("任务板已导入");
+        } catch (error) {
+          console.error(error);
+          alert("无法导入：文件不是有效的任务板 JSON。");
+        }
+      });
+
+      byId("copy-summary").addEventListener("click", async () => {
+        const lines = ["Echo Warrior 美术任务板", `更新时间：${new Date().toLocaleString("zh-CN")}`, ""];
+        STATUS_ORDER.forEach(status => {
+          const tasks = state.tasks.filter(task => task.status === status);
+          lines.push(`【${STATUS_LABELS[status]}】${tasks.length} 项`);
+          tasks.forEach(task => {
+            const progress = acceptanceProgress(task);
+            const due = task.due ? ` · ${formatDate(task.due)}` : "";
+            const checks = progress.total ? ` · 验收 ${progress.done}/${progress.total}` : "";
+            lines.push(`- [${task.owner || "未分配"}] ${task.project} / ${task.title} · ${PRIORITY_LABELS[task.priority]}${due}${checks}`);
+          });
+          lines.push("");
+        });
+        try {
+          await navigator.clipboard.writeText(lines.join("\n"));
+          showToast("任务摘要已复制");
+        } catch {
+          const textarea = document.createElement("textarea");
+          textarea.value = lines.join("\n");
+          document.body.append(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          textarea.remove();
+          showToast("任务摘要已复制");
+        }
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

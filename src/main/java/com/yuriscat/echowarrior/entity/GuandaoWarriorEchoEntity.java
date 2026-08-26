@@ -70,28 +70,81 @@ import java.util.UUID;
 
 public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		implements EchoWarriorEntity, SmartBrainOwner<GuandaoWarriorEchoEntity>, GeoEntity {
+	public static final byte VISUAL_NORMAL = 0;
+	public static final byte VISUAL_ALERT = 1;
+	public static final byte VISUAL_STARTLED = 2;
+	public static final byte VISUAL_HURT = 3;
+	public static final byte VISUAL_CURIOUS = 4;
+	public static final byte VISUAL_MUTUAL_GAZE = 5;
+	public static final byte VISUAL_CAUGHT = 6;
+	public static final byte VISUAL_LOCOMOTION = 7;
+
 	public static final int SKILL_ARMOR_CLAD = 0;
 	public static final int SKILL_GROWING_VALOR = 1;
 	public static final int SKILL_CRESCENT_BLADE = 2;
 	public static final int SKILL_COMBO = 3;
+	public static final byte ANIMATION_ACTION_NONE = 0;
+	public static final byte ANIMATION_ACTION_ATTACK = 1;
+	public static final byte ANIMATION_ACTION_COMBO = 2;
+	public static final byte ANIMATION_ACTION_HURT = 3;
 
 	private static final EntityDataAccessor<Boolean> COMBO_ACTIVE = SynchedEntityData.defineId(
 			GuandaoWarriorEchoEntity.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Boolean> ANIMATION_DEBUG_ENABLED = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Byte> ANIMATION_ACTION = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Long> ANIMATION_ACTION_STARTED_AT = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Long> ANIMATION_ACTION_ENDS_AT = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.LONG);
 	private static final EntityDataAccessor<Byte> VALOR_STACKS = SynchedEntityData.defineId(
 			GuandaoWarriorEchoEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Float> ATTENTION_X = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> ATTENTION_Y = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> ATTENTION_Z = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_X = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_Y = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_Z = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Byte> VISUAL_REACTION = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Long> VISUAL_REACTION_UNTIL = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Long> BLINK_START = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Byte> BLINK_COUNT = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Byte> CURIOUS_TILT = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Integer> VISUAL_SEQUENCE = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Long> ATTENTION_STARTED_AT = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Long> CAUGHT_REACTION_START = SynchedEntityData.defineId(
+			GuandaoWarriorEchoEntity.class, EntityDataSerializers.LONG);
 
 	private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.guandao_warrior.idle");
 	private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.guandao_warrior.walk");
-	private static final RawAnimation ATTACK = RawAnimation.begin().thenPlay("animation.guandao_warrior.attack");
-	private static final RawAnimation COMBO = RawAnimation.begin().thenPlay("animation.guandao_warrior.combo");
+	// Both committed attacks hold their authored neutral final keyframe until the
+	// server explicitly releases the trigger. Letting a PLAY_ONCE trigger expire
+	// naturally can expose GeckoLib's cached previous pose for one rendered frame.
+	private static final RawAnimation ATTACK = RawAnimation.begin().thenPlayAndHold("animation.guandao_warrior.attack");
+	private static final RawAnimation COMBO = RawAnimation.begin().thenPlayAndHold("animation.guandao_warrior.combo");
 	private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.guandao_warrior.hurt");
 	private static final String ACTION_CONTROLLER = "action";
 	private static final String ATTACK_TRIGGER = "attack";
 	private static final String COMBO_TRIGGER = "combo";
 	private static final String HURT_TRIGGER = "hurt";
 
-	private static final int ATTACK_ANIMATION_TICKS = 34;
+	private static final int ATTACK_ANIMATION_TICKS = 35;
 	private static final int COMBO_ANIMATION_TICKS = 101;
+	private static final int HURT_ANIMATION_TICKS = 10;
 	private static final int VALOR_DURATION_TICKS = 160;
 	private static final int MAX_VALOR_STACKS = 5;
 	private static final double VALOR_DAMAGE_PER_STACK = 0.06;
@@ -103,11 +156,19 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	private static final double[] COMBO_ANGLE = {150.0, 190.0, 120.0, 220.0};
 	private static final double[] COMBO_FORWARD_OFFSET = {0.40, 0.50, 0.75, 0.50};
 	private static final double[] COMBO_YAW_OFFSET = {0.0, 0.0, -10.0, 0.0};
+	private static final float[] COMBO_SWEEP_VOLUME = {0.46F, 0.56F, 0.66F};
+	private static final float[] COMBO_SWEEP_PITCH = {1.08F, 0.98F, 0.86F};
+	private static final int COMBO_OPENING_CORRECTION_START_TICK = 6;
+	private static final int COMBO_OPENING_CORRECTION_END_TICK = 21;
+	private static final double COMBO_OPENING_CORRECTION_MAX = 0.75;
+	private static final double COMBO_OPENING_CORRECTION_STEP = 0.075;
+	private static final double COMBO_OPENING_REACH_MARGIN = 0.15;
 	private static final Identifier COMBO_STEP_ID = EchoWarrior.id("guandao_combo_step_height");
 	private static final AttributeModifier COMBO_STEP = new AttributeModifier(
 			COMBO_STEP_ID, 0.45, AttributeModifier.Operation.ADD_VALUE);
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
+	private final GuandaoVisualBehavior visualBehavior = new GuandaoVisualBehavior(this);
 	private final Set<UUID> comboPhaseHits = new HashSet<>();
 	private final Set<UUID> deflectedProjectiles = new HashSet<>();
 	private @Nullable EntityReference<LivingEntity> ownerReference;
@@ -119,12 +180,16 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	private Vec3 activityAnchor = Vec3.ZERO;
 	private long lastNaturalHealAt;
 	private long attackAnimationUntil;
+	private long hurtAnimationUntil;
 	private long valorExpiresAt;
 	private long comboStartedAt;
 	private int comboPhase = -1;
 	private boolean comboPhaseAwardedValor;
 	private double comboPhaseValorMultiplier = 1.0;
 	private float comboYaw;
+	private @Nullable LivingEntity comboOpeningTarget;
+	private double comboOpeningCorrectionUsed;
+	private boolean comboOpeningCorrectionBlockedLogged;
 	private boolean projectileKnockbackContext;
 	private int lastProjectileDamageTick = Integer.MIN_VALUE;
 	private int movementAnimationLastMovingTick = Integer.MIN_VALUE;
@@ -149,7 +214,26 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	protected void defineSynchedData(SynchedEntityData.Builder builder) {
 		super.defineSynchedData(builder);
 		builder.define(COMBO_ACTIVE, false);
+		// Opt-in after the release-boundary logs confirmed stable attack and combo recovery.
+		builder.define(ANIMATION_DEBUG_ENABLED, false);
+		builder.define(ANIMATION_ACTION, ANIMATION_ACTION_NONE);
+		builder.define(ANIMATION_ACTION_STARTED_AT, 0L);
+		builder.define(ANIMATION_ACTION_ENDS_AT, 0L);
 		builder.define(VALOR_STACKS, (byte)0);
+		builder.define(ATTENTION_X, 0.0F);
+		builder.define(ATTENTION_Y, 0.0F);
+		builder.define(ATTENTION_Z, 0.0F);
+		builder.define(EYE_ATTENTION_X, 0.0F);
+		builder.define(EYE_ATTENTION_Y, 0.0F);
+		builder.define(EYE_ATTENTION_Z, 0.0F);
+		builder.define(VISUAL_REACTION, VISUAL_NORMAL);
+		builder.define(VISUAL_REACTION_UNTIL, 0L);
+		builder.define(BLINK_START, -100L);
+		builder.define(BLINK_COUNT, (byte)0);
+		builder.define(CURIOUS_TILT, (byte)0);
+		builder.define(VISUAL_SEQUENCE, 0);
+		builder.define(ATTENTION_STARTED_AT, 0L);
+		builder.define(CAUGHT_REACTION_START, -100L);
 	}
 
 	@Override
@@ -185,12 +269,21 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	}
 
 	private void startMeleeAttackAnimation() {
-		this.attackAnimationUntil = this.level().getGameTime() + ATTACK_ANIMATION_TICKS;
+		long now = this.level().getGameTime();
+		byte previousAction = getAnimationActionStateForDiagnostics();
+		this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+		this.hurtAnimationUntil = 0L;
+		this.attackAnimationUntil = now + ATTACK_ANIMATION_TICKS;
+		setAnimationAction(ANIMATION_ACTION_ATTACK, now, this.attackAnimationUntil);
 		this.triggerAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
+		logAnimationEvent("start", ANIMATION_ACTION_ATTACK, previousAction, this.getTarget(),
+				"budget=" + ATTACK_ANIMATION_TICKS);
 	}
 
 	private boolean canPerformMeleeHit(LivingEntity target) {
 		if (isComboActive() || !target.isAlive() || !this.canAttack(target) || !this.hasLineOfSight(target)) return false;
+		if (getAnimationActionStateForDiagnostics() == ANIMATION_ACTION_HURT
+				&& this.level().getGameTime() < this.hurtAnimationUntil) return false;
 		double reach = NORMAL_RADIUS + target.getBbWidth() * 0.5;
 		return horizontalDistanceSqr(this.position(), target.position()) <= reach * reach;
 	}
@@ -214,6 +307,8 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		}
 
 		long now = level.getGameTime();
+		finishMeleeAttackPresentation(now);
+		finishHurtPresentation(now);
 		if (getValorStacks() > 0 && now >= this.valorExpiresAt) {
 			setValorStacks(0);
 		}
@@ -238,9 +333,21 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 			EchoExperienceSystem.markParticipation(this, this.getTarget());
 		}
 		EchoActivityMovement.tick(level, this, this.activityMode, this.activityAnchor,
-				this.getTarget() != null || isComboActive() || now < this.attackAnimationUntil);
+				this.getTarget() != null || isComboActive() || now < this.attackAnimationUntil
+						|| this.visualBehavior.ownsMovement());
+		this.visualBehavior.tick(level, owner);
 		EchoWaterSafety.tick(level, this, owner,
 				this.activityMode == EchoRelicState.ActivityMode.FOLLOW && !isComboActive());
+	}
+
+	@Override
+	public void tick() {
+		super.tick();
+		if (!this.level().isClientSide()) {
+			// Body-facing is applied after the normal mob tick so vanilla rotation
+			// control cannot overwrite mutual-gaze or presentation-owned turns.
+			this.visualBehavior.tickBodyFacing(this.level().getGameTime());
+		}
 	}
 
 	private void tryStartCombo(ServerLevel level, ItemStack relic) {
@@ -263,15 +370,26 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		persistCurrentRelic(relic);
 		this.comboStartedAt = now;
 		this.comboYaw = desiredYaw;
+		this.comboOpeningTarget = target;
+		this.comboOpeningCorrectionUsed = 0.0;
+		this.comboOpeningCorrectionBlockedLogged = false;
 		this.comboPhase = -1;
 		this.comboPhaseHits.clear();
 		this.deflectedProjectiles.clear();
 		this.entityData.set(COMBO_ACTIVE, true);
+		this.attackAnimationUntil = 0L;
+		this.hurtAnimationUntil = 0L;
+		byte previousAction = getAnimationActionStateForDiagnostics();
+		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+		setAnimationAction(ANIMATION_ACTION_COMBO, now, now + COMBO_ANIMATION_TICKS);
 		setComboStepHeight(true);
 		lockComboFacing();
 		this.getNavigation().stop();
 		BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.WALK_TARGET);
 		this.triggerAnim(ACTION_CONTROLLER, COMBO_TRIGGER);
+		logAnimationEvent("start", ANIMATION_ACTION_COMBO, previousAction, target,
+				"budget=" + COMBO_ANIMATION_TICKS + " triggerDistance=" + horizontalDistance(this, target));
 	}
 
 	private void tickCombo(ServerLevel level) {
@@ -284,16 +402,23 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.WALK_TARGET);
 		this.setDeltaMovement(0.0, this.getDeltaMovement().y, 0.0);
 		if (elapsed == 30 || elapsed == 48 || elapsed == 65) retargetBetweenComboStrikes();
+		trackOpeningTarget(elapsed);
 		lockComboFacing();
 		moveComboForward(level, elapsed);
+		moveComboOpeningCorrection(level, elapsed);
 
 		int phase = comboPhaseForTick(elapsed);
 		if (phase >= 0) {
+			if (elapsed == COMBO_HIT_TICKS[phase]) playComboStrikeFeedback(level, phase);
 			if (phase != this.comboPhase) {
 				this.comboPhase = phase;
 				this.comboPhaseHits.clear();
 				this.comboPhaseAwardedValor = false;
 				this.comboPhaseValorMultiplier = valorDamageMultiplier();
+				logAnimationEvent("hit_window_start", ANIMATION_ACTION_COMBO,
+						ANIMATION_ACTION_COMBO, phase == 0 ? this.comboOpeningTarget : this.getTarget(),
+						"phase=" + (phase + 1) + " elapsed=" + elapsed
+								+ " openingCorrection=" + this.comboOpeningCorrectionUsed);
 			}
 			int hits = performSectorAttack(
 					level,
@@ -308,12 +433,46 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 			if (hits > 0 && !this.comboPhaseAwardedValor) {
 				this.comboPhaseAwardedValor = true;
 				addValorStack(level.getGameTime());
-				level.playSound(null, this.blockPosition(),
-						phase == 3 ? SoundEvents.PLAYER_ATTACK_STRONG : SoundEvents.PLAYER_ATTACK_SWEEP,
-						SoundSource.PLAYERS, phase == 3 ? 0.9F : 0.55F, phase == 3 ? 0.75F : 0.95F);
+			}
+			if (hits > 0) {
+				logAnimationEvent("hit", ANIMATION_ACTION_COMBO, ANIMATION_ACTION_COMBO,
+						phase == 0 ? this.comboOpeningTarget : this.getTarget(),
+						"phase=" + (phase + 1) + " elapsed=" + elapsed + " newHits=" + hits
+								+ " totalHits=" + this.comboPhaseHits.size());
+			}
+			if (elapsed == COMBO_HIT_TICKS[phase] + 1) {
+				logAnimationEvent("hit_window_finish", ANIMATION_ACTION_COMBO,
+						ANIMATION_ACTION_COMBO, phase == 0 ? this.comboOpeningTarget : this.getTarget(),
+						"phase=" + (phase + 1) + " hits=" + this.comboPhaseHits.size());
+				if (phase == 0) this.comboOpeningTarget = null;
 			}
 		}
 		if (elapsed >= 38 && elapsed <= 47) deflectFrontProjectiles(level);
+	}
+
+	private void playComboStrikeFeedback(ServerLevel level, int phase) {
+		if (phase < 3) {
+			level.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+					SoundSource.PLAYERS, COMBO_SWEEP_VOLUME[phase], COMBO_SWEEP_PITCH[phase]);
+			return;
+		}
+
+		level.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
+				SoundSource.PLAYERS, 0.58F, 0.68F);
+		level.playSound(null, this.blockPosition(), SoundEvents.BREEZE_WIND_CHARGE_BURST.value(),
+				SoundSource.PLAYERS, 1.12F, 0.78F);
+		level.playSound(null, this.blockPosition(), SoundEvents.MACE_SMASH_GROUND_HEAVY,
+				SoundSource.PLAYERS, 0.72F, 0.86F);
+
+		Vec3 impactCenter = this.position().add(facing(this.comboYaw).scale(2.0)).add(0.0, 0.85, 0.0);
+		level.sendParticles(ParticleTypes.GUST_EMITTER_SMALL,
+				impactCenter.x, impactCenter.y, impactCenter.z, 1, 0.0, 0.0, 0.0, 0.0);
+		for (int index = 0; index < 7; index++) {
+			float arcYaw = this.comboYaw - 80.0F + index * (160.0F / 6.0F);
+			Vec3 gust = this.position().add(facing(arcYaw).scale(2.35)).add(0.0, 0.8, 0.0);
+			level.sendParticles(ParticleTypes.GUST,
+					gust.x, gust.y, gust.z, 1, 0.08, 0.16, 0.08, 0.015);
+		}
 	}
 
 	private int comboPhaseForTick(int elapsed) {
@@ -332,6 +491,47 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		if (distance <= 0.0 || !hasSafeForwardSupport(level, distance + 0.35)) return;
 		Vec3 movement = facing(this.comboYaw).scale(distance);
 		this.move(MoverType.SELF, movement);
+	}
+
+	private void trackOpeningTarget(int elapsed) {
+		if (elapsed < COMBO_OPENING_CORRECTION_START_TICK || elapsed > COMBO_OPENING_CORRECTION_END_TICK) return;
+		LivingEntity target = this.comboOpeningTarget;
+		if (target == null || !target.isAlive() || !this.canAttack(target) || !this.hasLineOfSight(target)) return;
+		float desired = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		this.comboYaw += Mth.clamp(Mth.wrapDegrees(desired - this.comboYaw), -12.0F, 12.0F);
+	}
+
+	private void moveComboOpeningCorrection(ServerLevel level, int elapsed) {
+		if (elapsed < COMBO_OPENING_CORRECTION_START_TICK || elapsed > COMBO_OPENING_CORRECTION_END_TICK
+				|| this.comboOpeningCorrectionUsed >= COMBO_OPENING_CORRECTION_MAX) return;
+		LivingEntity target = this.comboOpeningTarget;
+		if (target == null || !target.isAlive() || !this.canAttack(target) || !this.hasLineOfSight(target)) return;
+
+		double remainingAuthoredAdvance = Math.max(0, COMBO_HIT_TICKS[0] - Math.max(15, elapsed)) * 0.075;
+		double reliableCenterReach = COMBO_FORWARD_OFFSET[0] + COMBO_RADIUS[0]
+				+ target.getBbWidth() * 0.5 + remainingAuthoredAdvance - COMBO_OPENING_REACH_MARGIN;
+		double shortfall = Math.sqrt(horizontalDistanceSqr(this.position(), target.position())) - reliableCenterReach;
+		if (shortfall <= 0.0) return;
+
+		double requested = Math.min(COMBO_OPENING_CORRECTION_STEP,
+				Math.min(shortfall, COMBO_OPENING_CORRECTION_MAX - this.comboOpeningCorrectionUsed));
+		if (!hasSafeForwardSupport(level, requested + 0.35)) {
+			logOpeningCorrectionBlocked("unsafe_support", elapsed, target);
+			return;
+		}
+		Vec3 before = this.position();
+		this.move(MoverType.SELF, facing(this.comboYaw).scale(requested));
+		double moved = Math.sqrt(horizontalDistanceSqr(before, this.position()));
+		this.comboOpeningCorrectionUsed += moved;
+		if (moved + 1.0E-4 < requested) logOpeningCorrectionBlocked("collision", elapsed, target);
+	}
+
+	private void logOpeningCorrectionBlocked(String reason, int elapsed, LivingEntity target) {
+		if (this.comboOpeningCorrectionBlockedLogged) return;
+		this.comboOpeningCorrectionBlockedLogged = true;
+		logAnimationEvent("opening_correction_blocked", ANIMATION_ACTION_COMBO,
+				ANIMATION_ACTION_COMBO, target,
+				"reason=" + reason + " elapsed=" + elapsed + " used=" + this.comboOpeningCorrectionUsed);
 	}
 
 	private boolean hasSafeForwardSupport(ServerLevel level, double distance) {
@@ -369,11 +569,44 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	}
 
 	private void finishCombo() {
+		if (!isComboActive()) {
+			setComboStepHeight(false);
+			return;
+		}
+		byte previousAction = getAnimationActionStateForDiagnostics();
+		logAnimationEvent("finish", ANIMATION_ACTION_COMBO, previousAction, this.getTarget(),
+				"elapsed=" + Math.max(0L, this.level().getGameTime() - this.comboStartedAt)
+						+ " openingCorrection=" + this.comboOpeningCorrectionUsed);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, COMBO_TRIGGER);
 		this.entityData.set(COMBO_ACTIVE, false);
+		setAnimationAction(ANIMATION_ACTION_NONE, this.level().getGameTime(), 0L);
 		this.comboPhase = -1;
 		this.comboPhaseHits.clear();
 		this.deflectedProjectiles.clear();
+		this.comboOpeningTarget = null;
+		this.comboOpeningCorrectionUsed = 0.0;
 		setComboStepHeight(false);
+	}
+
+	private void finishMeleeAttackPresentation(long now) {
+		if (this.attackAnimationUntil <= 0L || now < this.attackAnimationUntil) return;
+		byte previousAction = getAnimationActionStateForDiagnostics();
+		logAnimationEvent("finish", ANIMATION_ACTION_ATTACK, previousAction, this.getTarget(),
+				"controllerStopped=true");
+		this.attackAnimationUntil = 0L;
+		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
+		if (previousAction == ANIMATION_ACTION_ATTACK) setAnimationAction(ANIMATION_ACTION_NONE, now, 0L);
+	}
+
+	private void finishHurtPresentation(long now) {
+		if (this.hurtAnimationUntil <= 0L || now < this.hurtAnimationUntil) return;
+		this.hurtAnimationUntil = 0L;
+		this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+		if (getAnimationActionStateForDiagnostics() == ANIMATION_ACTION_HURT) {
+			logAnimationEvent("finish", ANIMATION_ACTION_HURT, ANIMATION_ACTION_HURT, this.getTarget(),
+					"controllerStopped=true");
+			setAnimationAction(ANIMATION_ACTION_NONE, now, 0L);
+		}
 	}
 
 	private void setComboStepHeight(boolean active) {
@@ -417,6 +650,9 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		Set<UUID> hits = new HashSet<>();
 		int hitCount = performSectorAttack(level, NORMAL_RADIUS, NORMAL_ANGLE, 0.45, 0.0,
 				valorDamageMultiplier(), hits, false);
+		logAnimationEvent("hit", ANIMATION_ACTION_ATTACK, getAnimationActionStateForDiagnostics(),
+				ignoredPrimaryTarget instanceof LivingEntity living ? living : this.getTarget(),
+				"hits=" + hitCount + " targetCount=" + hits.size());
 		if (hitCount <= 0) return false;
 		addValorStack(level.getGameTime());
 		level.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
@@ -489,6 +725,51 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 
 	public boolean isComboActive() {
 		return this.entityData.get(COMBO_ACTIVE);
+	}
+
+	public boolean isAnimationDebugEnabled() { return this.entityData.get(ANIMATION_DEBUG_ENABLED); }
+	public byte getAnimationActionStateForDiagnostics() { return this.entityData.get(ANIMATION_ACTION); }
+	public long getAnimationActionStartedAtForDiagnostics() { return this.entityData.get(ANIMATION_ACTION_STARTED_AT); }
+	public long getAnimationActionEndsAtForDiagnostics() { return this.entityData.get(ANIMATION_ACTION_ENDS_AT); }
+	public boolean isMovementAnimationActiveForDiagnostics() { return this.movementAnimationActive; }
+
+	public void setAnimationDebugEnabled(boolean enabled) {
+		this.entityData.set(ANIMATION_DEBUG_ENABLED, enabled);
+		EchoWarrior.LOGGER.info("[GuandaoAnimationDebug] warrior={} tick={} enabled={}",
+				this.getId(), this.level().getGameTime(), enabled);
+	}
+
+	private void setAnimationAction(byte action, long startedAt, long endsAt) {
+		this.entityData.set(ANIMATION_ACTION, action);
+		this.entityData.set(ANIMATION_ACTION_STARTED_AT, startedAt);
+		this.entityData.set(ANIMATION_ACTION_ENDS_AT, endsAt);
+	}
+
+	private void logAnimationEvent(String event, byte action, byte previousAction,
+			@Nullable LivingEntity target, String detail) {
+		if (!isAnimationDebugEnabled()) return;
+		EchoWarrior.LOGGER.info(
+				"[GuandaoAnimationServer] warrior={} tick={} event={} action={} previousAction={} "
+						+ "target={} alive={} distance={} yaw={} start={} end={} movementBase={} detail={}",
+				this.getId(), this.level().getGameTime(), event, animationActionName(action),
+				animationActionName(previousAction), target == null ? -1 : target.getId(),
+				target != null && target.isAlive(), horizontalDistance(this, target), this.getYRot(),
+				this.entityData.get(ANIMATION_ACTION_STARTED_AT), this.entityData.get(ANIMATION_ACTION_ENDS_AT),
+				this.movementAnimationActive, detail);
+	}
+
+	private static String animationActionName(byte action) {
+		return switch (action) {
+			case ANIMATION_ACTION_ATTACK -> "attack";
+			case ANIMATION_ACTION_COMBO -> "combo";
+			case ANIMATION_ACTION_HURT -> "hurt";
+			default -> "none";
+		};
+	}
+
+	private static double horizontalDistance(Entity source, @Nullable Entity target) {
+		return target == null ? Double.NaN
+				: Math.sqrt(horizontalDistanceSqr(source.position(), target.position()));
 	}
 
 	private @Nullable LivingEntity selectProtectiveTarget(LivingEntity owner) {
@@ -576,14 +857,108 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 			this.projectileKnockbackContext = previousProjectileContext;
 		}
 		if (hurt && this.getHealth() < previousHealth) {
-			if (!isComboActive() && level.getGameTime() >= this.attackAnimationUntil) {
-				this.triggerAnim(ACTION_CONTROLLER, HURT_TRIGGER);
-			}
+			long now = level.getGameTime();
+			boolean combatWasActive = isVisualCombatActive(now);
+			boolean committedAction = isComboActive() || now < this.attackAnimationUntil;
+			LivingEntity livingAttacker = attacker instanceof LivingEntity living ? living : null;
 			boolean directMelee = attacker instanceof LivingEntity && source.getDirectEntity() == attacker
 					&& !source.is(DamageTypeTags.IS_PROJECTILE);
+			boolean legalRetaliation = livingAttacker != null && canProtectAgainst(livingAttacker);
+			boolean immediateRetaliation = legalRetaliation && directMelee && !committedAction
+					&& this.hasLineOfSight(livingAttacker)
+					&& horizontalDistanceSqr(this.position(), livingAttacker.position())
+					<= Math.pow(NORMAL_RADIUS + livingAttacker.getBbWidth() * 0.5, 2.0);
+
+			if (legalRetaliation && !committedAction) BrainUtil.setTargetOfEntity(this, livingAttacker);
+			if (immediateRetaliation) {
+				byte previousAction = getAnimationActionStateForDiagnostics();
+				this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+				this.hurtAnimationUntil = 0L;
+				if (previousAction == ANIMATION_ACTION_HURT) {
+					setAnimationAction(ANIMATION_ACTION_NONE, now, 0L);
+				}
+				faceImmediateRetaliation(livingAttacker);
+				logAnimationEvent("retaliate_immediate", ANIMATION_ACTION_NONE,
+						previousAction, livingAttacker, "directMelee=true");
+			} else if (!combatWasActive) {
+				byte previousAction = getAnimationActionStateForDiagnostics();
+				this.hurtAnimationUntil = now + HURT_ANIMATION_TICKS;
+				setAnimationAction(ANIMATION_ACTION_HURT, now, this.hurtAnimationUntil);
+				this.triggerAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+				logAnimationEvent("start", ANIMATION_ACTION_HURT, previousAction, livingAttacker,
+						"retaliation=" + (legalRetaliation ? "pursue" : "none"));
+			}
+			this.visualBehavior.onHurt(now, livingAttacker);
 			if (projectile || directMelee) reduceComboCooldown(level, 10L);
 		}
 		return hurt;
+	}
+
+	private void faceImmediateRetaliation(LivingEntity attacker) {
+		float yaw = yawToward(this.getX(), this.getZ(), attacker.getX(), attacker.getZ());
+		this.setYRot(yaw);
+		this.setYBodyRot(yaw);
+		this.setYHeadRot(yaw);
+		this.getLookControl().setLookAt(attacker, 180.0F, 180.0F);
+		this.getNavigation().stop();
+		BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.WALK_TARGET);
+	}
+
+	boolean isVisualCombatActive(long now) {
+		LivingEntity target = this.getTarget();
+		return isComboActive() || now < this.attackAnimationUntil || target != null && target.isAlive();
+	}
+
+	public Vec3 getSyncedAttentionPoint() {
+		return new Vec3(this.entityData.get(ATTENTION_X), this.entityData.get(ATTENTION_Y), this.entityData.get(ATTENTION_Z));
+	}
+
+	public Vec3 getSyncedEyeAttentionPoint() {
+		return new Vec3(this.entityData.get(EYE_ATTENTION_X), this.entityData.get(EYE_ATTENTION_Y), this.entityData.get(EYE_ATTENTION_Z));
+	}
+
+	public byte getVisualReaction() { return this.entityData.get(VISUAL_REACTION); }
+	public long getVisualReactionUntil() { return this.entityData.get(VISUAL_REACTION_UNTIL); }
+	public long getBlinkStart() { return this.entityData.get(BLINK_START); }
+	public byte getBlinkCount() { return this.entityData.get(BLINK_COUNT); }
+	public byte getCuriousTilt() { return this.entityData.get(CURIOUS_TILT); }
+	public int getVisualSequence() { return this.entityData.get(VISUAL_SEQUENCE); }
+	public long getAttentionStartedAt() { return this.entityData.get(ATTENTION_STARTED_AT); }
+	public long getCaughtReactionStart() { return this.entityData.get(CAUGHT_REACTION_START); }
+
+	void setVisualAttentionPoint(Vec3 point) {
+		this.entityData.set(ATTENTION_X, (float)point.x);
+		this.entityData.set(ATTENTION_Y, (float)point.y);
+		this.entityData.set(ATTENTION_Z, (float)point.z);
+	}
+
+	void setVisualEyeAttentionPoint(Vec3 point) {
+		this.entityData.set(EYE_ATTENTION_X, (float)point.x);
+		this.entityData.set(EYE_ATTENTION_Y, (float)point.y);
+		this.entityData.set(EYE_ATTENTION_Z, (float)point.z);
+	}
+
+	void setVisualReaction(byte reaction, long until) {
+		this.entityData.set(VISUAL_REACTION, reaction);
+		this.entityData.set(VISUAL_REACTION_UNTIL, until);
+	}
+
+	void setVisualBlink(long start, byte count) {
+		this.entityData.set(BLINK_START, start);
+		this.entityData.set(BLINK_COUNT, count);
+	}
+
+	void setVisualCuriousTilt(byte tilt) { this.entityData.set(CURIOUS_TILT, tilt); }
+	void bumpVisualSequence() { this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1); }
+	void setVisualAttentionStartedAt(long startedAt) { this.entityData.set(ATTENTION_STARTED_AT, startedAt); }
+	void setVisualCaughtReactionStart(long startedAt) { this.entityData.set(CAUGHT_REACTION_START, startedAt); }
+	float visualBodyYaw() { return this.yBodyRot; }
+
+	void turnVisualBodyToward(Vec3 point, float maxDegrees) {
+		float desiredYaw = yawToward(this.getX(), this.getZ(), point.x, point.z);
+		float delta = Mth.wrapDegrees(desiredYaw - this.yBodyRot);
+		this.yBodyRot += Mth.clamp(delta, -maxDegrees, maxDegrees);
+		this.setYRot(this.yBodyRot);
 	}
 
 	private void reduceComboCooldown(ServerLevel level, long ticks) {
@@ -647,6 +1022,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		this.summonerUuid = summonerUuid;
 		this.missingSummonerTicks = 0;
 		this.activityAnchor = this.position();
+		this.visualBehavior.bindTo(owner);
 	}
 
 	@Override
@@ -695,7 +1071,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	@Override public LivingEntity livingEntity() { return this; }
 	@Override public EchoHeroType heroType() { return EchoHeroType.GUANDAO_WARRIOR; }
 	@Override public boolean shouldFollowOwner() { return this.activityMode == EchoRelicState.ActivityMode.FOLLOW && !isComboActive(); }
-	@Override public boolean isFollowMovementSuppressed() { return isComboActive(); }
+	@Override public boolean isFollowMovementSuppressed() { return isComboActive() || this.visualBehavior.ownsMovement(); }
 	@Override public @Nullable UUID getOwnerUuid() { LivingEntity owner = getOwner(); return owner == null ? null : owner.getUUID(); }
 	@Override public @Nullable UUID getSummonerUuid() { return this.summonerUuid; }
 	@Override public @Nullable EntityReference<LivingEntity> getOwnerReference() { return this.ownerReference; }
@@ -769,7 +1145,9 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	@Override
 	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
 		controllers.add(new AnimationController<GuandaoWarriorEchoEntity>("movement", 3, this::selectMovementAnimation));
-		controllers.add(new AnimationController<GuandaoWarriorEchoEntity>(ACTION_CONTROLLER, 1, test -> PlayState.STOP)
+		// The authored endpoints are idle-compatible. Blending the combo's equivalent
+		// +/-180-degree Euler representation toward zero can take the long path for one frame.
+		controllers.add(new AnimationController<GuandaoWarriorEchoEntity>(ACTION_CONTROLLER, 0, test -> PlayState.STOP)
 				.triggerableAnim(ATTACK_TRIGGER, ATTACK)
 				.triggerableAnim(COMBO_TRIGGER, COMBO)
 				.triggerableAnim(HURT_TRIGGER, HURT));
@@ -777,6 +1155,13 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 
 	private PlayState selectMovementAnimation(AnimationTest<GuandaoWarriorEchoEntity> test) {
 		int currentTick = test.animatable().tickCount;
+		if (test.animatable().getAnimationActionStateForDiagnostics() != ANIMATION_ACTION_NONE) {
+			// Maintain a stable idle layer beneath full-body actions. Their release can
+			// then never reveal a cached walk-cycle phase for a single rendered frame.
+			this.movementAnimationActive = false;
+			this.movementAnimationLastMovingTick = currentTick;
+			return test.setAndContinue(IDLE);
+		}
 		if (test.isMoving() && !test.animatable().isComboActive()) {
 			this.movementAnimationActive = true;
 			this.movementAnimationLastMovingTick = currentTick;

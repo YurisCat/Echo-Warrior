@@ -63,7 +63,7 @@
   "gui.echo_warrior.summoner.skill.guandao.combo.description.2": "四段伤害依次为70%、100%、70%、180%，全部为范围攻击。",
   "gui.echo_warrior.summoner.skill.guandao.combo.description.3": "连招中向前推进3格，可平滑跨越一格高低差。",
   "gui.echo_warrior.summoner.skill.guandao.combo.description.4": "第一段短暂浮空，第二段弹开正面来袭的敌方投射物。",
-  "gui.echo_warrior.summoner.skill.guandao.combo.description.5": "冷却10秒；每次实际受到近战或投射物伤害使冷却缩短0.5秒。",
+  "gui.echo_warrior.summoner.skill.guandao.combo.description.5": "冷却12秒；每次实际受到近战或投射物伤害使冷却缩短0.5秒，减冷却不设上限。",
   "gui.echo_warrior.summoner.skill.passive_locked": "被动技能：始终生效",
   "gui.echo_warrior.summoner.skill.enabled": "当前：已启用（点击禁用）",
   "gui.echo_warrior.summoner.skill.disabled": "当前：已禁用（点击启用）",

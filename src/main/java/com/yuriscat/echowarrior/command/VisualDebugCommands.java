@@ -1,6 +1,7 @@
 package com.yuriscat.echowarrior.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.yuriscat.echowarrior.entity.GuandaoWarriorEchoEntity;
 import com.yuriscat.echowarrior.entity.RomanLegionaryEchoEntity;
 import com.yuriscat.echowarrior.item.EchoRelicItem;
 import com.yuriscat.echowarrior.item.EchoRelicState;
@@ -43,6 +44,12 @@ public final class VisualDebugCommands {
 						.then(animationCommand("shield_raise", RomanLegionaryEchoEntity.AnimationTestMode.SHIELD_RAISE))
 						.then(animationCommand("shield_lower", RomanLegionaryEchoEntity.AnimationTestMode.SHIELD_LOWER))
 						.then(animationCommand("reset", RomanLegionaryEchoEntity.AnimationTestMode.RESET)))
+				.then(Commands.literal("animation_debug")
+						.then(Commands.literal("guandao")
+								.then(Commands.literal("on")
+										.executes(context -> setGuandaoAnimationDebug(context.getSource(), true)))
+								.then(Commands.literal("off")
+										.executes(context -> setGuandaoAnimationDebug(context.getSource(), false)))))
 				.then(Commands.literal("relic")
 						.then(Commands.literal("reroll_traits").executes(context -> rerollTraits(context.getSource())))));
 	}
@@ -129,10 +136,40 @@ public final class VisualDebugCommands {
 		return 1;
 	}
 
+	private static int setGuandaoAnimationDebug(CommandSourceStack source, boolean enabled) {
+		ServerPlayer player = source.getPlayer();
+		if (player == null) {
+			source.sendFailure(Component.literal("This command must be used by a player."));
+			return 0;
+		}
+
+		GuandaoWarriorEchoEntity echo = findNearestOwnedGuandao(player);
+		if (echo == null) {
+			source.sendFailure(Component.literal("32 格内没有属于你的关刀甲胄战士。"));
+			return 0;
+		}
+
+		echo.setAnimationDebugEnabled(enabled);
+		source.sendSuccess(() -> Component.literal("关刀动画诊断已" + (enabled ? "开启" : "关闭") + "。"), false);
+		return 1;
+	}
+
 	private static RomanLegionaryEchoEntity findNearestOwnedEcho(ServerPlayer player) {
 		return player.level()
 				.getEntitiesOfClass(
 						RomanLegionaryEchoEntity.class,
+						player.getBoundingBox().inflate(32.0),
+						entity -> player.getUUID().equals(entity.getOwnerUuid())
+				)
+				.stream()
+				.min(Comparator.comparingDouble(player::distanceToSqr))
+				.orElse(null);
+	}
+
+	private static GuandaoWarriorEchoEntity findNearestOwnedGuandao(ServerPlayer player) {
+		return player.level()
+				.getEntitiesOfClass(
+						GuandaoWarriorEchoEntity.class,
 						player.getBoundingBox().inflate(32.0),
 						entity -> player.getUUID().equals(entity.getOwnerUuid())
 				)

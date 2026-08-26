@@ -63,7 +63,7 @@
   "gui.echo_warrior.summoner.skill.guandao.combo.description.2": "The four area strikes deal 70%, 100%, 70%, and 180% damage.",
   "gui.echo_warrior.summoner.skill.guandao.combo.description.3": "Advances 3 blocks and smoothly traverses one-block height changes.",
   "gui.echo_warrior.summoner.skill.guandao.combo.description.4": "The first strike launches briefly; the second deflects incoming hostile projectiles.",
-  "gui.echo_warrior.summoner.skill.guandao.combo.description.5": "10-second cooldown; real melee or projectile hits shorten it by 0.5 seconds.",
+  "gui.echo_warrior.summoner.skill.guandao.combo.description.5": "12-second cooldown; real melee or projectile hits shorten it by 0.5 seconds without a reduction cap.",
   "gui.echo_warrior.summoner.skill.passive_locked": "Passive: always active",
   "gui.echo_warrior.summoner.skill.enabled": "Status: Enabled (click to disable)",
   "gui.echo_warrior.summoner.skill.disabled": "Status: Disabled (click to enable)",

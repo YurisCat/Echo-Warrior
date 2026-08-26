@@ -13,6 +13,9 @@ All notable development changes to Echo Warrior are recorded here.
 - Added the first playable implementation of the Guandao Warrior Echo, including its relic, model, five normalized animations, summoner preview, localization, and four hand-drawn skill icons.
 - Added projectile resistance, Growing Valor stacks, low-health damage reduction, full-damage crescent-blade sweeps, and the four-stage advancing Guandao combo with launch and projectile deflection windows.
 - Added Guandao Warrior documentation and interactive encyclopedia content, plus a repeatable BBModel-to-GeckoLib asset export script.
+- Added the complete server-synchronised visual-life system to the Guandao Warrior: natural and double blinks, layered eye/head attention, player mutual gaze, caught-watching reactions and exits, locomotion focus, creeper awareness, approaching-entity reactions, and damage-source attention.
+- Added command-toggleable Guandao animation diagnostics. Server logs cover action boundaries, hit windows, opening correction, and retaliation; client logs sample key-bone deltas around attack and combo release. Diagnostics now default to off after logs confirmed stable action release.
+- Added the modeler's updated Aztec and Egyptian relic icons to runtime, summoner, and encyclopedia assets; archived the future Japanese Samurai relic icon without registering that unreleased hero.
 - Head-centred player-gaze acquisition with distance-scaled timing, two-tick mouse tolerance, line-of-sight validation, multiplayer owner priority, and close-range handling for invisible players.
 - A mutual-gaze state with randomized hold and renewal durations, occasional glance-away breaks, last-seen-position persistence, combat suppression, and threat interruption.
 - Independent pupil, head, and body attention layers with explicit threat priorities and minimum target-hold windows.
@@ -24,7 +27,13 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Changed
 
-- Guandao Warrior passive skills are permanently enabled; only the automatic combo can be toggled, and its remaining ten-second cooldown is shown in the summoner GUI.
+- Guandao Warrior passive skills are permanently enabled; only the automatic combo can be toggled. Its cooldown now lasts twelve seconds from combo start, retains uncapped 0.5-second reductions from real melee or projectile hits during the combo, and uses a radial GUI mask without a charge number.
+- Guandao combo swings now play keyframe-bound, progressively weighted sweep sounds even when they miss. The fourth strike layers a strong attack with a wind-charge burst and creates a small directional gust in front without adding damage or knockback.
+- Reinforced the Guandao combo finisher with the larger Breeze wind-charge burst and a restrained heavy-mace impact layer while preserving the existing directional gust and gameplay values.
+- Guandao normal attacks and combos now hold their final GeckoLib pose until the server explicitly releases the trigger, preventing stale cached clips from flashing during recovery. Full-body hurt animation is suppressed whenever a target or attack is active, while damage, pain blinking, facial reaction, and attacker attention remain intact.
+- Guandao action release now keeps an idle movement layer beneath full-body clips and uses a zero-tick action-controller transition to avoid stale walk phases and long-path Euler blending at attack/combo boundaries.
+- The Guandao combo keeps its 4.5-block trigger range but can add up to 0.75 blocks of safe, target-tracking opening correction so the first strike prioritizes the committed primary target.
+- Idle Guandao warriors now acquire, face, and counter legal melee attackers immediately within normal attack reach; ranged or distant attackers are acquired for pursuit while the current hurt animation is allowed to finish without repeated restarts.
 - Mutual gaze now moves pupils first, then the head, and gently aligns the body only when the player lies well outside the forward cone.
 - Removed SmartBrainLib's generic always-running look behaviour so it no longer competes with the code-owned visual-attention layer.
 - Moved mutual-gaze body correction to the end of the entity tick so vanilla body-rotation control cannot overwrite it.

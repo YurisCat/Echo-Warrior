@@ -37,7 +37,7 @@ public final class EchoRelicState {
 	public static final int MAX_BACKSTEP_CHARGES = 2;
 	public static final long BACKSTEP_CHARGE_TICKS = 120L;
 	public static final long EGYPTIAN_ARROW_SWITCH_COOLDOWN_TICKS = 10L;
-	public static final long GUANDAO_COMBO_COOLDOWN_TICKS = 200L;
+	public static final long GUANDAO_COMBO_COOLDOWN_TICKS = 240L;
 
 	private EchoRelicState() {
 	}
@@ -311,7 +311,7 @@ public final class EchoRelicState {
 			case ROMAN_LEGIONARY -> shieldCharges(relic, gameTime);
 			case AZTEC_WARRIOR -> pursuitCharges(relic, gameTime);
 			case EGYPTIAN_ARCHER -> backstepCharges(relic, gameTime);
-			case GUANDAO_WARRIOR -> guandaoComboCooldownEnd(relic) <= gameTime ? 1 : 0;
+			case GUANDAO_WARRIOR -> 0;
 		};
 	}
 
@@ -320,7 +320,7 @@ public final class EchoRelicState {
 			case ROMAN_LEGIONARY -> MAX_SHIELD_CHARGES;
 			case AZTEC_WARRIOR -> MAX_PURSUIT_CHARGES;
 			case EGYPTIAN_ARCHER -> MAX_BACKSTEP_CHARGES;
-			case GUANDAO_WARRIOR -> 1;
+			case GUANDAO_WARRIOR -> 0;
 		};
 	}
 

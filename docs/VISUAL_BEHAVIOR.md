@@ -27,7 +27,14 @@ The Egyptian archer uses the same runtime bone names as the Aztec model:
 - `Eyes_Right`
 - `Eyebrow`
 
-The renderer also compensates the Roman `root`/torso ancestry and the Aztec `Main` → `Body` → `Upper_Body2` ancestry independently. Model-specific axis signs and ancestor compensation belong in each renderer; gameplay attention data remains shared in behaviour.
+The Guandao warrior also uses those runtime face-bone names:
+
+- `Head`
+- `Eyes_Left`
+- `Eyes_Right`
+- `Eyebrow`
+
+The renderers compensate each model's real ancestry independently: Roman `root`/torso, Aztec and Guandao `Main` → `Body` → `Upper_Body2`, and Egyptian `Main` → `Upper_Body` → `Upper_Body2`. Model-specific axis signs and ancestor compensation belong in each renderer; gameplay attention rules remain consistent across entities.
 
 Animation files must not introduce new face keyframes that fight the runtime layer unless the project owner explicitly approves a future exception. The authoritative Blockbench sources are:
 
@@ -35,6 +42,7 @@ Animation files must not introduce new face keyframes that fight the runtime lay
 assets-source/blockbench/roman_legionary.bbmodel
 assets-source/blockbench/aztec_warrior_echo.bbmodel
 assets-source/blockbench/egyptian_archer_echo.bbmodel
+assets-source/blockbench/guandao_warrior_echo.bbmodel
 ```
 
 Model artists must continue from the latest matching source file rather than an older local branch.
