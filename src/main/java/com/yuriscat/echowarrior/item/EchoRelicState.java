@@ -27,6 +27,9 @@ public final class EchoRelicState {
 	private static final String BACKSTEP_CHARGES_KEY = "EchoWarriorBackstepCharges";
 	private static final String BACKSTEP_CHARGE_TIME_KEY = "EchoWarriorBackstepChargeTime";
 	private static final String GUANDAO_COMBO_COOLDOWN_END_KEY = "EchoWarriorGuandaoComboCooldownEnd";
+	private static final String FUMIKOMI_CHARGES_KEY = "EchoWarriorFumikomiCharges";
+	private static final String FUMIKOMI_CHARGE_TIME_KEY = "EchoWarriorFumikomiChargeTime";
+	private static final String SAMURAI_STAB_COOLDOWN_END_KEY = "EchoWarriorSamuraiStabCooldownEnd";
 
 	public static final int SKILL_COUNT = 5;
 	public static final int ALL_SKILLS_ENABLED = (1 << SKILL_COUNT) - 1;
@@ -38,6 +41,9 @@ public final class EchoRelicState {
 	public static final long BACKSTEP_CHARGE_TICKS = 120L;
 	public static final long EGYPTIAN_ARROW_SWITCH_COOLDOWN_TICKS = 10L;
 	public static final long GUANDAO_COMBO_COOLDOWN_TICKS = 240L;
+	public static final int MAX_FUMIKOMI_CHARGES = 3;
+	public static final long FUMIKOMI_CHARGE_TICKS = 100L;
+	public static final long SAMURAI_STAB_COOLDOWN_TICKS = 200L;
 
 	private EchoRelicState() {
 	}
@@ -71,6 +77,9 @@ public final class EchoRelicState {
 			tag.putInt(BACKSTEP_CHARGES_KEY, MAX_BACKSTEP_CHARGES);
 			tag.putLong(BACKSTEP_CHARGE_TIME_KEY, gameTime);
 			tag.putLong(GUANDAO_COMBO_COOLDOWN_END_KEY, 0L);
+			tag.putInt(FUMIKOMI_CHARGES_KEY, MAX_FUMIKOMI_CHARGES);
+			tag.putLong(FUMIKOMI_CHARGE_TIME_KEY, gameTime);
+			tag.putLong(SAMURAI_STAB_COOLDOWN_END_KEY, 0L);
 		});
 		return true;
 	}
@@ -147,7 +156,11 @@ public final class EchoRelicState {
 		EchoHeroType heroType = EchoHeroType.fromRelic(relic);
 		int allowed = heroType.allSkillsEnabledMask();
 		int enabled = intValue(relic, ENABLED_SKILLS_KEY, heroType.defaultEnabledSkillsMask()) & allowed;
-		return heroType == EchoHeroType.GUANDAO_WARRIOR ? enabled | 0b0111 : enabled;
+		return switch (heroType) {
+			case GUANDAO_WARRIOR -> enabled | 0b0111;
+			case JAPANESE_SAMURAI -> allowed;
+			default -> enabled;
+		};
 	}
 
 	public static boolean skillEnabled(ItemStack relic, int skill) {
@@ -162,6 +175,7 @@ public final class EchoRelicState {
 		if (EchoHeroType.fromRelic(relic) == EchoHeroType.GUANDAO_WARRIOR && skill != 3) {
 			return;
 		}
+		if (EchoHeroType.fromRelic(relic) == EchoHeroType.JAPANESE_SAMURAI) return;
 		int updated = enabledSkills(relic) ^ 1 << skill;
 		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> tag.putInt(ENABLED_SKILLS_KEY, updated));
 	}
@@ -251,6 +265,35 @@ public final class EchoRelicState {
 				MAX_BACKSTEP_CHARGES, BACKSTEP_CHARGE_TICKS);
 	}
 
+	public static int fumikomiCharges(ItemStack relic, long gameTime) {
+		updateCharges(relic, gameTime, FUMIKOMI_CHARGES_KEY, FUMIKOMI_CHARGE_TIME_KEY,
+				MAX_FUMIKOMI_CHARGES, FUMIKOMI_CHARGE_TICKS);
+		return intValue(relic, FUMIKOMI_CHARGES_KEY, MAX_FUMIKOMI_CHARGES);
+	}
+
+	public static int fumikomiChargeProgress(ItemStack relic, long gameTime) {
+		int charges = fumikomiCharges(relic, gameTime);
+		if (charges >= MAX_FUMIKOMI_CHARGES) return 1000;
+		long last = longValue(relic, FUMIKOMI_CHARGE_TIME_KEY, gameTime);
+		return (int)Math.clamp((gameTime - last) * 1000L / FUMIKOMI_CHARGE_TICKS, 0L, 1000L);
+	}
+
+	public static boolean consumeFumikomiCharge(ItemStack relic, long gameTime) {
+		return consumeCharge(relic, gameTime, FUMIKOMI_CHARGES_KEY, FUMIKOMI_CHARGE_TIME_KEY,
+				MAX_FUMIKOMI_CHARGES, FUMIKOMI_CHARGE_TICKS);
+	}
+
+	public static boolean addFumikomiCharge(ItemStack relic, long gameTime) {
+		int charges = fumikomiCharges(relic, gameTime);
+		if (charges >= MAX_FUMIKOMI_CHARGES) return false;
+		int updated = charges + 1;
+		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> {
+			tag.putInt(FUMIKOMI_CHARGES_KEY, updated);
+			if (updated >= MAX_FUMIKOMI_CHARGES) tag.putLong(FUMIKOMI_CHARGE_TIME_KEY, gameTime);
+		});
+		return true;
+	}
+
 	private static boolean consumeCharge(
 			ItemStack relic,
 			long gameTime,
@@ -312,6 +355,7 @@ public final class EchoRelicState {
 			case AZTEC_WARRIOR -> pursuitCharges(relic, gameTime);
 			case EGYPTIAN_ARCHER -> backstepCharges(relic, gameTime);
 			case GUANDAO_WARRIOR -> 0;
+			case JAPANESE_SAMURAI -> fumikomiCharges(relic, gameTime);
 		};
 	}
 
@@ -321,6 +365,7 @@ public final class EchoRelicState {
 			case AZTEC_WARRIOR -> MAX_PURSUIT_CHARGES;
 			case EGYPTIAN_ARCHER -> MAX_BACKSTEP_CHARGES;
 			case GUANDAO_WARRIOR -> 0;
+			case JAPANESE_SAMURAI -> MAX_FUMIKOMI_CHARGES;
 		};
 	}
 
@@ -330,7 +375,25 @@ public final class EchoRelicState {
 			case AZTEC_WARRIOR -> pursuitChargeProgress(relic, gameTime);
 			case EGYPTIAN_ARCHER -> backstepChargeProgress(relic, gameTime);
 			case GUANDAO_WARRIOR -> guandaoComboCooldownProgress(relic, gameTime);
+			case JAPANESE_SAMURAI -> fumikomiChargeProgress(relic, gameTime);
 		};
+	}
+
+	public static long samuraiStabCooldownEnd(ItemStack relic) {
+		return longValue(relic, SAMURAI_STAB_COOLDOWN_END_KEY, 0L);
+	}
+
+	public static void setSamuraiStabCooldownEnd(ItemStack relic, long end) {
+		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> tag.putLong(SAMURAI_STAB_COOLDOWN_END_KEY, end));
+	}
+
+	public static int samuraiStabCooldownProgress(ItemStack relic, long gameTime) {
+		long remaining = Math.max(0L, samuraiStabCooldownEnd(relic) - gameTime);
+		return (int)Math.clamp(
+				(SAMURAI_STAB_COOLDOWN_TICKS - remaining) * 1000L / SAMURAI_STAB_COOLDOWN_TICKS,
+				0L,
+				1000L
+		);
 	}
 
 	public static long guandaoComboCooldownEnd(ItemStack relic) {
@@ -404,8 +467,11 @@ public final class EchoRelicState {
 
 	public static int attackIntervalTicks(ItemStack relic) {
 		int percent = attackSpeedPercent(relic);
-		int minimum = EchoHeroType.fromRelic(relic) == EchoHeroType.EGYPTIAN_ARCHER ? 24 : 4;
-		return Math.max(minimum, Math.round(20.0F * 100.0F / percent));
+		EchoHeroType heroType = EchoHeroType.fromRelic(relic);
+		int calculated = Math.round(20.0F * 100.0F / percent);
+		if (heroType == EchoHeroType.JAPANESE_SAMURAI) return Math.clamp(calculated, 24, 80);
+		int minimum = heroType == EchoHeroType.EGYPTIAN_ARCHER ? 24 : 4;
+		return Math.max(minimum, calculated);
 	}
 
 	private static int intValue(ItemStack stack, String key, int fallback) {

@@ -50,6 +50,18 @@ public enum EchoHeroType {
 			0.30,
 			34,
 			4
+	),
+	JAPANESE_SAMURAI(
+			"japanese_samurai",
+			"日本武士",
+			"Japanese Samurai",
+			28.0,
+			6.0,
+			6.0,
+			0.32,
+			0.20,
+			40,
+			4
 	);
 
 	private final String id;

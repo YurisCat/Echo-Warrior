@@ -5,6 +5,7 @@ import com.yuriscat.echowarrior.entity.AztecWarriorEchoEntity;
 import com.yuriscat.echowarrior.entity.EgyptianArcherEchoEntity;
 import com.yuriscat.echowarrior.entity.EgyptianArcherArrowEntity;
 import com.yuriscat.echowarrior.entity.GuandaoWarriorEchoEntity;
+import com.yuriscat.echowarrior.entity.JapaneseSamuraiEchoEntity;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -51,6 +52,15 @@ public final class ModEntities {
 					.noSave()
 					.clientTrackingRange(10)
 	);
+	public static final EntityType<JapaneseSamuraiEchoEntity> JAPANESE_SAMURAI_ECHO = register(
+			"japanese_samurai_echo",
+			EntityType.Builder.of(JapaneseSamuraiEchoEntity::new, MobCategory.CREATURE)
+					.sized(0.75F, 1.95F)
+					.eyeHeight(1.75F)
+					.noLootTable()
+					.noSave()
+					.clientTrackingRange(10)
+	);
 	public static final EntityType<EgyptianArcherArrowEntity> EGYPTIAN_ARCHER_ARROW = register(
 			"egyptian_archer_arrow",
 			EntityType.Builder.of(EgyptianArcherArrowEntity::new, MobCategory.MISC)
@@ -68,6 +78,7 @@ public final class ModEntities {
 		FabricDefaultAttributeRegistry.register(AZTEC_WARRIOR_ECHO, AztecWarriorEchoEntity.createAttributes().build());
 		FabricDefaultAttributeRegistry.register(EGYPTIAN_ARCHER_ECHO, EgyptianArcherEchoEntity.createAttributes().build());
 		FabricDefaultAttributeRegistry.register(GUANDAO_WARRIOR_ECHO, GuandaoWarriorEchoEntity.createAttributes().build());
+		FabricDefaultAttributeRegistry.register(JAPANESE_SAMURAI_ECHO, JapaneseSamuraiEchoEntity.createAttributes().build());
 	}
 
 	private static <T extends net.minecraft.world.entity.Entity> EntityType<T> register(String path, EntityType.Builder<T> builder) {

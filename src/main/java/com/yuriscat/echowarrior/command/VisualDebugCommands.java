@@ -2,6 +2,7 @@ package com.yuriscat.echowarrior.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.yuriscat.echowarrior.entity.GuandaoWarriorEchoEntity;
+import com.yuriscat.echowarrior.entity.JapaneseSamuraiEchoEntity;
 import com.yuriscat.echowarrior.entity.RomanLegionaryEchoEntity;
 import com.yuriscat.echowarrior.item.EchoRelicItem;
 import com.yuriscat.echowarrior.item.EchoRelicState;
@@ -29,6 +30,21 @@ public final class VisualDebugCommands {
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
 				.then(Commands.literal("visual")
 						.then(Commands.literal("status").executes(context -> executeStatus(context.getSource())))
+						.then(Commands.literal("samurai_afterimage_neutral")
+								.then(Commands.literal("on")
+										.executes(context -> setSamuraiAfterimageNeutral(context.getSource(), true)))
+								.then(Commands.literal("off")
+										.executes(context -> setSamuraiAfterimageNeutral(context.getSource(), false))))
+						.then(Commands.literal("samurai_afterimage_advanced")
+								.then(Commands.literal("on")
+										.executes(context -> setSamuraiAfterimageAdvanced(context.getSource(), true)))
+								.then(Commands.literal("off")
+										.executes(context -> setSamuraiAfterimageAdvanced(context.getSource(), false))))
+						.then(Commands.literal("samurai_afterimage_outline")
+								.then(Commands.literal("on")
+										.executes(context -> setSamuraiAfterimageOutline(context.getSource(), true)))
+								.then(Commands.literal("off")
+										.executes(context -> setSamuraiAfterimageOutline(context.getSource(), false))))
 						.then(visualCommand("blink", RomanLegionaryEchoEntity.VisualTestMode.BLINK))
 						.then(visualCommand("double_blink", RomanLegionaryEchoEntity.VisualTestMode.DOUBLE_BLINK))
 						.then(visualCommand("curious", RomanLegionaryEchoEntity.VisualTestMode.CURIOUS))
@@ -154,6 +170,69 @@ public final class VisualDebugCommands {
 		return 1;
 	}
 
+	private static int setSamuraiAfterimageNeutral(CommandSourceStack source, boolean neutral) {
+		ServerPlayer player = source.getPlayer();
+		if (player == null) {
+			source.sendFailure(Component.literal("This command must be used by a player."));
+			return 0;
+		}
+
+		JapaneseSamuraiEchoEntity echo = findNearestOwnedSamurai(player);
+		if (echo == null) {
+			source.sendFailure(Component.literal("32 格内没有属于你的日本武士。"));
+			return 0;
+		}
+
+		echo.setAfterimageNeutral(neutral);
+		source.sendSuccess(() -> Component.literal(neutral
+				? "武士闪避残影已切换为原始贴图色调。"
+				: "武士闪避残影已恢复残心青色／踏込金色。"), false);
+		return 1;
+	}
+
+	private static int setSamuraiAfterimageAdvanced(CommandSourceStack source, boolean enabled) {
+		ServerPlayer player = source.getPlayer();
+		if (player == null) {
+			source.sendFailure(Component.literal("This command must be used by a player."));
+			return 0;
+		}
+
+		JapaneseSamuraiEchoEntity echo = findNearestOwnedSamurai(player);
+		if (echo == null) {
+			source.sendFailure(Component.literal("32 格内没有属于你的日本武士。"));
+			return 0;
+		}
+
+		echo.setAfterimageAdvanced(enabled);
+		source.sendSuccess(() -> Component.literal(enabled
+				? "武士残影 2A 溶解与全亮效果已开启。"
+				: "武士残影 2A 已关闭；2B 外轮廓也已同步关闭。"), false);
+		return 1;
+	}
+
+	private static int setSamuraiAfterimageOutline(CommandSourceStack source, boolean enabled) {
+		ServerPlayer player = source.getPlayer();
+		if (player == null) {
+			source.sendFailure(Component.literal("This command must be used by a player."));
+			return 0;
+		}
+
+		JapaneseSamuraiEchoEntity echo = findNearestOwnedSamurai(player);
+		if (echo == null) {
+			source.sendFailure(Component.literal("32 格内没有属于你的日本武士。"));
+			return 0;
+		}
+		if (enabled) {
+			echo.setAfterimageOutline(false);
+			source.sendFailure(Component.literal("武士残影 2B 已暂时停用：当前 GeckoLib 通道会把描边错误渲染成白色剪影。"));
+			return 0;
+		}
+
+		echo.setAfterimageOutline(false);
+		source.sendSuccess(() -> Component.literal("武士残影 2B 外轮廓保持关闭。"), false);
+		return 1;
+	}
+
 	private static RomanLegionaryEchoEntity findNearestOwnedEcho(ServerPlayer player) {
 		return player.level()
 				.getEntitiesOfClass(
@@ -170,6 +249,18 @@ public final class VisualDebugCommands {
 		return player.level()
 				.getEntitiesOfClass(
 						GuandaoWarriorEchoEntity.class,
+						player.getBoundingBox().inflate(32.0),
+						entity -> player.getUUID().equals(entity.getOwnerUuid())
+				)
+				.stream()
+				.min(Comparator.comparingDouble(player::distanceToSqr))
+				.orElse(null);
+	}
+
+	private static JapaneseSamuraiEchoEntity findNearestOwnedSamurai(ServerPlayer player) {
+		return player.level()
+				.getEntitiesOfClass(
+						JapaneseSamuraiEchoEntity.class,
 						player.getBoundingBox().inflate(32.0),
 						entity -> player.getUUID().equals(entity.getOwnerUuid())
 				)

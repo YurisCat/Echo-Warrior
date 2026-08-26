@@ -10,6 +10,9 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Added
 
+- Added the first playable Japanese Samurai Echo prototype, including its relic, model and split combat animations, summoner integration, localization, hand-drawn skill icons, encyclopedia entry, and repeatable BBModel export pipeline.
+- Added Zanshin health-scaled dodge, attack-window dodge bonus, Fumikomi charges and invulnerable forward dash, branching two-slash normal attacks, and the automatic two-hit Stab skill.
+- Added client-only frozen-pose Samurai afterimages with neutral/themed color modes, optional UV-anchored dissolve, performance limits, and temporary visual debug commands.
 - Added the first playable implementation of the Guandao Warrior Echo, including its relic, model, five normalized animations, summoner preview, localization, and four hand-drawn skill icons.
 - Added projectile resistance, Growing Valor stacks, low-health damage reduction, full-damage crescent-blade sweeps, and the four-stage advancing Guandao combo with launch and projectile deflection windows.
 - Added Guandao Warrior documentation and interactive encyclopedia content, plus a repeatable BBModel-to-GeckoLib asset export script.
@@ -27,6 +30,8 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Changed
 
+- Japanese Samurai normal attacks now use limited safe target tracking before each hit so small target movement does not routinely make the committed slash miss. The first slash can travel up to 1.5 blocks and the follow-up up to 0.75 blocks without gaining Fumikomi invulnerability or afterimages.
+- Reworked the themed Samurai dissolve texture to retain full-range grayscale armor, cloth, and blade detail under saturated cyan/gold coloring. The proposed outline mode is temporarily disabled because the current GeckoLib path produces a filled white silhouette instead of a true contour.
 - Guandao Warrior passive skills are permanently enabled; only the automatic combo can be toggled. Its cooldown now lasts twelve seconds from combo start, retains uncapped 0.5-second reductions from real melee or projectile hits during the combo, and uses a radial GUI mask without a charge number.
 - Guandao combo swings now play keyframe-bound, progressively weighted sweep sounds even when they miss. The fourth strike layers a strong attack with a wind-charge burst and creates a small directional gust in front without adding damage or knockback.
 - Reinforced the Guandao combo finisher with the larger Breeze wind-charge burst and a restrained heavy-mace impact layer while preserving the existing directional gust and gameplay values.

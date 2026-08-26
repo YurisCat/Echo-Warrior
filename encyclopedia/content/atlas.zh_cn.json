@@ -552,7 +552,7 @@
         { "targetId": "shield_charge", "kind": "skill" },
         { "targetId": "legion_endures", "kind": "skill" },
         { "targetId": "aztec_warrior", "kind": "related" },
-        { "targetId": "future_roster", "kind": "related" }
+        { "targetId": "japanese_samurai", "kind": "related" }
       ],
       "article": {
         "summary": "比赛版首位可运行英灵。以盾牌、近战防护和保护主人为核心，已经具备完整召唤、跟随、战斗、成长和三项技能的首版闭环。",
@@ -708,7 +708,7 @@
       "symbol": "A",
       "connections": [
         { "targetId": "roman_legionary", "kind": "related" },
-        { "targetId": "future_roster", "kind": "related" }
+        { "targetId": "japanese_samurai", "kind": "related" }
       ],
       "article": {
         "summary": "第二位英灵。以马夸威特的慢速大范围横扫为核心，通过黑曜石创口造成致死性流血，并使用追猎跳劈切入战场。",
@@ -768,7 +768,7 @@
             "body": "五个技能图标、黑曜石创口与维齐洛波奇特利祝福的状态图标，以及新版 128×128 实体贴图均已替换为人工绘制资源。"
           }
         ],
-        "related": ["roman_legionary", "summoner", "leveling", "future_roster"]
+        "related": ["roman_legionary", "summoner", "leveling", "japanese_samurai"]
       }
     },
     {
@@ -785,7 +785,7 @@
         { "targetId": "roman_legionary", "kind": "related" },
         { "targetId": "aztec_warrior", "kind": "related" },
         { "targetId": "guandao_warrior", "kind": "related" },
-        { "targetId": "future_roster", "kind": "related" }
+        { "targetId": "japanese_samurai", "kind": "related" }
       ],
       "article": {
         "summary": "第三位英灵与首位远程战士。以完整拉弓—放箭动作、移动射击和距离控制为核心，并可在普通箭、叶形箭与锥锋箭之间切换。",
@@ -833,7 +833,7 @@
             "body": "赞美猫神、叶形箭、锥锋箭、战车与齐射之魂和后撤步均已使用用户人工绘制的 16×16 正式图标；游戏召唤器与网页百科复用同一套映射。"
           }
         ],
-        "related": ["summoner", "roman_legionary", "aztec_warrior", "guandao_warrior", "leveling", "future_roster"]
+        "related": ["summoner", "roman_legionary", "aztec_warrior", "guandao_warrior", "leveling", "japanese_samurai"]
       }
     },
     {
@@ -849,7 +849,7 @@
       "connections": [
         { "targetId": "egyptian_archer", "kind": "related" },
         { "targetId": "summoner", "kind": "related" },
-        { "targetId": "future_roster", "kind": "related" }
+        { "targetId": "japanese_samurai", "kind": "related" }
       ],
       "article": {
         "summary": "第四位正式开发英灵。以高护甲与远程抗性承受压力，用大范围偃月刀斩击积累攻势，并智能施展完整四段连招穿入敌群。",
@@ -896,18 +896,19 @@
             "body": "遗物图标、四个 16×16 技能图标和模型师提供的 5 段动画均已规范化接入。刀刃粒子通过武器骨骼下的专用锚点跟随真实动画位置。后续只需提供 BBModel，GLTF 不再是必需交付物。"
           }
         ],
-        "related": ["summoner", "relics_overview", "egyptian_archer", "leveling", "future_roster"]
+        "related": ["summoner", "relics_overview", "egyptian_archer", "leveling", "japanese_samurai"]
       }
     },
     {
-      "id": "future_roster",
+      "id": "japanese_samurai",
       "categoryId": "heroes",
-      "title": "后续英灵候选",
-      "subtitle": "日本武士",
-      "status": "planned",
+      "title": "日本武士",
+      "subtitle": "中甲、高机动与闪避循环决斗",
+      "status": "development",
       "x": 705,
       "y": 210,
-      "symbol": "+",
+      "icon": "/assets/echo-warrior/item/japanese_samurai_relic.png",
+      "symbol": "侍",
       "connections": [
         { "targetId": "roman_legionary", "kind": "related" },
         { "targetId": "aztec_warrior", "kind": "related" },
@@ -915,18 +916,51 @@
         { "targetId": "guandao_warrior", "kind": "related" }
       ],
       "article": {
-        "summary": "关刀甲胄战士已从中国武士候选冻结为第四位正式开发英灵。骑士与阵线步枪兵已从当前开发队列移除；当前尚未排期的候选仅保留日本武士。",
-        "tags": ["候选", "后续", "未排期"],
+        "summary": "第五位正式开发英灵。以中甲属性和高机动切入单体决斗，通过攻击后的残心窗口提高闪避率，再把成功闪避转化为踏込充能。",
+        "tags": ["第五英灵", "近战", "中甲", "高机动", "闪避", "单体决斗", "开发中"],
         "sections": [
           {
-            "type": "cards",
-            "title": "候选方向",
+            "type": "stats",
+            "title": "基础属性",
             "items": [
-              { "title": "日本武士", "meta": "候选", "body": "具体定位和技能待后续冻结。" }
+              { "label": "生命", "value": "28", "note": "满级 56", "icon": "/assets/echo-warrior/gui/attributes/health.png" },
+              { "label": "护甲", "value": "6", "note": "中甲决斗者", "icon": "/assets/echo-warrior/gui/attributes/armor.png" },
+              { "label": "攻击", "value": "6", "note": "满级 12", "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png" },
+              { "label": "移速", "value": "0.32", "note": "高机动近战", "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png" },
+              { "label": "击退抗性", "value": "20%", "note": "保持决斗位置" },
+              { "label": "攻击周期", "value": "40 tick", "note": "随攻速缩放，限制 24～80 tick" }
             ]
+          },
+          {
+            "type": "cards",
+            "title": "四个固定技能",
+            "items": [
+              { "title": "残心", "meta": "生命越低越易闪避", "body": "基础闪避率按缺失生命平滑增长：满血 0%，1 点生命 40%。每次实际完成一段攻击伤害后，10 tick 内额外获得 20 个百分点，重复命中只刷新，最终最高 60%。近战、投射物、爆炸和范围伤害均可闪避；既有燃烧、中毒等持续状态与环境伤害不能触发闪避，也不会被闪避清除。每次成功闪避立即恢复一层踏込。", "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/zanshin.png" },
+              { "title": "踏込", "meta": "最多 3 层 · 每 5 秒一层", "body": "目标位于普通攻击范围外但仍在 8 格内、存在视线且路径安全时，自动消耗一层向目标冲刺并在约 2 格处停下；目标已经在近战范围内时保留充能。冲刺持续 6～14 tick，期间免疫普通伤害，可像走楼梯一样平滑跨越一格高低差，但不能穿墙、越过二格障碍、低顶或危险落差。结束或中断后有 10 tick 内置冷却。冲刺后半段的攻击伤害等待模型师新版动作后再单独确定。", "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/fumikomi.png" },
+              { "title": "斩", "meta": "分支式两连斩", "body": "第一刀对前方 90°、2.25 格内主目标造成 100% 伤害，次要目标 50%，并只施加 0.08 的极轻水平击退。起手至命中帧可向锁定目标追随：最多 0.30 格/tick、累计 1.5 格，在约 1.7 格处停下。第一刀结算后立刻检查前方 160°、2.75 格：如果仍有可见目标就接续第二刀，否则收刀待机。第二刀允许覆盖此刻刚走入正面扇区的新敌人，但只向分支时记录的主目标追随，最多 0.20 格/tick、累计 0.75 格；伤害集合不会再增加，主目标 100%，其余目标 50%，并保留终结击退。两段每 tick 最多转 15°、相对各段起始朝向最多 ±45°；失去目标、视线、角度或安全路径时只停止追随，不中断攻击。追随不消耗踏込、没有无敌或残影，仅带轻微脚下扬尘。", "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/zan.png" },
+              { "title": "刺", "meta": "自动主动技能 · 10 秒冷却", "body": "近战范围内冷却完成时优先起手。向前方 2.75 格、半径 0.4 格的胶囊范围猛刺，可同时贯穿紧密站成一排的多个有视线敌人。刺入造成 150% 攻击伤害、无击退，并令实际命中者在原地短暂停住约 3～4 tick；拔刀只对第一段命中集合造成 300% 攻击伤害、轻微普通击退，并爆出红色水尘粒子。当前两个命中点暂定为起手后 16 与 20 tick。", "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/stab.png" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "动作优先级与不可打断规则",
+            "body": "当前目标在近战外且踏込可用时先冲刺；已经进入近战且刺冷却完成时先刺；否则使用普通两刀分支。普通攻击、踏込和刺一旦起手，都不会被全身 HURT 动画覆盖。闲置、行走或普通追敌时成功闪避会播放 dash_backward 并安全后撤约 2 格；完整动作进行中成功闪避只生成反向或侧向残影，不打断动画，也不移动本体。"
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "残影与可选第二阶段",
+            "body": "残影是客户端冻结的模型骨骼姿态快照，不是实体，不具备 AI、碰撞、阴影或伤害判定，并遵守深度测试而不会透墙。第一阶段半透明快照保持默认开启。2A 默认关闭：开启后，残影先完整保持约 2 tick，再以附着模型的固定噪声、窄亮边和全亮照明逐步溶解；彩色模式使用覆盖完整明暗范围的高对比灰度派生贴图乘以高饱和残心青／踏込金，保留甲片、布料与刀身结构，原色模式则保留完整原贴图色。2B 因当前 GeckoLib 自定义几何的 outline 通道会错误显示为实心白色剪影而暂时停用，开启指令会拒绝执行；以后改用独立后处理描边。48～63 道会降低新残影密度，64 道起只保留粒子回退，总硬上限 96。对 32 格内最近所属武士可临时使用 /echo_warrior visual samurai_afterimage_neutral on|off、/echo_warrior visual samurai_afterimage_advanced on|off、/echo_warrior visual samurai_afterimage_outline on|off；重新召唤或重启后全部重置。"
+          },
+          {
+            "type": "callout",
+            "tone": "success",
+            "title": "人工美术与新版模型已接入",
+            "body": "遗物图标、残心／斩／刺／踏込四个 16×16 技能图标，以及模型师更新的 dash_forward 与 dash_backward 均已接入。普通攻击已经从 attack_1 与 attack_2 中拆出第一刀、收势与第二刀接续片段；attack_3 暂不使用。"
           }
         ],
-        "related": ["roman_legionary", "aztec_warrior", "egyptian_archer", "guandao_warrior"]
+        "related": ["summoner", "relics_overview", "roman_legionary", "aztec_warrior", "egyptian_archer", "guandao_warrior", "leveling"]
       }
     },
     {
@@ -952,7 +986,10 @@
               { "label": "等级上限", "value": "30", "note": "满级停止累计溢出经验" },
               { "label": "累计经验", "value": "1305", "note": "从 1 级升至 30 级" },
               { "label": "罗马军团兵", "value": "60 / 12", "note": "满级生命 / 攻击" },
-              { "label": "阿兹特克勇士", "value": "68 / 16", "note": "满级生命 / 攻击" }
+              { "label": "阿兹特克勇士", "value": "68 / 16", "note": "满级生命 / 攻击" },
+              { "label": "埃及弓箭手", "value": "56 / 10", "note": "满级生命 / 远程攻击" },
+              { "label": "关刀甲胄战士", "value": "60 / 14", "note": "满级生命 / 攻击" },
+              { "label": "日本武士", "value": "56 / 12", "note": "满级生命 / 攻击" }
             ]
           },
           {

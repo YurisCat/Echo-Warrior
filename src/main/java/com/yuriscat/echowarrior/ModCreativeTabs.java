@@ -20,6 +20,7 @@ public final class ModCreativeTabs {
 						output.accept(new ItemStack(ModItems.AZTEC_WARRIOR_RELIC));
 						output.accept(new ItemStack(ModItems.EGYPTIAN_ARCHER_RELIC));
 						output.accept(new ItemStack(ModItems.GUANDAO_WARRIOR_RELIC));
+						output.accept(new ItemStack(ModItems.JAPANESE_SAMURAI_RELIC));
 					})
 					.build()
 	);

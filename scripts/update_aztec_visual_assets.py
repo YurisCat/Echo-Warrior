@@ -150,6 +150,35 @@ def export_geometry(model: dict) -> dict:
                 seen_elements.add(child)
                 source_from = vector(element.get("from"))
                 source_to = vector(element.get("to"))
+                if element.get("box_uv", True):
+                    cube_uv: list[float | int] | dict = [
+                        clean_number(value) for value in (element.get("uv_offset") or [0, 0])
+                    ]
+                else:
+                    cube_uv = {}
+                    for face_name in ("north", "east", "south", "west", "up", "down"):
+                        face = (element.get("faces") or {}).get(face_name)
+                        if not isinstance(face, dict):
+                            continue
+                        if face.get("enabled") is False or face.get("texture") is None:
+                            continue
+                        face_uv = face.get("uv")
+                        if not isinstance(face_uv, list) or len(face_uv) != 4:
+                            continue
+                        uv_min_u, uv_min_v, uv_max_u, uv_max_v = (number(value) for value in face_uv)
+                        mapping: dict = {
+                            "uv": [clean_number(uv_min_u), clean_number(uv_min_v)],
+                            "uv_size": [
+                                clean_number(uv_max_u - uv_min_u),
+                                clean_number(uv_max_v - uv_min_v),
+                            ],
+                        }
+                        uv_rotation = int(number(face.get("rotation", 0)))
+                        if uv_rotation:
+                            mapping["uv_rotation"] = uv_rotation
+                        cube_uv[face_name] = mapping
+                    if not cube_uv:
+                        raise ValueError(f"Per-face UV cube {child} has no exportable faces")
                 cube: dict = {
                     "origin": [
                         clean_number(-source_to[0]),
@@ -157,7 +186,7 @@ def export_geometry(model: dict) -> dict:
                         clean_number(source_from[2]),
                     ],
                     "size": [clean_number(source_to[index] - source_from[index]) for index in range(3)],
-                    "uv": [clean_number(value) for value in (element.get("uv_offset") or [0, 0])],
+                    "uv": cube_uv,
                 }
                 element_rotation = transform_rotation(element.get("rotation", [0, 0, 0]))
                 if any(element_rotation):

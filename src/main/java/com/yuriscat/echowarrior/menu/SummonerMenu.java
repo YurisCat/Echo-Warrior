@@ -286,7 +286,11 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			if (!summoner.isEmpty()) {
 				summoner.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(this.summonerContainer.getItems()));
 			}
-			this.legionCooldownTicks.set((int)Math.clamp(EchoRelicState.legionCooldownEnd(relic) - serverPlayer.level().getGameTime(), 0L, 400L));
+			long auxiliaryCooldown = currentHero == EchoHeroType.JAPANESE_SAMURAI
+					? EchoRelicState.samuraiStabCooldownEnd(relic) - serverPlayer.level().getGameTime()
+					: EchoRelicState.legionCooldownEnd(relic) - serverPlayer.level().getGameTime();
+			this.legionCooldownTicks.set((int)Math.clamp(auxiliaryCooldown, 0L,
+					currentHero == EchoHeroType.JAPANESE_SAMURAI ? 200L : 400L));
 			this.formationActive.set(spirit != null && spirit.isFormationActive() ? 1 : 0);
 			this.shieldBondActive.set(spirit != null && spirit.isShieldBondActive() ? 1 : 0);
 			this.legionActive.set(spirit != null && spirit.isLegionEnduresActive() ? 1 : 0);

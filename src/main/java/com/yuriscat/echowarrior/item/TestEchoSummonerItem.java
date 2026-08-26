@@ -209,6 +209,7 @@ public final class TestEchoSummonerItem extends Item {
 			case AZTEC_WARRIOR -> ModEntities.AZTEC_WARRIOR_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
 			case EGYPTIAN_ARCHER -> ModEntities.EGYPTIAN_ARCHER_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
 			case GUANDAO_WARRIOR -> ModEntities.GUANDAO_WARRIOR_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
+			case JAPANESE_SAMURAI -> ModEntities.JAPANESE_SAMURAI_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
 		};
 		if (spirit == null) {
 			return SummonResult.CREATE_FAILED;
