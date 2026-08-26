@@ -44,19 +44,12 @@ public final class JapaneseSamuraiEchoRenderer
 	private static final int HARD_LIMIT = 96;
 	private static final int ZANSHIN_RGB = 0x38BFEF;
 	private static final int FUMIKOMI_RGB = 0xE9A72F;
-	private static final int ZANSHIN_EDGE_RGB = 0xECFCFF;
-	private static final int FUMIKOMI_EDGE_RGB = 0xFFF8DE;
-	private static final int FULL_BRIGHT = 0x00F000F0;
 	private static final float DISSOLVE_HOLD_TICKS = 2.0F;
-	private static final float DISSOLVE_EDGE_WIDTH = 0.075F;
 	private static final byte PASS_NONE = 0;
 	private static final byte PASS_PHASE_ONE = 1;
-	private static final byte PASS_ADVANCED_EDGE = 2;
-	private static final byte PASS_ADVANCED_BASE = 3;
+	private static final byte PASS_ADVANCED_BASE = 2;
 	private static final Identifier ADVANCED_DETAIL_TEXTURE = EchoWarrior.id(
 			"textures/entity/japanese_samurai_afterimage_detail.png");
-	private static final Identifier SILHOUETTE_TEXTURE = EchoWarrior.id(
-			"textures/entity/japanese_samurai_afterimage_silhouette.png");
 	private static final Identifier DISSOLVE_MASK = EchoWarrior.id(
 			"textures/effect/samurai_afterimage_dissolve.png");
 
@@ -187,7 +180,7 @@ public final class JapaneseSamuraiEchoRenderer
 		if (alpha <= 0) return;
 		int rgb = afterimage.neutral ? 0xFFFFFF : themedColor(afterimage.kind, ZANSHIN_RGB, FUMIKOMI_RGB);
 		renderFrozenPass(renderState, poseStack, collector, cameraState, afterimage,
-				PASS_PHASE_ONE, alpha << 24 | rgb, false);
+				PASS_PHASE_ONE, alpha << 24 | rgb);
 	}
 
 	private void renderAdvancedAfterimage(
@@ -199,17 +192,14 @@ public final class JapaneseSamuraiEchoRenderer
 			float age
 	) {
 		float threshold = dissolveThreshold(age, afterimage.lifetime);
-		float edgeThreshold = Math.min(1.0F, threshold + DISSOLVE_EDGE_WIDTH);
 		int baseRgb = afterimage.neutral ? 0xFFFFFF : themedColor(afterimage.kind, ZANSHIN_RGB, FUMIKOMI_RGB);
-		int edgeRgb = afterimage.neutral ? 0xFFFFFF
-				: themedColor(afterimage.kind, ZANSHIN_EDGE_RGB, FUMIKOMI_EDGE_RGB);
 
-		// Draw the slightly wider bright mask first; the detailed base pass
-		// covers its interior and leaves only a narrow noisy dissolve rim.
+		// A previous second full-model pass attempted to leave a narrow bright
+		// dissolve rim. GeckoLib submitted that pass in front of the detailed
+		// geometry and turned the afterimage into a white cutout. Keep the useful
+		// UV-anchored dissolve, but draw only the textured body under scene light.
 		renderFrozenPass(renderState, poseStack, collector, cameraState, afterimage,
-				PASS_ADVANCED_EDGE, alphaByte(edgeThreshold) << 24 | edgeRgb, true);
-		renderFrozenPass(renderState, poseStack, collector, cameraState, afterimage,
-				PASS_ADVANCED_BASE, alphaByte(threshold) << 24 | baseRgb, true);
+				PASS_ADVANCED_BASE, alphaByte(threshold) << 24 | baseRgb);
 	}
 
 	private void renderFrozenPass(
@@ -219,14 +209,12 @@ public final class JapaneseSamuraiEchoRenderer
 			CameraRenderState cameraState,
 			Afterimage afterimage,
 			byte passMode,
-			int color,
-			boolean fullBright
+			int color
 	) {
 		renderState.addGeckolibData(AFTERIMAGE_PASS_MODE, passMode);
 		renderState.addGeckolibData(AFTERIMAGE_PASS_NEUTRAL, afterimage.neutral);
 		renderState.addGeckolibData(DataTickets.RENDER_COLOR, color);
-		if (fullBright) renderState.addGeckolibData(DataTickets.PACKED_LIGHT, FULL_BRIGHT);
-		else renderState.addGeckolibData(DataTickets.PACKED_LIGHT, renderState.lightCoords);
+		renderState.addGeckolibData(DataTickets.PACKED_LIGHT, renderState.lightCoords);
 		this.performRenderPass(renderState, poseStack, collector, cameraState,
 				List.of((pass, bones) -> applyFrozenPose(afterimage.pose, bones)));
 	}
@@ -260,7 +248,6 @@ public final class JapaneseSamuraiEchoRenderer
 		boolean neutral = renderState.getOrDefaultGeckolibData(AFTERIMAGE_PASS_NEUTRAL, false);
 		return switch (passMode) {
 			case PASS_PHASE_ONE -> RenderTypes.entityTranslucent(texture);
-			case PASS_ADVANCED_EDGE -> RenderTypes.entityCutoutDissolve(SILHOUETTE_TEXTURE, DISSOLVE_MASK);
 			case PASS_ADVANCED_BASE -> RenderTypes.entityCutoutDissolve(
 					neutral ? texture : ADVANCED_DETAIL_TEXTURE, DISSOLVE_MASK);
 			default -> super.getRenderType(renderState, texture);

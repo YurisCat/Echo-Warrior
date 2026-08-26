@@ -43,15 +43,17 @@
 以下指令作用于玩家 32 格内最近的所属日本武士：
 
 ```mcfunction
-/echo_warrior visual samurai_afterimage_advanced on
 /echo_warrior visual samurai_afterimage_advanced off
+/echo_warrior visual samurai_afterimage_advanced on
 /echo_warrior visual samurai_afterimage_neutral on
 /echo_warrior visual samurai_afterimage_neutral off
 ```
 
-- `advanced on`：开启约 2 tick 完整保持、随后逐步溶解的 2A 效果。
-- `neutral off`：使用高对比灰度细节乘以高饱和残心青/踏込金。
-- `neutral on`：保留完整原贴图颜色，同样应能看到溶解和白色窄亮边。
+- 新召唤的武士默认已经开启 2A，并使用无额外附色的原始贴图溶解。
+- `advanced off/on`：关闭或重新开启约 2 tick 完整保持、随后逐步溶解的 2A 效果。
+- `neutral off`：主动开启高对比灰度细节乘以高饱和残心青/踏込金。
+- `neutral on`：关闭额外附色，恢复默认的完整原贴图颜色。
+- 2A 主体按场景光照显示，不再强制全亮；会覆盖贴图的白色整模型边缘通道已经移除。
 - `/echo_warrior visual samurai_afterimage_outline on` 当前应明确拒绝开启；这是预期行为，不是新的故障。
 
 ## 请模型师重点反馈
@@ -67,5 +69,5 @@
 
 - 踏込后半段攻击尚未定义伤害与命中时点。
 - 刺的两个命中时点仍是暂定值，等待模型师校准。
-- 溶解 2A 默认关闭，需要指令开启；真正的整体外轮廓 2B 尚未实现。
+- 溶解 2A 默认开启、额外青色/金色附色默认关闭；真正的整体外轮廓 2B 尚未实现。
 - 脚下扬尘、血液和短刀光仍是程序员占位效果，后续会按实机画面继续调整。

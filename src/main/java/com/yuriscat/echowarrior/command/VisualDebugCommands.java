@@ -185,8 +185,8 @@ public final class VisualDebugCommands {
 
 		echo.setAfterimageNeutral(neutral);
 		source.sendSuccess(() -> Component.literal(neutral
-				? "武士闪避残影已切换为原始贴图色调。"
-				: "武士闪避残影已恢复残心青色／踏込金色。"), false);
+				? "武士闪避残影已关闭额外附色，使用原始贴图。"
+				: "武士闪避残影已开启残心青色／踏込金色附色。"), false);
 		return 1;
 	}
 
@@ -205,7 +205,7 @@ public final class VisualDebugCommands {
 
 		echo.setAfterimageAdvanced(enabled);
 		source.sendSuccess(() -> Component.literal(enabled
-				? "武士残影 2A 溶解与全亮效果已开启。"
+				? "武士残影 2A 贴图溶解效果已开启。"
 				: "武士残影 2A 已关闭；2B 外轮廓也已同步关闭。"), false);
 		return 1;
 	}

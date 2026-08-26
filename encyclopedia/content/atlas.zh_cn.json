@@ -951,7 +951,7 @@
             "type": "callout",
             "tone": "info",
             "title": "残影与可选第二阶段",
-            "body": "残影是客户端冻结的模型骨骼姿态快照，不是实体，不具备 AI、碰撞、阴影或伤害判定，并遵守深度测试而不会透墙。第一阶段半透明快照保持默认开启。2A 默认关闭：开启后，残影先完整保持约 2 tick，再以附着模型的固定噪声、窄亮边和全亮照明逐步溶解；彩色模式使用覆盖完整明暗范围的高对比灰度派生贴图乘以高饱和残心青／踏込金，保留甲片、布料与刀身结构，原色模式则保留完整原贴图色。2B 因当前 GeckoLib 自定义几何的 outline 通道会错误显示为实心白色剪影而暂时停用，开启指令会拒绝执行；以后改用独立后处理描边。48～63 道会降低新残影密度，64 道起只保留粒子回退，总硬上限 96。对 32 格内最近所属武士可临时使用 /echo_warrior visual samurai_afterimage_neutral on|off、/echo_warrior visual samurai_afterimage_advanced on|off、/echo_warrior visual samurai_afterimage_outline on|off；重新召唤或重启后全部重置。"
+            "body": "残影是客户端冻结的模型骨骼姿态快照，不是实体，不具备 AI、碰撞、阴影或伤害判定，并遵守深度测试而不会透墙。新召唤的武士默认使用原始贴图并开启 2A：残影先完整保持约 2 tick，再以附着模型的固定噪声逐步溶解。额外附色改为可选模式，输入 /echo_warrior visual samurai_afterimage_neutral off 后，残影使用高对比灰度派生贴图乘以高饱和残心青／踏込金；输入 neutral on 恢复无额外附色的原始贴图。主体使用场景光照，不强制全亮；原有白色窄亮边会因第二次完整模型绘制覆盖主体，因此暂时移除。2B 同样因当前 outline 通道会错误显示为实心白色剪影而停用，开启指令会拒绝执行。48～63 道会降低新残影密度，64 道起只保留粒子回退，总硬上限 96。2A 仍可用 samurai_afterimage_advanced on|off 切换；重新召唤或重启后全部恢复上述默认值。"
           },
           {
             "type": "callout",

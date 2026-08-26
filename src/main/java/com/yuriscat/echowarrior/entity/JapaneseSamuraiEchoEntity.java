@@ -240,8 +240,8 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		builder.define(ACTION_STARTED_AT, 0L);
 		builder.define(ACTION_ENDS_AT, 0L);
 		builder.define(ACTION_SPEED, 1.0F);
-		builder.define(AFTERIMAGE_NEUTRAL, false);
-		builder.define(AFTERIMAGE_ADVANCED, false);
+		builder.define(AFTERIMAGE_NEUTRAL, true);
+		builder.define(AFTERIMAGE_ADVANCED, true);
 		builder.define(AFTERIMAGE_OUTLINE, false);
 		builder.define(AFTERIMAGE_SEQUENCE, 0);
 		builder.define(AFTERIMAGE_KIND, (byte)0);
