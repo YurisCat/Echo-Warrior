@@ -7,15 +7,20 @@ import com.geckolib.constant.dataticket.DataTicket;
 import com.geckolib.renderer.GeoEntityRenderer;
 import com.geckolib.renderer.base.BoneSnapshots;
 import com.geckolib.renderer.base.RenderPassInfo;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.ModEntities;
 import com.yuriscat.echowarrior.entity.JapaneseSamuraiEchoEntity;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -32,7 +37,7 @@ import java.util.Map;
 
 /**
  * Renders frozen GeckoLib bone-pose afterimages. Phase two reuses the same
- * snapshots for model-anchored dissolve and full-bright coloring. The proposed
+ * snapshots for model-anchored dissolve and optional coloring. The proposed
  * outline pass remains disabled until it can use a real post-process instead
  * of turning custom GeckoLib geometry into a filled silhouette.
  */
@@ -48,10 +53,24 @@ public final class JapaneseSamuraiEchoRenderer
 	private static final byte PASS_NONE = 0;
 	private static final byte PASS_PHASE_ONE = 1;
 	private static final byte PASS_ADVANCED_BASE = 2;
+	private static final Identifier SAMURAI_TEXTURE = EchoWarrior.id(
+			"textures/entity/japanese_samurai_echo.png");
 	private static final Identifier ADVANCED_DETAIL_TEXTURE = EchoWarrior.id(
 			"textures/entity/japanese_samurai_afterimage_detail.png");
 	private static final Identifier DISSOLVE_MASK = EchoWarrior.id(
 			"textures/effect/samurai_afterimage_dissolve.png");
+	private static final RenderPipeline ADVANCED_NEUTRAL_PIPELINE = createAdvancedPipeline(
+			"samurai_afterimage_neutral", 0xFFFFFF);
+	private static final RenderPipeline ADVANCED_ZANSHIN_PIPELINE = createAdvancedPipeline(
+			"samurai_afterimage_zanshin", ZANSHIN_RGB);
+	private static final RenderPipeline ADVANCED_FUMIKOMI_PIPELINE = createAdvancedPipeline(
+			"samurai_afterimage_fumikomi", FUMIKOMI_RGB);
+	private static final RenderType ADVANCED_NEUTRAL_RENDER_TYPE = createAdvancedRenderType(
+			"samurai_afterimage_neutral", ADVANCED_NEUTRAL_PIPELINE, SAMURAI_TEXTURE);
+	private static final RenderType ADVANCED_ZANSHIN_RENDER_TYPE = createAdvancedRenderType(
+			"samurai_afterimage_zanshin", ADVANCED_ZANSHIN_PIPELINE, ADVANCED_DETAIL_TEXTURE);
+	private static final RenderType ADVANCED_FUMIKOMI_RENDER_TYPE = createAdvancedRenderType(
+			"samurai_afterimage_fumikomi", ADVANCED_FUMIKOMI_PIPELINE, ADVANCED_DETAIL_TEXTURE);
 
 	private static final DataTicket<Integer> ENTITY_ID = DataTickets.create(
 			"echo_warrior_samurai_afterimage_entity_id", Integer.class);
@@ -79,6 +98,8 @@ public final class JapaneseSamuraiEchoRenderer
 			"echo_warrior_samurai_afterimage_pass_mode", Byte.class);
 	private static final DataTicket<Boolean> AFTERIMAGE_PASS_NEUTRAL = DataTickets.create(
 			"echo_warrior_samurai_afterimage_pass_neutral", Boolean.class);
+	private static final DataTicket<Byte> AFTERIMAGE_PASS_KIND = DataTickets.create(
+			"echo_warrior_samurai_afterimage_pass_kind", Byte.class);
 
 	private final Map<Integer, Integer> lastSequences = new HashMap<>();
 	private final List<Afterimage> afterimages = new ArrayList<>();
@@ -192,14 +213,15 @@ public final class JapaneseSamuraiEchoRenderer
 			float age
 	) {
 		float threshold = dissolveThreshold(age, afterimage.lifetime);
-		int baseRgb = afterimage.neutral ? 0xFFFFFF : themedColor(afterimage.kind, ZANSHIN_RGB, FUMIKOMI_RGB);
+		float opacity = afterimageOpacity(age, afterimage.lifetime, afterimage.startAlpha);
+		if (opacity <= 0.0F) return;
 
-		// A previous second full-model pass attempted to leave a narrow bright
-		// dissolve rim. GeckoLib submitted that pass in front of the detailed
-		// geometry and turned the afterimage into a white cutout. Keep the useful
-		// UV-anchored dissolve, but draw only the textured body under scene light.
+		// Red carries the dissolve threshold and alpha carries actual opacity.
+		// Minecraft's stock dissolve shader cannot do this because it forcibly
+		// resets every surviving fragment to fully opaque.
+		int controls = alphaByte(opacity) << 24 | alphaByte(threshold) << 16 | 0xFFFF;
 		renderFrozenPass(renderState, poseStack, collector, cameraState, afterimage,
-				PASS_ADVANCED_BASE, alphaByte(threshold) << 24 | baseRgb);
+				PASS_ADVANCED_BASE, controls);
 	}
 
 	private void renderFrozenPass(
@@ -213,6 +235,7 @@ public final class JapaneseSamuraiEchoRenderer
 	) {
 		renderState.addGeckolibData(AFTERIMAGE_PASS_MODE, passMode);
 		renderState.addGeckolibData(AFTERIMAGE_PASS_NEUTRAL, afterimage.neutral);
+		renderState.addGeckolibData(AFTERIMAGE_PASS_KIND, afterimage.kind);
 		renderState.addGeckolibData(DataTickets.RENDER_COLOR, color);
 		renderState.addGeckolibData(DataTickets.PACKED_LIGHT, renderState.lightCoords);
 		this.performRenderPass(renderState, poseStack, collector, cameraState,
@@ -227,6 +250,12 @@ public final class JapaneseSamuraiEchoRenderer
 		return 1.0F - smooth;
 	}
 
+	private static float afterimageOpacity(float age, float lifetime, float startAlpha) {
+		float progress = Mth.clamp(age / Math.max(1.0F, lifetime), 0.0F, 1.0F);
+		float smooth = progress * progress * (3.0F - 2.0F * progress);
+		return startAlpha * (1.0F - smooth);
+	}
+
 	private static int alphaByte(float alpha) {
 		return Math.clamp(Math.round(alpha * 255.0F), 0, 255);
 	}
@@ -238,6 +267,7 @@ public final class JapaneseSamuraiEchoRenderer
 	private static void clearAfterimagePassData(EntityRenderState renderState) {
 		renderState.getDataMap().remove(AFTERIMAGE_PASS_MODE);
 		renderState.getDataMap().remove(AFTERIMAGE_PASS_NEUTRAL);
+		renderState.getDataMap().remove(AFTERIMAGE_PASS_KIND);
 		renderState.getDataMap().remove(DataTickets.RENDER_COLOR);
 		renderState.getDataMap().remove(DataTickets.PACKED_LIGHT);
 	}
@@ -246,12 +276,51 @@ public final class JapaneseSamuraiEchoRenderer
 	public RenderType getRenderType(EntityRenderState renderState, Identifier texture) {
 		byte passMode = renderState.getOrDefaultGeckolibData(AFTERIMAGE_PASS_MODE, PASS_NONE);
 		boolean neutral = renderState.getOrDefaultGeckolibData(AFTERIMAGE_PASS_NEUTRAL, false);
+		byte kind = renderState.getOrDefaultGeckolibData(AFTERIMAGE_PASS_KIND,
+				JapaneseSamuraiEchoEntity.AFTERIMAGE_ZANSHIN_REAL);
 		return switch (passMode) {
 			case PASS_PHASE_ONE -> RenderTypes.entityTranslucent(texture);
-			case PASS_ADVANCED_BASE -> RenderTypes.entityCutoutDissolve(
-					neutral ? texture : ADVANCED_DETAIL_TEXTURE, DISSOLVE_MASK);
+			case PASS_ADVANCED_BASE -> neutral
+					? ADVANCED_NEUTRAL_RENDER_TYPE
+					: kind == JapaneseSamuraiEchoEntity.AFTERIMAGE_FUMIKOMI
+							? ADVANCED_FUMIKOMI_RENDER_TYPE
+							: ADVANCED_ZANSHIN_RENDER_TYPE;
 			default -> super.getRenderType(renderState, texture);
 		};
+	}
+
+	private static RenderPipeline createAdvancedPipeline(String name, int rgb) {
+		return RenderPipelines.register(RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
+				.withLocation(EchoWarrior.id("pipeline/" + name))
+				.withVertexShader(EchoWarrior.id("core/samurai_afterimage"))
+				.withFragmentShader(EchoWarrior.id("core/samurai_afterimage"))
+				.withShaderDefine("ALPHA_CUTOUT", 0.1F)
+				.withShaderDefine("PER_FACE_LIGHTING")
+				.withShaderDefine("AFTERIMAGE_TINT_R", ((rgb >> 16) & 0xFF) / 255.0F)
+				.withShaderDefine("AFTERIMAGE_TINT_G", ((rgb >> 8) & 0xFF) / 255.0F)
+				.withShaderDefine("AFTERIMAGE_TINT_B", (rgb & 0xFF) / 255.0F)
+				.withSampler("Sampler1")
+				.withSampler("DissolveMaskSampler")
+				.withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+				.withCull(false)
+				.build());
+	}
+
+	private static RenderType createAdvancedRenderType(
+			String name,
+			RenderPipeline pipeline,
+			Identifier texture
+	) {
+		RenderSetup setup = RenderSetup.builder(pipeline)
+				.withTexture("Sampler0", texture)
+				.withTexture("DissolveMaskSampler", DISSOLVE_MASK)
+				.useLightmap()
+				.useOverlay()
+				.affectsCrumbling()
+				.sortOnUpload()
+				.setOutline(RenderSetup.OutlineProperty.NONE)
+				.createRenderSetup();
+		return RenderType.create("echo_warrior_" + name, setup);
 	}
 
 	@Override

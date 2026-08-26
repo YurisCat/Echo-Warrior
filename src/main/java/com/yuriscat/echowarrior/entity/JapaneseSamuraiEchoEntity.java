@@ -504,14 +504,19 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 			return;
 		}
 		double step = Math.min(FUMIKOMI_SPEED, distance - FUMIKOMI_STOP_RANGE);
+		Vec3 before = this.position();
 		if (step <= 0.0 || !moveSpecial(level, delta.normalize().scale(step))) {
 			finishAction(now);
 			return;
 		}
-		double travelled = horizontalDistance(this.fumikomiAfterimageOrigin, this.position());
-		while (this.fumikomiAfterimageStep < 4 && travelled >= (this.fumikomiAfterimageStep + 1) * 1.25) {
+		// The client interpolates the body between its previous and latest server
+		// positions. Only sample the previous position, which the body has visibly
+		// traversed already, so a trail snapshot can never appear ahead of it.
+		double visiblyTravelled = horizontalDistance(this.fumikomiAfterimageOrigin, before);
+		while (this.fumikomiAfterimageStep < 4
+				&& visiblyTravelled >= (this.fumikomiAfterimageStep + 1) * 1.25) {
 			this.fumikomiAfterimageStep++;
-			emitFumikomiAfterimage(level, this.position());
+			emitFumikomiAfterimage(level, before);
 		}
 	}
 
@@ -529,7 +534,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		}
 		this.dashBackwardTravelled += horizontalDistance(before, this.position());
 		int elapsed = (int)(now - actionStartedAt());
-		if (elapsed == 5 || elapsed == 10) emitZanshinResidual(level, this.position(), this.dashBackwardDirection, false);
+		if (elapsed == 5 || elapsed == 10) emitZanshinResidual(level, before, this.dashBackwardDirection, false);
 	}
 
 	private void performSlash(
