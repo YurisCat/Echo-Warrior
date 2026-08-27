@@ -11,6 +11,7 @@ import com.yuriscat.echowarrior.entity.GuandaoWarriorEchoEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.Mth;
@@ -30,6 +31,7 @@ public final class GuandaoWarriorEchoRenderer extends GeoEntityRenderer<GuandaoW
 	private static final float FULL_IDLE_PARENT_COMPENSATION_DEGREES = 3.0F;
 	private static final float NO_PARENT_COMPENSATION_DEGREES = 8.0F;
 	private static final int ANIMATION_BOUNDARY_DIAGNOSTIC_TICKS = 5;
+	private static final int MAX_VALOR_PARTICLE_STACKS = 5;
 	private static final String[] ANIMATION_BOUNDARY_DIAGNOSTIC_BONES = {
 			"Main", "Body", "Upper_Body2", "Arm_Left", "Arm_Right", "Weapon", "Leg_Left", "Leg_Right"
 	};
@@ -379,9 +381,8 @@ public final class GuandaoWarriorEchoRenderer extends GeoEntityRenderer<GuandaoW
 		if (this.lastParticleTicks.size() > 256 && !this.lastParticleTicks.containsKey(entityId)) this.lastParticleTicks.clear();
 		this.lastParticleTicks.put(entityId, gameTime);
 
-		ParticleOptions particle = stacks >= 5 ? ParticleTypes.SOUL_FIRE_FLAME
-				: stacks >= 3 ? ParticleTypes.FLAME : ParticleTypes.SMALL_FLAME;
-		int count = stacks >= 4 ? 2 : 1;
+		ParticleOptions particle = ParticleTypes.FLAME;
+		int count = stacks >= 5 ? 3 : stacks >= 4 ? 2 : 1;
 		renderPass.addBonePositionListener("WeaponParticleAnchor", (worldPosition, modelPosition, localPosition) -> {
 			var level = Minecraft.getInstance().level;
 			if (level == null || worldPosition == null) return;
@@ -395,6 +396,22 @@ public final class GuandaoWarriorEchoRenderer extends GeoEntityRenderer<GuandaoW
 						(random.nextDouble() - 0.5) * 0.015,
 						0.012 + random.nextDouble() * 0.018,
 						(random.nextDouble() - 0.5) * 0.015);
+			}
+			if (stacks >= MAX_VALOR_PARTICLE_STACKS && gameTime % 6L == 0L) {
+				double phase = random.nextDouble() * Math.PI * 2.0;
+				for (int index = 0; index < 8; index++) {
+					double angle = phase + index * Math.PI * 0.25;
+					double radialX = Math.cos(angle);
+					double radialZ = Math.sin(angle);
+					ParticleOptions spark = new DustParticleOptions(index % 2 == 0 ? 0xE43A1A : 0xFF9A24, 0.72F);
+					level.addParticle(spark,
+							worldPosition.x + radialX * 0.045,
+							worldPosition.y + (random.nextDouble() - 0.5) * 0.045,
+							worldPosition.z + radialZ * 0.045,
+							radialX * 0.025,
+							0.018 + random.nextDouble() * 0.012,
+							radialZ * 0.025);
+				}
 			}
 		});
 	}

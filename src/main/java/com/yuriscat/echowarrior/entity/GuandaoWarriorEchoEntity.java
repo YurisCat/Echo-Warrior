@@ -143,6 +143,8 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	private static final String HURT_TRIGGER = "hurt";
 
 	private static final int ATTACK_ANIMATION_TICKS = 35;
+	private static final float NORMAL_ATTACK_ALIGNMENT_DEGREES = 25.0F;
+	private static final float NORMAL_ATTACK_TURN_DEGREES_PER_TICK = 30.0F;
 	private static final int COMBO_ANIMATION_TICKS = 101;
 	private static final int HURT_ANIMATION_TICKS = 10;
 	private static final int VALOR_DURATION_TICKS = 160;
@@ -181,6 +183,10 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	private long lastNaturalHealAt;
 	private long attackAnimationUntil;
 	private long hurtAnimationUntil;
+	private @Nullable UUID normalAttackTargetUuid;
+	private float normalAttackYaw;
+	private @Nullable UUID pendingRetaliationTargetUuid;
+	private long lastMeleeAlignmentLogAt = Long.MIN_VALUE;
 	private long valorExpiresAt;
 	private long comboStartedAt;
 	private int comboPhase = -1;
@@ -214,8 +220,8 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	protected void defineSynchedData(SynchedEntityData.Builder builder) {
 		super.defineSynchedData(builder);
 		builder.define(COMBO_ACTIVE, false);
-		// Opt-in after the release-boundary logs confirmed stable attack and combo recovery.
-		builder.define(ANIMATION_DEBUG_ENABLED, false);
+		// Temporarily enabled while validating rear-target retaliation and attack-yaw locking.
+		builder.define(ANIMATION_DEBUG_ENABLED, true);
 		builder.define(ANIMATION_ACTION, ANIMATION_ACTION_NONE);
 		builder.define(ANIMATION_ACTION_STARTED_AT, 0L);
 		builder.define(ANIMATION_ACTION_ENDS_AT, 0L);
@@ -269,15 +275,24 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	}
 
 	private void startMeleeAttackAnimation() {
+		if (this.isDeadOrDying()) return;
 		long now = this.level().getGameTime();
+		LivingEntity target = this.getTarget();
+		if (target == null || !target.isAlive()) return;
+		float desiredYaw = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		float alignmentBeforeLock = Mth.wrapDegrees(desiredYaw - this.yBodyRot);
+		this.normalAttackTargetUuid = target.getUUID();
+		this.normalAttackYaw = desiredYaw;
+		lockNormalAttackFacing();
 		byte previousAction = getAnimationActionStateForDiagnostics();
 		this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
 		this.hurtAnimationUntil = 0L;
 		this.attackAnimationUntil = now + ATTACK_ANIMATION_TICKS;
 		setAnimationAction(ANIMATION_ACTION_ATTACK, now, this.attackAnimationUntil);
 		this.triggerAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
-		logAnimationEvent("start", ANIMATION_ACTION_ATTACK, previousAction, this.getTarget(),
-				"budget=" + ATTACK_ANIMATION_TICKS);
+		logAnimationEvent("start", ANIMATION_ACTION_ATTACK, previousAction, target,
+				"budget=" + ATTACK_ANIMATION_TICKS + " attackYaw=" + this.normalAttackYaw
+						+ " alignmentBeforeLock=" + alignmentBeforeLock);
 	}
 
 	private boolean canPerformMeleeHit(LivingEntity target) {
@@ -285,13 +300,32 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		if (getAnimationActionStateForDiagnostics() == ANIMATION_ACTION_HURT
 				&& this.level().getGameTime() < this.hurtAnimationUntil) return false;
 		double reach = NORMAL_RADIUS + target.getBbWidth() * 0.5;
-		return horizontalDistanceSqr(this.position(), target.position()) <= reach * reach;
+		if (horizontalDistanceSqr(this.position(), target.position()) > reach * reach) return false;
+		long now = this.level().getGameTime();
+		if (this.normalAttackTargetUuid != null && now < this.attackAnimationUntil) {
+			return this.normalAttackTargetUuid.equals(target.getUUID());
+		}
+		float desiredYaw = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		float difference = Math.abs(Mth.wrapDegrees(desiredYaw - this.yBodyRot));
+		if (difference <= NORMAL_ATTACK_ALIGNMENT_DEGREES) return true;
+		if (isAnimationDebugEnabled() && now - this.lastMeleeAlignmentLogAt >= 5L) {
+			this.lastMeleeAlignmentLogAt = now;
+			logAnimationEvent("attack_wait_alignment", ANIMATION_ACTION_NONE,
+					getAnimationActionStateForDiagnostics(), target,
+					"desiredYaw=" + desiredYaw + " yawDifference=" + difference
+							+ " threshold=" + NORMAL_ATTACK_ALIGNMENT_DEGREES);
+		}
+		return false;
 	}
 
 	@Override
 	public void aiStep() {
 		super.aiStep();
 		if (!(this.level() instanceof ServerLevel level)) return;
+		if (this.isDeadOrDying()) {
+			cancelCommittedActions(level.getGameTime(), "dead_ai_step");
+			return;
+		}
 		LivingEntity owner = this.getOwner();
 		if (!(owner instanceof Player player) || !owner.isAlive() || owner.level() != this.level()) {
 			dismiss();
@@ -309,6 +343,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		long now = level.getGameTime();
 		finishMeleeAttackPresentation(now);
 		finishHurtPresentation(now);
+		promotePendingRetaliation(level, now);
 		if (getValorStacks() > 0 && now >= this.valorExpiresAt) {
 			setValorStacks(0);
 		}
@@ -323,6 +358,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		} else if (isComboActive()) {
 			finishCombo();
 		}
+		tickNormalAttackPreparation(now);
 
 		if (this.tickCount % 5 == 0 && !isComboActive()) {
 			LivingEntity target = selectProtectiveTarget(owner);
@@ -344,6 +380,9 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	public void tick() {
 		super.tick();
 		if (!this.level().isClientSide()) {
+			if (this.normalAttackTargetUuid != null && this.level().getGameTime() < this.attackAnimationUntil) {
+				lockNormalAttackFacing();
+			}
 			// Body-facing is applied after the normal mob tick so vanilla rotation
 			// control cannot overwrite mutual-gaze or presentation-owned turns.
 			this.visualBehavior.tickBodyFacing(this.level().getGameTime());
@@ -351,6 +390,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	}
 
 	private void tryStartCombo(ServerLevel level, ItemStack relic) {
+		if (this.isDeadOrDying()) return;
 		if (!EchoRelicState.skillEnabled(relic, SKILL_COMBO)) return;
 		long now = level.getGameTime();
 		if (now < EchoRelicState.guandaoComboCooldownEnd(relic)) return;
@@ -378,6 +418,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		this.deflectedProjectiles.clear();
 		this.entityData.set(COMBO_ACTIVE, true);
 		this.attackAnimationUntil = 0L;
+		clearNormalAttackLock();
 		this.hurtAnimationUntil = 0L;
 		byte previousAction = getAnimationActionStateForDiagnostics();
 		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
@@ -393,6 +434,10 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	}
 
 	private void tickCombo(ServerLevel level) {
+		if (this.isDeadOrDying()) {
+			cancelCommittedActions(level.getGameTime(), "dead_combo_tick");
+			return;
+		}
 		int elapsed = (int)(level.getGameTime() - this.comboStartedAt);
 		if (elapsed >= COMBO_ANIMATION_TICKS) {
 			finishCombo();
@@ -425,6 +470,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 					COMBO_RADIUS[phase],
 					COMBO_ANGLE[phase],
 					COMBO_FORWARD_OFFSET[phase],
+					this.comboYaw,
 					COMBO_YAW_OFFSET[phase],
 					COMBO_DAMAGE[phase] * this.comboPhaseValorMultiplier,
 					this.comboPhaseHits,
@@ -588,14 +634,102 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		setComboStepHeight(false);
 	}
 
+	private void cancelCommittedActions(long now, String reason) {
+		byte previousAction = getAnimationActionStateForDiagnostics();
+		boolean hadCommittedAction = isComboActive() || this.attackAnimationUntil > 0L
+				|| this.hurtAnimationUntil > 0L || previousAction != ANIMATION_ACTION_NONE;
+		if (!hadCommittedAction) {
+			setComboStepHeight(false);
+			return;
+		}
+		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, COMBO_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+		this.entityData.set(COMBO_ACTIVE, false);
+		setAnimationAction(ANIMATION_ACTION_NONE, now, 0L);
+		this.attackAnimationUntil = 0L;
+		this.hurtAnimationUntil = 0L;
+		clearNormalAttackLock();
+		this.pendingRetaliationTargetUuid = null;
+		this.comboPhase = -1;
+		this.comboPhaseHits.clear();
+		this.deflectedProjectiles.clear();
+		this.comboOpeningTarget = null;
+		this.comboOpeningCorrectionUsed = 0.0;
+		this.comboOpeningCorrectionBlockedLogged = false;
+		setComboStepHeight(false);
+		this.getNavigation().stop();
+		BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.WALK_TARGET);
+		logAnimationEvent("cancel", ANIMATION_ACTION_NONE, previousAction, this.getTarget(), "reason=" + reason);
+	}
+
 	private void finishMeleeAttackPresentation(long now) {
 		if (this.attackAnimationUntil <= 0L || now < this.attackAnimationUntil) return;
 		byte previousAction = getAnimationActionStateForDiagnostics();
-		logAnimationEvent("finish", ANIMATION_ACTION_ATTACK, previousAction, this.getTarget(),
-				"controllerStopped=true");
+		LivingEntity lockedTarget = this.level() instanceof ServerLevel level
+				? resolveLivingEntity(level, this.normalAttackTargetUuid) : null;
+		logAnimationEvent("finish", ANIMATION_ACTION_ATTACK, previousAction, lockedTarget,
+				"controllerStopped=true attackYaw=" + this.normalAttackYaw);
 		this.attackAnimationUntil = 0L;
 		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
+		clearNormalAttackLock();
 		if (previousAction == ANIMATION_ACTION_ATTACK) setAnimationAction(ANIMATION_ACTION_NONE, now, 0L);
+	}
+
+	private void tickNormalAttackPreparation(long now) {
+		if (isComboActive() || now < this.attackAnimationUntil || this.isDeadOrDying()) return;
+		LivingEntity target = this.getTarget();
+		if (target == null || !target.isAlive() || !this.canAttack(target) || !this.hasLineOfSight(target)) return;
+		double reach = NORMAL_RADIUS + target.getBbWidth() * 0.5;
+		if (horizontalDistanceSqr(this.position(), target.position()) > reach * reach) return;
+		turnNormalAttackBodyToward(target, NORMAL_ATTACK_TURN_DEGREES_PER_TICK);
+	}
+
+	private void turnNormalAttackBodyToward(LivingEntity target, float maximumDegrees) {
+		float desiredYaw = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		float difference = Mth.wrapDegrees(desiredYaw - this.yBodyRot);
+		float step = Mth.clamp(difference, -maximumDegrees, maximumDegrees);
+		this.yBodyRot += step;
+		this.setYRot(this.yBodyRot);
+		this.setYHeadRot(this.yBodyRot);
+		this.getLookControl().setLookAt(target, maximumDegrees, maximumDegrees);
+	}
+
+	private void lockNormalAttackFacing() {
+		this.setYRot(this.normalAttackYaw);
+		this.setYBodyRot(this.normalAttackYaw);
+		this.setYHeadRot(this.normalAttackYaw);
+	}
+
+	private void clearNormalAttackLock() {
+		this.normalAttackTargetUuid = null;
+	}
+
+	private void queuePendingRetaliation(LivingEntity attacker, long now) {
+		this.pendingRetaliationTargetUuid = attacker.getUUID();
+		logAnimationEvent("retaliation_queued", getAnimationActionStateForDiagnostics(),
+				getAnimationActionStateForDiagnostics(), attacker,
+				"attackEndsAt=" + this.attackAnimationUntil + " comboActive=" + isComboActive());
+	}
+
+	private void promotePendingRetaliation(ServerLevel level, long now) {
+		if (this.pendingRetaliationTargetUuid == null || isComboActive() || now < this.attackAnimationUntil) return;
+		LivingEntity target = resolveLivingEntity(level, this.pendingRetaliationTargetUuid);
+		this.pendingRetaliationTargetUuid = null;
+		if (!canProtectAgainst(target)) return;
+		BrainUtil.setTargetOfEntity(this, target);
+		this.getNavigation().stop();
+		BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.WALK_TARGET);
+		logAnimationEvent("retaliation_promoted", ANIMATION_ACTION_NONE,
+				getAnimationActionStateForDiagnostics(), target,
+				"yawDifference=" + Math.abs(Mth.wrapDegrees(
+						yawToward(this.getX(), this.getZ(), target.getX(), target.getZ()) - this.yBodyRot)));
+	}
+
+	private static @Nullable LivingEntity resolveLivingEntity(ServerLevel level, @Nullable UUID uuid) {
+		if (uuid == null) return null;
+		Entity entity = level.getEntity(uuid);
+		return entity instanceof LivingEntity living ? living : null;
 	}
 
 	private void finishHurtPresentation(long now) {
@@ -646,13 +780,15 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 
 	@Override
 	public boolean doHurtTarget(ServerLevel level, Entity ignoredPrimaryTarget) {
-		if (isComboActive()) return false;
+		if (this.isDeadOrDying() || isComboActive()) return false;
 		Set<UUID> hits = new HashSet<>();
-		int hitCount = performSectorAttack(level, NORMAL_RADIUS, NORMAL_ANGLE, 0.45, 0.0,
+		float attackYaw = this.normalAttackTargetUuid == null ? this.getYRot() : this.normalAttackYaw;
+		int hitCount = performSectorAttack(level, NORMAL_RADIUS, NORMAL_ANGLE, 0.45, attackYaw, 0.0,
 				valorDamageMultiplier(), hits, false);
 		logAnimationEvent("hit", ANIMATION_ACTION_ATTACK, getAnimationActionStateForDiagnostics(),
 				ignoredPrimaryTarget instanceof LivingEntity living ? living : this.getTarget(),
-				"hits=" + hitCount + " targetCount=" + hits.size());
+				"hits=" + hitCount + " targetCount=" + hits.size() + " attackYaw=" + attackYaw
+						+ " bodyYaw=" + this.yBodyRot + " lockedTarget=" + this.normalAttackTargetUuid);
 		if (hitCount <= 0) return false;
 		addValorStack(level.getGameTime());
 		level.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
@@ -665,12 +801,14 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 			double radius,
 			double angle,
 			double forwardOffset,
+			float baseYaw,
 			double yawOffset,
 			double damageMultiplier,
 			Set<UUID> alreadyHit,
 			boolean launch
 	) {
-		Vec3 attackFacing = facing(this.getYRot() + (float)yawOffset);
+		if (this.isDeadOrDying()) return 0;
+		Vec3 attackFacing = facing(baseYaw + (float)yawOffset);
 		Vec3 origin = this.position().add(attackFacing.scale(forwardOffset));
 		double cosine = Math.cos(Math.toRadians(angle * 0.5));
 		float damage = (float)(this.getAttributeValue(Attributes.ATTACK_DAMAGE) * damageMultiplier);
@@ -678,16 +816,18 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		AABB area = new AABB(origin.x - radius, this.getY() - 0.75, origin.z - radius,
 				origin.x + radius, this.getY() + 2.75, origin.z + radius);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area, this::isValidCombatEnemy)) {
+			if (this.isDeadOrDying()) break;
 			if (alreadyHit.contains(target.getUUID()) || !this.hasLineOfSight(target)) continue;
 			Vec3 toward = target.getBoundingBox().getCenter().subtract(origin).multiply(1.0, 0.0, 1.0);
 			double permittedRadius = radius + target.getBbWidth() * 0.5;
 			if (toward.lengthSqr() > permittedRadius * permittedRadius) continue;
 			if (toward.lengthSqr() > 1.0E-5 && attackFacing.dot(toward.normalize()) < cosine) continue;
+			Vec3 movementBeforeHit = target.getDeltaMovement();
 			if (!target.hurtServer(level, level.damageSources().mobAttack(this), damage)) continue;
 			alreadyHit.add(target.getUUID());
 			hits++;
 			EchoExperienceSystem.markParticipation(this, target);
-			if (launch) launchTarget(target, origin);
+			if (launch) launchTarget(target, origin, movementBeforeHit);
 			level.sendParticles(ParticleTypes.SWEEP_ATTACK,
 					target.getX(), target.getY() + target.getBbHeight() * 0.55, target.getZ(),
 					1, 0.0, 0.0, 0.0, 0.0);
@@ -695,15 +835,21 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		return hits;
 	}
 
-	private void launchTarget(LivingEntity target, Vec3 origin) {
+	private void launchTarget(LivingEntity target, Vec3 origin, Vec3 movementBeforeHit) {
 		double resistance = Math.clamp(target.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE), 0.0, 1.0);
 		double strength = 1.0 - resistance;
-		if (strength <= 0.0) return;
+		if (strength <= 0.0) {
+			target.setDeltaMovement(movementBeforeHit);
+			return;
+		}
 		Vec3 outward = target.position().subtract(origin).multiply(1.0, 0.0, 1.0);
 		if (outward.lengthSqr() < 1.0E-5) outward = facing(this.comboYaw);
 		else outward = outward.normalize();
-		double upward = Math.max(0.0, 0.36 * strength - target.getDeltaMovement().y);
-		target.push(outward.x * 0.12 * strength, upward, outward.z * 0.12 * strength);
+		double upward = Math.max(movementBeforeHit.y, 0.22 * strength);
+		// hurtServer has already applied vanilla's directional hurt knockback. Replace
+		// that result instead of adding another push, so phase one creates a short,
+		// nearly vertical float without throwing the target out of phase two's sector.
+		target.setDeltaMovement(outward.x * 0.04 * strength, upward, outward.z * 0.04 * strength);
 	}
 
 	private void addValorStack(long now) {
@@ -856,6 +1002,11 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		} finally {
 			this.projectileKnockbackContext = previousProjectileContext;
 		}
+		if (this.isDeadOrDying()) {
+			cancelCommittedActions(level.getGameTime(), "lethal_damage");
+			this.reflectModuleMeleeDamage(level, source, previousHealth);
+			return hurt;
+		}
 		if (hurt && this.getHealth() < previousHealth) {
 			long now = level.getGameTime();
 			boolean combatWasActive = isVisualCombatActive(now);
@@ -869,7 +1020,8 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 					&& horizontalDistanceSqr(this.position(), livingAttacker.position())
 					<= Math.pow(NORMAL_RADIUS + livingAttacker.getBbWidth() * 0.5, 2.0);
 
-			if (legalRetaliation && !committedAction) BrainUtil.setTargetOfEntity(this, livingAttacker);
+			if (legalRetaliation && committedAction) queuePendingRetaliation(livingAttacker, now);
+			else if (legalRetaliation) BrainUtil.setTargetOfEntity(this, livingAttacker);
 			if (immediateRetaliation) {
 				byte previousAction = getAnimationActionStateForDiagnostics();
 				this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
@@ -896,11 +1048,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	}
 
 	private void faceImmediateRetaliation(LivingEntity attacker) {
-		float yaw = yawToward(this.getX(), this.getZ(), attacker.getX(), attacker.getZ());
-		this.setYRot(yaw);
-		this.setYBodyRot(yaw);
-		this.setYHeadRot(yaw);
-		this.getLookControl().setLookAt(attacker, 180.0F, 180.0F);
+		turnNormalAttackBodyToward(attacker, NORMAL_ATTACK_TURN_DEGREES_PER_TICK);
 		this.getNavigation().stop();
 		BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.WALK_TARGET);
 	}

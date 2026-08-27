@@ -24,6 +24,7 @@ All notable development changes to Echo Warrior are recorded here.
 - Added Guandao Warrior documentation and interactive encyclopedia content, plus a repeatable BBModel-to-GeckoLib asset export script.
 - Added the complete server-synchronised visual-life system to the Guandao Warrior: natural and double blinks, layered eye/head attention, player mutual gaze, caught-watching reactions and exits, locomotion focus, creeper awareness, approaching-entity reactions, and damage-source attention.
 - Added command-toggleable Guandao animation diagnostics. Server logs cover action boundaries, hit windows, opening correction, and retaliation; client logs sample key-bone deltas around attack and combo release. Diagnostics now default to off after logs confirmed stable action release.
+- Temporarily re-enabled Guandao animation diagnostics by default for the rear-retaliation regression pass, including alignment waits, queued/promoted retaliation targets, and locked attack/body yaw values.
 - Added the modeler's updated Aztec and Egyptian relic icons to runtime, summoner, and encyclopedia assets; archived the future Japanese Samurai relic icon without registering that unreleased hero.
 - Head-centred player-gaze acquisition with distance-scaled timing, two-tick mouse tolerance, line-of-sight validation, multiplayer owner priority, and close-range handling for invisible players.
 - A mutual-gaze state with randomized hold and renewal durations, occasional glance-away breaks, last-seen-position persistence, combat suppression, and threat interruption.
@@ -36,6 +37,9 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Fixed
 
+- Fixed the Guandao Warrior committing a normal attack against a newly selected rear target before its body had turned, causing the animation and sector damage to continue along the previous forward direction. Rear retaliation now queues across committed actions, turns at up to 30 degrees per tick, waits for a 25-degree alignment threshold, and locks one target yaw for the full swing.
+- Fixed lethal damage leaving the Guandao Warrior's committed attack or combo windows active long enough to produce a post-death strike.
+- Fixed the Guandao combo opener stacking its custom launch on top of vanilla hurt knockback and pushing targets out of the second strike; it now replaces the result with a restrained, resistance-scaled short float.
 - Fixed the Echo Compass using vanilla random no-target wobble inside battlefield sites; it now spins continuously clockwise, accelerates from roughly 1.6 seconds to 0.4 seconds per revolution near its archaeology target, and uses a fixed fast spin when no site is available.
 - Fixed suspicious grass and dirt being visually identical to ordinary blocks in every brushing stage; both now have visible echo markings and four progressive brushing textures while suspicious grass retains biome tinting.
 - Fixed custom suspicious grass and dirt crashing the client when placed because the vanilla brushable block entity type did not yet recognize the two mod blocks.
@@ -45,6 +49,7 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Changed
 
+- Growing Valor now keeps red-orange weapon flames at every stack. Five stacks are marked by denser flame and a periodic red-gold spark pulse instead of blue soul fire.
 - Reduced suspicious grass and dirt markings to low-contrast dark-only details; removed bright highlights and color shifting so untouched pixels remain identical to the vanilla terrain texture.
 - Echo Compass right-click now mutes only that individual compass's exterior reminder; it never disables navigation or inner-site echoes, and multiple enabled compasses resolve to one sound emitter by inventory priority.
 - Echo summoner combat values now display their actual module-adjusted values, with increases shown in green and decreases shown in red.
