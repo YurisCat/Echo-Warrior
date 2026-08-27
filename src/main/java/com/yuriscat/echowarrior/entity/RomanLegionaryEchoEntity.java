@@ -133,6 +133,8 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final AttributeModifier LEGION_KNOCKBACK = new AttributeModifier(LEGION_KNOCKBACK_ID, 1.0, AttributeModifier.Operation.ADD_VALUE);
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
+	private final EchoTargetVisibilityMemory targetVisibility = new EchoTargetVisibilityMemory();
+	private final EchoCreeperTargeting creeperTargeting = new EchoCreeperTargeting();
 	private boolean movementAnimationActive;
 	private int movementAnimationLastMovingTick = Integer.MIN_VALUE;
 	private boolean shieldAnimationWasRaised;
@@ -326,9 +328,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 		if (this.tickCount % 5 == 0) {
 			LivingEntity target = selectProtectiveTarget(owner);
-			if (target != null && this.canAttack(target)) {
-				BrainUtil.setTargetOfEntity(this, target);
-			}
+			applySelectedCombatTarget(target);
 			enforceActivityBoundary(owner);
 		}
 		if (this.tickCount % 20 == 0) {
@@ -1996,8 +1996,13 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	}
 
 	private @Nullable LivingEntity selectProtectiveTarget(LivingEntity owner) {
+		long now = this.level().getGameTime();
+		this.creeperTargeting.validate(this, now, this::canProtectAgainst);
 		LivingEntity ownAttacker = this.getLastHurtByMob();
-		if (isRecent(this, this.getLastHurtByMobTimestamp()) && canProtectAgainst(ownAttacker)) {
+		if (isRecentWithin(this, this.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canProtectAgainst(ownAttacker)) {
+			this.creeperTargeting.authorizeReactive(this, ownAttacker, now);
+			this.targetVisibility.observe(this, ownAttacker, now);
 			return ownAttacker;
 		}
 		if (this.alertMode == EchoRelicState.AlertMode.PEACEFUL) {
@@ -2005,24 +2010,48 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		}
 
 		LivingEntity ownerAttacker = owner.getLastHurtByMob();
-		if (isRecent(owner, owner.getLastHurtByMobTimestamp()) && canProtectAgainst(ownerAttacker)) {
+		if (isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canProtectAgainst(ownerAttacker)) {
+			this.creeperTargeting.authorizeReactive(this, ownerAttacker, now);
+			this.targetVisibility.observe(this, ownerAttacker, now);
 			return ownerAttacker;
 		}
 
 		LivingEntity ownerTarget = owner.getLastHurtMob();
-		if (isRecent(owner, owner.getLastHurtMobTimestamp()) && canProtectAgainst(ownerTarget)) {
+		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canProtectAgainst(ownerTarget)) {
+			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
+			this.targetVisibility.observe(this, ownerTarget, now);
 			return ownerTarget;
 		}
+		LivingEntity current = this.getTarget();
+		if (canProtectAgainst(current) && this.creeperTargeting.canTarget(this, current, now, false)
+				&& this.targetVisibility.canRetain(this, current, now)) return current;
 		if (this.alertMode == EchoRelicState.AlertMode.AGGRESSIVE) {
 			double range = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 6.0 : 16.0;
 			AABB scanBox = this.activityMode == EchoRelicState.ActivityMode.WAIT
 					? new AABB(this.activityAnchor.x - range, this.activityAnchor.y - 4.0, this.activityAnchor.z - range,
 							this.activityAnchor.x + range, this.activityAnchor.y + 4.0, this.activityAnchor.z + range)
 					: this.getBoundingBox().inflate(range);
-			return this.level().getEntitiesOfClass(Monster.class, scanBox, this::canProtectAgainst)
+			LivingEntity selected = this.level().getEntitiesOfClass(Monster.class, scanBox,
+					candidate -> canProtectAgainst(candidate)
+							&& this.creeperTargeting.canTarget(this, candidate, now, false)
+							&& this.hasLineOfSight(candidate))
 					.stream().min(java.util.Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
+			this.targetVisibility.observe(this, selected, now);
+			return selected;
 		}
 		return null;
+	}
+
+	private void applySelectedCombatTarget(@Nullable LivingEntity target) {
+		if (target != null) {
+			BrainUtil.setTargetOfEntity(this, target);
+			return;
+		}
+		this.setTarget(null);
+		this.targetVisibility.clear();
+		BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
 	}
 
 	private static boolean isRecent(LivingEntity source, int timestamp) {
@@ -2143,6 +2172,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.enabledSkills = EchoRelicState.enabledSkills(relic);
 		if (previousAlert != this.alertMode || previousActivity != this.activityMode || resetAnchor) {
 			this.setTarget(null);
+			this.targetVisibility.clear();
 			BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
 		}
 		if (previousActivity != this.activityMode || resetAnchor) {

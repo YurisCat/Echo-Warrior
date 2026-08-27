@@ -155,12 +155,7 @@ public final class EchoRelicState {
 	public static int enabledSkills(ItemStack relic) {
 		EchoHeroType heroType = EchoHeroType.fromRelic(relic);
 		int allowed = heroType.allSkillsEnabledMask();
-		int enabled = intValue(relic, ENABLED_SKILLS_KEY, heroType.defaultEnabledSkillsMask()) & allowed;
-		return switch (heroType) {
-			case GUANDAO_WARRIOR -> enabled | 0b0111;
-			case JAPANESE_SAMURAI -> allowed;
-			default -> enabled;
-		};
+		return intValue(relic, ENABLED_SKILLS_KEY, heroType.defaultEnabledSkillsMask()) & allowed;
 	}
 
 	public static boolean skillEnabled(ItemStack relic, int skill) {
@@ -172,10 +167,6 @@ public final class EchoRelicState {
 		if (skill < 0 || skill >= EchoHeroType.fromRelic(relic).skillCount()) {
 			return;
 		}
-		if (EchoHeroType.fromRelic(relic) == EchoHeroType.GUANDAO_WARRIOR && skill != 3) {
-			return;
-		}
-		if (EchoHeroType.fromRelic(relic) == EchoHeroType.JAPANESE_SAMURAI) return;
 		int updated = enabledSkills(relic) ^ 1 << skill;
 		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> tag.putInt(ENABLED_SKILLS_KEY, updated));
 	}

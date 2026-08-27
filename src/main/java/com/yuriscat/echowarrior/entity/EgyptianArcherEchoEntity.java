@@ -198,7 +198,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private static final int BOW_RECOVERY_TICKS = 8;
 	private static final int BOW_LOWER_TICKS = 10;
 	private static final int TARGET_LOSS_GRACE_TICKS = 6;
-	private static final int COMBAT_SIGHT_MEMORY_TICKS = 20;
+	private static final int COMBAT_SIGHT_MEMORY_TICKS = EchoTargetVisibilityMemory.GRACE_TICKS;
 	private static final int BASE_RANGED_ATTACK_INTERVAL = 42;
 	private static final int MIN_RANGED_ATTACK_INTERVAL = 24;
 	private static final int UNNOCK_TICKS = 12;
@@ -295,6 +295,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private EchoRelicState.ActivityMode activityMode = EchoRelicState.ActivityMode.FOLLOW;
 	private EchoRelicState.AlertMode alertMode = EchoRelicState.AlertMode.DEFENSIVE;
 	private int enabledSkills = EchoHeroType.EGYPTIAN_ARCHER.defaultEnabledSkillsMask();
+	private final EchoCreeperTargeting creeperTargeting = new EchoCreeperTargeting();
 	private EchoRelicState.EgyptianArrowMode arrowMode = EchoRelicState.EgyptianArrowMode.OFF;
 	private Vec3 activityAnchor = Vec3.ZERO;
 	private long lastNaturalHealAt;
@@ -922,8 +923,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 
 	private boolean canAcquireCombatTarget(@Nullable LivingEntity target) {
 		if (target == null || !canProtectAgainst(target) || rangedAimTarget(target) == null) return false;
-		return !(target instanceof Creeper creeper) || !CatGodCreeperSystem.isPanicking(creeper)
-				|| target == this.getLastHurtByMob() && isRecentWithin(this, this.getLastHurtByMobTimestamp(), 20);
+		return this.creeperTargeting.canTarget(this, target, this.level().getGameTime(),
+				allowProactiveCreeperTargeting());
 	}
 
 	private @Nullable Entity rangedAimTarget(LivingEntity target) {
@@ -1034,11 +1035,12 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		LivingEntity owner = this.getOwner();
 		LivingEntity recentAttacker = this.getLastHurtByMob();
 		boolean recentDamage = isRecentWithin(this, this.getLastHurtByMobTimestamp(), 20);
+		long now = level.getGameTime();
 		return level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(3.0), candidate ->
 				(candidate instanceof Enemy || candidate == currentTarget)
 						&& isInMeleeRange(candidate)
-						&& (!(candidate instanceof Creeper creeper) || !CatGodCreeperSystem.isPanicking(creeper)
-								|| recentDamage && candidate == recentAttacker))
+						&& this.creeperTargeting.canTarget(this, candidate, now,
+								allowProactiveCreeperTargeting()))
 				.stream()
 				.min(Comparator.comparingInt((LivingEntity candidate) -> {
 					if (recentDamage && candidate == recentAttacker) return 0;
@@ -1051,9 +1053,12 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 
 	private @Nullable LivingEntity selectCommittedMeleeReplacement(ServerLevel level,
 			@Nullable LivingEntity previousTarget) {
+		long now = level.getGameTime();
 		return level.getEntitiesOfClass(LivingEntity.class,
 				this.getBoundingBox().inflate(MELEE_ESCAPE_RELEASE_RANGE), candidate ->
 						candidate != previousTarget && canDefendAgainst(candidate)
+								&& this.creeperTargeting.canTarget(this, candidate, now,
+										allowProactiveCreeperTargeting())
 								&& this.distanceToSqr(candidate) <= MELEE_ESCAPE_RELEASE_RANGE * MELEE_ESCAPE_RELEASE_RANGE
 								&& this.hasLineOfSight(candidate)
 								&& (candidate instanceof Enemy || candidate == this.getTarget()
@@ -1293,9 +1298,13 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private List<LivingEntity> combatTargets(ServerLevel level, double range, @Nullable LivingEntity excluded) {
+		long now = level.getGameTime();
 		return level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(range), candidate ->
 				candidate != excluded && (candidate instanceof Enemy || candidate == this.getTarget())
-						&& candidate.distanceToSqr(this) <= range * range && this.canAttack(candidate)
+						&& candidate.distanceToSqr(this) <= range * range && canDefendAgainst(candidate)
+						&& rangedAimTarget(candidate) != null
+						&& this.creeperTargeting.canTarget(this, candidate, now,
+								allowProactiveCreeperTargeting())
 						&& this.hasLineOfSight(candidate)).stream()
 				.sorted(Comparator.comparingDouble(this::distanceToSqr)).toList();
 	}
@@ -3244,6 +3253,9 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private @Nullable LivingEntity selectProtectiveTarget(LivingEntity owner) {
+		long now = this.level().getGameTime();
+		refreshReactiveCreeperPermission(owner, now);
+		this.creeperTargeting.validate(this, now, this::canDefendAgainst);
 		LivingEntity current = this.getTarget();
 		current = clearExpiredEmergencyTarget(current);
 		LivingEntity retainedSelfDefense = validateSelfDefenseTarget();
@@ -3293,12 +3305,15 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			return current;
 		}
 		LivingEntity ownAttacker = this.getLastHurtByMob();
-		if (isRecent(this, this.getLastHurtByMobTimestamp()) && canAcquireCombatTarget(ownAttacker)) return ownAttacker;
+		if (isRecentWithin(this, this.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canProtectAgainst(ownAttacker)) return ownAttacker;
 		if (this.alertMode == EchoRelicState.AlertMode.PEACEFUL) return null;
 		LivingEntity ownerAttacker = owner.getLastHurtByMob();
-		if (isRecent(owner, owner.getLastHurtByMobTimestamp()) && canAcquireCombatTarget(ownerAttacker)) return ownerAttacker;
+		if (isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canProtectAgainst(ownerAttacker)) return ownerAttacker;
 		LivingEntity ownerTarget = owner.getLastHurtMob();
-		if (isRecent(owner, owner.getLastHurtMobTimestamp()) && canAcquireCombatTarget(ownerTarget)) return ownerTarget;
+		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canProtectAgainst(ownerTarget)) return ownerTarget;
 		if (this.alertMode != EchoRelicState.AlertMode.AGGRESSIVE) return null;
 		double range = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 6.0 : MAX_RANGE;
 		return this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(range),
@@ -3309,16 +3324,26 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private @Nullable LivingEntity selectVisibleCombatReplacement(LivingEntity owner, LivingEntity hiddenCurrent) {
+		long now = this.level().getGameTime();
 		LivingEntity ownAttacker = this.getLastHurtByMob();
 		if (ownAttacker != hiddenCurrent && isRecent(this, this.getLastHurtByMobTimestamp())
-				&& canAcquireCombatTarget(ownAttacker)) return ownAttacker;
+				&& canAcquireCombatTarget(ownAttacker)) {
+			this.creeperTargeting.authorizeReactive(this, ownAttacker, now);
+			return ownAttacker;
+		}
 		if (this.alertMode == EchoRelicState.AlertMode.PEACEFUL) return null;
 		LivingEntity ownerAttacker = owner.getLastHurtByMob();
 		if (ownerAttacker != hiddenCurrent && isRecent(owner, owner.getLastHurtByMobTimestamp())
-				&& canAcquireCombatTarget(ownerAttacker)) return ownerAttacker;
+				&& canAcquireCombatTarget(ownerAttacker)) {
+			this.creeperTargeting.authorizeReactive(this, ownerAttacker, now);
+			return ownerAttacker;
+		}
 		LivingEntity ownerTarget = owner.getLastHurtMob();
 		if (ownerTarget != hiddenCurrent && isRecent(owner, owner.getLastHurtMobTimestamp())
-				&& canAcquireCombatTarget(ownerTarget)) return ownerTarget;
+				&& canAcquireCombatTarget(ownerTarget)) {
+			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
+			return ownerTarget;
+		}
 		if (this.alertMode != EchoRelicState.AlertMode.AGGRESSIVE) return null;
 		double range = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 6.0 : MAX_RANGE;
 		return this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(range),
@@ -3356,12 +3381,12 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 				this.getBoundingBox().inflate(BACKSTEP_TRIGGER_RANGE), candidate -> {
 					if (candidate.distanceToSqr(this) > BACKSTEP_TRIGGER_RANGE * BACKSTEP_TRIGGER_RANGE
 							|| canProtectAgainst(candidate) || !canDefendAgainst(candidate)) return false;
+					if (!this.creeperTargeting.canTarget(this, candidate, this.level().getGameTime(),
+							allowProactiveCreeperTargeting())) return false;
 					boolean continuing = candidate == current && canContinueCombatAgainst(candidate)
 							|| candidate == retainedSelfDefense && canContinueCombatAgainst(candidate);
 					if (!continuing && rangedAimTarget(candidate) == null) return false;
 					boolean ownDamager = ownDamageRecent && candidate == ownAttacker;
-					if (candidate instanceof Creeper creeper && CatGodCreeperSystem.isPanicking(creeper)
-							&& !ownDamager) return false;
 					if (this.alertMode == EchoRelicState.AlertMode.PEACEFUL) return ownDamager;
 					return this.alertMode == EchoRelicState.AlertMode.AGGRESSIVE
 							|| ownDamager || ownerDamageRecent && candidate == ownerAttacker
@@ -3404,9 +3429,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 							|| ownerDamageRecent && candidate == ownerAttacker;
 					if (this.alertMode == EchoRelicState.AlertMode.PEACEFUL
 							&& !(ownDamageRecent && candidate == ownAttacker)) return true;
-					if (!alreadyInCombat && !recentDamager) return true;
-					return candidate instanceof Creeper creeper && CatGodCreeperSystem.isPanicking(creeper)
-							&& !recentDamager;
+					return !alreadyInCombat && !recentDamager;
 				});
 		if (candidates.isEmpty()) return null;
 
@@ -3448,6 +3471,29 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		return timestamp > 0 && source.tickCount - timestamp <= ticks;
 	}
 
+	private boolean allowProactiveCreeperTargeting() {
+		return this.alertMode == EchoRelicState.AlertMode.AGGRESSIVE && skillEnabled(SKILL_CAT_GOD);
+	}
+
+	private void refreshReactiveCreeperPermission(LivingEntity owner, long now) {
+		LivingEntity ownAttacker = this.getLastHurtByMob();
+		if (isRecentWithin(this, this.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canDefendAgainst(ownAttacker)) {
+			this.creeperTargeting.authorizeReactive(this, ownAttacker, now);
+		}
+		if (this.alertMode == EchoRelicState.AlertMode.PEACEFUL) return;
+		LivingEntity ownerAttacker = owner.getLastHurtByMob();
+		if (isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canDefendAgainst(ownerAttacker)) {
+			this.creeperTargeting.authorizeReactive(this, ownerAttacker, now);
+		}
+		LivingEntity ownerTarget = owner.getLastHurtMob();
+		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canDefendAgainst(ownerTarget)) {
+			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
+		}
+	}
+
 	private boolean canProtectAgainst(@Nullable LivingEntity target) {
 		if (!canDefendAgainst(target)) return false;
 		if (target instanceof Phantom && !canRangedAttack(target)) return false;
@@ -3458,11 +3504,15 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 
 	private boolean canContinueCombatAgainst(@Nullable LivingEntity target) {
 		return (canProtectAgainst(target) || isRetainedSelfDefenseTarget(target))
+				&& this.creeperTargeting.canTarget(this, target, this.level().getGameTime(),
+						allowProactiveCreeperTargeting())
 				&& !isCombatSightExpired(target);
 	}
 
 	private boolean isRetainedSelfDefenseTarget(@Nullable LivingEntity target) {
 		return target != null && target == this.selfDefenseTarget && canDefendAgainst(target)
+				&& this.creeperTargeting.canTarget(this, target, this.level().getGameTime(),
+						allowProactiveCreeperTargeting())
 				&& this.distanceToSqr(target) <= SELF_DEFENSE_RELEASE_RANGE * SELF_DEFENSE_RELEASE_RANGE
 				&& !isCombatSightExpired(target)
 				&& (target == this.getTarget() || rangedAimTarget(target) != null);
@@ -3483,6 +3533,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 
 	private void retainSelfDefenseTarget(@Nullable LivingEntity target, String reason) {
 		if (!canDefendAgainst(target)
+				|| !this.creeperTargeting.canTarget(this, target, this.level().getGameTime(),
+						allowProactiveCreeperTargeting())
 				|| this.distanceToSqr(target) > SELF_DEFENSE_RELEASE_RANGE * SELF_DEFENSE_RELEASE_RANGE) return;
 		if (this.distanceToSqr(target) < MELEE_ESCAPE_RELEASE_RANGE * MELEE_ESCAPE_RELEASE_RANGE) {
 			// Basic close-quarters survival retreat remains active even when Chariot Soul is
@@ -3550,6 +3602,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			}
 			if (attacker instanceof LivingEntity livingAttacker && canDefendAgainst(livingAttacker)
 					&& this.distanceToSqr(livingAttacker) <= MAX_RANGE * MAX_RANGE) {
+				this.creeperTargeting.authorizeReactive(this, livingAttacker, now);
 				if (action() == ACTION_MELEE) this.meleeHitAgainDuringAction = true;
 				Entity directAttacker = source.getDirectEntity();
 				boolean closePhysicalHit = (directAttacker == null || directAttacker == livingAttacker)

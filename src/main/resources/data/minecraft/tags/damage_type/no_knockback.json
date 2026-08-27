@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "echo_warrior:samurai_first_slash"
+    "echo_warrior:samurai_first_slash",
+    "echo_warrior:samurai_stab"
   ]
 }

@@ -127,9 +127,10 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 
 	private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.japanese_samurai.idle");
 	private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.japanese_samurai.walk");
-	private static final RawAnimation ATTACK_FIRST = RawAnimation.begin().thenPlayAndHold("animation.japanese_samurai.attack_first");
+	private static final RawAnimation ATTACK_FIRST = RawAnimation.begin()
+			.thenPlay("animation.japanese_samurai.attack_first")
+			.thenPlayAndHold("animation.japanese_samurai.attack_follow");
 	private static final RawAnimation ATTACK_RECOVER = RawAnimation.begin().thenPlayAndHold("animation.japanese_samurai.attack_recover");
-	private static final RawAnimation ATTACK_FOLLOW = RawAnimation.begin().thenPlayAndHold("animation.japanese_samurai.attack_follow");
 	private static final RawAnimation STAB = RawAnimation.begin().thenPlayAndHold("animation.japanese_samurai.stab");
 	private static final RawAnimation DASH_FORWARD = RawAnimation.begin().thenPlayAndHold("animation.japanese_samurai.dash_forward");
 	private static final RawAnimation DASH_BACKWARD = RawAnimation.begin().thenPlayAndHold("animation.japanese_samurai.dash_backward");
@@ -137,7 +138,6 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	private static final String ACTION_CONTROLLER = "action";
 	private static final String ATTACK_FIRST_TRIGGER = "attack_first";
 	private static final String ATTACK_RECOVER_TRIGGER = "attack_recover";
-	private static final String ATTACK_FOLLOW_TRIGGER = "attack_follow";
 	private static final String STAB_TRIGGER = "stab";
 	private static final String DASH_FORWARD_TRIGGER = "dash_forward";
 	private static final String DASH_BACKWARD_TRIGGER = "dash_backward";
@@ -175,10 +175,11 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	private static final double STAB_TRIGGER_RANGE = 2.25;
 	private static final double STAB_CAPSULE_LENGTH = 2.75;
 	private static final double STAB_CAPSULE_RADIUS = 0.40;
-	private static final int ZANSHIN_ATTACK_BONUS_TICKS = 10;
+	private static final int ZANSHIN_ATTACK_BONUS_TICKS = 20;
 	private static final float ZANSHIN_ATTACK_BONUS = 0.20F;
-	private static final float ZANSHIN_BASE_CAP = 0.40F;
-	private static final float ZANSHIN_FINAL_CAP = 0.60F;
+	private static final float ZANSHIN_BASE_MIN = 0.20F;
+	private static final float ZANSHIN_BASE_MAX = 0.60F;
+	private static final float ZANSHIN_FINAL_CAP = 0.80F;
 	private static final DustParticleOptions CYAN_AFTERIMAGE = new DustParticleOptions(0xAEEFFF, 1.15F);
 	private static final DustParticleOptions GOLD_AFTERIMAGE = new DustParticleOptions(0xFFE4A3, 1.15F);
 	private static final DustParticleOptions BLOOD = new DustParticleOptions(0xB51020, 1.05F);
@@ -190,6 +191,8 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	private static final Map<UUID, Vec3> PINNED_CENTERS = new ConcurrentHashMap<>();
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
+	private final EchoTargetVisibilityMemory targetVisibility = new EchoTargetVisibilityMemory();
+	private final EchoCreeperTargeting creeperTargeting = new EchoCreeperTargeting();
 	private final List<UUID> secondSlashTargets = new ArrayList<>();
 	private final Map<UUID, Vec3> stabTargets = new LinkedHashMap<>();
 	private @Nullable EntityReference<LivingEntity> ownerReference;
@@ -217,6 +220,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	private double attackTrackingTravelled;
 	private float attackTrackingStartYaw;
 	private boolean attackTrackingStopped;
+	private int committedSkillSnapshot = EchoHeroType.JAPANESE_SAMURAI.allSkillsEnabledMask();
 
 	public JapaneseSamuraiEchoEntity(EntityType<? extends JapaneseSamuraiEchoEntity> type, Level level) {
 		super(type, level);
@@ -318,7 +322,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 
 		if (this.tickCount % 5 == 0 && action() == ACTION_NONE) {
 			LivingEntity target = selectProtectiveTarget(owner);
-			if (target != null) BrainUtil.setTargetOfEntity(this, target);
+			applySelectedCombatTarget(target);
 			enforceActivityBoundary(owner);
 		}
 		if (this.tickCount % 20 == 0 && this.getTarget() != null) {
@@ -338,14 +342,15 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		if (target == null || !target.isAlive() || !this.canAttack(target)) return;
 		double distance = horizontalDistance(this.position(), target.position());
 
-		if (distance > NORMAL_MELEE_RANGE && distance <= FUMIKOMI_MAX_RANGE
+		if (skillEnabled(SKILL_FUMIKOMI)
+				&& distance > NORMAL_MELEE_RANGE && distance <= FUMIKOMI_MAX_RANGE
 				&& now >= this.fumikomiInternalCooldownUntil && this.hasLineOfSight(target)
 				&& EchoRelicState.fumikomiCharges(relic, now) > 0
 				&& canPrecheckDash(level, target)) {
 			startFumikomi(level, relic, target, now, distance);
 			return;
 		}
-		if (distance <= STAB_TRIGGER_RANGE && this.hasLineOfSight(target)
+		if (skillEnabled(SKILL_STAB) && distance <= STAB_TRIGGER_RANGE && this.hasLineOfSight(target)
 				&& now >= EchoRelicState.samuraiStabCooldownEnd(relic)) {
 			startStab(relic, target, now);
 			return;
@@ -356,6 +361,10 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	}
 
 	private void startNormalAttack(ItemStack relic, LivingEntity target, long now) {
+		startNormalAttack(relic, target, now, this.enabledSkills);
+	}
+
+	private void startNormalAttack(ItemStack relic, LivingEntity target, long now, int skillSnapshot) {
 		int interval = relic.isEmpty() ? BASE_ATTACK_CYCLE_TICKS : EchoRelicState.attackIntervalTicks(relic);
 		float speed = BASE_ATTACK_CYCLE_TICKS / (float)interval;
 		int firstTicks = scaledAttackTicks(BASE_FIRST_TICKS, interval);
@@ -363,6 +372,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		this.lockedTargetUuid = target.getUUID();
 		this.secondSlashTargets.clear();
 		this.secondSlashPrimaryUuid = null;
+		this.committedSkillSnapshot = skillSnapshot;
 		faceTargetImmediately(target);
 		beginAttackTracking();
 		setAction(ACTION_ATTACK_FIRST, now, firstTicks, now + firstTicks, speed, ATTACK_FIRST_TRIGGER);
@@ -375,17 +385,17 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		this.stabTargets.clear();
 		this.stabDirectionLocked = false;
 		this.stabYaw = this.yBodyRot;
+		this.committedSkillSnapshot = this.enabledSkills;
 		setAction(ACTION_STAB, now, STAB_ANIMATION_TICKS, now + STAB_FIRST_HIT_TICK, 1.0F, STAB_TRIGGER);
 	}
 
 	private void startFumikomi(ServerLevel level, ItemStack relic, LivingEntity target, long now, double distance) {
-		if (!EchoRelicState.consumeFumikomiCharge(relic, now)) return;
-		persistCurrentRelic(relic);
 		double travel = Math.max(0.0, distance - FUMIKOMI_STOP_RANGE);
 		int duration = Math.clamp((int)Math.ceil(travel / FUMIKOMI_SPEED), FUMIKOMI_MIN_TICKS, FUMIKOMI_MAX_TICKS);
 		this.dashTargetUuid = target.getUUID();
 		this.fumikomiAfterimageOrigin = this.position();
 		this.fumikomiAfterimageStep = 0;
+		this.committedSkillSnapshot = this.enabledSkills;
 		setSpecialStepHeight(true);
 		faceTargetImmediately(target);
 		setAction(ACTION_DASH_FORWARD, now, duration, Long.MAX_VALUE,
@@ -429,14 +439,18 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		}
 		if (!this.actionHitResolved && now >= this.actionHitAt) {
 			this.actionHitResolved = true;
+			boolean zanEnabled = (this.committedSkillSnapshot & 1 << SKILL_ZAN) != 0;
 			performSlash(level, FIRST_SLASH_RADIUS, FIRST_SLASH_ANGLE,
-					this.lockedTargetUuid, null, 1.0F, 0.5F, 0.08, true);
+					this.lockedTargetUuid,
+					zanEnabled || this.lockedTargetUuid == null ? null : List.of(this.lockedTargetUuid),
+					1.0F, 0.5F, 0.08, true);
+			if (!zanEnabled) {
+				startAttackRecovery(relic, now);
+				return;
+			}
 			List<LivingEntity> followTargets = targetsInSector(level, SECOND_SLASH_RADIUS, SECOND_SLASH_ANGLE);
 			if (followTargets.isEmpty()) {
-				int interval = relic.isEmpty() ? BASE_ATTACK_CYCLE_TICKS : EchoRelicState.attackIntervalTicks(relic);
-				int duration = scaledAttackTicks(BASE_RECOVER_TICKS, interval);
-				setAction(ACTION_ATTACK_RECOVER, now, duration, Long.MAX_VALUE,
-						BASE_ATTACK_CYCLE_TICKS / (float)interval, ATTACK_RECOVER_TRIGGER);
+				startAttackRecovery(relic, now);
 				return;
 			}
 			this.secondSlashTargets.clear();
@@ -448,9 +462,16 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 			int duration = scaledAttackTicks(BASE_FOLLOW_TICKS, interval);
 			int hit = scaledAttackTicks(BASE_FOLLOW_HIT_TICKS, interval);
 			beginAttackTracking();
-			setAction(ACTION_ATTACK_FOLLOW, now, duration, now + hit,
-					BASE_ATTACK_CYCLE_TICKS / (float)interval, ATTACK_FOLLOW_TRIGGER);
+			continueAction(ACTION_ATTACK_FOLLOW, now, duration, now + hit,
+					BASE_ATTACK_CYCLE_TICKS / (float)interval);
 		}
+	}
+
+	private void startAttackRecovery(ItemStack relic, long now) {
+		int interval = relic.isEmpty() ? BASE_ATTACK_CYCLE_TICKS : EchoRelicState.attackIntervalTicks(relic);
+		int duration = scaledAttackTicks(BASE_RECOVER_TICKS, interval);
+		setAction(ACTION_ATTACK_RECOVER, now, duration, Long.MAX_VALUE,
+				BASE_ATTACK_CYCLE_TICKS / (float)interval, ATTACK_RECOVER_TRIGGER);
 	}
 
 	private void tickAttackFollow(ServerLevel level, long now) {
@@ -499,10 +520,14 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		turnToward(target, 15.0F);
 		Vec3 delta = target.position().subtract(this.position()).multiply(1.0, 0.0, 1.0);
 		double distance = delta.length();
-		if (distance <= FUMIKOMI_STOP_RANGE || now >= actionEndsAt()) {
-			finishAction(now);
+		if (distance <= FUMIKOMI_STOP_RANGE) {
+			completeFumikomi(level, target, now);
 			return;
 		}
+		// Movement starts on the tick after setAction. The calculated duration is
+		// the number of movement steps required, so the end tick must still be
+		// allowed to take its final step before timing out.
+		boolean finalMovementTick = now >= actionEndsAt();
 		double step = Math.min(FUMIKOMI_SPEED, distance - FUMIKOMI_STOP_RANGE);
 		Vec3 before = this.position();
 		if (step <= 0.0 || !moveSpecial(level, delta.normalize().scale(step))) {
@@ -518,6 +543,27 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 			this.fumikomiAfterimageStep++;
 			emitFumikomiAfterimage(level, before);
 		}
+		double remaining = horizontalDistance(this.position(), target.position());
+		if (remaining <= FUMIKOMI_STOP_RANGE + 1.0E-4) {
+			completeFumikomi(level, target, now);
+		} else if (finalMovementTick) {
+			finishAction(now);
+		}
+	}
+
+	private void completeFumikomi(ServerLevel level, LivingEntity target, long now) {
+		ItemStack relic = currentRelic();
+		boolean canAttackNow = !relic.isEmpty() && target.isAlive() && this.canAttack(target)
+				&& this.hasLineOfSight(target)
+				&& horizontalDistance(this.position(), target.position()) <= NORMAL_MELEE_RANGE;
+		if (!canAttackNow || !EchoRelicState.consumeFumikomiCharge(relic, now)) {
+			finishAction(now);
+			return;
+		}
+		persistCurrentRelic(relic);
+		setSpecialStepHeight(false);
+		this.fumikomiInternalCooldownUntil = now + FUMIKOMI_INTERNAL_COOLDOWN_TICKS;
+		startNormalAttack(relic, target, now, this.committedSkillSnapshot);
 	}
 
 	private void tickDashBackward(ServerLevel level, long now) {
@@ -571,7 +617,8 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		boolean damaged = false;
 		for (LivingEntity target : targetsInStabCapsule(level, this.stabYaw)) {
 			Vec3 stored = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
-			if (dealDamage(level, target, 1.5F)) {
+			if (dealDamage(level, target, 1.5F,
+					level.damageSources().source(ModDamageTypes.SAMURAI_STAB, this))) {
 				damaged = true;
 				this.stabTargets.put(target.getUUID(), stored);
 				PINNED_UNTIL.put(target.getUUID(), now + 8L);
@@ -589,7 +636,8 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		for (Map.Entry<UUID, Vec3> entry : this.stabTargets.entrySet()) {
 			LivingEntity target = resolveLiving(level, entry.getKey());
 			Vec3 bloodPosition = target != null ? target.position().add(0.0, target.getBbHeight() * 0.55, 0.0) : entry.getValue();
-			if (target != null && target.isAlive() && this.canAttack(target) && dealDamage(level, target, 3.0F)) {
+			if (target != null && target.isAlive() && this.canAttack(target) && dealDamage(level, target, 3.0F,
+					level.damageSources().source(ModDamageTypes.SAMURAI_STAB, this))) {
 				damaged = true;
 				applyLightKnockback(target, 0.32);
 			}
@@ -613,17 +661,27 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 			float multiplier,
 			boolean suppressVanillaKnockback
 	) {
-		if (!target.isAlive() || !this.canAttack(target)) return false;
-		float previousHealth = target.getHealth();
-		float damage = (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE) * multiplier;
 		DamageSource source = suppressVanillaKnockback
 				? level.damageSources().source(ModDamageTypes.SAMURAI_FIRST_SLASH, this)
 				: level.damageSources().mobAttack(this);
+		return dealDamage(level, target, multiplier, source);
+	}
+
+	private boolean dealDamage(
+			ServerLevel level,
+			LivingEntity target,
+			float multiplier,
+			DamageSource source
+	) {
+		if (!target.isAlive() || !this.canAttack(target)) return false;
+		float previousHealth = target.getHealth();
+		float damage = (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE) * multiplier;
 		boolean hurt = target.hurtServer(level, source, damage);
 		return hurt && target.getHealth() < previousHealth;
 	}
 
 	private void grantAttackZanshin(long now) {
+		if (!skillEnabled(SKILL_ZANSHIN)) return;
 		this.zanshinBonusUntil = now + ZANSHIN_ATTACK_BONUS_TICKS;
 	}
 
@@ -676,6 +734,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 				setAction(ACTION_HURT, now, HURT_TICKS, Long.MAX_VALUE, 1.0F, HURT_TRIGGER);
 			}
 			if (attacker instanceof LivingEntity living && canProtectAgainst(living)) {
+				this.creeperTargeting.authorizeReactive(this, living, now);
 				BrainUtil.setTargetOfEntity(this, living);
 			}
 		}
@@ -710,15 +769,20 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	}
 
 	private float zanshinChance(long now) {
+		if (!skillEnabled(SKILL_ZANSHIN)) return 0.0F;
 		float denominator = Math.max(1.0F, this.getMaxHealth() - 1.0F);
-		float base = Math.clamp((this.getMaxHealth() - this.getHealth()) / denominator, 0.0F, 1.0F) * ZANSHIN_BASE_CAP;
+		float missingHealthRatio = Math.clamp(
+				(this.getMaxHealth() - this.getHealth()) / denominator, 0.0F, 1.0F);
+		float base = ZANSHIN_BASE_MIN
+				+ missingHealthRatio * (ZANSHIN_BASE_MAX - ZANSHIN_BASE_MIN);
 		float bonus = now < this.zanshinBonusUntil ? ZANSHIN_ATTACK_BONUS : 0.0F;
 		return Math.min(ZANSHIN_FINAL_CAP, base + bonus);
 	}
 
 	private void onSuccessfulDodge(ServerLevel level, DamageSource source, long now) {
 		ItemStack relic = currentRelic();
-		if (!relic.isEmpty() && EchoRelicState.addFumikomiCharge(relic, now)) persistCurrentRelic(relic);
+		if (skillEnabled(SKILL_FUMIKOMI) && !relic.isEmpty()
+				&& EchoRelicState.addFumikomiCharge(relic, now)) persistCurrentRelic(relic);
 		advanceDodgedProjectile(source);
 		if (action() == ACTION_NONE) {
 			startDashBackward(level, source, now);
@@ -826,8 +890,9 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	private boolean moveSpecial(ServerLevel level, Vec3 horizontalDelta) {
 		Vec3 safe = safeSpecialDestination(level, this.position().add(horizontalDelta));
 		if (safe == null) return false;
+		double verticalVelocity = this.getDeltaMovement().y;
 		this.snapTo(safe.x, safe.y, safe.z, this.getYRot(), this.getXRot());
-		this.setDeltaMovement(Vec3.ZERO);
+		this.setDeltaMovement(0.0, verticalVelocity, 0.0);
 		return true;
 	}
 
@@ -887,7 +952,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 
 	private @Nullable Vec3 safeSpecialDestination(ServerLevel level, Vec3 desired) {
 		for (double dy : new double[] {0.0, 1.0, -1.0}) {
-			Vec3 candidate = new Vec3(desired.x, this.getY() + dy, desired.z);
+			Vec3 candidate = new Vec3(desired.x, desired.y + dy, desired.z);
 			AABB moved = this.getBoundingBox().move(candidate.subtract(this.position()));
 			if (!level.noCollision(this, moved) || !hasSafeSupport(level, candidate)) continue;
 			return candidate;
@@ -913,6 +978,16 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		this.actionHitResolved = false;
 		stopMovementIntent();
 		this.triggerAnim(ACTION_CONTROLLER, trigger);
+	}
+
+	private void continueAction(byte action, long now, int duration, long hitAt, float speed) {
+		this.entityData.set(ACTION, action);
+		this.entityData.set(ACTION_STARTED_AT, now);
+		this.entityData.set(ACTION_ENDS_AT, now + duration);
+		this.entityData.set(ACTION_SPEED, speed);
+		this.actionHitAt = hitAt;
+		this.actionHitResolved = false;
+		stopMovementIntent();
 	}
 
 	private void finishAction(long now) {
@@ -941,7 +1016,6 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	private void stopAllActionTriggers() {
 		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_FIRST_TRIGGER);
 		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_RECOVER_TRIGGER);
-		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_FOLLOW_TRIGGER);
 		this.stopTriggeredAnim(ACTION_CONTROLLER, STAB_TRIGGER);
 		this.stopTriggeredAnim(ACTION_CONTROLLER, DASH_FORWARD_TRIGGER);
 		this.stopTriggeredAnim(ACTION_CONTROLLER, DASH_BACKWARD_TRIGGER);
@@ -991,7 +1065,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		this.setSpeed(0.0F);
 		this.setXxa(0.0F);
 		this.setZza(0.0F);
-		this.setDeltaMovement(Vec3.ZERO);
+		this.setDeltaMovement(0.0, this.getDeltaMovement().y, 0.0);
 		BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.WALK_TARGET);
 	}
 
@@ -1017,27 +1091,66 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	}
 
 	private @Nullable LivingEntity selectProtectiveTarget(LivingEntity owner) {
+		long now = this.level().getGameTime();
+		this.creeperTargeting.validate(this, now, this::canProtectAgainst);
 		LivingEntity ownAttacker = this.getLastHurtByMob();
-		if (isRecent(this, this.getLastHurtByMobTimestamp()) && canProtectAgainst(ownAttacker)) return ownAttacker;
+		if (isRecentWithin(this, this.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canProtectAgainst(ownAttacker)) {
+			this.creeperTargeting.authorizeReactive(this, ownAttacker, now);
+			this.targetVisibility.observe(this, ownAttacker, now);
+			return ownAttacker;
+		}
 		if (this.alertMode == EchoRelicState.AlertMode.PEACEFUL) return null;
 		LivingEntity ownerAttacker = owner.getLastHurtByMob();
-		if (isRecent(owner, owner.getLastHurtByMobTimestamp()) && canProtectAgainst(ownerAttacker)) return ownerAttacker;
+		if (isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canProtectAgainst(ownerAttacker)) {
+			this.creeperTargeting.authorizeReactive(this, ownerAttacker, now);
+			this.targetVisibility.observe(this, ownerAttacker, now);
+			return ownerAttacker;
+		}
 		LivingEntity ownerTarget = owner.getLastHurtMob();
-		if (isRecent(owner, owner.getLastHurtMobTimestamp()) && canProtectAgainst(ownerTarget)) return ownerTarget;
+		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canProtectAgainst(ownerTarget)) {
+			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
+			this.targetVisibility.observe(this, ownerTarget, now);
+			return ownerTarget;
+		}
+		LivingEntity current = this.getTarget();
+		if (canProtectAgainst(current) && this.creeperTargeting.canTarget(this, current, now, false)
+				&& this.targetVisibility.canRetain(this, current, now)) return current;
 		if (this.alertMode == EchoRelicState.AlertMode.AGGRESSIVE) {
 			double range = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 6.0 : 16.0;
 			AABB box = this.activityMode == EchoRelicState.ActivityMode.WAIT
 					? new AABB(this.activityAnchor.x - range, this.activityAnchor.y - 4.0, this.activityAnchor.z - range,
 						this.activityAnchor.x + range, this.activityAnchor.y + 4.0, this.activityAnchor.z + range)
 					: this.getBoundingBox().inflate(range);
-			return this.level().getEntitiesOfClass(Monster.class, box, this::canProtectAgainst).stream()
+			LivingEntity selected = this.level().getEntitiesOfClass(Monster.class, box,
+					candidate -> canProtectAgainst(candidate)
+							&& this.creeperTargeting.canTarget(this, candidate, now, false)
+							&& this.hasLineOfSight(candidate)).stream()
 					.min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
+			this.targetVisibility.observe(this, selected, now);
+			return selected;
 		}
 		return null;
 	}
 
+	private void applySelectedCombatTarget(@Nullable LivingEntity target) {
+		if (target != null) {
+			BrainUtil.setTargetOfEntity(this, target);
+			return;
+		}
+		this.setTarget(null);
+		this.targetVisibility.clear();
+		BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
+	}
+
 	private static boolean isRecent(LivingEntity source, int timestamp) {
 		return timestamp > 0 && source.tickCount - timestamp <= 100;
+	}
+
+	private static boolean isRecentWithin(LivingEntity source, int timestamp, int ticks) {
+		return timestamp > 0 && source.tickCount - timestamp <= ticks;
 	}
 
 	private boolean canProtectAgainst(@Nullable LivingEntity target) {
@@ -1123,11 +1236,16 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		if (relic.isEmpty()) return;
 		EchoRelicState.ActivityMode previousActivity = this.activityMode;
 		EchoRelicState.AlertMode previousAlert = this.alertMode;
+		int previousSkills = this.enabledSkills;
 		this.activityMode = EchoRelicState.activityMode(relic);
 		this.alertMode = EchoRelicState.alertMode(relic);
 		this.enabledSkills = EchoRelicState.enabledSkills(relic);
+		if ((previousSkills & 1 << SKILL_ZANSHIN) != 0 && !skillEnabled(SKILL_ZANSHIN)) {
+			this.zanshinBonusUntil = 0L;
+		}
 		if (previousActivity != this.activityMode || previousAlert != this.alertMode || resetAnchor) {
 			this.setTarget(null);
+			this.targetVisibility.clear();
 			BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
 		}
 		if (previousActivity != this.activityMode || resetAnchor) EchoActivityMovement.reset(this);
@@ -1256,12 +1374,12 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
 		controllers.add(new AnimationController<JapaneseSamuraiEchoEntity>("movement", 3, this::selectMovementAnimation));
 		controllers.add(new AnimationController<JapaneseSamuraiEchoEntity>(ACTION_CONTROLLER, 0, test -> {
-			test.setControllerSpeed(test.animatable().actionAnimationSpeed());
+			test.setControllerSpeed(test.animatable().action() == ACTION_STAB
+					? 1.0F : test.animatable().actionAnimationSpeed());
 			return PlayState.STOP;
 		})
 				.triggerableAnim(ATTACK_FIRST_TRIGGER, ATTACK_FIRST)
 				.triggerableAnim(ATTACK_RECOVER_TRIGGER, ATTACK_RECOVER)
-				.triggerableAnim(ATTACK_FOLLOW_TRIGGER, ATTACK_FOLLOW)
 				.triggerableAnim(STAB_TRIGGER, STAB)
 				.triggerableAnim(DASH_FORWARD_TRIGGER, DASH_FORWARD)
 				.triggerableAnim(DASH_BACKWARD_TRIGGER, DASH_BACKWARD)
@@ -1270,6 +1388,10 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 
 	private PlayState selectMovementAnimation(AnimationTest<JapaneseSamuraiEchoEntity> test) {
 		return test.setAndContinue(test.animatable().action() == ACTION_NONE && test.isMoving() ? WALK : IDLE);
+	}
+
+	private boolean skillEnabled(int skill) {
+		return (this.enabledSkills & 1 << skill) != 0;
 	}
 
 	@Override public AnimatableInstanceCache getAnimatableInstanceCache() { return this.animationCache; }

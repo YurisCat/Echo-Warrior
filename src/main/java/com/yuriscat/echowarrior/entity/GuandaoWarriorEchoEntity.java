@@ -171,6 +171,8 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
 	private final GuandaoVisualBehavior visualBehavior = new GuandaoVisualBehavior(this);
+	private final EchoTargetVisibilityMemory targetVisibility = new EchoTargetVisibilityMemory();
+	private final EchoCreeperTargeting creeperTargeting = new EchoCreeperTargeting();
 	private final Set<UUID> comboPhaseHits = new HashSet<>();
 	private final Set<UUID> deflectedProjectiles = new HashSet<>();
 	private @Nullable EntityReference<LivingEntity> ownerReference;
@@ -182,6 +184,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	private Vec3 activityAnchor = Vec3.ZERO;
 	private long lastNaturalHealAt;
 	private long attackAnimationUntil;
+	private int normalAttackSkillSnapshot = EchoHeroType.GUANDAO_WARRIOR.allSkillsEnabledMask();
 	private long hurtAnimationUntil;
 	private @Nullable UUID normalAttackTargetUuid;
 	private float normalAttackYaw;
@@ -282,6 +285,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		float desiredYaw = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
 		float alignmentBeforeLock = Mth.wrapDegrees(desiredYaw - this.yBodyRot);
 		this.normalAttackTargetUuid = target.getUUID();
+		this.normalAttackSkillSnapshot = this.enabledSkills;
 		this.normalAttackYaw = desiredYaw;
 		lockNormalAttackFacing();
 		byte previousAction = getAnimationActionStateForDiagnostics();
@@ -362,7 +366,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 
 		if (this.tickCount % 5 == 0 && !isComboActive()) {
 			LivingEntity target = selectProtectiveTarget(owner);
-			if (target != null) BrainUtil.setTargetOfEntity(this, target);
+			applySelectedCombatTarget(target);
 			enforceActivityBoundary(owner);
 		}
 		if (this.tickCount % 20 == 0 && this.getTarget() != null) {
@@ -597,10 +601,13 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	}
 
 	private void retargetBetweenComboStrikes() {
+		long now = this.level().getGameTime();
 		LivingEntity best = this.level().getEntitiesOfClass(
 				LivingEntity.class,
 				this.getBoundingBox().inflate(5.5, 2.75, 5.5),
-				candidate -> isValidCombatEnemy(candidate) && this.hasLineOfSight(candidate)
+				candidate -> isValidCombatEnemy(candidate)
+						&& this.creeperTargeting.canTarget(this, candidate, now, false)
+						&& this.hasLineOfSight(candidate)
 		).stream().min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
 		if (best == null) return;
 		BrainUtil.setTargetOfEntity(this, best);
@@ -781,6 +788,9 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	@Override
 	public boolean doHurtTarget(ServerLevel level, Entity ignoredPrimaryTarget) {
 		if (this.isDeadOrDying() || isComboActive()) return false;
+		if ((this.normalAttackSkillSnapshot & 1 << SKILL_CRESCENT_BLADE) == 0) {
+			return performBasicNormalAttack(level, ignoredPrimaryTarget);
+		}
 		Set<UUID> hits = new HashSet<>();
 		float attackYaw = this.normalAttackTargetUuid == null ? this.getYRot() : this.normalAttackYaw;
 		int hitCount = performSectorAttack(level, NORMAL_RADIUS, NORMAL_ANGLE, 0.45, attackYaw, 0.0,
@@ -793,6 +803,20 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		addValorStack(level.getGameTime());
 		level.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
 				SoundSource.PLAYERS, 0.55F, 0.9F);
+		return true;
+	}
+
+	private boolean performBasicNormalAttack(ServerLevel level, Entity primaryTarget) {
+		if (!(primaryTarget instanceof LivingEntity target) || !isValidCombatEnemy(target)
+				|| !this.hasLineOfSight(target)) return false;
+		double reach = NORMAL_RADIUS + target.getBbWidth() * 0.5;
+		if (horizontalDistanceSqr(this.position(), target.position()) > reach * reach) return false;
+		float damage = (float)(this.getAttributeValue(Attributes.ATTACK_DAMAGE) * valorDamageMultiplier());
+		if (!target.hurtServer(level, level.damageSources().mobAttack(this), damage)) return false;
+		EchoExperienceSystem.markParticipation(this, target);
+		addValorStack(level.getGameTime());
+		level.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
+				SoundSource.PLAYERS, 0.48F, 0.95F);
 		return true;
 	}
 
@@ -853,6 +877,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	}
 
 	private void addValorStack(long now) {
+		if (!skillEnabled(SKILL_GROWING_VALOR)) return;
 		setValorStacks(Math.min(MAX_VALOR_STACKS, getValorStacks() + 1));
 		this.valorExpiresAt = now + VALOR_DURATION_TICKS;
 	}
@@ -866,7 +891,8 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	}
 
 	private double valorDamageMultiplier() {
-		return 1.0 + getValorStacks() * VALOR_DAMAGE_PER_STACK;
+		return skillEnabled(SKILL_GROWING_VALOR)
+				? 1.0 + getValorStacks() * VALOR_DAMAGE_PER_STACK : 1.0;
 	}
 
 	public boolean isComboActive() {
@@ -919,25 +945,64 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	}
 
 	private @Nullable LivingEntity selectProtectiveTarget(LivingEntity owner) {
+		long now = this.level().getGameTime();
+		this.creeperTargeting.validate(this, now, this::canProtectAgainst);
 		LivingEntity ownAttacker = this.getLastHurtByMob();
-		if (isRecent(this, this.getLastHurtByMobTimestamp()) && canProtectAgainst(ownAttacker)) return ownAttacker;
+		if (isRecentWithin(this, this.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canProtectAgainst(ownAttacker)) {
+			this.creeperTargeting.authorizeReactive(this, ownAttacker, now);
+			this.targetVisibility.observe(this, ownAttacker, now);
+			return ownAttacker;
+		}
 		if (this.alertMode == EchoRelicState.AlertMode.PEACEFUL) return null;
 		LivingEntity ownerAttacker = owner.getLastHurtByMob();
-		if (isRecent(owner, owner.getLastHurtByMobTimestamp()) && canProtectAgainst(ownerAttacker)) return ownerAttacker;
+		if (isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canProtectAgainst(ownerAttacker)) {
+			this.creeperTargeting.authorizeReactive(this, ownerAttacker, now);
+			this.targetVisibility.observe(this, ownerAttacker, now);
+			return ownerAttacker;
+		}
 		LivingEntity ownerTarget = owner.getLastHurtMob();
-		if (isRecent(owner, owner.getLastHurtMobTimestamp()) && canProtectAgainst(ownerTarget)) return ownerTarget;
+		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
+				&& canProtectAgainst(ownerTarget)) {
+			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
+			this.targetVisibility.observe(this, ownerTarget, now);
+			return ownerTarget;
+		}
+		LivingEntity current = this.getTarget();
+		if (canProtectAgainst(current) && this.creeperTargeting.canTarget(this, current, now, false)
+				&& this.targetVisibility.canRetain(this, current, now)) return current;
 		if (this.alertMode != EchoRelicState.AlertMode.AGGRESSIVE) return null;
 		double range = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 6.0 : 16.0;
 		AABB box = this.activityMode == EchoRelicState.ActivityMode.WAIT
 				? new AABB(this.activityAnchor.x - range, this.activityAnchor.y - 4.0, this.activityAnchor.z - range,
 					this.activityAnchor.x + range, this.activityAnchor.y + 4.0, this.activityAnchor.z + range)
 				: this.getBoundingBox().inflate(range);
-		return this.level().getEntitiesOfClass(Monster.class, box, this::canProtectAgainst).stream()
+		LivingEntity selected = this.level().getEntitiesOfClass(Monster.class, box,
+				candidate -> canProtectAgainst(candidate)
+						&& this.creeperTargeting.canTarget(this, candidate, now, false)
+						&& this.hasLineOfSight(candidate)).stream()
 				.min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
+		this.targetVisibility.observe(this, selected, now);
+		return selected;
+	}
+
+	private void applySelectedCombatTarget(@Nullable LivingEntity target) {
+		if (target != null) {
+			BrainUtil.setTargetOfEntity(this, target);
+			return;
+		}
+		this.setTarget(null);
+		this.targetVisibility.clear();
+		BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
 	}
 
 	private static boolean isRecent(LivingEntity source, int timestamp) {
 		return timestamp > 0 && source.tickCount - timestamp <= 100;
+	}
+
+	private static boolean isRecentWithin(LivingEntity source, int timestamp, int ticks) {
+		return timestamp > 0 && source.tickCount - timestamp <= ticks;
 	}
 
 	private boolean canProtectAgainst(@Nullable LivingEntity target) {
@@ -1015,6 +1080,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 			boolean directMelee = attacker instanceof LivingEntity && source.getDirectEntity() == attacker
 					&& !source.is(DamageTypeTags.IS_PROJECTILE);
 			boolean legalRetaliation = livingAttacker != null && canProtectAgainst(livingAttacker);
+			if (legalRetaliation) this.creeperTargeting.authorizeReactive(this, livingAttacker, now);
 			boolean immediateRetaliation = legalRetaliation && directMelee && !committedAction
 					&& this.hasLineOfSight(livingAttacker)
 					&& horizontalDistanceSqr(this.position(), livingAttacker.position())
@@ -1123,12 +1189,12 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	@Override
 	protected float getDamageAfterMagicAbsorb(DamageSource source, float damage) {
 		float adjusted = super.getDamageAfterMagicAbsorb(source, damage);
-		if (source.is(DamageTypeTags.IS_PROJECTILE)) adjusted *= 0.50F;
+		if (skillEnabled(SKILL_ARMOR_CLAD) && source.is(DamageTypeTags.IS_PROJECTILE)) adjusted *= 0.50F;
 		boolean excluded = source.is(DamageTypeTags.IS_FIRE)
 				|| source.is(DamageTypeTags.BYPASSES_EFFECTS)
 				|| source.is(DamageTypeTags.BYPASSES_RESISTANCE)
 				|| source.is(DamageTypes.IN_WALL);
-		if (!excluded && this.getMaxHealth() > 0.0F) {
+		if (skillEnabled(SKILL_GROWING_VALOR) && !excluded && this.getMaxHealth() > 0.0F) {
 			float missingHealth = 1.0F - this.getHealth() / this.getMaxHealth();
 			adjusted *= 1.0F - Math.clamp(missingHealth * 0.30F, 0.0F, 0.30F);
 		}
@@ -1137,7 +1203,8 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 
 	@Override
 	public void knockback(double power, double xd, double zd) {
-		if (this.projectileKnockbackContext || this.tickCount == this.lastProjectileDamageTick) {
+		if (skillEnabled(SKILL_ARMOR_CLAD)
+				&& (this.projectileKnockbackContext || this.tickCount == this.lastProjectileDamageTick)) {
 			double resistance = Math.clamp(this.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE), 0.0, 1.0);
 			double vanillaRetained = 1.0 - resistance;
 			double desiredRetained = Math.min(vanillaRetained, 0.05);
@@ -1179,11 +1246,19 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		if (relic.isEmpty()) return;
 		EchoRelicState.ActivityMode previousActivity = this.activityMode;
 		EchoRelicState.AlertMode previousAlert = this.alertMode;
+		int previousSkills = this.enabledSkills;
 		this.activityMode = EchoRelicState.activityMode(relic);
 		this.alertMode = EchoRelicState.alertMode(relic);
 		this.enabledSkills = EchoRelicState.enabledSkills(relic);
+		if ((previousSkills & 1 << SKILL_GROWING_VALOR) != 0
+				&& !skillEnabled(SKILL_GROWING_VALOR)) {
+			setValorStacks(0);
+			this.valorExpiresAt = 0L;
+			this.comboPhaseValorMultiplier = 1.0;
+		}
 		if (previousActivity != this.activityMode || previousAlert != this.alertMode || resetAnchor) {
 			this.setTarget(null);
+			this.targetVisibility.clear();
 			BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
 		}
 		if (previousActivity != this.activityMode || resetAnchor) EchoActivityMovement.reset(this);
@@ -1203,6 +1278,10 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		ItemStack relic = currentRelic();
 		return relic.isEmpty() ? EchoHeroType.GUANDAO_WARRIOR.baseAttackIntervalTicks()
 				: EchoRelicState.attackIntervalTicks(relic);
+	}
+
+	private boolean skillEnabled(int skill) {
+		return (this.enabledSkills & 1 << skill) != 0;
 	}
 
 	private ItemStack currentRelic() {

@@ -774,7 +774,8 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			} else if (samurai) {
 				for (int index = 0; index < Math.min(this.menu.skillCount(), SAMURAI_SKILL_TRANSLATION_KEYS.length); index++) {
 					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
-						showSamuraiSkillTooltip(graphics, mouseX, mouseY, index);
+						showSamuraiSkillTooltip(graphics, mouseX, mouseY, index,
+								(this.menu.enabledSkills() & 1 << index) != 0);
 						return;
 					}
 				}
@@ -931,26 +932,22 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		for (int line = 1; line <= GUANDAO_SKILL_DESCRIPTION_LINES[skill]; line++) {
 			lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
 		}
-		if (skill < 3) {
-			lines.add(Component.translatable("gui.echo_warrior.summoner.skill.passive_locked")
-					.withStyle(ChatFormatting.DARK_GRAY));
-		} else {
-			lines.add(Component.translatable(enabled
-					? "gui.echo_warrior.summoner.skill.enabled"
-					: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
-		}
+		lines.add(Component.translatable(enabled
+				? "gui.echo_warrior.summoner.skill.enabled"
+				: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
 		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
 	}
 
-	private void showSamuraiSkillTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int skill) {
+	private void showSamuraiSkillTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int skill, boolean enabled) {
 		String key = SAMURAI_SKILL_TRANSLATION_KEYS[skill];
 		List<Component> lines = new java.util.ArrayList<>();
 		lines.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
 		for (int line = 1; line <= SAMURAI_SKILL_DESCRIPTION_LINES[skill]; line++) {
 			lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
 		}
-		lines.add(Component.translatable("gui.echo_warrior.summoner.skill.fixed_locked")
-				.withStyle(ChatFormatting.DARK_GRAY));
+		lines.add(Component.translatable(enabled
+				? "gui.echo_warrior.summoner.skill.enabled"
+				: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
 		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
 	}
 
@@ -1149,9 +1146,6 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					}
 					for (int index = 0; index < this.menu.skillCount(); index++) {
 						if (isInside(event.x(), event.y(), x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
-							if (this.menu.heroType() == EchoHeroType.GUANDAO_WARRIOR.ordinal() && index < 3) {
-								return true;
-							}
 							sendMenuButton(SummonerMenu.BUTTON_SKILL_START + index);
 							return true;
 						}
