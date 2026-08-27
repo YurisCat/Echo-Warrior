@@ -45,6 +45,7 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Changed
 
+- Reduced suspicious grass and dirt markings to low-contrast dark-only details; removed bright highlights and color shifting so untouched pixels remain identical to the vanilla terrain texture.
 - Echo Compass right-click now mutes only that individual compass's exterior reminder; it never disables navigation or inner-site echoes, and multiple enabled compasses resolve to one sound emitter by inventory priority.
 - Echo summoner combat values now display their actual module-adjusted values, with increases shown in green and decreases shown in red.
 - Japanese Samurai normal attacks now use limited safe target tracking before each hit so small target movement does not routinely make the committed slash miss. The first slash can travel up to 1.5 blocks and the follow-up up to 0.75 blocks without gaining Fumikomi invulnerability or afterimages.

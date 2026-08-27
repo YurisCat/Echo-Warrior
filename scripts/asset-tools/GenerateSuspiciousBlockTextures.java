@@ -1,6 +1,6 @@
 import javax.imageio.ImageIO;
-import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -25,10 +25,6 @@ public final class GenerateSuspiciousBlockTextures {
 			{5, 3}, {6, 3}, {9, 4}, {10, 5}, {11, 6}, {11, 7}, {10, 9},
 			{9, 10}, {7, 11}, {6, 10}, {4, 9}, {4, 7}, {5, 6}, {7, 5},
 			{8, 5}, {9, 6}, {9, 7}, {8, 8}, {7, 8}
-	};
-	private static final int[][] RING_HIGHLIGHTS = {
-			{4, 3}, {7, 3}, {10, 4}, {12, 6}, {11, 9}, {8, 11}, {5, 10},
-			{3, 8}, {5, 5}, {7, 4}, {10, 7}, {9, 9}, {6, 9}
 	};
 	private static final int[][] STAGE_ONE = {
 			{2, 5}, {3, 5}, {12, 3}, {12, 4}, {13, 10}, {12, 11}, {3, 12}, {4, 12}
@@ -81,20 +77,29 @@ public final class GenerateSuspiciousBlockTextures {
 	}
 
 	private static BufferedImage mark(BufferedImage base, int stage, Surface surface) {
-		BufferedImage result = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-		for (int y = 0; y < 16; y++) {
-			for (int x = 0; x < 16; x++) result.setRGB(x, y, base.getRGB(x, y));
+		BufferedImage result;
+		if (base.getColorModel().getNumColorComponents() == 1) {
+			WritableRaster copiedRaster = base.copyData(null);
+			result = new BufferedImage(
+					base.getColorModel(), copiedRaster, base.isAlphaPremultiplied(), null);
+		} else {
+			result = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+			for (int y = 0; y < 16; y++) {
+				for (int x = 0; x < 16; x++) result.setRGB(x, y, base.getRGB(x, y));
+			}
 		}
 
 		List<int[]> dark = new ArrayList<>(List.of(ECHO_RING));
 		if (stage >= 1) dark.addAll(List.of(STAGE_ONE));
 		if (stage >= 2) dark.addAll(List.of(STAGE_TWO));
 		if (stage >= 3) dark.addAll(List.of(STAGE_THREE));
-		int darkAmount = -38 - stage * 8;
-		for (int[] point : dark) shade(result, transform(point, surface), darkAmount, surface, true);
-		for (int[] point : RING_HIGHLIGHTS) {
-			shade(result, transform(point, surface), 24 + stage * 3, surface, false);
-		}
+		int darkAmount = switch (stage) {
+			case 0 -> -12;
+			case 1 -> -20;
+			case 2 -> -30;
+			default -> -42;
+		};
+		for (int[] point : dark) shade(result, transform(point, surface), darkAmount);
 		return result;
 	}
 
@@ -106,27 +111,26 @@ public final class GenerateSuspiciousBlockTextures {
 		return point;
 	}
 
-	private static void shade(
-			BufferedImage image,
-			int[] point,
-			int amount,
-			Surface surface,
-			boolean accent
-	) {
+	private static void shade(BufferedImage image, int[] point, int amount) {
 		int x = point[0];
 		int y = point[1];
 		if (x < 0 || x >= 16 || y < 0 || y >= 16) return;
-		Color source = new Color(image.getRGB(x, y), true);
-		int red = clamp(source.getRed() + amount);
-		int green = clamp(source.getGreen() + amount);
-		int blue = clamp(source.getBlue() + amount);
-		if (accent && surface != Surface.GRASS_TOP) {
-			double blend = 0.28;
-			red = (int)Math.round(red * (1.0 - blend) + 88 * blend);
-			green = (int)Math.round(green * (1.0 - blend) + 55 * blend);
-			blue = (int)Math.round(blue * (1.0 - blend) + 104 * blend);
+		if (image.getColorModel().getNumColorComponents() != 1) {
+			int source = image.getRGB(x, y);
+			int alpha = source >>> 24;
+			int red = clamp(((source >>> 16) & 0xFF) + amount);
+			int green = clamp(((source >>> 8) & 0xFF) + amount);
+			int blue = clamp((source & 0xFF) + amount);
+			image.setRGB(x, y, alpha << 24 | red << 16 | green << 8 | blue);
+			return;
 		}
-		image.setRGB(x, y, new Color(red, green, blue, source.getAlpha()).getRGB());
+		WritableRaster raster = image.getRaster();
+		int[] samples = raster.getPixel(x, y, (int[])null);
+		int colorComponents = Math.min(image.getColorModel().getNumColorComponents(), samples.length);
+		for (int component = 0; component < colorComponents; component++) {
+			samples[component] = clamp(samples[component] + amount);
+		}
+		raster.setPixel(x, y, samples);
 	}
 
 	private static int clamp(int value) {
