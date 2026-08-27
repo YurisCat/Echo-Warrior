@@ -6,6 +6,7 @@ import com.yuriscat.echowarrior.item.EchoRelicProgress;
 import com.yuriscat.echowarrior.item.EchoRelicState;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoSummonerModule;
+import com.yuriscat.echowarrior.item.EchoModuleSystem;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import com.yuriscat.echowarrior.layout.SummonerLayout;
@@ -242,6 +243,12 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			reportAction(ACTION_RELIC_CHANGED);
 		}
 		this.previousRelicId = currentRelicId;
+		if (this.owner instanceof ServerPlayer serverPlayer) {
+			var spirit = TestEchoSummonerItem.findBoundSpirit(serverPlayer.level(), currentSummoner);
+			if (spirit != null && relic.getItem() instanceof EchoRelicItem) {
+				spirit.applyRelicState(relic, false);
+			}
+		}
 	}
 
 	@Override
@@ -269,8 +276,10 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			this.spiritAttackDamage.set((int)Math.round(EchoRelicState.attackDamage(relic) * 10.0));
 			this.spiritHealth.set(spirit == null ? maximumHealth : Math.round(spirit.livingEntity().getHealth() * 10.0F));
 			this.spiritAttackSpeed.set(EchoRelicState.attackSpeedPercent(relic));
-			this.spiritArmor.set((int)Math.round(EchoRelicState.armor(relic) * 10.0));
-			this.spiritMovement.set(EchoRelicState.movementPercent(relic));
+			this.spiritArmor.set((int)Math.round((EchoRelicState.armor(relic)
+					+ EchoModuleSystem.armorBonus(this.summonerContainer)) * 10.0));
+			this.spiritMovement.set((int)Math.round(EchoRelicState.movementPercent(relic)
+					* EchoModuleSystem.movementMultiplier(this.summonerContainer)));
 			this.summonCostPercent.set(EchoRelicState.summonCostPercent(relic));
 			this.traitMask.set(EchoRelicState.traitMask(relic));
 			this.relicSyncToken.set(relicSyncToken(relic));
@@ -540,6 +549,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	public int spiritAttackSpeed() { return this.spiritAttackSpeed.get(); }
 	public int spiritArmor() { return this.spiritArmor.get(); }
 	public int spiritMovement() { return this.spiritMovement.get(); }
+	public boolean moduleImprovesArmor() { return EchoModuleSystem.armorBonus(this.summonerContainer) > 0.0; }
+	public boolean moduleReducesMovement() { return EchoModuleSystem.movementMultiplier(this.summonerContainer) < 1.0; }
 	public int summonCostPercent() { return this.summonCostPercent.get(); }
 	public int fuelAmount() { return this.fuelAmount.get(); }
 	public int traitMask() { return this.traitMask.get(); }

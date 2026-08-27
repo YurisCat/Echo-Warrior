@@ -1,4 +1,8 @@
 {
   "replace": false,
-  "values": []
+  "values": [
+    "echo_warrior:plate_armor_module",
+    "echo_warrior:chainmail_armor_module",
+    "echo_warrior:spiked_armor_module"
+  ]
 }

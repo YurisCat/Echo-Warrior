@@ -3536,6 +3536,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		Entity attacker = source.getEntity();
 		if (attacker == this.getOwner() || attacker instanceof EchoWarriorEntity echo && echo.getOwner() == this.getOwner()) return false;
 		long now = level.getGameTime();
+		float previousHealth = this.getHealth();
 		boolean hurt = super.hurtServer(level, source, damage);
 		if (hurt && damage > 0.0F) {
 			endCaughtExit(now, true);
@@ -3585,6 +3586,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			}
 			triggerHurtPresentation(now, action() == ACTION_IDLE);
 		}
+		this.reflectModuleMeleeDamage(level, source, previousHealth);
 		return hurt;
 	}
 
@@ -3687,6 +3689,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.getAttribute(Attributes.ARMOR).setBaseValue(EchoRelicState.armor(relic));
 		this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(EchoRelicState.movementSpeed(relic));
 		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(EchoRelicState.knockbackResistance(relic));
+		this.applyModuleState();
 		if (this.getHealth() >= oldMaximum - 0.01F) this.setHealth(this.getMaxHealth());
 		else if (this.getHealth() > this.getMaxHealth()) this.setHealth(this.getMaxHealth());
 	}

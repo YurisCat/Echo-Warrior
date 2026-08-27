@@ -1,6 +1,9 @@
 package com.yuriscat.echowarrior.entity;
 
 import com.yuriscat.echowarrior.item.EchoHeroType;
+import com.yuriscat.echowarrior.item.EchoModuleSystem;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.player.Player;
@@ -21,6 +24,14 @@ public interface EchoWarriorEntity extends OwnableEntity {
 	void bindTo(Player owner, UUID summonerUuid);
 
 	void applyRelicState(ItemStack relic, boolean resetAnchor);
+
+	default void applyModuleState() {
+		EchoModuleSystem.apply(this);
+	}
+
+	default void reflectModuleMeleeDamage(ServerLevel level, DamageSource source, float previousHealth) {
+		EchoModuleSystem.reflectMeleeDamage(this, level, source, previousHealth);
+	}
 
 	void recallTo(Player player);
 

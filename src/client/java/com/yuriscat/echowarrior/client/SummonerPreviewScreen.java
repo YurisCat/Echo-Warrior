@@ -321,8 +321,10 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			graphics.text(this.font, Integer.toString(this.menu.relicLevel()), rx(Element.BASIC_INFO, 145), ry(Element.BASIC_INFO, 21), PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, decimal(this.menu.spiritAttackDamage()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 34), PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, this.menu.spiritAttackSpeed() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 34), PRIMARY_TEXT_COLOR, true);
-			graphics.text(this.font, decimal(this.menu.spiritArmor()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 47), PRIMARY_TEXT_COLOR, true);
-			graphics.text(this.font, this.menu.spiritMovement() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 47), PRIMARY_TEXT_COLOR, true);
+			graphics.text(this.font, decimal(this.menu.spiritArmor()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 47),
+					this.menu.moduleImprovesArmor() ? 0x55FF55 : PRIMARY_TEXT_COLOR, true);
+			graphics.text(this.font, this.menu.spiritMovement() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 47),
+					this.menu.moduleReducesMovement() ? 0xFF5555 : PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, this.menu.heroType() == EchoHeroType.EGYPTIAN_ARCHER.ordinal() ? "24" : "16",
 					rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, this.menu.summonCostPercent() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);

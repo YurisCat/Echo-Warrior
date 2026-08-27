@@ -679,6 +679,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 				BrainUtil.setTargetOfEntity(this, living);
 			}
 		}
+		this.reflectModuleMeleeDamage(level, source, previousHealth);
 		return hurt;
 	}
 
@@ -1137,6 +1138,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		this.getAttribute(Attributes.ARMOR).setBaseValue(EchoRelicState.armor(relic));
 		this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(EchoRelicState.movementSpeed(relic));
 		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(EchoRelicState.knockbackResistance(relic));
+		this.applyModuleState();
 		if (this.getHealth() >= oldMaximum - 0.01F) this.setHealth(this.getMaxHealth());
 		else if (this.getHealth() > this.getMaxHealth()) this.setHealth(this.getMaxHealth());
 	}

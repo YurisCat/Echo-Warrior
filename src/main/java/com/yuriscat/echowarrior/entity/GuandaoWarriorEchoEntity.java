@@ -891,6 +891,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 			this.visualBehavior.onHurt(now, livingAttacker);
 			if (projectile || directMelee) reduceComboCooldown(level, 10L);
 		}
+		this.reflectModuleMeleeDamage(level, source, previousHealth);
 		return hurt;
 	}
 
@@ -1045,6 +1046,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		this.getAttribute(Attributes.ARMOR).setBaseValue(EchoRelicState.armor(relic));
 		this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(EchoRelicState.movementSpeed(relic));
 		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(EchoRelicState.knockbackResistance(relic));
+		this.applyModuleState();
 		if (this.getHealth() >= oldMaximum - 0.01F) this.setHealth(this.getMaxHealth());
 		else if (this.getHealth() > this.getMaxHealth()) this.setHealth(this.getMaxHealth());
 	}

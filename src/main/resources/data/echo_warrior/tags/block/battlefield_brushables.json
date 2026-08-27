@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "echo_warrior:suspicious_grass_block",
+    "echo_warrior:suspicious_dirt",
+    "minecraft:suspicious_sand",
+    "minecraft:suspicious_gravel"
+  ]
+}

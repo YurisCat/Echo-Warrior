@@ -10,6 +10,9 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Added
 
+- Added the first complete Echo Compass and battlefield-archaeology gameplay loop: toggleable audio navigation, persistent renewable battlefield sites, guaranteed relic targets, biome-matched suspicious blocks, and exact weighted archaeology rewards.
+- Added placeholder Small Knowledge and five Legacy materials, plus functional Plate Armor, Full Chainmail, and Spiked Armor Echo modules with live stat updates, duplicate-name limits, summoner display integration, recipes, localization, and encyclopedia documentation.
+- Added a guaranteed journeyman-cartographer Echo Compass trade and the compass recipe using one compass, four amethyst shards, and four copper ingots.
 - Added the first playable Japanese Samurai Echo prototype, including its relic, model and split combat animations, summoner integration, localization, hand-drawn skill icons, encyclopedia entry, and repeatable BBModel export pipeline.
 - Added Zanshin health-scaled dodge, attack-window dodge bonus, Fumikomi charges and invulnerable forward dash, branching two-slash normal attacks, and the automatic two-hit Stab skill.
 - Added client-only frozen-pose Samurai afterimages with neutral/themed color modes, optional UV-anchored dissolve, performance limits, and temporary visual debug commands.
@@ -30,6 +33,7 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Changed
 
+- Echo summoner combat values now display their actual module-adjusted values, with increases shown in green and decreases shown in red.
 - Japanese Samurai normal attacks now use limited safe target tracking before each hit so small target movement does not routinely make the committed slash miss. The first slash can travel up to 1.5 blocks and the follow-up up to 0.75 blocks without gaining Fumikomi invulnerability or afterimages.
 - Samurai afterimages now default to original-texture dissolve with no extra tint; saturated cyan/gold coloring is opt-in through the neutral visual command. Removed forced full-bright lighting and the separate full-model white edge pass because GeckoLib rendered it over the detailed body; the proposed outline mode remains disabled for the same filled-silhouette limitation.
 - Samurai advanced afterimages now combine UV dissolve with genuine age-based opacity decay, and dash snapshots are emitted only from positions the body has already traversed so they cannot visually overtake the Samurai during Fumikomi.

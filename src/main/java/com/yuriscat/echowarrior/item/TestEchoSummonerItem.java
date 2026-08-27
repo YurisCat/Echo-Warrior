@@ -325,6 +325,17 @@ public final class TestEchoSummonerItem extends Item {
 		return contents.getItem(SummonerMenu.RELIC_SLOT);
 	}
 
+	public static List<ItemStack> moduleStacks(ItemStack summoner) {
+		if (!(summoner.getItem() instanceof TestEchoSummonerItem)) return List.of();
+		SimpleContainer contents = new SimpleContainer(SummonerMenu.CUSTOM_SLOT_COUNT);
+		summoner.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY)
+				.copyInto(contents.getItems());
+		return contents.getItems().subList(0, SummonerMenu.MODULE_SLOT_COUNT).stream()
+				.filter(stack -> !stack.isEmpty())
+				.map(ItemStack::copy)
+				.toList();
+	}
+
 	public static void setRelicStack(ItemStack summoner, ItemStack relic) {
 		if (!(summoner.getItem() instanceof TestEchoSummonerItem)) return;
 		SimpleContainer contents = new SimpleContainer(SummonerMenu.CUSTOM_SLOT_COUNT);

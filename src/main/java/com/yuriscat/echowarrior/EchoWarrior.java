@@ -4,6 +4,8 @@ import com.yuriscat.echowarrior.command.VisualDebugCommands;
 import com.yuriscat.echowarrior.entity.EchoCombatEvents;
 import com.yuriscat.echowarrior.entity.CatGodCreeperSystem;
 import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
+import com.yuriscat.echowarrior.world.BattlefieldSystem;
+import com.yuriscat.echowarrior.world.EchoCompassSystem;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -17,9 +19,12 @@ public final class EchoWarrior implements ModInitializer {
 	public void onInitialize() {
 		ModEffects.initialize();
 		ModEntities.initialize();
+		ModBlocks.initialize();
 		ModItems.initialize();
 		ModMenus.initialize();
 		ModCreativeTabs.initialize();
+		BattlefieldSystem.initialize();
+		EchoCompassSystem.initialize();
 		EchoExperienceSystem.initialize();
 		EchoCombatEvents.initialize();
 		CatGodCreeperSystem.initialize();

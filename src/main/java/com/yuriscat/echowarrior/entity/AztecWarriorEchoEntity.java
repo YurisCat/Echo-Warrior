@@ -1996,6 +1996,7 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 			return false;
 		}
 		float adjusted = level.getGameTime() < this.pursuitBuffUntil ? damage * 0.80F : damage;
+		float previousHealth = this.getHealth();
 		boolean hurt = super.hurtServer(level, source, adjusted);
 		if (hurt && adjusted > 0.0F) {
 			endCaughtExit(now, true);
@@ -2012,6 +2013,7 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 				this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
 			}
 		}
+		this.reflectModuleMeleeDamage(level, source, previousHealth);
 		return hurt;
 	}
 
@@ -2081,6 +2083,7 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 		this.getAttribute(Attributes.ARMOR).setBaseValue(EchoRelicState.armor(relic));
 		this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(EchoRelicState.movementSpeed(relic));
 		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(EchoRelicState.knockbackResistance(relic));
+		this.applyModuleState();
 		if (this.getHealth() >= oldMaximum - 0.01F) this.setHealth(this.getMaxHealth());
 		else if (this.getHealth() > this.getMaxHealth()) this.setHealth(this.getMaxHealth());
 		if (!EchoRelicState.skillEnabled(relic, SKILL_BLESSING)) {

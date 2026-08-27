@@ -2085,6 +2085,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		if (isLegionEnduresActive() && attacker instanceof LivingEntity living && this.canAttack(living)) {
 			this.legionAccumulatedDamage += Math.max(0.0F, damage);
 		}
+		float previousHealth = this.getHealth();
 		boolean hurt = super.hurtServer(level, source, damage);
 		if (hurt) {
 			Entity attackerEntity = source.getEntity();
@@ -2104,6 +2105,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 				this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
 			}
 		}
+		this.reflectModuleMeleeDamage(level, source, previousHealth);
 		return hurt;
 	}
 
@@ -2159,6 +2161,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.getAttribute(Attributes.ARMOR).setBaseValue(EchoRelicState.armor(relic));
 		this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(EchoRelicState.movementSpeed(relic));
 		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(EchoRelicState.knockbackResistance(relic));
+		this.applyModuleState();
 		if (this.getHealth() >= oldMaximum - 0.01F) {
 			this.setHealth(this.getMaxHealth());
 		} else if (this.getHealth() > this.getMaxHealth()) {
