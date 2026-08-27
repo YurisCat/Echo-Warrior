@@ -115,5 +115,10 @@
   "item.echo_warrior.module.chainmail_armor.effect": "英灵护甲 +4，移动速度 -10%",
   "item.echo_warrior.module.spiked_armor.effect": "英灵护甲 +2；按实际近战生命伤害 1:1 反伤",
   "message.echo_warrior.echo_compass.enabled": "回声罗盘：已开启",
-  "message.echo_warrior.echo_compass.disabled": "回声罗盘：已关闭"
+  "message.echo_warrior.echo_compass.disabled": "回声罗盘：已关闭",
+  "message.echo_warrior.echo_compass.sound_enabled": "回声罗盘远途提醒音：已开启",
+  "message.echo_warrior.echo_compass.sound_disabled": "回声罗盘远途提醒音：已关闭；指针与遗迹内回响仍然工作",
+  "message.echo_warrior.echo_compass.no_nearby_site": "附近没有可响应的战场回声",
+  "message.echo_warrior.echo_compass.remaining_echoes": "仍有 %s 处回声等待被揭示",
+  "message.echo_warrior.echo_compass.site_quiet": "此处的回声已经平息"
 }

@@ -12,6 +12,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
@@ -52,6 +53,8 @@ public final class ModBlocks {
 	}
 
 	public static void initialize() {
+		BlockEntityType.BRUSHABLE_BLOCK.addValidBlock(SUSPICIOUS_GRASS_BLOCK);
+		BlockEntityType.BRUSHABLE_BLOCK.addValidBlock(SUSPICIOUS_DIRT);
 	}
 
 	private static Block register(

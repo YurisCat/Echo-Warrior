@@ -1,3 +1,9 @@
 {
-  "parent": "minecraft:block/grass_block"
+  "parent": "minecraft:block/grass_block",
+  "textures": {
+    "particle": "echo_warrior:block/suspicious_dirt_0",
+    "bottom": "echo_warrior:block/suspicious_dirt_0",
+    "top": "echo_warrior:block/suspicious_grass_block_top_0",
+    "side": "echo_warrior:block/suspicious_grass_block_side_0"
+  }
 }

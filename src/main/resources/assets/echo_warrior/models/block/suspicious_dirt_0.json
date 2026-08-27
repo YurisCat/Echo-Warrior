@@ -1,3 +1,6 @@
 {
-  "parent": "minecraft:block/dirt"
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "echo_warrior:block/suspicious_dirt_0"
+  }
 }

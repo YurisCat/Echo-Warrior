@@ -36,6 +36,8 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	private static final int IMAGE_HEIGHT = SummonerLayout.GUI_HEIGHT;
 	private static final int PRIMARY_TEXT_COLOR = 0xFFFFFFFF;
 	private static final int HEADER_TEXT_COLOR = 0xFFE0E0E0;
+	private static final int POSITIVE_TEXT_COLOR = 0xFF55FF55;
+	private static final int NEGATIVE_TEXT_COLOR = 0xFFFF5555;
 	private static final int[] MODULE_SLOT_X = {8, 37, 66, 94, 123, 152};
 	private static final int[] ATTRIBUTE_ICON_X = {61, 134, 61, 116, 61, 116, 61, 116};
 	private static final int[] ATTRIBUTE_ICON_Y = {19, 19, 32, 32, 45, 45, 58, 58};
@@ -322,9 +324,9 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			graphics.text(this.font, decimal(this.menu.spiritAttackDamage()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 34), PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, this.menu.spiritAttackSpeed() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 34), PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, decimal(this.menu.spiritArmor()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 47),
-					this.menu.moduleImprovesArmor() ? 0x55FF55 : PRIMARY_TEXT_COLOR, true);
+					this.menu.moduleImprovesArmor() ? POSITIVE_TEXT_COLOR : PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, this.menu.spiritMovement() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 47),
-					this.menu.moduleReducesMovement() ? 0xFF5555 : PRIMARY_TEXT_COLOR, true);
+					this.menu.moduleReducesMovement() ? NEGATIVE_TEXT_COLOR : PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, this.menu.heroType() == EchoHeroType.EGYPTIAN_ARCHER.ordinal() ? "24" : "16",
 					rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, this.menu.summonCostPercent() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);

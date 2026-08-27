@@ -115,5 +115,10 @@
   "item.echo_warrior.module.chainmail_armor.effect": "Echo armor +4, movement speed -10%",
   "item.echo_warrior.module.spiked_armor.effect": "Echo armor +2; reflects actual melee health damage 1:1",
   "message.echo_warrior.echo_compass.enabled": "Echo Compass: enabled",
-  "message.echo_warrior.echo_compass.disabled": "Echo Compass: disabled"
+  "message.echo_warrior.echo_compass.disabled": "Echo Compass: disabled",
+  "message.echo_warrior.echo_compass.sound_enabled": "Echo Compass travel reminder: enabled",
+  "message.echo_warrior.echo_compass.sound_disabled": "Echo Compass travel reminder: muted; its needle and local echoes still work",
+  "message.echo_warrior.echo_compass.no_nearby_site": "No battlefield echo answers nearby",
+  "message.echo_warrior.echo_compass.remaining_echoes": "%s echoes still wait to be uncovered",
+  "message.echo_warrior.echo_compass.site_quiet": "The echoes here have fallen silent"
 }
