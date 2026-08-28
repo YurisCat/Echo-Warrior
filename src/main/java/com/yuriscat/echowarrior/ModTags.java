@@ -11,10 +11,12 @@ public final class ModTags {
 			Registries.BIOME,
 			EchoWarrior.id("aztec_favored_biomes")
 	);
-	public static final TagKey<Item> SUMMONER_MODULES = TagKey.create(
+	public static final TagKey<Item> SUMMONER_ACCESSORIES = TagKey.create(
 			Registries.ITEM,
-			EchoWarrior.id("summoner_modules")
+			EchoWarrior.id("summoner_accessories")
 	);
+	/** Reserved for future special-enemy inheritance drops. */
+	public static final TagKey<Item> LEGACIES = TagKey.create(Registries.ITEM, EchoWarrior.id("legacies"));
 	public static final TagKey<Item> BATTLEFIELD_RELICS = TagKey.create(
 			Registries.ITEM,
 			EchoWarrior.id("battlefield_relics")

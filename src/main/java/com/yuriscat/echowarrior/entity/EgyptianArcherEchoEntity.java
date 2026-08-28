@@ -10,9 +10,11 @@ import com.geckolib.animation.state.AnimationTest;
 import com.geckolib.util.GeckoLibUtil;
 import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.ModEntities;
+import com.yuriscat.echowarrior.ModItems;
 import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoHeroType;
+import com.yuriscat.echowarrior.item.EchoAccessorySystem;
 import com.yuriscat.echowarrior.item.EchoRelicState;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
@@ -3315,7 +3317,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
 				&& canProtectAgainst(ownerTarget)) return ownerTarget;
 		if (this.alertMode != EchoRelicState.AlertMode.AGGRESSIVE) return null;
-		double range = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 6.0 : MAX_RANGE;
+		double range = EchoAccessorySystem.proactiveRange(this, MAX_RANGE,
+				this.activityMode == EchoRelicState.ActivityMode.WAIT);
 		return this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(range),
 				candidate -> candidate instanceof Enemy
 						&& this.distanceToSqr(candidate) <= range * range
@@ -3345,7 +3348,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			return ownerTarget;
 		}
 		if (this.alertMode != EchoRelicState.AlertMode.AGGRESSIVE) return null;
-		double range = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 6.0 : MAX_RANGE;
+		double range = EchoAccessorySystem.proactiveRange(this, MAX_RANGE,
+				this.activityMode == EchoRelicState.ActivityMode.WAIT);
 		return this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(range),
 				candidate -> candidate != hiddenCurrent && candidate instanceof Enemy
 						&& this.distanceToSqr(candidate) <= range * range
@@ -3472,7 +3476,9 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	private boolean allowProactiveCreeperTargeting() {
-		return this.alertMode == EchoRelicState.AlertMode.AGGRESSIVE && skillEnabled(SKILL_CAT_GOD);
+		return this.alertMode == EchoRelicState.AlertMode.AGGRESSIVE
+				&& (skillEnabled(SKILL_CAT_GOD)
+				|| EchoAccessorySystem.has(this, ModItems.CAT_BELL_FISH_CHARM_ACCESSORY));
 	}
 
 	private void refreshReactiveCreeperPermission(LivingEntity owner, long now) {
@@ -3743,8 +3749,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(EchoRelicState.movementSpeed(relic));
 		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(EchoRelicState.knockbackResistance(relic));
 		this.applyModuleState();
-		if (this.getHealth() >= oldMaximum - 0.01F) this.setHealth(this.getMaxHealth());
-		else if (this.getHealth() > this.getMaxHealth()) this.setHealth(this.getMaxHealth());
+		if (this.getHealth() > this.getMaxHealth()) this.setHealth(this.getMaxHealth());
 	}
 
 	private ItemStack currentRelic() {

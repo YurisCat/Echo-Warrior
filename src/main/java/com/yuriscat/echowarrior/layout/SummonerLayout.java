@@ -146,7 +146,7 @@ public final class SummonerLayout {
 		MODEL("角色模型", 7, 19, 51, 72),
 		BASIC_INFO("八项基础属性", 61, 19, 108, 50),
 		SKILLS("技能", 61, 71, 108, 20),
-		MODULES("模块槽", 7, 93, 162, 18),
+		MODULES("饰品槽", 7, 93, 162, 18),
 		EXPERIENCE("经验条", 7, 113, 162, 4),
 		PLAYER_INVENTORY("玩家物品栏", 7, 119, 162, 75),
 		ACTIVITY("行动模式", 178, 77, 56, 31),

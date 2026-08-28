@@ -1,3 +1,4 @@
 {
-  "parent": "minecraft:item/red_dye"
+  "parent": "minecraft:item/generated",
+  "textures": { "layer0": "echo_warrior:item/courage_legacy" }
 }

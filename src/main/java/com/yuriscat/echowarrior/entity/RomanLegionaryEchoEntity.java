@@ -9,10 +9,12 @@ import com.geckolib.animation.object.PlayState;
 import com.geckolib.animation.state.AnimationTest;
 import com.geckolib.util.GeckoLibUtil;
 import com.yuriscat.echowarrior.ModEffects;
+import com.yuriscat.echowarrior.ModItems;
 import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
 import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoRelicState;
+import com.yuriscat.echowarrior.item.EchoAccessorySystem;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
@@ -2028,14 +2030,16 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		if (canProtectAgainst(current) && this.creeperTargeting.canTarget(this, current, now, false)
 				&& this.targetVisibility.canRetain(this, current, now)) return current;
 		if (this.alertMode == EchoRelicState.AlertMode.AGGRESSIVE) {
-			double range = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 6.0 : 16.0;
+			double range = EchoAccessorySystem.proactiveRange(this, 16.0,
+					this.activityMode == EchoRelicState.ActivityMode.WAIT);
 			AABB scanBox = this.activityMode == EchoRelicState.ActivityMode.WAIT
 					? new AABB(this.activityAnchor.x - range, this.activityAnchor.y - 4.0, this.activityAnchor.z - range,
 							this.activityAnchor.x + range, this.activityAnchor.y + 4.0, this.activityAnchor.z + range)
 					: this.getBoundingBox().inflate(range);
 			LivingEntity selected = this.level().getEntitiesOfClass(Monster.class, scanBox,
 					candidate -> canProtectAgainst(candidate)
-							&& this.creeperTargeting.canTarget(this, candidate, now, false)
+							&& this.creeperTargeting.canTarget(this, candidate, now,
+									EchoAccessorySystem.has(this, ModItems.CAT_BELL_FISH_CHARM_ACCESSORY))
 							&& this.hasLineOfSight(candidate))
 					.stream().min(java.util.Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
 			this.targetVisibility.observe(this, selected, now);
@@ -2192,9 +2196,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(EchoRelicState.movementSpeed(relic));
 		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(EchoRelicState.knockbackResistance(relic));
 		this.applyModuleState();
-		if (this.getHealth() >= oldMaximum - 0.01F) {
-			this.setHealth(this.getMaxHealth());
-		} else if (this.getHealth() > this.getMaxHealth()) {
+		if (this.getHealth() > this.getMaxHealth()) {
 			this.setHealth(this.getMaxHealth());
 		}
 	}

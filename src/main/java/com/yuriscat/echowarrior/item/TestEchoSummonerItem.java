@@ -111,7 +111,12 @@ public final class TestEchoSummonerItem extends Item {
 			return true;
 		}
 		getOrCreateSummonerId(self);
+		boolean insertedAccessory = EchoSummonerAccessory.isAccessory(other);
 		boolean inserted = insertIntoInternalSlot(self, other);
+		if (inserted && insertedAccessory && player.level() instanceof ServerLevel serverLevel) {
+			EchoWarriorEntity spirit = findBoundSpirit(serverLevel, self);
+			if (spirit != null) spirit.applyModuleState();
+		}
 		playInsertionSound(player, inserted);
 		if (player.containerMenu != null) player.containerMenu.broadcastChanges();
 		return true;
@@ -135,10 +140,10 @@ public final class TestEchoSummonerItem extends Item {
 				inserted = 1;
 				contents.setItem(SummonerMenu.RELIC_SLOT, carried.copyWithCount(1));
 			}
-		} else if (EchoSummonerModule.isModule(carried)) {
+		} else if (EchoSummonerAccessory.isAccessory(carried)) {
 			for (int moduleSlot = 0; moduleSlot < SummonerMenu.MODULE_SLOT_COUNT; moduleSlot++) {
 				if (!contents.getItem(moduleSlot).isEmpty()
-						|| !EchoSummonerModule.canInstall(carried, summoner, moduleSlot, contents)) continue;
+						|| !EchoSummonerAccessory.canInstall(carried, summoner, moduleSlot, contents)) continue;
 				inserted = 1;
 				contents.setItem(moduleSlot, carried.copyWithCount(1));
 				break;
@@ -228,6 +233,7 @@ public final class TestEchoSummonerItem extends Item {
 		spiritEntity.setYHeadRot(facingYaw);
 		spirit.bindTo(player, summonerId);
 		spirit.applyRelicState(relic, true);
+		spiritEntity.setHealth(spiritEntity.getMaxHealth());
 		if (!level.addFreshEntity(spiritEntity)) {
 			return SummonResult.CREATE_FAILED;
 		}
@@ -325,7 +331,7 @@ public final class TestEchoSummonerItem extends Item {
 		return contents.getItem(SummonerMenu.RELIC_SLOT);
 	}
 
-	public static List<ItemStack> moduleStacks(ItemStack summoner) {
+	public static List<ItemStack> accessoryStacks(ItemStack summoner) {
 		if (!(summoner.getItem() instanceof TestEchoSummonerItem)) return List.of();
 		SimpleContainer contents = new SimpleContainer(SummonerMenu.CUSTOM_SLOT_COUNT);
 		summoner.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY)

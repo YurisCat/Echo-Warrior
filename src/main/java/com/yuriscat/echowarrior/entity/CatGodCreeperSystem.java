@@ -1,5 +1,7 @@
 package com.yuriscat.echowarrior.entity;
 
+import com.yuriscat.echowarrior.ModItems;
+import com.yuriscat.echowarrior.item.EchoAccessorySystem;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -45,8 +47,8 @@ public final class CatGodCreeperSystem {
 	public static boolean shouldCancelExplosion(Creeper creeper) {
 		if (!(creeper.level() instanceof ServerLevel level)) return false;
 		EgyptianArcherEchoEntity protector = nearestProtector(level, creeper);
-		if (protector == null) return false;
-		panic(level, creeper, protector.position());
+		if (protector != null) panic(level, creeper, protector.position());
+		else if (!hasAccessoryProtector(level, creeper)) return false;
 		creeper.setSwellDir(-1);
 		return true;
 	}
@@ -55,9 +57,18 @@ public final class CatGodCreeperSystem {
 		if (!(creeper.level() instanceof ServerLevel level)
 				|| creeper.getSwellDir() <= 0 && !creeper.isIgnited()) return false;
 		EgyptianArcherEchoEntity protector = nearestProtector(level, creeper);
-		if (protector == null) return false;
-		panic(level, creeper, protector.position());
+		if (protector != null) panic(level, creeper, protector.position());
+		else if (!hasAccessoryProtector(level, creeper)) return false;
 		return true;
+	}
+
+	private static boolean hasAccessoryProtector(ServerLevel level, Creeper creeper) {
+		for (Entity entity : level.getAllEntities()) {
+			if (entity instanceof EchoWarriorEntity echo && echo.livingEntity().isAlive()
+					&& creeper.distanceToSqr(echo.livingEntity()) <= 36.0
+					&& EchoAccessorySystem.has(echo, ModItems.CAT_BELL_FISH_CHARM_ACCESSORY)) return true;
+		}
+		return false;
 	}
 
 	public static boolean isPanicking(Creeper creeper) {

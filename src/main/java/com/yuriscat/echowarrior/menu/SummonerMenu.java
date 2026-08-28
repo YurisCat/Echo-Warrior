@@ -5,8 +5,8 @@ import com.yuriscat.echowarrior.item.EchoRelicItem;
 import com.yuriscat.echowarrior.item.EchoRelicProgress;
 import com.yuriscat.echowarrior.item.EchoRelicState;
 import com.yuriscat.echowarrior.item.EchoHeroType;
-import com.yuriscat.echowarrior.item.EchoSummonerModule;
-import com.yuriscat.echowarrior.item.EchoModuleSystem;
+import com.yuriscat.echowarrior.item.EchoSummonerAccessory;
+import com.yuriscat.echowarrior.item.EchoAccessorySystem;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import com.yuriscat.echowarrior.layout.SummonerLayout;
@@ -268,18 +268,20 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		if (relic.getItem() instanceof EchoRelicItem) {
 			EchoRelicState.ensureInitialized(relic, serverPlayer.getRandom(), serverPlayer.level().getGameTime());
 			int level = EchoRelicProgress.level(relic);
-			int maximumHealth = (int)Math.round(EchoRelicState.maximumHealth(relic) * 10.0);
+			int maximumHealth = (int)Math.round(Math.max(1.0, EchoRelicState.maximumHealth(relic)
+					+ EchoAccessorySystem.maximumHealthBonus(this.summonerContainer)) * 10.0);
 			this.relicLevel.set(level);
 			this.relicExperience.set(EchoRelicProgress.experience(relic));
 			this.relicExperienceNeeded.set(EchoRelicProgress.experienceNeeded(level));
 			this.spiritMaximumHealth.set(maximumHealth);
-			this.spiritAttackDamage.set((int)Math.round(EchoRelicState.attackDamage(relic) * 10.0));
+			this.spiritAttackDamage.set((int)Math.round(Math.max(0.0, EchoRelicState.attackDamage(relic)
+					+ EchoAccessorySystem.attackBonus(this.summonerContainer)) * 10.0));
 			this.spiritHealth.set(spirit == null ? maximumHealth : Math.round(spirit.livingEntity().getHealth() * 10.0F));
 			this.spiritAttackSpeed.set(EchoRelicState.attackSpeedPercent(relic));
-			this.spiritArmor.set((int)Math.round((EchoRelicState.armor(relic)
-					+ EchoModuleSystem.armorBonus(this.summonerContainer)) * 10.0));
+			this.spiritArmor.set((int)Math.round(Math.max(0.0, EchoRelicState.armor(relic)
+					+ EchoAccessorySystem.armorBonus(this.summonerContainer)) * 10.0));
 			this.spiritMovement.set((int)Math.round(EchoRelicState.movementPercent(relic)
-					* EchoModuleSystem.movementMultiplier(this.summonerContainer)));
+					* EchoAccessorySystem.movementMultiplier(this.summonerContainer)));
 			this.summonCostPercent.set(EchoRelicState.summonCostPercent(relic));
 			this.traitMask.set(EchoRelicState.traitMask(relic));
 			this.relicSyncToken.set(relicSyncToken(relic));
@@ -549,8 +551,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	public int spiritAttackSpeed() { return this.spiritAttackSpeed.get(); }
 	public int spiritArmor() { return this.spiritArmor.get(); }
 	public int spiritMovement() { return this.spiritMovement.get(); }
-	public boolean moduleImprovesArmor() { return EchoModuleSystem.armorBonus(this.summonerContainer) > 0.0; }
-	public boolean moduleReducesMovement() { return EchoModuleSystem.movementMultiplier(this.summonerContainer) < 1.0; }
+	public boolean moduleImprovesArmor() { return EchoAccessorySystem.armorBonus(this.summonerContainer) > 0.0; }
+	public boolean moduleReducesMovement() { return EchoAccessorySystem.movementMultiplier(this.summonerContainer) < 1.0; }
 	public int summonCostPercent() { return this.summonCostPercent.get(); }
 	public int fuelAmount() { return this.fuelAmount.get(); }
 	public int traitMask() { return this.traitMask.get(); }
@@ -595,7 +597,7 @@ public final class SummonerMenu extends AbstractContainerMenu {
 
 		@Override
 		public boolean mayPlace(ItemStack stack) {
-			return EchoSummonerModule.canInstall(stack, currentSummonerStack(), this.moduleSlot, summonerContainer);
+			return EchoSummonerAccessory.canInstall(stack, currentSummonerStack(), this.moduleSlot, summonerContainer);
 		}
 	}
 

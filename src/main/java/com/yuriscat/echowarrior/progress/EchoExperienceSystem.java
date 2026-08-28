@@ -1,6 +1,8 @@
 package com.yuriscat.echowarrior.progress;
 
+import com.yuriscat.echowarrior.ModItems;
 import com.yuriscat.echowarrior.entity.EchoWarriorEntity;
+import com.yuriscat.echowarrior.item.EchoAccessorySystem;
 import com.yuriscat.echowarrior.item.EchoRelicItem;
 import com.yuriscat.echowarrior.item.EchoRelicProgress;
 import com.yuriscat.echowarrior.item.EchoRelicState;
@@ -16,22 +18,21 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.entity.item.ItemEntity;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.WeakHashMap;
 
 public final class EchoExperienceSystem {
-	private static final long PARTICIPATION_WINDOW_TICKS = 20L * 10L;
-	private static final Map<LivingEntity, Map<UUID, Participation>> PARTICIPATION = new WeakHashMap<>();
+	private static final long CREDIT_WINDOW_TICKS = 20L * 10L;
+	private static final Map<LivingEntity, Participation> LAST_ECHO_CREDIT = new WeakHashMap<>();
 
 	private EchoExperienceSystem() {
 	}
@@ -48,12 +49,14 @@ public final class EchoExperienceSystem {
 			float damageTaken,
 			boolean blocked
 	) {
-		Entity attacker = source.getEntity();
-		if (attacker instanceof EchoWarriorEntity echo) {
+		if (damageTaken <= 0.0F || blocked) return;
+		EchoWarriorEntity echo = EchoAccessorySystem.resolveAttackingEcho(source);
+		if (echo != null) {
 			markParticipation(echo, victim);
-		}
-		if (victim instanceof EchoWarriorEntity echo && attacker instanceof LivingEntity opponent) {
-			markParticipation(echo, opponent);
+		} else if (source.getEntity() != null) {
+			// Preserve recent Echo credit through entity-less follow-up damage such as
+			// falling, fire, lava, drowning, or Echo-applied damage-over-time effects.
+			LAST_ECHO_CREDIT.remove(victim);
 		}
 	}
 
@@ -62,54 +65,42 @@ public final class EchoExperienceSystem {
 			return;
 		}
 
-		Entity killer = source.getEntity();
-		if (killer instanceof EchoWarriorEntity echo) {
-			markParticipation(echo, victim);
+		EchoWarriorEntity direct = EchoAccessorySystem.resolveAttackingEcho(source);
+		Participation credit = LAST_ECHO_CREDIT.remove(victim);
+		if (direct != null) {
+			credit = participationFor(direct);
+		}
+		if (credit == null || level.getGameTime() - credit.lastParticipationTick() > CREDIT_WINDOW_TICKS) return;
+		Entity active = level.getEntity(credit.echoUuid());
+		if (!(active instanceof EchoWarriorEntity echo) || !echo.livingEntity().isAlive()) return;
+
+		if (EchoAccessorySystem.has(echo, ModItems.VICTORS_LAUREL_ACCESSORY)) {
+			echo.livingEntity().heal(echo.livingEntity().getMaxHealth() * 0.10F);
+		}
+		if (EchoAccessorySystem.has(echo, ModItems.MEMORY_RITUAL_KNIFE_ACCESSORY)
+				&& echo.livingEntity().getRandom().nextFloat() < 0.005F) {
+			ItemStack legacy = new ItemStack(switch (echo.livingEntity().getRandom().nextInt(5)) {
+				case 0 -> ModItems.COURAGE_LEGACY;
+				case 1 -> ModItems.FORTITUDE_LEGACY;
+				case 2 -> ModItems.PURITY_LEGACY;
+				case 3 -> ModItems.WISDOM_LEGACY;
+				default -> ModItems.CRAFT_LEGACY;
+			});
+			level.addFreshEntity(new ItemEntity(level, victim.getX(), victim.getY() + 0.35, victim.getZ(), legacy));
 		}
 
-		UUID creditedOwner = null;
-		UUID killingEcho = null;
-		if (killer instanceof EchoWarriorEntity echo) {
-			creditedOwner = echo.getOwnerUuid();
-			killingEcho = echo.livingEntity().getUUID();
-		} else if (killer instanceof ServerPlayer player) {
-			creditedOwner = player.getUUID();
-		}
-		if (creditedOwner == null) {
-			PARTICIPATION.remove(victim);
-			return;
-		}
+		int reward = victim.getExperienceReward(level, echo.livingEntity());
+		if (reward <= 0) return;
+		int worldReward = scaledReward(reward,
+				EchoAccessorySystem.has(echo, ModItems.LIGHT_GATHERING_MAGNET_ACCESSORY));
+		int growthReward = scaledReward(reward,
+				EchoAccessorySystem.has(echo, ModItems.TRAINING_NOTES_ACCESSORY));
+		ExperienceOrb.award(level, victim.position(), worldReward);
+		awardExperience(level, credit, growthReward);
+	}
 
-		Map<UUID, Participation> records = PARTICIPATION.remove(victim);
-		if (records == null || records.isEmpty()) {
-			return;
-		}
-		long now = level.getGameTime();
-		UUID finalCreditedOwner = creditedOwner;
-		UUID finalKillingEcho = killingEcho;
-		List<Participation> eligible = records.values().stream()
-				.filter(record -> record.ownerUuid().equals(finalCreditedOwner))
-				.filter(record -> now - record.lastParticipationTick() <= PARTICIPATION_WINDOW_TICKS)
-				.sorted(Comparator
-						.comparing((Participation record) -> !record.echoUuid().equals(finalKillingEcho))
-						.thenComparing(record -> record.echoUuid().toString()))
-				.toList();
-		if (eligible.isEmpty()) {
-			return;
-		}
-
-		int reward = victim.getExperienceReward(level, killer);
-		if (reward <= 0) {
-			return;
-		}
-		int share = reward / eligible.size();
-		int remainder = reward % eligible.size();
-		for (int index = 0; index < eligible.size(); index++) {
-			int awarded = share + (index < remainder ? 1 : 0);
-			if (awarded > 0) {
-				awardExperience(level, eligible.get(index), awarded);
-			}
-		}
+	private static int scaledReward(int base, boolean boosted) {
+		return Math.max(1, boosted ? Math.round(base * 1.5F) : base);
 	}
 
 	public static void markParticipation(EchoWarriorEntity echo, LivingEntity target) {
@@ -117,18 +108,17 @@ public final class EchoExperienceSystem {
 		if (!(echoEntity.level() instanceof ServerLevel level) || target == echoEntity || !target.isAlive()) {
 			return;
 		}
+		Participation participation = participationFor(echo);
+		if (participation != null) LAST_ECHO_CREDIT.put(target, participation);
+	}
+
+	private static Participation participationFor(EchoWarriorEntity echo) {
+		LivingEntity echoEntity = echo.livingEntity();
+		if (!(echoEntity.level() instanceof ServerLevel level)) return null;
 		UUID ownerUuid = echo.getOwnerUuid();
 		UUID summonerUuid = echo.getSummonerUuid();
-		if (ownerUuid == null || summonerUuid == null) {
-			return;
-		}
-		PARTICIPATION.computeIfAbsent(target, ignored -> new java.util.HashMap<>())
-				.put(echoEntity.getUUID(), new Participation(
-						echoEntity.getUUID(),
-						ownerUuid,
-						summonerUuid,
-						level.getGameTime()
-				));
+		return ownerUuid == null || summonerUuid == null ? null : new Participation(
+				echoEntity.getUUID(), ownerUuid, summonerUuid, level.getGameTime());
 	}
 
 	private static void awardExperience(ServerLevel level, Participation participation, int amount) {
@@ -187,9 +177,9 @@ public final class EchoExperienceSystem {
 	public static void applyRelicProgress(EchoWarriorEntity echo, ItemStack relic, boolean preserveHealthGain) {
 		LivingEntity entity = echo.livingEntity();
 		double newMaximumHealth = EchoRelicState.maximumHealth(relic);
-		double oldMaximumHealth = entity.getMaxHealth();
 		AttributeInstance maximumHealth = entity.getAttribute(Attributes.MAX_HEALTH);
 		AttributeInstance attackDamage = entity.getAttribute(Attributes.ATTACK_DAMAGE);
+		double oldBaseMaximumHealth = maximumHealth == null ? newMaximumHealth : maximumHealth.getBaseValue();
 		if (maximumHealth != null) {
 			maximumHealth.setBaseValue(newMaximumHealth);
 		}
@@ -198,7 +188,7 @@ public final class EchoExperienceSystem {
 		}
 		echo.applyRelicState(relic, false);
 		if (preserveHealthGain) {
-			float gained = (float)Math.max(0.0, newMaximumHealth - oldMaximumHealth);
+			float gained = (float)Math.max(0.0, newMaximumHealth - oldBaseMaximumHealth);
 			entity.setHealth(Math.min(entity.getMaxHealth(), entity.getHealth() + gained));
 		} else {
 			entity.setHealth(entity.getMaxHealth());

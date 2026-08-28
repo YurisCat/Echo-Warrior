@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["SWS","FPF"," S "],"key":{"S":"minecraft:string","W":"minecraft:white_wool","F":"echo_warrior:fortitude_legacy","P":"minecraft:oak_planks"},"result":{"id":"echo_warrior:substitute_doll_accessory"}}

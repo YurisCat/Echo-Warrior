@@ -1,3 +1,4 @@
 {
-  "parent": "minecraft:item/paper"
+  "parent": "minecraft:item/generated",
+  "textures": { "layer0": "echo_warrior:item/small_knowledge" }
 }

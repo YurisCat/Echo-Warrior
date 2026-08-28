@@ -867,7 +867,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		}
 		for (int index = 0; index < SummonerMenu.MODULE_SLOT_COUNT; index++) {
 			if (isInside(mouseX, mouseY, x(Element.MODULES, MODULE_SLOT_X[index]), y(Element.MODULES, 94), 16, 16)) {
-				showTooltip(graphics, mouseX, mouseY, "升级模块槽", "模块系统尚未实装，当前不接受新物品。");
+				showTooltip(graphics, mouseX, mouseY, "饰品槽", "可安装英灵饰品；同名饰品最多一个，不同饰品可以叠加。");
 				return;
 			}
 		}

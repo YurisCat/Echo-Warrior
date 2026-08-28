@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["SBS","CLT"],"key":{"S":"minecraft:string","B":"minecraft:black_wool","C":"echo_warrior:courage_legacy","L":"minecraft:leather","T":"echo_warrior:craft_legacy"},"result":{"id":"echo_warrior:battle_blindfold_accessory"}}

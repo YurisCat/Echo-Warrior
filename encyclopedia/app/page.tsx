@@ -25,7 +25,7 @@ type Category = {
 };
 
 type ArticleSection = {
-  type: "prose" | "stats" | "steps" | "cards" | "callout";
+  type: "prose" | "stats" | "steps" | "cards" | "recipe" | "callout";
   title: string;
   tone?: "info" | "warning" | "planned" | "muted";
   body?: string;
@@ -39,6 +39,17 @@ type ArticleSection = {
     body?: string;
     icon?: string;
   }>;
+  grid?: Array<{
+    name: string;
+    icon: string;
+    count?: number;
+  } | null>;
+  output?: {
+    name: string;
+    icon: string;
+    count?: number;
+  };
+  shapeless?: boolean;
 };
 
 type AtlasNode = {
@@ -230,6 +241,41 @@ function Section({ section }: { section: ArticleSection }) {
               </div>
             </article>
           ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (section.type === "recipe") {
+    return (
+      <section className="article-section">
+        <p className="section-kicker">CRAFTING RECORD</p>
+        <h2>{section.title}</h2>
+        <div className="recipe-panel">
+          <div className={`craft-grid ${section.shapeless ? "shapeless" : ""}`} aria-label={section.shapeless ? "无序合成材料" : "有序合成表"}>
+            {Array.from({ length: 9 }, (_, index) => {
+              const slot = section.grid?.[index] ?? null;
+              return (
+                <div className="craft-slot" key={index} title={slot?.name}>
+                  {slot && <>
+                    <img src={slot.icon} alt={slot.name} />
+                    {(slot.count ?? 1) > 1 && <span>{slot.count}</span>}
+                  </>}
+                </div>
+              );
+            })}
+          </div>
+          <span className="recipe-arrow" aria-hidden="true">→</span>
+          <div className="recipe-result">
+            <div className="craft-slot output" title={section.output?.name}>
+              {section.output && <>
+                <img src={section.output.icon} alt={section.output.name} />
+                {(section.output.count ?? 1) > 1 && <span>{section.output.count}</span>}
+              </>}
+            </div>
+            <strong>{section.output?.name}</strong>
+            <small>{section.shapeless ? "无序合成" : "有序合成"}</small>
+          </div>
         </div>
       </section>
     );

@@ -1,11 +1,11 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "locale": "zh_cn",
   "meta": {
     "title": "Echo Archive",
     "displayTitle": "回声档案馆",
     "description": "Echo Warrior 的交互式知识地图",
-    "lastVerified": "2026-08-21"
+    "lastVerified": "2026-08-28"
   },
   "categories": [
     {
@@ -59,8 +59,26 @@
       "shortLabel": "成长",
       "symbol": "✦",
       "kicker": "RESONANCE GROWTH",
-      "description": "记录等级成长、经验规则与召唤器模块。",
+      "description": "记录等级成长、经验规则，以及它们与英灵饰品的关系。",
       "accent": "#b79bd7"
+    },
+    {
+      "id": "inheritance",
+      "label": "传承",
+      "shortLabel": "传承",
+      "symbol": "⬡",
+      "kicker": "SHARED LEGACIES",
+      "description": "跨越文明留下的共通精神，也是饰品合成的核心材料。",
+      "accent": "#d6a45d"
+    },
+    {
+      "id": "accessories",
+      "label": "英灵饰品",
+      "shortLabel": "饰品",
+      "symbol": "✧",
+      "kicker": "RELIC LOADOUT",
+      "description": "六个开放槽中的固定构筑组件，只强化绑定英灵。",
+      "accent": "#d47d75"
     }
   ],
   "nodes": [
@@ -74,12 +92,22 @@
       "y": 260,
       "symbol": "EW",
       "connections": [
-        { "targetId": "core_loop", "kind": "primary" },
-        { "targetId": "development_status", "kind": "related" }
+        {
+          "targetId": "core_loop",
+          "kind": "primary"
+        },
+        {
+          "targetId": "development_status",
+          "kind": "related"
+        }
       ],
       "article": {
         "summary": "这里不是按字母排序的传统百科，而是一张可以拖动、缩放并沿关系探索的 Echo Warrior 知识地图。",
-        "tags": ["入口", "知识地图", "网页版首版"],
+        "tags": [
+          "入口",
+          "知识地图",
+          "网页版首版"
+        ],
         "sections": [
           {
             "type": "prose",
@@ -93,9 +121,18 @@
             "type": "steps",
             "title": "建议的阅读顺序",
             "items": [
-              { "title": "理解核心循环", "body": "从探索、考古、遗物和召唤开始，先建立整体认识。" },
-              { "title": "进入召唤系统", "body": "了解召唤器、燃料、活动模式与警戒状态。" },
-              { "title": "选择英灵", "body": "查看罗马军团兵、阿兹特克勇士、埃及弓箭手与关刀甲胄战士，以及后续候选英灵。" }
+              {
+                "title": "理解核心循环",
+                "body": "从探索、考古、遗物和召唤开始，先建立整体认识。"
+              },
+              {
+                "title": "进入召唤系统",
+                "body": "了解召唤器、燃料、活动模式与警戒状态。"
+              },
+              {
+                "title": "选择英灵",
+                "body": "查看罗马军团兵、阿兹特克勇士、埃及弓箭手与关刀甲胄战士，以及后续候选英灵。"
+              }
             ]
           },
           {
@@ -105,7 +142,11 @@
             "body": "条目会明确区分“已实装”“开发中”和“计划中”，避免把设计稿误认为当前游戏行为。"
           }
         ],
-        "related": ["core_loop", "summoner", "roman_legionary"]
+        "related": [
+          "core_loop",
+          "summoner",
+          "roman_legionary"
+        ]
       }
     },
     {
@@ -118,21 +159,42 @@
       "y": 405,
       "symbol": "↻",
       "connections": [
-        { "targetId": "archive_overview", "kind": "primary" },
-        { "targetId": "development_status", "kind": "related" }
+        {
+          "targetId": "archive_overview",
+          "kind": "primary"
+        },
+        {
+          "targetId": "development_status",
+          "kind": "related"
+        }
       ],
       "article": {
         "summary": "探索 → 回声定位 → 考古 → 获得遗物 → 装入召唤器 → 准备灵魂介质 → 召唤英灵 → 战斗与成长。",
-        "tags": ["玩法循环", "MVP"],
+        "tags": [
+          "玩法循环",
+          "MVP"
+        ],
         "sections": [
           {
             "type": "steps",
             "title": "完整流程",
             "items": [
-              { "title": "发现回声", "body": "携带回声罗盘，在已加载区域内感知附近考古目标。" },
-              { "title": "取得遗物", "body": "从可疑方块等考古目标获得决定英灵类型的遗物。" },
-              { "title": "准备召唤", "body": "把遗物装入召唤器，并使用灵魂沙、灵魂土或腐肉补充燃料。" },
-              { "title": "共同战斗", "body": "英灵跟随主人作战，遗物保存经验、等级、天赋和行为设置。" }
+              {
+                "title": "发现回声",
+                "body": "携带回声罗盘，在已加载区域内感知附近考古目标。"
+              },
+              {
+                "title": "取得遗物",
+                "body": "从可疑方块等考古目标获得决定英灵类型的遗物。"
+              },
+              {
+                "title": "准备召唤",
+                "body": "把遗物装入召唤器，并使用灵魂沙、灵魂土或腐肉补充燃料。"
+              },
+              {
+                "title": "共同战斗",
+                "body": "英灵跟随主人作战，遗物保存经验、等级、天赋和行为设置。"
+              }
             ]
           },
           {
@@ -142,7 +204,12 @@
             "body": "四位英灵均已有开发版战斗闭环；比赛 MVP 的最低验收仍为前三英灵、考古、回声罗盘与基础升级，关刀甲胄战士是用户批准加入的第四位正式开发英灵。"
           }
         ],
-        "related": ["echo_compass", "relics_overview", "summoner", "roman_legionary"]
+        "related": [
+          "echo_compass",
+          "relics_overview",
+          "summoner",
+          "roman_legionary"
+        ]
       }
     },
     {
@@ -155,24 +222,49 @@
       "y": 405,
       "symbol": "✓",
       "connections": [
-        { "targetId": "archive_overview", "kind": "related" },
-        { "targetId": "core_loop", "kind": "related" }
+        {
+          "targetId": "archive_overview",
+          "kind": "related"
+        },
+        {
+          "targetId": "core_loop",
+          "kind": "related"
+        }
       ],
       "article": {
         "summary": "每个节点都会显示当前状态，让百科同时服务玩家阅读和开发过程，而不会混淆已完成内容与未来设计。",
-        "tags": ["已实装", "开发中", "计划中"],
+        "tags": [
+          "已实装",
+          "开发中",
+          "计划中"
+        ],
         "sections": [
           {
             "type": "cards",
             "title": "三种状态",
             "items": [
-              { "title": "已实装", "meta": "IMPLEMENTED", "body": "已经进入当前开发版本，并依据项目文档核对。" },
-              { "title": "开发中", "meta": "IN DEVELOPMENT", "body": "核心规则已经确定，但仍可能补充、调参与完善反馈。" },
-              { "title": "计划中", "meta": "PLANNED", "body": "属于确认过的目标，但当前版本尚不可用。" }
+              {
+                "title": "已实装",
+                "meta": "IMPLEMENTED",
+                "body": "已经进入当前开发版本，并依据项目文档核对。"
+              },
+              {
+                "title": "开发中",
+                "meta": "IN DEVELOPMENT",
+                "body": "核心规则已经确定，但仍可能补充、调参与完善反馈。"
+              },
+              {
+                "title": "计划中",
+                "meta": "PLANNED",
+                "body": "属于确认过的目标，但当前版本尚不可用。"
+              }
             ]
           }
         ],
-        "related": ["archive_overview", "core_loop"]
+        "related": [
+          "archive_overview",
+          "core_loop"
+        ]
       }
     },
     {
@@ -185,11 +277,18 @@
       "y": 300,
       "symbol": "⌖",
       "connections": [
-        { "targetId": "archaeology", "kind": "primary" }
+        {
+          "targetId": "archaeology",
+          "kind": "primary"
+        }
       ],
       "article": {
         "summary": "遗迹外用指针寻找 2048 格内最近的未完成战场遗迹；进入遗迹后以顺时针变速指针配合方向、频率与音量回响寻找考古方块。",
-        "tags": ["探索", "定位", "已实装"],
+        "tags": [
+          "探索",
+          "定位",
+          "已实装"
+        ],
         "sections": [
           {
             "type": "prose",
@@ -205,15 +304,39 @@
             "type": "stats",
             "title": "取得方式",
             "items": [
-              { "label": "合成", "value": "指南针 + 4 紫水晶 + 4 铜锭", "note": "中央指南针，正方向紫水晶，四角铜锭" },
-              { "label": "制图师", "value": "4 绿宝石 + 指南针", "note": "三级起固定出现，每次补货最多 2 次" },
-              { "label": "指针索引", "value": "2048 格", "note": "只读取持久化索引，不扫描方块" },
-              { "label": "提醒音", "value": "320 格", "note": "右键可按单个罗盘屏蔽" },
-              { "label": "内外切换", "value": "进入 24 格 / 离开 48 格", "note": "迟滞避免边界抖动" }
+              {
+                "label": "合成",
+                "value": "指南针 + 4 紫水晶 + 4 铜锭",
+                "note": "中央指南针，正方向紫水晶，四角铜锭"
+              },
+              {
+                "label": "制图师",
+                "value": "4 绿宝石 + 指南针",
+                "note": "三级起固定出现，每次补货最多 2 次"
+              },
+              {
+                "label": "指针索引",
+                "value": "2048 格",
+                "note": "只读取持久化索引，不扫描方块"
+              },
+              {
+                "label": "提醒音",
+                "value": "320 格",
+                "note": "右键可按单个罗盘屏蔽"
+              },
+              {
+                "label": "内外切换",
+                "value": "进入 24 格 / 离开 48 格",
+                "note": "迟滞避免边界抖动"
+              }
             ]
           }
         ],
-        "related": ["archaeology", "relic_discovery", "core_loop"]
+        "related": [
+          "archaeology",
+          "relic_discovery",
+          "core_loop"
+        ]
       }
     },
     {
@@ -226,33 +349,75 @@
       "y": 300,
       "symbol": "▧",
       "connections": [
-        { "targetId": "echo_compass", "kind": "primary" },
-        { "targetId": "relic_discovery", "kind": "primary" }
+        {
+          "targetId": "echo_compass",
+          "kind": "primary"
+        },
+        {
+          "targetId": "relic_discovery",
+          "kind": "primary"
+        }
       ],
       "article": {
         "summary": "在可重复补充的战场遗迹中刷取 6～9 个可疑方块；每处活动遗迹保证一个英灵遗物。",
-        "tags": ["考古", "遗物", "已实装"],
+        "tags": [
+          "考古",
+          "遗物",
+          "已实装"
+        ],
         "sections": [
           {
             "type": "steps",
             "title": "实际流程",
             "items": [
-              { "title": "定位", "body": "携带回声罗盘，用遗迹外指针寻找 2048 格内最近的未完成战场遗迹。" },
-              { "title": "辨认", "body": "寻找直径约 15～21 格的小型天然空地。自定义可疑草方块和可疑泥土从未刷状态起带有近看可辨认的低对比度断裂回声纹，后续刷取阶段会逐步显露更多裂纹；纹理没有亮色高光，未标记区域保持原生地表颜色，可疑草仍随所在地生态群系染色。" },
-              { "title": "刷取", "body": "每处遗迹有 6～9 个可疑方块；其中一个保底方块正确刷取时等概率产出五种现有遗物之一。" },
-              { "title": "鉴定", "body": "遗物进入玩家物品栏后初始化其独立天赋与成长数据。" }
+              {
+                "title": "定位",
+                "body": "携带回声罗盘，用遗迹外指针寻找 2048 格内最近的未完成战场遗迹。"
+              },
+              {
+                "title": "辨认",
+                "body": "寻找直径约 15～21 格的小型天然空地。自定义可疑草方块和可疑泥土从未刷状态起带有近看可辨认的低对比度断裂回声纹，后续刷取阶段会逐步显露更多裂纹；纹理没有亮色高光，未标记区域保持原生地表颜色，可疑草仍随所在地生态群系染色。"
+              },
+              {
+                "title": "刷取",
+                "body": "每处遗迹有 6～9 个可疑方块；其中一个保底方块正确刷取时等概率产出五种现有遗物之一。"
+              },
+              {
+                "title": "鉴定",
+                "body": "遗物进入玩家物品栏后初始化其独立天赋与成长数据。"
+              }
             ]
           },
           {
             "type": "prose",
             "title": "补充与安全规则",
             "paragraphs": [
-              "保底方块以非刷子方式消失仍会令遗迹完成，但不会掉落遗物；已经跟踪该遗迹的玩家仍可用清场回响刷取其他普通可疑方块。所有登记方块以刷取、破坏、爆炸、替换或下落等方式消失都会更新共享计数，避免不存在的目标卡住罗盘。普通掉落为铁锭 40%、小知识 30%、传承 20%、金锭 8%、额外遗物 1.5%、下界合金碎片 0.3%、模块 0.2%。",
+              "保底方块以非刷子方式消失仍会令遗迹完成，但不会掉落遗物；已经跟踪该遗迹的玩家仍可用清场回响刷取其他普通可疑方块。所有登记方块以刷取、破坏、爆炸、替换或下落等方式消失都会更新共享计数，避免不存在的目标卡住罗盘。普通掉落为铁锭 40%、小知识 30%、传承 20%、金锭 8%、额外遗物 1.5%、下界合金碎片 0.3%、饰品 0.2%。",
               "遗迹按 48×48 区块区域管理，每区最多一个活动遗迹，活动中心至少相距 512 格。完成后等待服务器运行 20 分钟，再在安全且自然加载的区块尝试补充；不会强制加载区块，也不会覆盖已标记为玩家修改的区域。管理员可用 battlefield generate、locate 与 teleport 指令批量生成、查询及从 32～50 格外安全落点开始测试。"
             ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "普通考古的饰品池",
+            "body": "饰品成品总概率为 0.2%。命中饰品池后：常见占 60%（8 件等权）、精良占 30%（11 件等权）、稀有占 10%（6 件等权）。五种传承合计 20%，彼此等权。"
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "普通考古的饰品池",
+            "body": "饰品成品总概率为 0.2%。命中饰品池后：常见占 60%（8 件等权）、精良占 30%（11 件等权）、稀有占 10%（6 件等权）。五种传承合计 20%，彼此等权。"
           }
         ],
-        "related": ["echo_compass", "relic_discovery", "relics_overview"]
+        "related": [
+          "echo_compass",
+          "relic_discovery",
+          "relics_overview",
+          "legacy_overview",
+          "accessories_overview",
+          "legacy_overview",
+          "accessories_overview"
+        ]
       }
     },
     {
@@ -265,11 +430,18 @@
       "y": 300,
       "symbol": "◇",
       "connections": [
-        { "targetId": "archaeology", "kind": "primary" }
+        {
+          "targetId": "archaeology",
+          "kind": "primary"
+        }
       ],
       "article": {
         "summary": "遗物不是普通收集品：它决定可以召唤哪位英灵，并随物品实例保存成长和行为设置。",
-        "tags": ["掉落", "鉴定", "持久化"],
+        "tags": [
+          "掉落",
+          "鉴定",
+          "持久化"
+        ],
         "sections": [
           {
             "type": "prose",
@@ -280,7 +452,11 @@
             ]
           }
         ],
-        "related": ["relics_overview", "traits", "summoner"]
+        "related": [
+          "relics_overview",
+          "traits",
+          "summoner"
+        ]
       }
     },
     {
@@ -294,40 +470,88 @@
       "icon": "/assets/echo-warrior/item/roman_legionary_relic.png",
       "symbol": "◇",
       "connections": [
-        { "targetId": "traits", "kind": "primary" }
+        {
+          "targetId": "traits",
+          "kind": "primary"
+        }
       ],
       "article": {
         "summary": "每件遗物绑定一种英灵类型，并保存等级、经验、随机天赋与玩家选择的行为设置。",
-        "tags": ["物品", "不可堆叠", "已实装"],
+        "tags": [
+          "物品",
+          "不可堆叠",
+          "已实装"
+        ],
         "sections": [
           {
             "type": "stats",
             "title": "当前规则",
             "items": [
-              { "label": "堆叠上限", "value": "1", "note": "每件遗物拥有独立数据" },
-              { "label": "天赋数量", "value": "0–4", "note": "同一天赋不会重复" },
-              { "label": "等级上限", "value": "30", "note": "等级和经验随遗物保存" },
-              { "label": "默认设置", "value": "跟随＋被动", "note": "可选技能默认开启" }
+              {
+                "label": "堆叠上限",
+                "value": "1",
+                "note": "每件遗物拥有独立数据"
+              },
+              {
+                "label": "天赋数量",
+                "value": "0–4",
+                "note": "同一天赋不会重复"
+              },
+              {
+                "label": "等级上限",
+                "value": "30",
+                "note": "等级和经验随遗物保存"
+              },
+              {
+                "label": "默认设置",
+                "value": "跟随＋被动",
+                "note": "可选技能默认开启"
+              }
             ]
           },
           {
             "type": "callout",
             "tone": "info",
             "title": "召唤器与遗物分工",
-            "body": "遗物保存英灵本身的成长和设置；召唤器保存燃料与升级模块。"
+            "body": "遗物保存英灵本身的成长和设置；召唤器保存燃料与饰品。"
           },
           {
             "type": "cards",
             "title": "当前遗物",
             "items": [
-              { "title": "罗马军团兵遗物", "meta": "已实装", "body": "召唤罗马军团兵英灵。", "icon": "/assets/echo-warrior/item/roman_legionary_relic.png" },
-              { "title": "阿兹特克勇士遗物", "meta": "开发版可用", "body": "召唤阿兹特克勇士英灵，保存五项技能开关与追猎充能。", "icon": "/assets/echo-warrior/item/aztec_warrior_relic.png" },
-              { "title": "埃及弓箭手遗物", "meta": "开发版可用", "body": "召唤埃及弓箭手，保存箭型选择、四项技能状态与后撤步充能。", "icon": "/assets/echo-warrior/item/egyptian_archer_relic.png" },
-              { "title": "关刀甲胄战士遗物", "meta": "开发版可用", "body": "召唤关刀甲胄战士，保存四项技能状态与连招冷却。", "icon": "/assets/echo-warrior/item/guandao_warrior_relic.png" }
+              {
+                "title": "罗马军团兵遗物",
+                "meta": "已实装",
+                "body": "召唤罗马军团兵英灵。",
+                "icon": "/assets/echo-warrior/item/roman_legionary_relic.png"
+              },
+              {
+                "title": "阿兹特克勇士遗物",
+                "meta": "开发版可用",
+                "body": "召唤阿兹特克勇士英灵，保存五项技能开关与追猎充能。",
+                "icon": "/assets/echo-warrior/item/aztec_warrior_relic.png"
+              },
+              {
+                "title": "埃及弓箭手遗物",
+                "meta": "开发版可用",
+                "body": "召唤埃及弓箭手，保存箭型选择、四项技能状态与后撤步充能。",
+                "icon": "/assets/echo-warrior/item/egyptian_archer_relic.png"
+              },
+              {
+                "title": "关刀甲胄战士遗物",
+                "meta": "开发版可用",
+                "body": "召唤关刀甲胄战士，保存四项技能状态与连招冷却。",
+                "icon": "/assets/echo-warrior/item/guandao_warrior_relic.png"
+              }
             ]
           }
         ],
-        "related": ["traits", "trait_conflicts", "summoner", "leveling"]
+        "related": [
+          "traits",
+          "trait_conflicts",
+          "summoner",
+          "leveling"
+        ]
       }
     },
     {
@@ -340,37 +564,98 @@
       "y": 310,
       "symbol": "✧",
       "connections": [
-        { "targetId": "relics_overview", "kind": "primary" },
-        { "targetId": "trait_conflicts", "kind": "primary" }
+        {
+          "targetId": "relics_overview",
+          "kind": "primary"
+        },
+        {
+          "targetId": "trait_conflicts",
+          "kind": "primary"
+        }
       ],
       "article": {
         "summary": "遗物首次进入玩家物品栏时生成 0～4 个互不重复的天赋，使同一种英灵遗物拥有不同倾向。",
-        "tags": ["坏脾气", "慵懒", "勇气", "瘦削", "壮硕"],
+        "tags": [
+          "坏脾气",
+          "慵懒",
+          "勇气",
+          "瘦削",
+          "壮硕"
+        ],
         "sections": [
           {
             "type": "cards",
             "title": "当前天赋",
             "items": [
-              { "title": "坏脾气", "meta": "+4 攻击 / 120% 消耗", "body": "召唤与自然恢复成本提高，但获得显著攻击强化。", "icon": "/assets/echo-warrior/gui/traits/bad_temper.png" },
-              { "title": "慵懒", "meta": "80% 消耗 / -25% 移速", "body": "节省燃料，但追击和移动能力下降。", "icon": "/assets/echo-warrior/gui/traits/lazy.png" },
-              { "title": "勇气", "meta": "+2 攻击", "body": "直接强化攻击力，没有额外代价。", "icon": "/assets/echo-warrior/gui/traits/courage.png" },
-              { "title": "瘦削", "meta": "生命降低 / 速度提高", "body": "最大生命降低 25%，移动速度和攻击频率各提高 25%。", "icon": "/assets/echo-warrior/gui/traits/skinny.png" },
-              { "title": "壮硕", "meta": "+4 护甲 / -25% 移速", "body": "提高承伤能力，但移动速度下降。", "icon": "/assets/echo-warrior/gui/traits/sturdy.png" }
+              {
+                "title": "坏脾气",
+                "meta": "+4 攻击 / 120% 消耗",
+                "body": "召唤与自然恢复成本提高，但获得显著攻击强化。",
+                "icon": "/assets/echo-warrior/gui/traits/bad_temper.png"
+              },
+              {
+                "title": "慵懒",
+                "meta": "80% 消耗 / -25% 移速",
+                "body": "节省燃料，但追击和移动能力下降。",
+                "icon": "/assets/echo-warrior/gui/traits/lazy.png"
+              },
+              {
+                "title": "勇气",
+                "meta": "+2 攻击",
+                "body": "直接强化攻击力，没有额外代价。",
+                "icon": "/assets/echo-warrior/gui/traits/courage.png"
+              },
+              {
+                "title": "瘦削",
+                "meta": "生命降低 / 速度提高",
+                "body": "最大生命降低 25%，移动速度和攻击频率各提高 25%。",
+                "icon": "/assets/echo-warrior/gui/traits/skinny.png"
+              },
+              {
+                "title": "壮硕",
+                "meta": "+4 护甲 / -25% 移速",
+                "body": "提高承伤能力，但移动速度下降。",
+                "icon": "/assets/echo-warrior/gui/traits/sturdy.png"
+              }
             ]
           },
           {
             "type": "stats",
             "title": "数量概率",
             "items": [
-              { "label": "0 个", "value": "10%", "note": "没有天赋" },
-              { "label": "1 个", "value": "25%", "note": "单一倾向" },
-              { "label": "2 个", "value": "40%", "note": "最常见" },
-              { "label": "3 个", "value": "20%", "note": "较稀有" },
-              { "label": "4 个", "value": "5%", "note": "最稀有" }
+              {
+                "label": "0 个",
+                "value": "10%",
+                "note": "没有天赋"
+              },
+              {
+                "label": "1 个",
+                "value": "25%",
+                "note": "单一倾向"
+              },
+              {
+                "label": "2 个",
+                "value": "40%",
+                "note": "最常见"
+              },
+              {
+                "label": "3 个",
+                "value": "20%",
+                "note": "较稀有"
+              },
+              {
+                "label": "4 个",
+                "value": "5%",
+                "note": "最稀有"
+              }
             ]
           }
         ],
-        "related": ["relics_overview", "trait_conflicts", "summoner"]
+        "related": [
+          "relics_overview",
+          "trait_conflicts",
+          "summoner"
+        ]
       }
     },
     {
@@ -383,18 +668,32 @@
       "y": 310,
       "symbol": "×",
       "connections": [
-        { "targetId": "traits", "kind": "primary" }
+        {
+          "targetId": "traits",
+          "kind": "primary"
+        }
       ],
       "article": {
         "summary": "同一天赋不会重复生成，明显冲突的倾向也不能同时出现。",
-        "tags": ["生成规则", "互斥"],
+        "tags": [
+          "生成规则",
+          "互斥"
+        ],
         "sections": [
           {
             "type": "cards",
             "title": "互斥组合",
             "items": [
-              { "title": "坏脾气 ↔ 慵懒", "meta": "消耗倾向冲突", "body": "提高召唤消耗与降低召唤消耗不会同时生成。" },
-              { "title": "瘦削 ↔ 壮硕", "meta": "体格倾向冲突", "body": "高速低生命与高护甲低速度不会同时生成。" }
+              {
+                "title": "坏脾气 ↔ 慵懒",
+                "meta": "消耗倾向冲突",
+                "body": "提高召唤消耗与降低召唤消耗不会同时生成。"
+              },
+              {
+                "title": "瘦削 ↔ 壮硕",
+                "meta": "体格倾向冲突",
+                "body": "高速低生命与高护甲低速度不会同时生成。"
+              }
             ]
           },
           {
@@ -404,7 +703,10 @@
             "body": "“平凡”目前只保留为未来可能使用的美术占位方案，首版不参与随机生成。"
           }
         ],
-        "related": ["traits", "relics_overview"]
+        "related": [
+          "traits",
+          "relics_overview"
+        ]
       }
     },
     {
@@ -418,36 +720,87 @@
       "icon": "/assets/echo-warrior/item/test_echo_summoner.png",
       "symbol": "◎",
       "connections": [
-        { "targetId": "fuel", "kind": "primary" },
-        { "targetId": "activity_modes", "kind": "primary" },
-        { "targetId": "alert_modes", "kind": "primary" }
+        {
+          "targetId": "fuel",
+          "kind": "primary"
+        },
+        {
+          "targetId": "activity_modes",
+          "kind": "primary"
+        },
+        {
+          "targetId": "alert_modes",
+          "kind": "primary"
+        }
       ],
       "article": {
-        "summary": "手持使用的便携召唤装置。装入遗物后，它负责燃料、召唤、遣散、模式设置以及未来的升级模块。",
-        "tags": ["GUI", "燃料", "便携物品", "已实装"],
+        "summary": "手持使用的便携召唤装置。装入遗物后，它负责燃料、召唤、遣散、模式设置以及未来的饰品。",
+        "tags": [
+          "GUI",
+          "燃料",
+          "便携物品",
+          "已实装"
+        ],
         "sections": [
           {
             "type": "steps",
             "title": "基础操作",
             "items": [
-              { "title": "普通右键", "body": "打开召唤器管理界面。没有装入遗物时仍可以打开。" },
-              { "title": "潜行右键", "body": "英灵未在场时召唤；英灵已经出现时，把仍在场的英灵召回玩家附近。" },
-              { "title": "界面内收回", "body": "主动使英灵离场，单击按钮后立即执行。召唤成功时按钮附近的青蓝灵魂粒子向外散开，收回成功时蓝色火焰在按钮附近向中心汇聚。" },
-              { "title": "左键直接装入", "body": "鼠标拿起燃料、遗物或兼容模块后，可左键点击玩家物品栏中的召唤器：燃料先进入燃料槽，遗物进入空遗物槽，模块进入首个兼容空槽；无效或冲突物品保持不变。" }
+              {
+                "title": "普通右键",
+                "body": "打开召唤器管理界面。没有装入遗物时仍可以打开。"
+              },
+              {
+                "title": "潜行右键",
+                "body": "英灵未在场时召唤；英灵已经出现时，把仍在场的英灵召回玩家附近。"
+              },
+              {
+                "title": "界面内收回",
+                "body": "主动使英灵离场，单击按钮后立即执行。召唤成功时按钮附近的青蓝灵魂粒子向外散开，收回成功时蓝色火焰在按钮附近向中心汇聚。"
+              },
+              {
+                "title": "左键直接装入",
+                "body": "鼠标拿起燃料、遗物或兼容饰品后，可左键点击玩家物品栏中的召唤器：燃料先进入燃料槽，遗物进入空遗物槽，饰品进入首个兼容空槽；无效或冲突物品保持不变。"
+              }
             ]
           },
           {
             "type": "stats",
             "title": "当前容量",
             "items": [
-              { "label": "内部燃料", "value": "1000", "note": "每个召唤器独立保存" },
-              { "label": "遗物槽", "value": "1", "note": "决定当前英灵" },
-              { "label": "燃料输入槽", "value": "1", "note": "每 5 tick 最多转化 1 个" },
-              { "label": "模块槽", "value": "6", "note": "同名最多一个，不同模块可叠加" }
+              {
+                "label": "内部燃料",
+                "value": "1000",
+                "note": "每个召唤器独立保存"
+              },
+              {
+                "label": "遗物槽",
+                "value": "1",
+                "note": "决定当前英灵"
+              },
+              {
+                "label": "燃料输入槽",
+                "value": "1",
+                "note": "每 5 tick 最多转化 1 个"
+              },
+              {
+                "label": "饰品槽",
+                "value": "6",
+                "note": "同名最多一个，不同饰品可叠加"
+              }
             ]
           }
         ],
-        "related": ["fuel", "activity_modes", "alert_modes", "relics_overview", "roman_legionary", "aztec_warrior", "egyptian_archer", "guandao_warrior"]
+        "related": [
+          "fuel",
+          "activity_modes",
+          "alert_modes",
+          "relics_overview",
+          "roman_legionary",
+          "aztec_warrior",
+          "egyptian_archer",
+          "guandao_warrior"
+        ]
       }
     },
     {
@@ -460,20 +813,44 @@
       "y": 430,
       "symbol": "◒",
       "connections": [
-        { "targetId": "summoner", "kind": "primary" }
+        {
+          "targetId": "summoner",
+          "kind": "primary"
+        }
       ],
       "article": {
         "summary": "燃料只在实际召唤和实际恢复生命时扣除；英灵存活期间没有持续维持费用。",
-        "tags": ["灵魂沙", "灵魂土", "腐肉", "恢复"],
+        "tags": [
+          "灵魂沙",
+          "灵魂土",
+          "腐肉",
+          "恢复"
+        ],
         "sections": [
           {
             "type": "stats",
             "title": "基础数值",
             "items": [
-              { "label": "灵魂沙 / 灵魂土", "value": "+50", "note": "两者完全等价的高效率燃料" },
-              { "label": "腐肉", "value": "+20", "note": "低效率燃料" },
-              { "label": "单次召唤", "value": "100", "note": "受消耗比例修正" },
-              { "label": "自然恢复", "value": "2 / 生命", "note": "每两秒恢复一点生命" }
+              {
+                "label": "灵魂沙 / 灵魂土",
+                "value": "+50",
+                "note": "两者完全等价的高效率燃料"
+              },
+              {
+                "label": "腐肉",
+                "value": "+20",
+                "note": "低效率燃料"
+              },
+              {
+                "label": "单次召唤",
+                "value": "100",
+                "note": "受消耗比例修正"
+              },
+              {
+                "label": "自然恢复",
+                "value": "2 / 生命",
+                "note": "每两秒恢复一点生命"
+              }
             ]
           },
           {
@@ -483,7 +860,10 @@
             "body": "燃料耗尽不会让英灵消散，也不会妨碍战斗；只会阻止新的召唤和需要燃料的自然生命恢复。"
           }
         ],
-        "related": ["summoner", "traits"]
+        "related": [
+          "summoner",
+          "traits"
+        ]
       }
     },
     {
@@ -496,20 +876,45 @@
       "y": 480,
       "symbol": "↔",
       "connections": [
-        { "targetId": "summoner", "kind": "primary" },
-        { "targetId": "alert_modes", "kind": "related" }
+        {
+          "targetId": "summoner",
+          "kind": "primary"
+        },
+        {
+          "targetId": "alert_modes",
+          "kind": "related"
+        }
       ],
       "article": {
         "summary": "活动模式决定英灵围绕主人还是位置锚点行动，并同时约束战斗追击边界。",
-        "tags": ["跟随", "等待", "闲逛"],
+        "tags": [
+          "跟随",
+          "等待",
+          "闲逛"
+        ],
         "sections": [
           {
             "type": "cards",
             "title": "三种模式",
             "items": [
-              { "title": "跟随", "meta": "围绕主人", "body": "在主人附近移动和战斗，距离过远时使用安全传送。", "icon": "/assets/echo-warrior/gui/modes/activity/follow.png" },
-              { "title": "等待", "meta": "约 2 格活动", "body": "以切换位置为锚点，平时仅轻微移动；主动响应范围约 6 格。", "icon": "/assets/echo-warrior/gui/modes/activity/wait.png" },
-              { "title": "闲逛", "meta": "约 16 格活动", "body": "在锚点周围停留、漫步并自然归位，最多追至约 24 格后返回。", "icon": "/assets/echo-warrior/gui/modes/activity/wander.png" }
+              {
+                "title": "跟随",
+                "meta": "围绕主人",
+                "body": "在主人附近移动和战斗，距离过远时使用安全传送。",
+                "icon": "/assets/echo-warrior/gui/modes/activity/follow.png"
+              },
+              {
+                "title": "等待",
+                "meta": "约 2 格活动",
+                "body": "以切换位置为锚点，平时仅轻微移动；主动响应范围约 6 格。",
+                "icon": "/assets/echo-warrior/gui/modes/activity/wait.png"
+              },
+              {
+                "title": "闲逛",
+                "meta": "约 16 格活动",
+                "body": "在锚点周围停留、漫步并自然归位，最多追至约 24 格后返回。",
+                "icon": "/assets/echo-warrior/gui/modes/activity/wander.png"
+              }
             ]
           },
           {
@@ -519,7 +924,13 @@
             "body": "英灵通常停留 2～5 秒，再选择一处可安全到达的陆地位置步行前往；单次移动以约 4～8 格为主，偶尔走得更远。接近活动区边缘时会偏向锚点方向，越界、战斗结束、路径失败或卡住时会重新归位或选择目标。战斗、主动技能、视觉互动和浮水行为始终拥有更高优先级。"
           }
         ],
-        "related": ["summoner", "alert_modes", "roman_legionary", "aztec_warrior", "guandao_warrior"]
+        "related": [
+          "summoner",
+          "alert_modes",
+          "roman_legionary",
+          "aztec_warrior",
+          "guandao_warrior"
+        ]
       }
     },
     {
@@ -532,24 +943,55 @@
       "y": 430,
       "symbol": "!",
       "connections": [
-        { "targetId": "summoner", "kind": "primary" },
-        { "targetId": "activity_modes", "kind": "related" }
+        {
+          "targetId": "summoner",
+          "kind": "primary"
+        },
+        {
+          "targetId": "activity_modes",
+          "kind": "related"
+        }
       ],
       "article": {
         "summary": "警戒状态决定英灵在什么条件下取得攻击目标，活动模式则决定它能追到哪里。",
-        "tags": ["主动出击", "被动防御", "和平"],
+        "tags": [
+          "主动出击",
+          "被动防御",
+          "和平"
+        ],
         "sections": [
           {
             "type": "cards",
             "title": "三种状态",
             "items": [
-              { "title": "主动出击", "meta": "仅取得可见目标", "body": "只主动取得允许范围内且拥有直接视线的敌对生物，不会隔墙或隔地发现目标。已看见的目标失去视线后最多保留 40 tick 重定位时间；英灵或主人受到直接攻击时，伤害来源也只短暂暴露 40 tick。苦力怕默认不会进入主动索敌列表；主人实际攻击某一只苦力怕后，英灵才会把该只目标视为可追击敌人。范围攻击造成的误伤不会自动授权追击。", "icon": "/assets/echo-warrior/gui/modes/alert/aggressive.png" },
-              { "title": "被动防御", "meta": "默认", "body": "只攻击伤害主人、自身，或者被主人攻击的目标。苦力怕同样不会被环境扫描主动取得；主人实际攻击某一只苦力怕，或仍存活的苦力怕实际造成伤害后，才会进入对应的反击流程。", "icon": "/assets/echo-warrior/gui/modes/alert/defensive.png" },
-              { "title": "和平", "meta": "不主动攻击", "body": "不会因发现目标主动追击，但自身受到直接攻击后仍可自卫。", "icon": "/assets/echo-warrior/gui/modes/alert/peaceful.png" }
+              {
+                "title": "主动出击",
+                "meta": "仅取得可见目标",
+                "body": "只主动取得允许范围内且拥有直接视线的敌对生物，不会隔墙或隔地发现目标。已看见的目标失去视线后最多保留 40 tick 重定位时间；英灵或主人受到直接攻击时，伤害来源也只短暂暴露 40 tick。苦力怕默认不会进入主动索敌列表；主人实际攻击某一只苦力怕后，英灵才会把该只目标视为可追击敌人。范围攻击造成的误伤不会自动授权追击。",
+                "icon": "/assets/echo-warrior/gui/modes/alert/aggressive.png"
+              },
+              {
+                "title": "被动防御",
+                "meta": "默认",
+                "body": "只攻击伤害主人、自身，或者被主人攻击的目标。苦力怕同样不会被环境扫描主动取得；主人实际攻击某一只苦力怕，或仍存活的苦力怕实际造成伤害后，才会进入对应的反击流程。",
+                "icon": "/assets/echo-warrior/gui/modes/alert/defensive.png"
+              },
+              {
+                "title": "和平",
+                "meta": "不主动攻击",
+                "body": "不会因发现目标主动追击，但自身受到直接攻击后仍可自卫。",
+                "icon": "/assets/echo-warrior/gui/modes/alert/peaceful.png"
+              }
             ]
           }
         ],
-        "related": ["summoner", "activity_modes", "roman_legionary", "aztec_warrior", "guandao_warrior"]
+        "related": [
+          "summoner",
+          "activity_modes",
+          "roman_legionary",
+          "aztec_warrior",
+          "guandao_warrior"
+        ]
       }
     },
     {
@@ -563,37 +1005,108 @@
       "icon": "/assets/echo-warrior/item/roman_legionary_relic.png",
       "symbol": "I",
       "connections": [
-        { "targetId": "soldier_formation", "kind": "skill" },
-        { "targetId": "shield_charge", "kind": "skill" },
-        { "targetId": "legion_endures", "kind": "skill" },
-        { "targetId": "aztec_warrior", "kind": "related" },
-        { "targetId": "japanese_samurai", "kind": "related" }
+        {
+          "targetId": "soldier_formation",
+          "kind": "skill"
+        },
+        {
+          "targetId": "shield_charge",
+          "kind": "skill"
+        },
+        {
+          "targetId": "legion_endures",
+          "kind": "skill"
+        },
+        {
+          "targetId": "aztec_warrior",
+          "kind": "related"
+        },
+        {
+          "targetId": "japanese_samurai",
+          "kind": "related"
+        }
       ],
       "article": {
         "summary": "比赛版首位可运行英灵。以盾牌、近战防护和保护主人为核心，已经具备完整召唤、跟随、战斗、成长和三项技能的首版闭环。",
-        "tags": ["近战", "盾牌", "防护", "已实装"],
+        "tags": [
+          "近战",
+          "盾牌",
+          "防护",
+          "已实装"
+        ],
         "sections": [
           {
             "type": "stats",
             "title": "基础属性",
             "items": [
-              { "label": "生命", "value": "30", "note": "满级 60", "icon": "/assets/echo-warrior/gui/attributes/health.png" },
-              { "label": "护甲", "value": "8", "note": "基础值", "icon": "/assets/echo-warrior/gui/attributes/armor.png" },
-              { "label": "攻击", "value": "6", "note": "满级 12", "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png" },
-              { "label": "移动速度", "value": "0.28", "note": "受天赋修正", "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png" },
-              { "label": "跟随距离", "value": "5", "note": "接近至 3 格停止" },
-              { "label": "安全传送", "value": "16", "note": "超过距离尝试返回" },
-              { "label": "击退抗性", "value": "0.3", "note": "基础值" },
-              { "label": "攻击间隔", "value": "约 1 秒", "note": "第 6 tick 判定伤害" }
+              {
+                "label": "生命",
+                "value": "30",
+                "note": "满级 60",
+                "icon": "/assets/echo-warrior/gui/attributes/health.png"
+              },
+              {
+                "label": "护甲",
+                "value": "8",
+                "note": "基础值",
+                "icon": "/assets/echo-warrior/gui/attributes/armor.png"
+              },
+              {
+                "label": "攻击",
+                "value": "6",
+                "note": "满级 12",
+                "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png"
+              },
+              {
+                "label": "移动速度",
+                "value": "0.28",
+                "note": "受天赋修正",
+                "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png"
+              },
+              {
+                "label": "跟随距离",
+                "value": "5",
+                "note": "接近至 3 格停止"
+              },
+              {
+                "label": "安全传送",
+                "value": "16",
+                "note": "超过距离尝试返回"
+              },
+              {
+                "label": "击退抗性",
+                "value": "0.3",
+                "note": "基础值"
+              },
+              {
+                "label": "攻击间隔",
+                "value": "约 1 秒",
+                "note": "第 6 tick 判定伤害"
+              }
             ]
           },
           {
             "type": "cards",
             "title": "技能组",
             "items": [
-              { "title": "士兵阵列", "meta": "可切换光环", "body": "强化主人和同主人军团兵，并根据主人是否持盾切换效果。", "icon": "/assets/echo-warrior/gui/skills/roman_legionary/soldier_formation.png" },
-              { "title": "举盾冲锋", "meta": "拦截技能", "body": "举盾加速冲锋，拦截投射物与危险目标。", "icon": "/assets/echo-warrior/gui/skills/roman_legionary/shield_charge.png" },
-              { "title": "军团永存", "meta": "蓄力技能", "body": "经过五秒蓄力后释放，并维持完整的举盾与收盾姿态流程。", "icon": "/assets/echo-warrior/gui/skills/roman_legionary/legion_endures.png" }
+              {
+                "title": "士兵阵列",
+                "meta": "可切换光环",
+                "body": "强化主人和同主人军团兵，并根据主人是否持盾切换效果。",
+                "icon": "/assets/echo-warrior/gui/skills/roman_legionary/soldier_formation.png"
+              },
+              {
+                "title": "举盾冲锋",
+                "meta": "拦截技能",
+                "body": "举盾加速冲锋，拦截投射物与危险目标。",
+                "icon": "/assets/echo-warrior/gui/skills/roman_legionary/shield_charge.png"
+              },
+              {
+                "title": "军团永存",
+                "meta": "蓄力技能",
+                "body": "经过五秒蓄力后释放，并维持完整的举盾与收盾姿态流程。",
+                "icon": "/assets/echo-warrior/gui/skills/roman_legionary/legion_endures.png"
+              }
             ]
           },
           {
@@ -609,7 +1122,13 @@
             "body": "军团兵会主动浮向水面并免疫溺水。跟随主人时若完全沉入水中且持续卡住，会先暂停战斗并尝试游向主人；仍无法脱困时，会在主人附近寻找干燥地面或水面安全传送。等待和闲逛模式不会因此被强制召回。"
           }
         ],
-        "related": ["soldier_formation", "shield_charge", "legion_endures", "leveling", "summoner"]
+        "related": [
+          "soldier_formation",
+          "shield_charge",
+          "legion_endures",
+          "leveling",
+          "summoner"
+        ]
       }
     },
     {
@@ -623,18 +1142,35 @@
       "icon": "/assets/echo-warrior/gui/skills/roman_legionary/soldier_formation.png",
       "symbol": "A",
       "connections": [
-        { "targetId": "roman_legionary", "kind": "skill" }
+        {
+          "targetId": "roman_legionary",
+          "kind": "skill"
+        }
       ],
       "article": {
         "summary": "不要求附近存在敌人。技能开启时持续影响主人和同主人的军团兵，并根据主人是否持盾切换阵列效果。",
-        "tags": ["光环", "攻击强化", "减伤"],
+        "tags": [
+          "光环",
+          "攻击强化",
+          "减伤"
+        ],
         "sections": [
           {
             "type": "cards",
             "title": "阵列状态",
             "items": [
-              { "title": "举起武器！", "meta": "+2 攻击", "body": "主人未持盾时提供固定攻击强化。", "icon": "/assets/echo-warrior/mob_effect/weapons_raised.png" },
-              { "title": "举起盾牌！", "meta": "+2 攻击 / 15% 减伤", "body": "主人任一只手持盾时，额外为主人和同主人军团兵提供最终伤害减免。", "icon": "/assets/echo-warrior/mob_effect/shields_raised.png" }
+              {
+                "title": "举起武器！",
+                "meta": "+2 攻击",
+                "body": "主人未持盾时提供固定攻击强化。",
+                "icon": "/assets/echo-warrior/mob_effect/weapons_raised.png"
+              },
+              {
+                "title": "举起盾牌！",
+                "meta": "+2 攻击 / 15% 减伤",
+                "body": "主人任一只手持盾时，额外为主人和同主人军团兵提供最终伤害减免。",
+                "icon": "/assets/echo-warrior/mob_effect/shields_raised.png"
+              }
             ]
           },
           {
@@ -644,7 +1180,11 @@
             "body": "受益者离开军团兵约 8 格、技能关闭、来源消失或玩家断开连接时，效果会直接移除。"
           }
         ],
-        "related": ["roman_legionary", "shield_charge", "legion_endures"]
+        "related": [
+          "roman_legionary",
+          "shield_charge",
+          "legion_endures"
+        ]
       }
     },
     {
@@ -658,11 +1198,18 @@
       "icon": "/assets/echo-warrior/gui/skills/roman_legionary/shield_charge.png",
       "symbol": "C",
       "connections": [
-        { "targetId": "roman_legionary", "kind": "skill" }
+        {
+          "targetId": "roman_legionary",
+          "kind": "skill"
+        }
       ],
       "article": {
         "summary": "军团兵举盾后沿目标方向冲锋，使用正弦速度曲线形成平稳起步、中段加速和末段收势。",
-        "tags": ["冲锋", "拦截", "姿态"],
+        "tags": [
+          "冲锋",
+          "拦截",
+          "姿态"
+        ],
         "sections": [
           {
             "type": "prose",
@@ -679,7 +1226,11 @@
             "body": "范围、路径、击退、粒子和声音仍需要实机手感测试。"
           }
         ],
-        "related": ["roman_legionary", "soldier_formation", "legion_endures"]
+        "related": [
+          "roman_legionary",
+          "soldier_formation",
+          "legion_endures"
+        ]
       }
     },
     {
@@ -693,11 +1244,18 @@
       "icon": "/assets/echo-warrior/gui/skills/roman_legionary/legion_endures.png",
       "symbol": "E",
       "connections": [
-        { "targetId": "roman_legionary", "kind": "skill" }
+        {
+          "targetId": "roman_legionary",
+          "kind": "skill"
+        }
       ],
       "article": {
         "summary": "军团兵维持举盾姿态进行五秒蓄力，完成后释放技能，并在结束后自然收盾。",
-        "tags": ["蓄力", "举盾", "反馈"],
+        "tags": [
+          "蓄力",
+          "举盾",
+          "反馈"
+        ],
         "sections": [
           {
             "type": "prose",
@@ -708,7 +1266,11 @@
             ]
           }
         ],
-        "related": ["roman_legionary", "soldier_formation", "shield_charge"]
+        "related": [
+          "roman_legionary",
+          "soldier_formation",
+          "shield_charge"
+        ]
       }
     },
     {
@@ -722,34 +1284,99 @@
       "icon": "/assets/echo-warrior/item/aztec_warrior_relic.png",
       "symbol": "A",
       "connections": [
-        { "targetId": "roman_legionary", "kind": "related" },
-        { "targetId": "japanese_samurai", "kind": "related" }
+        {
+          "targetId": "roman_legionary",
+          "kind": "related"
+        },
+        {
+          "targetId": "japanese_samurai",
+          "kind": "related"
+        }
       ],
       "article": {
         "summary": "第二位英灵。以马夸威特的慢速大范围横扫为核心，通过黑曜石创口造成致死性流血，并使用追猎跳劈切入战场。",
-        "tags": ["第二英灵", "近战", "流血", "范围伤害", "开发中"],
+        "tags": [
+          "第二英灵",
+          "近战",
+          "流血",
+          "范围伤害",
+          "开发中"
+        ],
         "sections": [
           {
             "type": "stats",
             "title": "基础属性",
             "items": [
-              { "label": "生命", "value": "34", "note": "满级 68", "icon": "/assets/echo-warrior/gui/attributes/health.png" },
-              { "label": "护甲", "value": "4", "note": "轻装战士", "icon": "/assets/echo-warrior/gui/attributes/armor.png" },
-              { "label": "攻击", "value": "8", "note": "满级 16", "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png" },
-              { "label": "移速", "value": "0.30", "note": "偏好生物群系内 +10%", "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png" },
-              { "label": "击退抗性", "value": "20%", "note": "追猎强势期约 70%" },
-              { "label": "攻击间隔", "value": "29 tick", "note": "约 1.45 秒" }
+              {
+                "label": "生命",
+                "value": "34",
+                "note": "满级 68",
+                "icon": "/assets/echo-warrior/gui/attributes/health.png"
+              },
+              {
+                "label": "护甲",
+                "value": "4",
+                "note": "轻装战士",
+                "icon": "/assets/echo-warrior/gui/attributes/armor.png"
+              },
+              {
+                "label": "攻击",
+                "value": "8",
+                "note": "满级 16",
+                "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png"
+              },
+              {
+                "label": "移速",
+                "value": "0.30",
+                "note": "偏好生物群系内 +10%",
+                "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png"
+              },
+              {
+                "label": "击退抗性",
+                "value": "20%",
+                "note": "追猎强势期约 70%"
+              },
+              {
+                "label": "攻击间隔",
+                "value": "29 tick",
+                "note": "约 1.45 秒"
+              }
             ]
           },
           {
             "type": "cards",
             "title": "五项可独立开关的技能",
             "items": [
-              { "title": "羽蛇神的诅咒", "meta": "反应式被动", "body": "英灵或主人实际受到可归因的直接伤害时，60% 概率使攻击者虚弱；触发后 25% 为虚弱 II。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/quetzalcoatls_curse.png" },
-              { "title": "维齐洛波奇特利的祝福", "meta": "日照祝福", "body": "白天且直视天空的当事者独立获得 +15% 近战攻击，每 4 秒恢复 1 点生命，不消耗燃料。生效时以无限时长图标稳定显示；离开日照、关闭技能、更换遗物、英灵死亡/遣散、绑定失效或重新连接时都会立即清理，不显示原版药水粒子。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/huitzilopochtlis_blessing.png" },
-              { "title": "黑曜石创口", "meta": "致死性流血", "body": "持续 6 秒，每秒 1 点可致死伤害。普通主目标 30%，横扫和追猎目标各自 15% 触发。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/obsidian_wound.png" },
-              { "title": "追猎", "meta": "2 层充能", "body": "在 4–10 格内向锁定目标跳劈，落地 2 格内造成 100% 攻击伤害与轻微击退。每层 6 秒恢复，两次施放至少间隔 2 秒；起跳至落地前免疫普通伤害。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/pursuit.png" },
-              { "title": "马夸威特", "meta": "160° 横扫", "body": "普通攻击横扫 2.5 格，溅射伤害为 50%。追猎后 3 秒强势期扩大为 180°、3 格、75% 溅射。", "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/macuahuitl_mastery.png" }
+              {
+                "title": "羽蛇神的诅咒",
+                "meta": "反应式被动",
+                "body": "英灵或主人实际受到可归因的直接伤害时，60% 概率使攻击者虚弱；触发后 25% 为虚弱 II。",
+                "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/quetzalcoatls_curse.png"
+              },
+              {
+                "title": "维齐洛波奇特利的祝福",
+                "meta": "日照祝福",
+                "body": "白天且直视天空的当事者独立获得 +15% 近战攻击，每 4 秒恢复 1 点生命，不消耗燃料。生效时以无限时长图标稳定显示；离开日照、关闭技能、更换遗物、英灵死亡/遣散、绑定失效或重新连接时都会立即清理，不显示原版药水粒子。",
+                "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/huitzilopochtlis_blessing.png"
+              },
+              {
+                "title": "黑曜石创口",
+                "meta": "致死性流血",
+                "body": "持续 6 秒，每秒 1 点可致死伤害。普通主目标 30%，横扫和追猎目标各自 15% 触发。",
+                "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/obsidian_wound.png"
+              },
+              {
+                "title": "追猎",
+                "meta": "2 层充能",
+                "body": "在 4–10 格内向锁定目标跳劈，落地 2 格内造成 100% 攻击伤害与轻微击退。每层 6 秒恢复，两次施放至少间隔 2 秒；起跳至落地前免疫普通伤害。",
+                "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/pursuit.png"
+              },
+              {
+                "title": "马夸威特",
+                "meta": "160° 横扫",
+                "body": "普通攻击横扫 2.5 格，溅射伤害为 50%。追猎后 3 秒强势期扩大为 180°、3 格、75% 溅射。",
+                "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/macuahuitl_mastery.png"
+              }
             ]
           },
           {
@@ -783,7 +1410,12 @@
             "body": "五个技能图标、黑曜石创口与维齐洛波奇特利祝福的状态图标，以及新版 128×128 实体贴图均已替换为人工绘制资源。"
           }
         ],
-        "related": ["roman_legionary", "summoner", "leveling", "japanese_samurai"]
+        "related": [
+          "roman_legionary",
+          "summoner",
+          "leveling",
+          "japanese_samurai"
+        ]
       }
     },
     {
@@ -797,36 +1429,107 @@
       "icon": "/assets/echo-warrior/item/egyptian_archer_relic.png",
       "symbol": "E",
       "connections": [
-        { "targetId": "roman_legionary", "kind": "related" },
-        { "targetId": "aztec_warrior", "kind": "related" },
-        { "targetId": "guandao_warrior", "kind": "related" },
-        { "targetId": "japanese_samurai", "kind": "related" }
+        {
+          "targetId": "roman_legionary",
+          "kind": "related"
+        },
+        {
+          "targetId": "aztec_warrior",
+          "kind": "related"
+        },
+        {
+          "targetId": "guandao_warrior",
+          "kind": "related"
+        },
+        {
+          "targetId": "japanese_samurai",
+          "kind": "related"
+        }
       ],
       "article": {
         "summary": "第三位英灵与首位远程战士。以完整拉弓—放箭动作、移动射击和距离控制为核心，并可在普通箭、叶形箭与锥锋箭之间切换。",
-        "tags": ["第三英灵", "远程", "移动射击", "箭型", "开发中"],
+        "tags": [
+          "第三英灵",
+          "远程",
+          "移动射击",
+          "箭型",
+          "开发中"
+        ],
         "sections": [
           {
             "type": "stats",
             "title": "基础属性",
             "items": [
-              { "label": "生命", "value": "28", "note": "满级 56", "icon": "/assets/echo-warrior/gui/attributes/health.png" },
-              { "label": "护甲", "value": "0", "note": "依靠距离控制", "icon": "/assets/echo-warrior/gui/attributes/armor.png" },
-              { "label": "远程攻击", "value": "5", "note": "满级 10", "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png" },
-              { "label": "移速", "value": "0.30", "note": "可移动射击", "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png" },
-              { "label": "射程", "value": "24 格", "note": "尝试保持 8—14 格" },
-              { "label": "攻击间隔", "value": "42 tick", "note": "约 2.1 秒；动画随攻速等比加速" }
+              {
+                "label": "生命",
+                "value": "28",
+                "note": "满级 56",
+                "icon": "/assets/echo-warrior/gui/attributes/health.png"
+              },
+              {
+                "label": "护甲",
+                "value": "0",
+                "note": "依靠距离控制",
+                "icon": "/assets/echo-warrior/gui/attributes/armor.png"
+              },
+              {
+                "label": "远程攻击",
+                "value": "5",
+                "note": "满级 10",
+                "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png"
+              },
+              {
+                "label": "移速",
+                "value": "0.30",
+                "note": "可移动射击",
+                "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png"
+              },
+              {
+                "label": "射程",
+                "value": "24 格",
+                "note": "尝试保持 8—14 格"
+              },
+              {
+                "label": "攻击间隔",
+                "value": "42 tick",
+                "note": "约 2.1 秒；动画随攻速等比加速"
+              }
             ]
           },
           {
             "type": "cards",
             "title": "四个技能槽",
             "items": [
-              { "title": "赞美猫神", "meta": "30 格球形光环", "body": "苦力怕进入光环后不会立刻逃跑；当其尝试点燃或受到直接伤害时，点燃被取消并进入类似被动动物的慌乱逃窜。技能关闭后保护立即消失，已经开始的慌乱会自然结束。隐藏联动：技能开启且警戒状态为“主动出击”时，埃及弓箭手会主动攻击视线内的苦力怕，并在目标进入慌乱后继续射击；关闭技能或切换其他警戒状态后恢复通用规则。埃及弓箭手的所有直接攻击还会对亡灵生物额外造成 20% 伤害。", "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/cat_god.png" },
-              { "title": "叶形箭", "meta": "点击箭型槽切换", "body": "造成正常箭伤害，并施加 4 秒共 2 点流血与 2 秒轻微减速。流血不叠加，只刷新持续时间；黄色粒子构成箭矢尾迹。", "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/leaf_arrow.png" },
-              { "title": "锥锋箭", "meta": "点击箭型槽切换", "body": "结算伤害前忽略 35% 护甲，并有 25% 概率贯穿当前目标、继续命中最多 1 个额外目标；使用黑色主题尾迹。箭型槽可切回关闭，普通箭无特殊尾迹。", "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/cone_arrow.png" },
-              { "title": "战车与齐射之魂", "meta": "可关闭被动", "body": "开启时允许边移动边射击，但只在必要时位移：任一近身威胁进入 8 格后沿远离全部威胁的稳定安全路线撤退，直到最近威胁退出 10 格；10～20 格且视线通畅时以站立射击为主，超过 20 格或失去视线时才接近或调整位置。路线受阻时尝试斜后与侧向绕行；遇到一格高障碍会确认上方及落脚面安全后立即向后普通跳跃，腾空时保持后退速度并迈上方块，二格墙和危险落点仍会阻挡。关闭被动会禁用常规距离控制与追加齐射，但不会禁用被敌人贴身后的基础求生撤退。16 格内至少有两个有效敌人时，追加射击概率为 15% + 每个额外敌人 8%，最高 55%，每次主射击最多追加一箭；成功追加时身体周围会爆发金黄色尘埃粒子。", "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/chariot_volley.png" },
-              { "title": "后撤步", "meta": "2 层充能", "body": "敌人进入 4 格时，在任意角度搜索使自己最远离最近敌人的安全 5 格落点；完整抛物线会用实体碰撞箱检查墙体、地面和危险方块。起跳后严格保持当前朝向，环境变化时停在最后安全位置，碰撞箱不会穿墙。跳跃完整播放后撤射击动作，并在模型箭矢消失、弓弦释放对应的第 11 tick，重新扫描 12 格内至多 6 个仍存活且有视线的敌人统一齐射；原目标失效时可改射其他有效目标，没有可见目标时不生成幽灵箭但会自然完成动作。每层 6 秒恢复，无全程安全路径时不消耗充能。备用近战不会被后撤步打断；动作结束后若仍在 4 格内、再次受击、撤退受阻或处于多敌/低生命高威胁，才立即尝试施放，已经拉开距离时不浪费充能。", "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/backstep.png" }
+              {
+                "title": "赞美猫神",
+                "meta": "30 格球形光环",
+                "body": "苦力怕进入光环后不会立刻逃跑；当其尝试点燃或受到直接伤害时，点燃被取消并进入类似被动动物的慌乱逃窜。技能关闭后保护立即消失，已经开始的慌乱会自然结束。隐藏联动：技能开启且警戒状态为“主动出击”时，埃及弓箭手会主动攻击视线内的苦力怕，并在目标进入慌乱后继续射击；关闭技能或切换其他警戒状态后恢复通用规则。埃及弓箭手的所有直接攻击还会对亡灵生物额外造成 20% 伤害。",
+                "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/cat_god.png"
+              },
+              {
+                "title": "叶形箭",
+                "meta": "点击箭型槽切换",
+                "body": "造成正常箭伤害，并施加 4 秒共 2 点流血与 2 秒轻微减速。流血不叠加，只刷新持续时间；黄色粒子构成箭矢尾迹。",
+                "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/leaf_arrow.png"
+              },
+              {
+                "title": "锥锋箭",
+                "meta": "点击箭型槽切换",
+                "body": "结算伤害前忽略 35% 护甲，并有 25% 概率贯穿当前目标、继续命中最多 1 个额外目标；使用黑色主题尾迹。箭型槽可切回关闭，普通箭无特殊尾迹。",
+                "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/cone_arrow.png"
+              },
+              {
+                "title": "战车与齐射之魂",
+                "meta": "可关闭被动",
+                "body": "开启时允许边移动边射击，但只在必要时位移：任一近身威胁进入 8 格后沿远离全部威胁的稳定安全路线撤退，直到最近威胁退出 10 格；10～20 格且视线通畅时以站立射击为主，超过 20 格或失去视线时才接近或调整位置。路线受阻时尝试斜后与侧向绕行；遇到一格高障碍会确认上方及落脚面安全后立即向后普通跳跃，腾空时保持后退速度并迈上方块，二格墙和危险落点仍会阻挡。关闭被动会禁用常规距离控制与追加齐射，但不会禁用被敌人贴身后的基础求生撤退。16 格内至少有两个有效敌人时，追加射击概率为 15% + 每个额外敌人 8%，最高 55%，每次主射击最多追加一箭；成功追加时身体周围会爆发金黄色尘埃粒子。",
+                "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/chariot_volley.png"
+              },
+              {
+                "title": "后撤步",
+                "meta": "2 层充能",
+                "body": "敌人进入 4 格时，在任意角度搜索使自己最远离最近敌人的安全 5 格落点；完整抛物线会用实体碰撞箱检查墙体、地面和危险方块。起跳后严格保持当前朝向，环境变化时停在最后安全位置，碰撞箱不会穿墙。跳跃完整播放后撤射击动作，并在模型箭矢消失、弓弦释放对应的第 11 tick，重新扫描 12 格内至多 6 个仍存活且有视线的敌人统一齐射；原目标失效时可改射其他有效目标，没有可见目标时不生成幽灵箭但会自然完成动作。每层 6 秒恢复，无全程安全路径时不消耗充能。备用近战不会被后撤步打断；动作结束后若仍在 4 格内、再次受击、撤退受阻或处于多敌/低生命高威胁，才立即尝试施放，已经拉开距离时不浪费充能。",
+                "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/backstep.png"
+              }
             ]
           },
           {
@@ -848,7 +1551,14 @@
             "body": "赞美猫神、叶形箭、锥锋箭、战车与齐射之魂和后撤步均已使用用户人工绘制的 16×16 正式图标；游戏召唤器与网页百科复用同一套映射。"
           }
         ],
-        "related": ["summoner", "roman_legionary", "aztec_warrior", "guandao_warrior", "leveling", "japanese_samurai"]
+        "related": [
+          "summoner",
+          "roman_legionary",
+          "aztec_warrior",
+          "guandao_warrior",
+          "leveling",
+          "japanese_samurai"
+        ]
       }
     },
     {
@@ -862,34 +1572,98 @@
       "icon": "/assets/echo-warrior/item/guandao_warrior_relic.png",
       "symbol": "关",
       "connections": [
-        { "targetId": "egyptian_archer", "kind": "related" },
-        { "targetId": "summoner", "kind": "related" },
-        { "targetId": "japanese_samurai", "kind": "related" }
+        {
+          "targetId": "egyptian_archer",
+          "kind": "related"
+        },
+        {
+          "targetId": "summoner",
+          "kind": "related"
+        },
+        {
+          "targetId": "japanese_samurai",
+          "kind": "related"
+        }
       ],
       "article": {
         "summary": "第四位正式开发英灵。以高护甲与远程抗性承受压力，用大范围偃月刀斩击积累攻势，并智能施展完整四段连招穿入敌群。",
-        "tags": ["第四英灵", "近战", "重甲", "范围伤害", "连招", "开发中"],
+        "tags": [
+          "第四英灵",
+          "近战",
+          "重甲",
+          "范围伤害",
+          "连招",
+          "开发中"
+        ],
         "sections": [
           {
             "type": "stats",
             "title": "基础属性",
             "items": [
-              { "label": "生命", "value": "30", "note": "满级 60", "icon": "/assets/echo-warrior/gui/attributes/health.png" },
-              { "label": "护甲", "value": "12", "note": "高护甲前排", "icon": "/assets/echo-warrior/gui/attributes/armor.png" },
-              { "label": "攻击", "value": "7", "note": "满级 14", "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png" },
-              { "label": "移速", "value": "0.26", "note": "重甲步战", "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png" },
-              { "label": "击退抗性", "value": "30%", "note": "投射物最终击退仅保留 5%" },
-              { "label": "攻击间隔", "value": "34 tick", "note": "约 1.7 秒" }
+              {
+                "label": "生命",
+                "value": "30",
+                "note": "满级 60",
+                "icon": "/assets/echo-warrior/gui/attributes/health.png"
+              },
+              {
+                "label": "护甲",
+                "value": "12",
+                "note": "高护甲前排",
+                "icon": "/assets/echo-warrior/gui/attributes/armor.png"
+              },
+              {
+                "label": "攻击",
+                "value": "7",
+                "note": "满级 14",
+                "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png"
+              },
+              {
+                "label": "移速",
+                "value": "0.26",
+                "note": "重甲步战",
+                "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png"
+              },
+              {
+                "label": "击退抗性",
+                "value": "30%",
+                "note": "投射物最终击退仅保留 5%"
+              },
+              {
+                "label": "攻击间隔",
+                "value": "34 tick",
+                "note": "约 1.7 秒"
+              }
             ]
           },
           {
             "type": "cards",
             "title": "四个技能槽",
             "items": [
-              { "title": "甲胄傍身", "meta": "可独立关闭", "body": "开启时受到的投射物伤害降低 50%，投射物造成的最终击退降低 95%；关闭后从下一次伤害起立即停止两项保护。", "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/armor_clad.png" },
-              { "title": "越战越勇", "meta": "可独立关闭 · 最多 5 层", "body": "每次有效挥击获得一层 6% 攻击增幅，持续 8 秒且命中刷新全部层数；同一挥击命中多人只增加一层。刀刃始终燃烧红橙火焰并随层数增密，五层以更密集的火焰和红金火星脉冲表示巅峰。生命越低还会获得越高的最终减伤，濒死时最多 30%。关闭时立即清空层数并停止攻击增幅与减伤。", "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/growing_valor.png" },
-              { "title": "偃月刀", "meta": "可独立关闭 · 220° 范围普攻", "body": "开启时普通攻击在动画伤害帧对前方 3.25 格扇区内所有有视线的合法目标造成完整伤害，每次挥击只结算一次。关闭后保留同一动画，但只对起手锁定的单个目标造成基础近战伤害。近战目标位于侧后方时会先平滑转身，身体尚未基本对准时不会错误地朝旧方向起手。", "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/crescent_blade.png" },
-              { "title": "关刀连段招式", "meta": "可独立关闭 · 12 秒冷却", "body": "目标在 4.5 格内，且附近至少有两个敌人或强敌无法被约两次普攻击杀时起手。四段范围伤害为 70%／100%／70%／180%，四段原始推进共 3 格；第一击前还会围绕主目标追加最多 0.75 格的安全追踪修正。第一段以覆盖原版击退的方式给予近乎原地的短浮空，第二段弹开正面来袭的敌方投射物。冷却从起手时开始；每次实际受到近战或投射物伤害都会令剩余冷却缩短 0.5 秒，连招期间也生效且不设上限。关闭只阻止新连招，已经起手的完整动作继续完成，冷却不会重置。死亡会立即终止动作与剩余命中窗口。前三段挥砍使用逐步加重的横扫声，第四段叠加低沉强力攻击、大型风弹爆发与重锤落地冲击声，并在前方产生小型定向风爆；挥空时照常播放，但不额外造成伤害或击退。召唤器仅显示径向冷却遮罩，不显示充能数字。", "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/guandao_combo.png" }
+              {
+                "title": "甲胄傍身",
+                "meta": "可独立关闭",
+                "body": "开启时受到的投射物伤害降低 50%，投射物造成的最终击退降低 95%；关闭后从下一次伤害起立即停止两项保护。",
+                "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/armor_clad.png"
+              },
+              {
+                "title": "越战越勇",
+                "meta": "可独立关闭 · 最多 5 层",
+                "body": "每次有效挥击获得一层 6% 攻击增幅，持续 8 秒且命中刷新全部层数；同一挥击命中多人只增加一层。刀刃始终燃烧红橙火焰并随层数增密，五层以更密集的火焰和红金火星脉冲表示巅峰。生命越低还会获得越高的最终减伤，濒死时最多 30%。关闭时立即清空层数并停止攻击增幅与减伤。",
+                "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/growing_valor.png"
+              },
+              {
+                "title": "偃月刀",
+                "meta": "可独立关闭 · 220° 范围普攻",
+                "body": "开启时普通攻击在动画伤害帧对前方 3.25 格扇区内所有有视线的合法目标造成完整伤害，每次挥击只结算一次。关闭后保留同一动画，但只对起手锁定的单个目标造成基础近战伤害。近战目标位于侧后方时会先平滑转身，身体尚未基本对准时不会错误地朝旧方向起手。",
+                "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/crescent_blade.png"
+              },
+              {
+                "title": "关刀连段招式",
+                "meta": "可独立关闭 · 12 秒冷却",
+                "body": "目标在 4.5 格内，且附近至少有两个敌人或强敌无法被约两次普攻击杀时起手。四段范围伤害为 70%／100%／70%／180%，四段原始推进共 3 格；第一击前还会围绕主目标追加最多 0.75 格的安全追踪修正。第一段以覆盖原版击退的方式给予近乎原地的短浮空，第二段弹开正面来袭的敌方投射物。冷却从起手时开始；每次实际受到近战或投射物伤害都会令剩余冷却缩短 0.5 秒，连招期间也生效且不设上限。关闭只阻止新连招，已经起手的完整动作继续完成，冷却不会重置。死亡会立即终止动作与剩余命中窗口。前三段挥砍使用逐步加重的横扫声，第四段叠加低沉强力攻击、大型风弹爆发与重锤落地冲击声，并在前方产生小型定向风爆；挥空时照常播放，但不额外造成伤害或击退。召唤器仅显示径向冷却遮罩，不显示充能数字。",
+                "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/guandao_combo.png"
+              }
             ]
           },
           {
@@ -911,7 +1685,13 @@
             "body": "遗物图标、四个 16×16 技能图标和模型师提供的 5 段动画均已规范化接入。刀刃粒子通过武器骨骼下的专用锚点跟随真实动画位置。后续只需提供 BBModel，GLTF 不再是必需交付物。"
           }
         ],
-        "related": ["summoner", "relics_overview", "egyptian_archer", "leveling", "japanese_samurai"]
+        "related": [
+          "summoner",
+          "relics_overview",
+          "egyptian_archer",
+          "leveling",
+          "japanese_samurai"
+        ]
       }
     },
     {
@@ -925,35 +1705,103 @@
       "icon": "/assets/echo-warrior/item/japanese_samurai_relic.png",
       "symbol": "侍",
       "connections": [
-        { "targetId": "roman_legionary", "kind": "related" },
-        { "targetId": "aztec_warrior", "kind": "related" },
-        { "targetId": "egyptian_archer", "kind": "related" },
-        { "targetId": "guandao_warrior", "kind": "related" }
+        {
+          "targetId": "roman_legionary",
+          "kind": "related"
+        },
+        {
+          "targetId": "aztec_warrior",
+          "kind": "related"
+        },
+        {
+          "targetId": "egyptian_archer",
+          "kind": "related"
+        },
+        {
+          "targetId": "guandao_warrior",
+          "kind": "related"
+        }
       ],
       "article": {
         "summary": "第五位正式开发英灵。以中甲属性和高机动切入单体决斗，通过攻击后的残心窗口提高闪避率，再把成功闪避转化为踏込充能。",
-        "tags": ["第五英灵", "近战", "中甲", "高机动", "闪避", "单体决斗", "开发中"],
+        "tags": [
+          "第五英灵",
+          "近战",
+          "中甲",
+          "高机动",
+          "闪避",
+          "单体决斗",
+          "开发中"
+        ],
         "sections": [
           {
             "type": "stats",
             "title": "基础属性",
             "items": [
-              { "label": "生命", "value": "28", "note": "满级 56", "icon": "/assets/echo-warrior/gui/attributes/health.png" },
-              { "label": "护甲", "value": "6", "note": "中甲决斗者", "icon": "/assets/echo-warrior/gui/attributes/armor.png" },
-              { "label": "攻击", "value": "6", "note": "满级 12", "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png" },
-              { "label": "移速", "value": "0.32", "note": "高机动近战", "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png" },
-              { "label": "击退抗性", "value": "20%", "note": "保持决斗位置" },
-              { "label": "攻击周期", "value": "40 tick", "note": "随攻速缩放，限制 24～80 tick" }
+              {
+                "label": "生命",
+                "value": "28",
+                "note": "满级 56",
+                "icon": "/assets/echo-warrior/gui/attributes/health.png"
+              },
+              {
+                "label": "护甲",
+                "value": "6",
+                "note": "中甲决斗者",
+                "icon": "/assets/echo-warrior/gui/attributes/armor.png"
+              },
+              {
+                "label": "攻击",
+                "value": "6",
+                "note": "满级 12",
+                "icon": "/assets/echo-warrior/gui/attributes/attack_damage.png"
+              },
+              {
+                "label": "移速",
+                "value": "0.32",
+                "note": "高机动近战",
+                "icon": "/assets/echo-warrior/gui/attributes/movement_speed.png"
+              },
+              {
+                "label": "击退抗性",
+                "value": "20%",
+                "note": "保持决斗位置"
+              },
+              {
+                "label": "攻击周期",
+                "value": "40 tick",
+                "note": "随攻速缩放，限制 24～80 tick"
+              }
             ]
           },
           {
             "type": "cards",
             "title": "四个可独立开关技能",
             "items": [
-              { "title": "残心", "meta": "可独立关闭 · 生命越低越易闪避", "body": "开启时基础闪避率按缺失生命平滑增长：满血 20%，1 点生命 60%。每次实际完成一段攻击伤害后，1 秒内额外获得 20 个百分点，重复命中只刷新、不叠加，最终最高 80%。近战、投射物、爆炸和范围伤害均可闪避；既有燃烧、中毒等持续状态与环境伤害不能触发闪避，也不会被闪避清除。每次成功闪避立即恢复一层踏込。关闭时立即清除临时闪避加成并停止闪避。", "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/zanshin.png" },
-              { "title": "踏込", "meta": "可独立关闭 · 最多 3 层", "body": "目标位于普通攻击范围外但仍在 8 格内、存在视线且整条地面路径安全时，自动向目标冲刺并在约 2 格处停下；目标已经在近战范围内时保留充能。冲刺持续 6～14 tick，期间免疫普通伤害；结束 tick 会先完成最后一步并立即复查是否到达，避免在目标前提前停止。冲刺保留重力并像走楼梯一样平滑跨越一格高低差，但不能穿墙、越过二格障碍、低顶或危险落差；途中地形变化时停在最后安全位置。只有成功抵达并在同一 tick 接上普通攻击时才消耗一层，受阻或失去目标不扣层。结束或中断后有 10 tick 内置冷却；关闭不清空充能，只阻止下一次起手。", "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/fumikomi.png" },
-              { "title": "斩", "meta": "可独立关闭 · 分支式两连斩", "body": "开启时第一刀对前方 90°、2.25 格内主目标造成 100% 伤害，次要目标 50%，并只施加 0.08 的极轻水平击退。起手至命中帧可向锁定目标追随：最多 0.30 格/tick、累计 1.5 格，在约 1.7 格处停下。第一刀结算后立刻检查前方 160°、2.75 格：如果仍有可见目标就在预载动画中无待机帧接续第二刀，否则收刀待机。第二刀允许覆盖此刻刚走入正面扇区的新敌人，但只向分支时记录的主目标追随，最多 0.20 格/tick、累计 0.75 格；伤害集合不会再增加，主目标 100%，其余目标 50%，并保留终结击退。关闭后仍播放第一刀并追随锁定目标，但只造成单体基础伤害，不产生第一刀范围伤害或第二刀。", "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/zan.png" },
-              { "title": "刺", "meta": "可独立关闭 · 10 秒冷却", "body": "近战范围内冷却完成时优先起手，始终按模型原始 1.0 倍速度播放，不受普通攻击速度提高或降低影响。向前方 2.75 格、半径 0.4 格的胶囊范围猛刺，可同时贯穿紧密站成一排的多个有视线敌人。刺入造成 150% 攻击伤害、无击退，并令实际命中者在原地短暂停住约 3～4 tick；拔刀只对第一段命中集合造成 300% 攻击伤害、轻微普通击退，并爆出红色水尘粒子。两段绕过原版受伤冷却但仍受护甲与真正无敌状态影响，因此会分别完整结算，不会清除既有持续状态。当前两个命中点为起手后 16 与 20 tick。关闭只阻止新动作，已经起手的刺继续完成，冷却不会重置。", "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/stab.png" }
+              {
+                "title": "残心",
+                "meta": "可独立关闭 · 生命越低越易闪避",
+                "body": "开启时基础闪避率按缺失生命平滑增长：满血 20%，1 点生命 60%。每次实际完成一段攻击伤害后，1 秒内额外获得 20 个百分点，重复命中只刷新、不叠加，最终最高 80%。近战、投射物、爆炸和范围伤害均可闪避；既有燃烧、中毒等持续状态与环境伤害不能触发闪避，也不会被闪避清除。每次成功闪避立即恢复一层踏込。关闭时立即清除临时闪避加成并停止闪避。",
+                "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/zanshin.png"
+              },
+              {
+                "title": "踏込",
+                "meta": "可独立关闭 · 最多 3 层",
+                "body": "目标位于普通攻击范围外但仍在 8 格内、存在视线且整条地面路径安全时，自动向目标冲刺并在约 2 格处停下；目标已经在近战范围内时保留充能。冲刺持续 6～14 tick，期间免疫普通伤害；结束 tick 会先完成最后一步并立即复查是否到达，避免在目标前提前停止。冲刺保留重力并像走楼梯一样平滑跨越一格高低差，但不能穿墙、越过二格障碍、低顶或危险落差；途中地形变化时停在最后安全位置。只有成功抵达并在同一 tick 接上普通攻击时才消耗一层，受阻或失去目标不扣层。结束或中断后有 10 tick 内置冷却；关闭不清空充能，只阻止下一次起手。",
+                "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/fumikomi.png"
+              },
+              {
+                "title": "斩",
+                "meta": "可独立关闭 · 分支式两连斩",
+                "body": "开启时第一刀对前方 90°、2.25 格内主目标造成 100% 伤害，次要目标 50%，并只施加 0.08 的极轻水平击退。起手至命中帧可向锁定目标追随：最多 0.30 格/tick、累计 1.5 格，在约 1.7 格处停下。第一刀结算后立刻检查前方 160°、2.75 格：如果仍有可见目标就在预载动画中无待机帧接续第二刀，否则收刀待机。第二刀允许覆盖此刻刚走入正面扇区的新敌人，但只向分支时记录的主目标追随，最多 0.20 格/tick、累计 0.75 格；伤害集合不会再增加，主目标 100%，其余目标 50%，并保留终结击退。关闭后仍播放第一刀并追随锁定目标，但只造成单体基础伤害，不产生第一刀范围伤害或第二刀。",
+                "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/zan.png"
+              },
+              {
+                "title": "刺",
+                "meta": "可独立关闭 · 10 秒冷却",
+                "body": "近战范围内冷却完成时优先起手，始终按模型原始 1.0 倍速度播放，不受普通攻击速度提高或降低影响。向前方 2.75 格、半径 0.4 格的胶囊范围猛刺，可同时贯穿紧密站成一排的多个有视线敌人。刺入造成 150% 攻击伤害、无击退，并令实际命中者在原地短暂停住约 3～4 tick；拔刀只对第一段命中集合造成 300% 攻击伤害、轻微普通击退，并爆出红色水尘粒子。两段绕过原版受伤冷却但仍受护甲与真正无敌状态影响，因此会分别完整结算，不会清除既有持续状态。当前两个命中点为起手后 16 与 20 tick。关闭只阻止新动作，已经起手的刺继续完成，冷却不会重置。",
+                "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/stab.png"
+              }
             ]
           },
           {
@@ -975,7 +1823,15 @@
             "body": "遗物图标、残心／斩／刺／踏込四个 16×16 技能图标，以及模型师更新的 dash_forward 与 dash_backward 均已接入。普通攻击已经从 attack_1 与 attack_2 中拆出第一刀、收势与第二刀接续片段；attack_3 暂不使用。"
           }
         ],
-        "related": ["summoner", "relics_overview", "roman_legionary", "aztec_warrior", "egyptian_archer", "guandao_warrior", "leveling"]
+        "related": [
+          "summoner",
+          "relics_overview",
+          "roman_legionary",
+          "aztec_warrior",
+          "egyptian_archer",
+          "guandao_warrior",
+          "leveling"
+        ]
       }
     },
     {
@@ -988,23 +1844,58 @@
       "y": 315,
       "symbol": "30",
       "connections": [
-        { "targetId": "modules", "kind": "related" }
+        {
+          "targetId": "accessories_overview",
+          "kind": "related"
+        }
       ],
       "article": {
         "summary": "英灵通过共同战斗获得独立成长经验。等级和经验保存在遗物上，不会分走玩家的原版经验球。",
-        "tags": ["等级", "经验", "30 级"],
+        "tags": [
+          "等级",
+          "经验",
+          "30 级"
+        ],
         "sections": [
           {
             "type": "stats",
             "title": "共用成长框架",
             "items": [
-              { "label": "等级上限", "value": "30", "note": "满级停止累计溢出经验" },
-              { "label": "累计经验", "value": "1305", "note": "从 1 级升至 30 级" },
-              { "label": "罗马军团兵", "value": "60 / 12", "note": "满级生命 / 攻击" },
-              { "label": "阿兹特克勇士", "value": "68 / 16", "note": "满级生命 / 攻击" },
-              { "label": "埃及弓箭手", "value": "56 / 10", "note": "满级生命 / 远程攻击" },
-              { "label": "关刀甲胄战士", "value": "60 / 14", "note": "满级生命 / 攻击" },
-              { "label": "日本武士", "value": "56 / 12", "note": "满级生命 / 攻击" }
+              {
+                "label": "等级上限",
+                "value": "30",
+                "note": "满级停止累计溢出经验"
+              },
+              {
+                "label": "累计经验",
+                "value": "1305",
+                "note": "从 1 级升至 30 级"
+              },
+              {
+                "label": "罗马军团兵",
+                "value": "60 / 12",
+                "note": "满级生命 / 攻击"
+              },
+              {
+                "label": "阿兹特克勇士",
+                "value": "68 / 16",
+                "note": "满级生命 / 攻击"
+              },
+              {
+                "label": "埃及弓箭手",
+                "value": "56 / 10",
+                "note": "满级生命 / 远程攻击"
+              },
+              {
+                "label": "关刀甲胄战士",
+                "value": "60 / 14",
+                "note": "满级生命 / 攻击"
+              },
+              {
+                "label": "日本武士",
+                "value": "56 / 12",
+                "note": "满级生命 / 攻击"
+              }
             ]
           },
           {
@@ -1016,44 +1907,2784 @@
             ]
           }
         ],
-        "related": ["roman_legionary", "aztec_warrior", "relics_overview", "modules"]
+        "related": [
+          "roman_legionary",
+          "aztec_warrior",
+          "relics_overview",
+          "accessories_overview"
+        ]
       }
     },
     {
-      "id": "modules",
-      "categoryId": "growth",
-      "title": "升级模块",
-      "subtitle": "六个开放模块槽",
+      "id": "legacy_overview",
+      "categoryId": "inheritance",
+      "title": "传承总览",
+      "subtitle": "跨文明的共同遗产",
       "status": "implemented",
-      "x": 610,
-      "y": 315,
-      "symbol": "▦",
+      "x": 450,
+      "y": 105,
+      "symbol": "⬡",
+      "icon": "/assets/echo-warrior/item/courage_legacy.png",
       "connections": [
-        { "targetId": "leveling", "kind": "related" }
+        {
+          "targetId": "courage_legacy",
+          "kind": "primary"
+        },
+        {
+          "targetId": "fortitude_legacy",
+          "kind": "primary"
+        },
+        {
+          "targetId": "purity_legacy",
+          "kind": "primary"
+        },
+        {
+          "targetId": "wisdom_legacy",
+          "kind": "primary"
+        },
+        {
+          "targetId": "craft_legacy",
+          "kind": "primary"
+        }
       ],
       "article": {
-        "summary": "六个开放槽可以安装板甲、全身锁链甲和尖刺护甲；模块只强化绑定英灵。",
-        "tags": ["已实装", "六槽", "召唤器"],
+        "summary": "五种传承可从普通战场考古中获得，也为未来的特殊敌人掉落预留了数据接口；它们既能独立使用，也是饰品配方的核心。",
+        "tags": [
+          "传承",
+          "考古",
+          "合成核心",
+          "特殊敌人预留"
+        ],
         "sections": [
           {
-            "type": "prose",
-            "title": "已确定的规则",
-            "paragraphs": [
-              "同名模块最多安装一个，不同模块可以叠加。插入或取出后，已经在场的英灵立即更新；玩家属性不受影响。",
-              "召唤器按实际最终数值显示属性：提升为绿色，降低为红色，未改变的数值保持原色。"
+            "type": "cards",
+            "title": "五种方向",
+            "items": [
+              {
+                "title": "勇气的传承",
+                "meta": "攻击与攻速方向",
+                "body": "长按使用 32 tick，获得 60 秒力量 II；非创造模式消耗 1 个。",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              {
+                "title": "坚毅的传承",
+                "meta": "防御方向",
+                "body": "长按使用 32 tick，获得 60 秒生命恢复 II；非创造模式消耗 1 个。",
+                "icon": "/assets/echo-warrior/item/fortitude_legacy.png"
+              },
+              {
+                "title": "纯净的传承",
+                "meta": "生命与恢复方向",
+                "body": "长按使用 32 tick，清除玩家身上全部负面状态；非创造模式消耗 1 个。",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              {
+                "title": "智慧的传承",
+                "meta": "经验与视野方向",
+                "body": "长按使用 32 tick，给予玩家 100 点原始经验值；非创造模式消耗 1 个。",
+                "icon": "/assets/echo-warrior/item/wisdom_legacy.png"
+              },
+              {
+                "title": "工艺的传承",
+                "meta": "特殊机制方向",
+                "body": "不具备直接使用效果。与恰好一件已损伤的工具或护甲无序合成，恢复向上取整的 20% 最大耐久，并保留附魔、名称和其他组件。",
+                "icon": "/assets/echo-warrior/item/craft_legacy.png"
+              }
             ]
           },
           {
-            "type": "cards",
-            "title": "当前模块",
-            "items": [
-              { "title": "板甲", "meta": "+2 护甲", "body": "使用 8 个铁锭环绕坚毅的传承合成。" },
-              { "title": "全身锁链甲", "meta": "+4 护甲 / -10% 移速", "body": "使用铁头盔、铁胸甲、铁护腿和 2 个坚毅的传承合成。" },
-              { "title": "尖刺护甲", "meta": "+2 护甲 / 1:1 近战反伤", "body": "反伤取英灵实际损失的生命值，并再次经过攻击者护甲；不会递归，也不响应投射物、爆炸、魔法或环境伤害。" }
+            "type": "callout",
+            "tone": "planned",
+            "title": "特殊敌人掉落",
+            "body": "本次比赛范围先完成考古获取与完整饰品体系。特殊敌人掉落尚未绑定到具体敌人，但传承物品标签与数据接口已经保留。"
+          }
+        ],
+        "related": [
+          "archaeology",
+          "accessories_overview"
+        ]
+      }
+    },
+    {
+      "id": "courage_legacy",
+      "categoryId": "inheritance",
+      "title": "勇气的传承",
+      "subtitle": "攻击与攻速方向",
+      "status": "implemented",
+      "x": 110,
+      "y": 350,
+      "symbol": "⬡",
+      "icon": "/assets/echo-warrior/item/courage_legacy.png",
+      "connections": [],
+      "article": {
+        "summary": "长按使用 32 tick，获得 60 秒力量 II；非创造模式消耗 1 个。",
+        "tags": [
+          "传承",
+          "考古",
+          "攻击与攻速方向",
+          "已实装"
+        ],
+        "sections": [
+          {
+            "type": "prose",
+            "title": "用途",
+            "paragraphs": [
+              "长按使用 32 tick，获得 60 秒力量 II；非创造模式消耗 1 个。",
+              "传承可以单独使用，但主要用途是作为对应方向饰品的合成核心。"
+            ]
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "已经采用现有像素素材。它应像从多个文明武器与战旗中凝结出的赤色传承碎片。"
             ]
           }
         ],
-        "related": ["summoner", "leveling"]
+        "related": [
+          "legacy_overview",
+          "accessories_overview"
+        ]
+      }
+    },
+    {
+      "id": "fortitude_legacy",
+      "categoryId": "inheritance",
+      "title": "坚毅的传承",
+      "subtitle": "防御方向",
+      "status": "implemented",
+      "x": 280,
+      "y": 350,
+      "symbol": "⬡",
+      "icon": "/assets/echo-warrior/item/fortitude_legacy.png",
+      "connections": [],
+      "article": {
+        "summary": "长按使用 32 tick，获得 60 秒生命恢复 II；非创造模式消耗 1 个。",
+        "tags": [
+          "传承",
+          "考古",
+          "防御方向",
+          "已实装"
+        ],
+        "sections": [
+          {
+            "type": "prose",
+            "title": "用途",
+            "paragraphs": [
+              "长按使用 32 tick，获得 60 秒生命恢复 II；非创造模式消耗 1 个。",
+              "传承可以单独使用，但主要用途是作为对应方向饰品的合成核心。"
+            ]
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "已经采用现有像素素材。形体强调沉重、稳定与石铁般的灰色核心。"
+            ]
+          }
+        ],
+        "related": [
+          "legacy_overview",
+          "accessories_overview"
+        ]
+      }
+    },
+    {
+      "id": "purity_legacy",
+      "categoryId": "inheritance",
+      "title": "纯净的传承",
+      "subtitle": "生命与恢复方向",
+      "status": "implemented",
+      "x": 450,
+      "y": 350,
+      "symbol": "⬡",
+      "icon": "/assets/echo-warrior/item/purity_legacy.png",
+      "connections": [],
+      "article": {
+        "summary": "长按使用 32 tick，清除玩家身上全部负面状态；非创造模式消耗 1 个。",
+        "tags": [
+          "传承",
+          "考古",
+          "生命与恢复方向",
+          "已实装"
+        ],
+        "sections": [
+          {
+            "type": "prose",
+            "title": "用途",
+            "paragraphs": [
+              "长按使用 32 tick，清除玩家身上全部负面状态；非创造模式消耗 1 个。",
+              "传承可以单独使用，但主要用途是作为对应方向饰品的合成核心。"
+            ]
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "已经采用原名“纯洁的传承”的现有像素素材，游戏内正式显示名为“纯净的传承”。"
+            ]
+          }
+        ],
+        "related": [
+          "legacy_overview",
+          "accessories_overview"
+        ]
+      }
+    },
+    {
+      "id": "wisdom_legacy",
+      "categoryId": "inheritance",
+      "title": "智慧的传承",
+      "subtitle": "经验与视野方向",
+      "status": "implemented",
+      "x": 620,
+      "y": 350,
+      "symbol": "⬡",
+      "icon": "/assets/echo-warrior/item/wisdom_legacy.png",
+      "connections": [],
+      "article": {
+        "summary": "长按使用 32 tick，给予玩家 100 点原始经验值；非创造模式消耗 1 个。",
+        "tags": [
+          "传承",
+          "考古",
+          "经验与视野方向",
+          "已实装"
+        ],
+        "sections": [
+          {
+            "type": "prose",
+            "title": "用途",
+            "paragraphs": [
+              "长按使用 32 tick，给予玩家 100 点原始经验值；非创造模式消耗 1 个。",
+              "传承可以单独使用，但主要用途是作为对应方向饰品的合成核心。"
+            ]
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "已经采用现有像素素材。蓝色知识核心应兼具书页、符文与观察之眼的联想。"
+            ]
+          }
+        ],
+        "related": [
+          "legacy_overview",
+          "accessories_overview"
+        ]
+      }
+    },
+    {
+      "id": "craft_legacy",
+      "categoryId": "inheritance",
+      "title": "工艺的传承",
+      "subtitle": "特殊机制方向",
+      "status": "implemented",
+      "x": 790,
+      "y": 350,
+      "symbol": "⬡",
+      "icon": "/assets/echo-warrior/item/craft_legacy.png",
+      "connections": [],
+      "article": {
+        "summary": "不具备直接使用效果。与恰好一件已损伤的工具或护甲无序合成，恢复向上取整的 20% 最大耐久，并保留附魔、名称和其他组件。",
+        "tags": [
+          "传承",
+          "考古",
+          "特殊机制方向",
+          "已实装"
+        ],
+        "sections": [
+          {
+            "type": "prose",
+            "title": "用途",
+            "paragraphs": [
+              "不具备直接使用效果。与恰好一件已损伤的工具或护甲无序合成，恢复向上取整的 20% 最大耐久，并保留附魔、名称和其他组件。",
+              "传承可以单独使用，但主要用途是作为对应方向饰品的合成核心。"
+            ]
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "已经采用现有像素素材。铜色结构表现跨文明的工具、机关与精密技艺。"
+            ]
+          }
+        ],
+        "related": [
+          "legacy_overview",
+          "accessories_overview"
+        ]
+      }
+    },
+    {
+      "id": "accessories_overview",
+      "categoryId": "accessories",
+      "title": "饰品总览",
+      "subtitle": "25 件固定构筑组件",
+      "status": "development",
+      "x": 440,
+      "y": 45,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/twin_oath_badge_accessory.png",
+      "connections": [
+        {
+          "targetId": "plate_armor_accessory",
+          "kind": "primary"
+        },
+        {
+          "targetId": "fractured_crystal_blade_accessory",
+          "kind": "primary"
+        },
+        {
+          "targetId": "blood_pact_fang_accessory",
+          "kind": "primary"
+        },
+        {
+          "targetId": "peacemaker_accessory",
+          "kind": "primary"
+        },
+        {
+          "targetId": "light_gathering_magnet_accessory",
+          "kind": "primary"
+        }
+      ],
+      "article": {
+        "summary": "召唤器提供六个饰品槽。同名饰品最多安装一个，不同饰品可以共同生效；所有属性都是等级成长完成后再叠加的固定值。",
+        "tags": [
+          "饰品",
+          "六槽",
+          "同名唯一",
+          "固定值",
+          "正式比赛范围"
+        ],
+        "sections": [
+          {
+            "type": "prose",
+            "title": "装卸规则",
+            "paragraphs": [
+              "饰品只能放进英灵召唤器的六个饰品槽，不会强化玩家。同名饰品最多一个，不同饰品允许组合。",
+              "攻击、护甲和最大生命采用固定加减值；移速相对基础值相加，最终不低于基础值的 25%。取出最大生命饰品时保留当前生命的绝对数值，只有超过新上限时才截断。"
+            ]
+          },
+          {
+            "type": "stats",
+            "title": "当前目录",
+            "items": [
+              {
+                "label": "饰品总数",
+                "value": "25",
+                "note": "3 件旧内容更名 + 22 件新内容"
+              },
+              {
+                "label": "槽位",
+                "value": "6",
+                "note": "同名最多 1 件"
+              },
+              {
+                "label": "普通考古总掉率",
+                "value": "0.2%",
+                "note": "常见/精良/稀有 = 60/30/10"
+              }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "正式美术待替换",
+            "body": "25 件饰品已经全部采用独立资源 ID 与百科绘制说明。当前原版图标只用于可玩占位和直观查表，正式美术素材计划在 2026 年 8 月 30 日前补齐。"
+          }
+        ],
+        "related": [
+          "summoner",
+          "legacy_overview",
+          "leveling"
+        ]
+      }
+    },
+    {
+      "id": "plate_armor_accessory",
+      "categoryId": "accessories",
+      "title": "板甲",
+      "subtitle": "+2 防御",
+      "status": "development",
+      "x": 100,
+      "y": 145,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/plate_armor_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "+2 防御",
+        "tags": [
+          "饰品",
+          "常见",
+          "六槽构筑",
+          "固定数值",
+          "板甲"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "+2 防御",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "常见",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "坚毅的传承",
+                "icon": "/assets/echo-warrior/item/fortitude_legacy.png"
+              },
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              }
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "板甲",
+              "icon": "/assets/echo-warrior/item/plate_armor_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "一块厚重、边缘铆接的铁制胸甲板碎片，轮廓简洁，强调可靠防护。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/plate_armor_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "chainmail_armor_accessory",
+      "categoryId": "accessories",
+      "title": "全身锁链甲",
+      "subtitle": "+4 防御，陆地移动速度 -15%",
+      "status": "development",
+      "x": 270,
+      "y": 145,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/chainmail_armor_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "+4 防御，陆地移动速度 -15%",
+        "tags": [
+          "饰品",
+          "精良",
+          "六槽构筑",
+          "固定数值",
+          "全身锁链甲"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "+4 防御，陆地移动速度 -15%",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "精良",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              null,
+              {
+                "name": "铁头盔",
+                "icon": "/assets/minecraft/item/iron_helmet.png"
+              },
+              null,
+              {
+                "name": "坚毅的传承",
+                "icon": "/assets/echo-warrior/item/fortitude_legacy.png"
+              },
+              {
+                "name": "铁胸甲",
+                "icon": "/assets/minecraft/item/iron_chestplate.png"
+              },
+              {
+                "name": "坚毅的传承",
+                "icon": "/assets/echo-warrior/item/fortitude_legacy.png"
+              },
+              null,
+              {
+                "name": "铁护腿",
+                "icon": "/assets/minecraft/item/iron_leggings.png"
+              },
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "全身锁链甲",
+              "icon": "/assets/echo-warrior/item/chainmail_armor_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "折叠成一束的全身锁链甲，垂下几段清楚的铁环，显得沉重而完整。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/chainmail_armor_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "spiked_armor_accessory",
+      "categoryId": "accessories",
+      "title": "尖刺护甲",
+      "subtitle": "+1 防御；受到近战生命伤害时按实际损失 1:1 反伤",
+      "status": "development",
+      "x": 440,
+      "y": 145,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/spiked_armor_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "+1 防御；受到近战生命伤害时按实际损失 1:1 反伤",
+        "tags": [
+          "饰品",
+          "精良",
+          "六槽构筑",
+          "固定数值",
+          "尖刺护甲"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "+1 防御；受到近战生命伤害时按实际损失 1:1 反伤",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "精良",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "仙人掌",
+                "icon": "/assets/minecraft/block/cactus_side.png"
+              },
+              null,
+              {
+                "name": "仙人掌",
+                "icon": "/assets/minecraft/block/cactus_side.png"
+              },
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              {
+                "name": "铁胸甲",
+                "icon": "/assets/minecraft/item/iron_chestplate.png"
+              },
+              {
+                "name": "坚毅的传承",
+                "icon": "/assets/echo-warrior/item/fortitude_legacy.png"
+              },
+              {
+                "name": "仙人掌",
+                "icon": "/assets/minecraft/block/cactus_side.png"
+              },
+              {
+                "name": "仙人掌",
+                "icon": "/assets/minecraft/block/cactus_side.png"
+              },
+              {
+                "name": "仙人掌",
+                "icon": "/assets/minecraft/block/cactus_side.png"
+              }
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "尖刺护甲",
+              "icon": "/assets/echo-warrior/item/spiked_armor_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "嵌着仙人掌硬刺的胸甲残片，尖刺方向外翻，危险但仍像可以佩戴的遗物。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/spiked_armor_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "battle_worn_whetstone_accessory",
+      "categoryId": "accessories",
+      "title": "战痕磨刀石",
+      "subtitle": "+2 攻击力",
+      "status": "development",
+      "x": 610,
+      "y": 145,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/battle_worn_whetstone_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "+2 攻击力",
+        "tags": [
+          "饰品",
+          "常见",
+          "六槽构筑",
+          "固定数值",
+          "战痕磨刀石"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "+2 攻击力",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "常见",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "石头",
+                "icon": "/assets/minecraft/block/stone.png"
+              },
+              {
+                "name": "燧石",
+                "icon": "/assets/minecraft/item/flint.png"
+              },
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              null,
+              null,
+              null,
+              null,
+              null
+            ],
+            "shapeless": true,
+            "output": {
+              "name": "战痕磨刀石",
+              "icon": "/assets/echo-warrior/item/battle_worn_whetstone_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "布满刀痕的小磨刀石，以磨损红绳束住，边缘残留金属亮屑。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/battle_worn_whetstone_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "mountain_burden_blade_accessory",
+      "categoryId": "accessories",
+      "title": "负山巨刃",
+      "subtitle": "+4 攻击力，陆地移动速度 -20%",
+      "status": "development",
+      "x": 780,
+      "y": 145,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/mountain_burden_blade_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "+4 攻击力，陆地移动速度 -20%",
+        "tags": [
+          "饰品",
+          "精良",
+          "六槽构筑",
+          "固定数值",
+          "负山巨刃"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "+4 攻击力，陆地移动速度 -20%",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "精良",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "铁砧",
+                "icon": "/assets/minecraft/block/anvil.png"
+              },
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              null,
+              {
+                "name": "木棍",
+                "icon": "/assets/minecraft/item/stick.png"
+              },
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "负山巨刃",
+              "icon": "/assets/echo-warrior/item/mountain_burden_blade_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "尺寸夸张的暗色巨刃，刀背像压着岩层，视觉重心明显下沉。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/mountain_burden_blade_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "fractured_crystal_blade_accessory",
+      "categoryId": "accessories",
+      "title": "裂曜晶刃",
+      "subtitle": "+4 攻击力，-6 防御",
+      "status": "development",
+      "x": 100,
+      "y": 245,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/fractured_crystal_blade_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "+4 攻击力，-6 防御",
+        "tags": [
+          "饰品",
+          "精良",
+          "六槽构筑",
+          "固定数值",
+          "裂曜晶刃"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "+4 攻击力，-6 防御",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "精良",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "黑曜石",
+                "icon": "/assets/minecraft/block/obsidian.png"
+              },
+              {
+                "name": "紫水晶碎片",
+                "icon": "/assets/minecraft/item/amethyst_shard.png"
+              },
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              null,
+              {
+                "name": "黑曜石",
+                "icon": "/assets/minecraft/block/obsidian.png"
+              },
+              null,
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              {
+                "name": "钻石",
+                "icon": "/assets/minecraft/item/diamond.png"
+              },
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "裂曜晶刃",
+              "icon": "/assets/echo-warrior/item/fractured_crystal_blade_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "黑曜石与紫晶构成的短剑或匕首，裂纹透亮，像随时会碎裂的玻璃大炮。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/fractured_crystal_blade_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "twin_oath_badge_accessory",
+      "categoryId": "accessories",
+      "title": "双誓徽章",
+      "subtitle": "+1 攻击力，+2 防御",
+      "status": "development",
+      "x": 270,
+      "y": 245,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/twin_oath_badge_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "+1 攻击力，+2 防御",
+        "tags": [
+          "饰品",
+          "常见",
+          "六槽构筑",
+          "固定数值",
+          "双誓徽章"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "+1 攻击力，+2 防御",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "常见",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "铁剑",
+                "icon": "/assets/minecraft/item/iron_sword.png"
+              },
+              {
+                "name": "盾牌",
+                "icon": "/assets/minecraft/item/shield.png"
+              },
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              {
+                "name": "坚毅的传承",
+                "icon": "/assets/echo-warrior/item/fortitude_legacy.png"
+              },
+              null,
+              null,
+              null,
+              null,
+              null
+            ],
+            "shapeless": true,
+            "output": {
+              "name": "双誓徽章",
+              "icon": "/assets/echo-warrior/item/twin_oath_badge_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "剑与盾左右咬合成一枚徽章，两个方向权重均衡，没有一方压过另一方。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/twin_oath_badge_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "battle_blindfold_accessory",
+      "categoryId": "accessories",
+      "title": "盲眼战带",
+      "subtitle": "+3 攻击力，主动索敌视野 -75%",
+      "status": "development",
+      "x": 440,
+      "y": 245,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/battle_blindfold_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "+3 攻击力，主动索敌视野 -75%",
+        "tags": [
+          "饰品",
+          "精良",
+          "六槽构筑",
+          "固定数值",
+          "盲眼战带"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "+3 攻击力，主动索敌视野 -75%",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "精良",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "线",
+                "icon": "/assets/minecraft/item/string.png"
+              },
+              {
+                "name": "黑色羊毛",
+                "icon": "/assets/minecraft/block/black_wool.png"
+              },
+              {
+                "name": "线",
+                "icon": "/assets/minecraft/item/string.png"
+              },
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              {
+                "name": "皮革",
+                "icon": "/assets/minecraft/item/leather.png"
+              },
+              {
+                "name": "工艺的传承",
+                "icon": "/assets/echo-warrior/item/craft_legacy.png"
+              },
+              null,
+              null,
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "盲眼战带",
+              "icon": "/assets/echo-warrior/item/battle_blindfold_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "磨损的黑色蒙眼布，正中缝有暗红色眼痕，表达舍弃观察换取直觉。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/battle_blindfold_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "crack_ring_hammer_charm_accessory",
+      "categoryId": "accessories",
+      "title": "裂响锤坠",
+      "subtitle": "攻击时 30% 暴击，造成 200% 伤害并播放一次暴击音效",
+      "status": "development",
+      "x": 610,
+      "y": 245,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/crack_ring_hammer_charm_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "攻击时 30% 暴击，造成 200% 伤害并播放一次暴击音效",
+        "tags": [
+          "饰品",
+          "稀有",
+          "六槽构筑",
+          "固定数值",
+          "裂响锤坠"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "攻击时 30% 暴击，造成 200% 伤害并播放一次暴击音效",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "稀有",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              {
+                "name": "钟",
+                "icon": "/assets/minecraft/item/bell.png"
+              },
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              null,
+              {
+                "name": "铁斧",
+                "icon": "/assets/minecraft/item/iron_axe.png"
+              },
+              null,
+              null,
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "裂响锤坠",
+              "icon": "/assets/echo-warrior/item/crack_ring_hammer_charm_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "带裂纹的铁锤吊坠，四周带冲击波或碎裂铃环，形体紧凑而有爆发感。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/crack_ring_hammer_charm_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "victors_laurel_accessory",
+      "categoryId": "accessories",
+      "title": "胜者桂冠",
+      "subtitle": "击杀任意有效生物后恢复 10% 饰品修正后的最大生命",
+      "status": "development",
+      "x": 780,
+      "y": 245,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/victors_laurel_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "击杀任意有效生物后恢复 10% 饰品修正后的最大生命",
+        "tags": [
+          "饰品",
+          "稀有",
+          "六槽构筑",
+          "固定数值",
+          "胜者桂冠"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "击杀任意有效生物后恢复 10% 饰品修正后的最大生命",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "稀有",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "橡树树叶",
+                "icon": "/assets/minecraft/block/oak_leaves.png"
+              },
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              {
+                "name": "橡树树叶",
+                "icon": "/assets/minecraft/block/oak_leaves.png"
+              },
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              {
+                "name": "金苹果",
+                "icon": "/assets/minecraft/item/golden_apple.png"
+              },
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              null,
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "胜者桂冠",
+              "icon": "/assets/echo-warrior/item/victors_laurel_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "金绿相间的旧桂冠，叶尖磨损，像从许多胜利者手中一路传下。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/victors_laurel_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "blood_pact_fang_accessory",
+      "categoryId": "accessories",
+      "title": "血契獠牙",
+      "subtitle": "每个攻击窗口 30% 概率恢复 4 点生命",
+      "status": "development",
+      "x": 100,
+      "y": 345,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/blood_pact_fang_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "每个攻击窗口 30% 概率恢复 4 点生命",
+        "tags": [
+          "饰品",
+          "稀有",
+          "六槽构筑",
+          "固定数值",
+          "血契獠牙"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "每个攻击窗口 30% 概率恢复 4 点生命",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "稀有",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              {
+                "name": "红石粉",
+                "icon": "/assets/minecraft/item/redstone.png"
+              },
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              null,
+              {
+                "name": "恶魂之泪",
+                "icon": "/assets/minecraft/item/ghast_tear.png"
+              },
+              null,
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              {
+                "name": "蜘蛛眼",
+                "icon": "/assets/minecraft/item/spider_eye.png"
+              },
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              }
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "血契獠牙",
+              "icon": "/assets/echo-warrior/item/blood_pact_fang_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "用暗红绳结缠住的苍白獠牙，根部有一滴凝固血珠。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/blood_pact_fang_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "memory_ritual_knife_accessory",
+      "categoryId": "accessories",
+      "title": "拾忆祭刀",
+      "subtitle": "+2 攻击力；击杀时 0.5% 概率凝炼额外传承",
+      "status": "development",
+      "x": 270,
+      "y": 345,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/memory_ritual_knife_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "+2 攻击力；击杀时 0.5% 概率凝炼额外传承",
+        "tags": [
+          "饰品",
+          "稀有",
+          "六槽构筑",
+          "固定数值",
+          "拾忆祭刀"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "+2 攻击力；击杀时 0.5% 概率凝炼额外传承",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "稀有",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "工艺的传承",
+                "icon": "/assets/echo-warrior/item/craft_legacy.png"
+              },
+              {
+                "name": "紫水晶碎片",
+                "icon": "/assets/minecraft/item/amethyst_shard.png"
+              },
+              null,
+              {
+                "name": "工艺的传承",
+                "icon": "/assets/echo-warrior/item/craft_legacy.png"
+              },
+              {
+                "name": "金剑",
+                "icon": "/assets/minecraft/item/golden_sword.png"
+              },
+              {
+                "name": "勇气的传承",
+                "icon": "/assets/echo-warrior/item/courage_legacy.png"
+              },
+              {
+                "name": "工艺的传承",
+                "icon": "/assets/echo-warrior/item/craft_legacy.png"
+              },
+              null,
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "拾忆祭刀",
+              "icon": "/assets/echo-warrior/item/memory_ritual_knife_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "短小仪式刀，刀身映出五色微光；掉落表现为从战利品记忆中凝出额外传承。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/memory_ritual_knife_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "substitute_doll_accessory",
+      "categoryId": "accessories",
+      "title": "替身木偶",
+      "subtitle": "受到合格攻击时有 10% 概率完全闪避",
+      "status": "development",
+      "x": 440,
+      "y": 345,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/substitute_doll_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "受到合格攻击时有 10% 概率完全闪避",
+        "tags": [
+          "饰品",
+          "常见",
+          "六槽构筑",
+          "固定数值",
+          "替身木偶"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "受到合格攻击时有 10% 概率完全闪避",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "常见",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "线",
+                "icon": "/assets/minecraft/item/string.png"
+              },
+              {
+                "name": "白色羊毛",
+                "icon": "/assets/minecraft/block/white_wool.png"
+              },
+              {
+                "name": "线",
+                "icon": "/assets/minecraft/item/string.png"
+              },
+              {
+                "name": "坚毅的传承",
+                "icon": "/assets/echo-warrior/item/fortitude_legacy.png"
+              },
+              {
+                "name": "橡木木板",
+                "icon": "/assets/minecraft/block/oak_planks.png"
+              },
+              {
+                "name": "坚毅的传承",
+                "icon": "/assets/echo-warrior/item/fortitude_legacy.png"
+              },
+              null,
+              {
+                "name": "线",
+                "icon": "/assets/minecraft/item/string.png"
+              },
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "替身木偶",
+              "icon": "/assets/echo-warrior/item/substitute_doll_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "小型木制或稻草玩偶，身上有替命用的白色刻痕与重新缝合的躯干。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/substitute_doll_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "heart_sprout_amber_accessory",
+      "categoryId": "accessories",
+      "title": "心芽琥珀",
+      "subtitle": "+6 最大生命值",
+      "status": "development",
+      "x": 610,
+      "y": 345,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/heart_sprout_amber_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "+6 最大生命值",
+        "tags": [
+          "饰品",
+          "常见",
+          "六槽构筑",
+          "固定数值",
+          "心芽琥珀"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "+6 最大生命值",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "常见",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              {
+                "name": "蜜脾",
+                "icon": "/assets/minecraft/item/honeycomb.png"
+              },
+              {
+                "name": "金粒",
+                "icon": "/assets/minecraft/item/gold_nugget.png"
+              },
+              {
+                "name": "橡树树苗",
+                "icon": "/assets/minecraft/block/oak_sapling.png"
+              },
+              null,
+              null,
+              null,
+              null,
+              null
+            ],
+            "shapeless": true,
+            "output": {
+              "name": "心芽琥珀",
+              "icon": "/assets/echo-warrior/item/heart_sprout_amber_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "琥珀内部封存心形嫩芽，温暖透明，像仍有生命在缓慢生长。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/heart_sprout_amber_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "feast_ham_accessory",
+      "categoryId": "accessories",
+      "title": "盛宴火腿",
+      "subtitle": "+12 最大生命值，陆地移动速度 -15%",
+      "status": "development",
+      "x": 780,
+      "y": 345,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/feast_ham_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "+12 最大生命值，陆地移动速度 -15%",
+        "tags": [
+          "饰品",
+          "精良",
+          "六槽构筑",
+          "固定数值",
+          "盛宴火腿"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "+12 最大生命值，陆地移动速度 -15%",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "精良",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              {
+                "name": "熟猪排",
+                "icon": "/assets/minecraft/item/cooked_porkchop.png"
+              },
+              {
+                "name": "熟猪排",
+                "icon": "/assets/minecraft/item/cooked_porkchop.png"
+              },
+              {
+                "name": "熟猪排",
+                "icon": "/assets/minecraft/item/cooked_porkchop.png"
+              },
+              {
+                "name": "熟猪排",
+                "icon": "/assets/minecraft/item/cooked_porkchop.png"
+              },
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              null,
+              {
+                "name": "骨头",
+                "icon": "/assets/minecraft/item/bone.png"
+              },
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "盛宴火腿",
+              "icon": "/assets/echo-warrior/item/feast_ham_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "巨大而油亮的火腿，以绳索绑成可携带的肉鸽遗物，滑稽但非常有分量。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/feast_ham_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "peacemaker_accessory",
+      "categoryId": "accessories",
+      "title": "和平使者",
+      "subtitle": "+20 最大生命值，-4 攻击力",
+      "status": "development",
+      "x": 100,
+      "y": 445,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/peacemaker_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "+20 最大生命值，-4 攻击力",
+        "tags": [
+          "饰品",
+          "稀有",
+          "六槽构筑",
+          "固定数值",
+          "和平使者"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "+20 最大生命值，-4 攻击力",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "稀有",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "羽毛",
+                "icon": "/assets/minecraft/item/feather.png"
+              },
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              {
+                "name": "羽毛",
+                "icon": "/assets/minecraft/item/feather.png"
+              },
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              {
+                "name": "铃兰",
+                "icon": "/assets/minecraft/block/lily_of_the_valley.png"
+              },
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              null,
+              {
+                "name": "铁剑",
+                "icon": "/assets/minecraft/item/iron_sword.png"
+              },
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "和平使者",
+              "icon": "/assets/echo-warrior/item/peacemaker_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "被白布封住的剑或断刃，外圈形成柔和心形，表达拒绝伤害换取生存。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/peacemaker_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "sunwheel_garland_accessory",
+      "categoryId": "accessories",
+      "title": "日轮花冠",
+      "subtitle": "白昼获得生命恢复 I",
+      "status": "development",
+      "x": 270,
+      "y": 445,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/sunwheel_garland_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "白昼获得生命恢复 I",
+        "tags": [
+          "饰品",
+          "精良",
+          "六槽构筑",
+          "固定数值",
+          "日轮花冠"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "白昼获得生命恢复 I",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "精良",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "金粒",
+                "icon": "/assets/minecraft/item/gold_nugget.png"
+              },
+              {
+                "name": "向日葵",
+                "icon": "/assets/minecraft/block/sunflower_front.png"
+              },
+              {
+                "name": "金粒",
+                "icon": "/assets/minecraft/item/gold_nugget.png"
+              },
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              {
+                "name": "蜜脾",
+                "icon": "/assets/minecraft/item/honeycomb.png"
+              },
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              null,
+              {
+                "name": "金粒",
+                "icon": "/assets/minecraft/item/gold_nugget.png"
+              },
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "日轮花冠",
+              "icon": "/assets/echo-warrior/item/sunwheel_garland_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "向日葵编成的圆形花冠，花瓣排列如太阳齿轮。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/sunwheel_garland_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "moondew_bottle_accessory",
+      "categoryId": "accessories",
+      "title": "月露瓶",
+      "subtitle": "夜间获得生命恢复 I",
+      "status": "development",
+      "x": 440,
+      "y": 445,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/moondew_bottle_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "夜间获得生命恢复 I",
+        "tags": [
+          "饰品",
+          "精良",
+          "六槽构筑",
+          "固定数值",
+          "月露瓶"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "夜间获得生命恢复 I",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "精良",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              {
+                "name": "纯净的传承",
+                "icon": "/assets/echo-warrior/item/purity_legacy.png"
+              },
+              {
+                "name": "玻璃瓶",
+                "icon": "/assets/minecraft/item/glass_bottle.png"
+              },
+              {
+                "name": "荧光墨囊",
+                "icon": "/assets/minecraft/item/glow_ink_sac.png"
+              },
+              {
+                "name": "幻翼膜",
+                "icon": "/assets/minecraft/item/phantom_membrane.png"
+              },
+              {
+                "name": "紫水晶碎片",
+                "icon": "/assets/minecraft/item/amethyst_shard.png"
+              },
+              null,
+              null,
+              null
+            ],
+            "shapeless": true,
+            "output": {
+              "name": "月露瓶",
+              "icon": "/assets/echo-warrior/item/moondew_bottle_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "小型蓝色玻璃瓶，瓶壁凝着月牙形露珠，内部有安静冷光。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/moondew_bottle_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "tomato_fish_accessory",
+      "categoryId": "accessories",
+      "title": "番茄鱼",
+      "subtitle": "水中移动速度 +50%",
+      "status": "development",
+      "x": 610,
+      "y": 445,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/tomato_fish_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "水中移动速度 +50%",
+        "tags": [
+          "饰品",
+          "常见",
+          "六槽构筑",
+          "固定数值",
+          "番茄鱼"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "水中移动速度 +50%",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "常见",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "红色羊毛",
+                "icon": "/assets/minecraft/block/red_wool.png"
+              },
+              {
+                "name": "热带鱼",
+                "icon": "/assets/minecraft/item/tropical_fish.png"
+              },
+              {
+                "name": "红色羊毛",
+                "icon": "/assets/minecraft/block/red_wool.png"
+              },
+              {
+                "name": "白色羊毛",
+                "icon": "/assets/minecraft/block/white_wool.png"
+              },
+              {
+                "name": "工艺的传承",
+                "icon": "/assets/echo-warrior/item/craft_legacy.png"
+              },
+              {
+                "name": "白色羊毛",
+                "icon": "/assets/minecraft/block/white_wool.png"
+              },
+              null,
+              {
+                "name": "线",
+                "icon": "/assets/minecraft/item/string.png"
+              },
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "番茄鱼",
+              "icon": "/assets/echo-warrior/item/tomato_fish_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "一个红色鱼玩偶，浅色腹部，带明显缝线与纽扣眼；不要画成真实鱼或靴子。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/tomato_fish_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "cat_bell_fish_charm_accessory",
+      "categoryId": "accessories",
+      "title": "猫铃鱼符",
+      "subtitle": "6 格内持续阻止苦力怕爆炸；主动锁敌状态下允许英灵主动锁定苦力怕",
+      "status": "development",
+      "x": 780,
+      "y": 445,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/cat_bell_fish_charm_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "6 格内持续阻止苦力怕爆炸；主动锁敌状态下允许英灵主动锁定苦力怕",
+        "tags": [
+          "饰品",
+          "稀有",
+          "六槽构筑",
+          "固定数值",
+          "猫铃鱼符"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "6 格内持续阻止苦力怕爆炸；主动锁敌状态下允许英灵主动锁定苦力怕",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "稀有",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "线",
+                "icon": "/assets/minecraft/item/string.png"
+              },
+              {
+                "name": "钟",
+                "icon": "/assets/minecraft/item/bell.png"
+              },
+              {
+                "name": "线",
+                "icon": "/assets/minecraft/item/string.png"
+              },
+              {
+                "name": "工艺的传承",
+                "icon": "/assets/echo-warrior/item/craft_legacy.png"
+              },
+              {
+                "name": "任意原版鱼类",
+                "icon": "/assets/minecraft/item/cod.png"
+              },
+              {
+                "name": "工艺的传承",
+                "icon": "/assets/echo-warrior/item/craft_legacy.png"
+              },
+              null,
+              {
+                "name": "工艺的传承",
+                "icon": "/assets/echo-warrior/item/craft_legacy.png"
+              },
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "猫铃鱼符",
+              "icon": "/assets/echo-warrior/item/cat_bell_fish_charm_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "猫脸小铃铛与鱼尾护符结合，既像玩具又像昂贵的驱爆祭具。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/cat_bell_fish_charm_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "light_gathering_magnet_accessory",
+      "categoryId": "accessories",
+      "title": "拾光磁石",
+      "subtitle": "英灵击杀产生的世界经验球 +50%",
+      "status": "development",
+      "x": 100,
+      "y": 545,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/light_gathering_magnet_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "英灵击杀产生的世界经验球 +50%",
+        "tags": [
+          "饰品",
+          "精良",
+          "六槽构筑",
+          "固定数值",
+          "拾光磁石"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "英灵击杀产生的世界经验球 +50%",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "精良",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              null,
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "绿宝石",
+                "icon": "/assets/minecraft/item/emerald.png"
+              },
+              {
+                "name": "铁锭",
+                "icon": "/assets/minecraft/item/iron_ingot.png"
+              },
+              {
+                "name": "智慧的传承",
+                "icon": "/assets/echo-warrior/item/wisdom_legacy.png"
+              },
+              {
+                "name": "红石粉",
+                "icon": "/assets/minecraft/item/redstone.png"
+              },
+              {
+                "name": "智慧的传承",
+                "icon": "/assets/echo-warrior/item/wisdom_legacy.png"
+              }
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "拾光磁石",
+              "icon": "/assets/echo-warrior/item/light_gathering_magnet_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "马蹄形磁石吸引数颗黄绿色经验光球，光球轨迹要清楚。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/light_gathering_magnet_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "training_notes_accessory",
+      "categoryId": "accessories",
+      "title": "练兵札记",
+      "subtitle": "只有英灵自身的成长经验获取 +50%",
+      "status": "development",
+      "x": 270,
+      "y": 545,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/training_notes_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "只有英灵自身的成长经验获取 +50%",
+        "tags": [
+          "饰品",
+          "精良",
+          "六槽构筑",
+          "固定数值",
+          "练兵札记"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "只有英灵自身的成长经验获取 +50%",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "精良",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "智慧的传承",
+                "icon": "/assets/echo-warrior/item/wisdom_legacy.png"
+              },
+              {
+                "name": "书",
+                "icon": "/assets/minecraft/item/book.png"
+              },
+              {
+                "name": "智慧的传承",
+                "icon": "/assets/echo-warrior/item/wisdom_legacy.png"
+              },
+              {
+                "name": "羽毛",
+                "icon": "/assets/minecraft/item/feather.png"
+              },
+              {
+                "name": "墨囊",
+                "icon": "/assets/minecraft/item/ink_sac.png"
+              },
+              {
+                "name": "羽毛",
+                "icon": "/assets/minecraft/item/feather.png"
+              },
+              null,
+              {
+                "name": "木剑",
+                "icon": "/assets/minecraft/item/wooden_sword.png"
+              },
+              null
+            ],
+            "shapeless": false,
+            "output": {
+              "name": "练兵札记",
+              "icon": "/assets/echo-warrior/item/training_notes_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "用红绳束起的磨损训练札记或小册，边角有反复翻阅的卷曲。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/training_notes_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "hawkeye_lens_accessory",
+      "categoryId": "accessories",
+      "title": "鹰眼透镜",
+      "subtitle": "主动索敌视野 +50%，最终不超过 32 格",
+      "status": "development",
+      "x": 440,
+      "y": 545,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/hawkeye_lens_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "主动索敌视野 +50%，最终不超过 32 格",
+        "tags": [
+          "饰品",
+          "常见",
+          "六槽构筑",
+          "固定数值",
+          "鹰眼透镜"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "主动索敌视野 +50%，最终不超过 32 格",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "常见",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "望远镜",
+                "icon": "/assets/minecraft/item/spyglass.png"
+              },
+              {
+                "name": "智慧的传承",
+                "icon": "/assets/echo-warrior/item/wisdom_legacy.png"
+              },
+              {
+                "name": "羽毛",
+                "icon": "/assets/minecraft/item/feather.png"
+              },
+              {
+                "name": "紫水晶碎片",
+                "icon": "/assets/minecraft/item/amethyst_shard.png"
+              },
+              null,
+              null,
+              null,
+              null,
+              null
+            ],
+            "shapeless": true,
+            "output": {
+              "name": "鹰眼透镜",
+              "icon": "/assets/echo-warrior/item/hawkeye_lens_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "黄铜单片镜或短小窥镜，镜面中有锐利鹰眼轮廓。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/hawkeye_lens_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "windchaser_feather_accessory",
+      "categoryId": "accessories",
+      "title": "逐风羽饰",
+      "subtitle": "陆地移动速度 +10%",
+      "status": "development",
+      "x": 610,
+      "y": 545,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/windchaser_feather_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "陆地移动速度 +10%",
+        "tags": [
+          "饰品",
+          "常见",
+          "六槽构筑",
+          "固定数值",
+          "逐风羽饰"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "陆地移动速度 +10%",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "常见",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "智慧的传承",
+                "icon": "/assets/echo-warrior/item/wisdom_legacy.png"
+              },
+              {
+                "name": "羽毛",
+                "icon": "/assets/minecraft/item/feather.png"
+              },
+              {
+                "name": "羽毛",
+                "icon": "/assets/minecraft/item/feather.png"
+              },
+              {
+                "name": "兔子脚",
+                "icon": "/assets/minecraft/item/rabbit_foot.png"
+              },
+              {
+                "name": "糖",
+                "icon": "/assets/minecraft/item/sugar.png"
+              },
+              null,
+              null,
+              null,
+              null
+            ],
+            "shapeless": true,
+            "output": {
+              "name": "逐风羽饰",
+              "icon": "/assets/echo-warrior/item/windchaser_feather_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "被气流向后拉直的浅色羽毛，末端绑有轻薄丝线。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/windchaser_feather_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
+      }
+    },
+    {
+      "id": "hollow_bird_bone_accessory",
+      "categoryId": "accessories",
+      "title": "空心鸟骨",
+      "subtitle": "陆地移动速度 +20%，-8 最大生命值",
+      "status": "development",
+      "x": 780,
+      "y": 545,
+      "symbol": "✧",
+      "icon": "/assets/echo-warrior/item/hollow_bird_bone_accessory.png",
+      "connections": [],
+      "article": {
+        "summary": "陆地移动速度 +20%，-8 最大生命值",
+        "tags": [
+          "饰品",
+          "精良",
+          "六槽构筑",
+          "固定数值",
+          "空心鸟骨"
+        ],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "固定效果",
+            "items": [
+              {
+                "label": "效果",
+                "value": "陆地移动速度 +20%，-8 最大生命值",
+                "note": "只影响绑定英灵；与等级无关"
+              },
+              {
+                "label": "考古稀有度",
+                "value": "精良",
+                "note": "饰品总掉率为 0.2%"
+              }
+            ]
+          },
+          {
+            "type": "recipe",
+            "title": "合成表",
+            "grid": [
+              {
+                "name": "逐风羽饰",
+                "icon": "/assets/echo-warrior/item/windchaser_feather_accessory.png"
+              },
+              {
+                "name": "智慧的传承",
+                "icon": "/assets/echo-warrior/item/wisdom_legacy.png"
+              },
+              {
+                "name": "骨头",
+                "icon": "/assets/minecraft/item/bone.png"
+              },
+              {
+                "name": "幻翼膜",
+                "icon": "/assets/minecraft/item/phantom_membrane.png"
+              },
+              null,
+              null,
+              null,
+              null,
+              null
+            ],
+            "shapeless": true,
+            "output": {
+              "name": "空心鸟骨",
+              "icon": "/assets/echo-warrior/item/hollow_bird_bone_accessory.png"
+            }
+          },
+          {
+            "type": "prose",
+            "title": "绘制思路与参考",
+            "paragraphs": [
+              "由逐风羽饰进一步制成的空心鸟骨哨，骨壁薄而脆，带少量残羽。"
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "planned",
+            "title": "美术状态",
+            "body": "当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/hollow_bird_bone_accessory。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。"
+          }
+        ],
+        "related": [
+          "accessories_overview",
+          "legacy_overview"
+        ]
       }
     }
   ]

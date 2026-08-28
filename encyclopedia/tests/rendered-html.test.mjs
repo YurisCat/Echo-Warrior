@@ -31,10 +31,16 @@ test("keeps the knowledge graph in a neutral content file", async () => {
     await readFile(new URL("../content/atlas.zh_cn.json", import.meta.url), "utf8"),
   );
 
-  assert.equal(content.schemaVersion, 1);
+  assert.equal(content.schemaVersion, 2);
   assert.equal(content.locale, "zh_cn");
   assert.ok(content.categories.length >= 6);
   assert.ok(content.nodes.length >= 15);
   assert.ok(content.nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.y)));
   assert.ok(content.nodes.some((node) => node.id === "roman_legionary"));
+  assert.equal(content.nodes.filter((node) => node.categoryId === "inheritance").length, 6);
+  assert.equal(content.nodes.filter((node) => node.categoryId === "accessories").length, 26);
+  assert.ok(content.nodes.some((node) =>
+    node.id === "tomato_fish_accessory" &&
+    node.article.sections.some((section) => section.type === "recipe" && section.grid.length === 9),
+  ));
 });
