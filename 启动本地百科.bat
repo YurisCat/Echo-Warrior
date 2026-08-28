@@ -4,7 +4,7 @@ title Echo Warrior - Local Encyclopedia
 
 set "LOCAL_SCRIPT=%~dp0scripts\start-local-encyclopedia.ps1"
 if not exist "%LOCAL_SCRIPT%" goto missing_script
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%LOCAL_SCRIPT%" -ProjectRoot "%~dp0"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%LOCAL_SCRIPT%" -ProjectRoot "%~dp0." %*
 set "RESULT=%ERRORLEVEL%"
 goto finish
 
