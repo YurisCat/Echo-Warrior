@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
     [ValidateRange(1024, 65535)][int]$Port = 4173,
