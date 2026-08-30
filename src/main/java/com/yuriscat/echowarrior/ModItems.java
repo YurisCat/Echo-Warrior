@@ -5,6 +5,8 @@ import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoCompassItem;
 import com.yuriscat.echowarrior.item.EchoAccessoryItem;
 import com.yuriscat.echowarrior.item.LegacyItem;
+import com.yuriscat.echowarrior.item.KnowledgeFragmentCollectionItem;
+import com.yuriscat.echowarrior.item.KnowledgeFragmentItem;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -18,7 +20,10 @@ public final class ModItems {
 			"echo_compass",
 			properties -> new EchoCompassItem(properties.stacksTo(1))
 	);
-	public static final Item SMALL_KNOWLEDGE = register("small_knowledge", properties -> new Item(properties.stacksTo(64)));
+	public static final KnowledgeFragmentItem KNOWLEDGE_FRAGMENT = register(
+			"knowledge_fragment", properties -> new KnowledgeFragmentItem(properties.stacksTo(64)));
+	public static final KnowledgeFragmentCollectionItem KNOWLEDGE_FRAGMENT_COLLECTION = register(
+			"knowledge_fragment_collection", properties -> new KnowledgeFragmentCollectionItem(properties.stacksTo(1)));
 	public static final LegacyItem COURAGE_LEGACY = legacy("courage_legacy", LegacyItem.LegacyType.COURAGE);
 	public static final LegacyItem FORTITUDE_LEGACY = legacy("fortitude_legacy", LegacyItem.LegacyType.FORTITUDE);
 	public static final LegacyItem PURITY_LEGACY = legacy("purity_legacy", LegacyItem.LegacyType.PURITY);

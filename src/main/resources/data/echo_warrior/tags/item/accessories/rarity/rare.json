@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "echo_warrior:victors_laurel_accessory",
+    "echo_warrior:crack_ring_hammer_charm_accessory",
+    "echo_warrior:blood_pact_fang_accessory",
+    "echo_warrior:memory_ritual_knife_accessory",
+    "echo_warrior:peacemaker_accessory",
+    "echo_warrior:cat_bell_fish_charm_accessory"
+  ]
+}

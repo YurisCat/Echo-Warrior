@@ -1,3 +1,9 @@
 {
-  "parent": "minecraft:item/compass_00"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "echo_warrior:item/echo_compass/echo_compass_background",
+    "layer1": "echo_warrior:item/echo_compass/echo_compass_pointer_16",
+    "layer2": "echo_warrior:item/echo_compass/echo_compass_highlight",
+    "layer3": "echo_warrior:item/echo_compass/echo_compass_frame_copper"
+  }
 }

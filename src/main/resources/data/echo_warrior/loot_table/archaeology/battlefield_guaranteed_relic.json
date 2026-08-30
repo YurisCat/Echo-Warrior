@@ -4,11 +4,31 @@
     {
       "rolls": 1,
       "entries": [
-        { "type": "minecraft:item", "name": "echo_warrior:roman_legionary_relic", "weight": 1 },
-        { "type": "minecraft:item", "name": "echo_warrior:aztec_warrior_relic", "weight": 1 },
-        { "type": "minecraft:item", "name": "echo_warrior:egyptian_archer_relic", "weight": 1 },
-        { "type": "minecraft:item", "name": "echo_warrior:guandao_warrior_relic", "weight": 1 },
-        { "type": "minecraft:item", "name": "echo_warrior:japanese_samurai_relic", "weight": 1 }
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:roman_legionary_relic",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:aztec_warrior_relic",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:egyptian_archer_relic",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:guandao_warrior_relic",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:japanese_samurai_relic",
+          "weight": 1
+        }
       ]
     }
   ],

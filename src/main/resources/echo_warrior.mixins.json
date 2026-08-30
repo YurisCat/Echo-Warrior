@@ -11,6 +11,7 @@
     "PlayerMixin"
   ],
   "client": [
+    "GuiGraphicsExtractorMixin",
     "ItemInHandRendererMixin"
   ],
   "injectors": {

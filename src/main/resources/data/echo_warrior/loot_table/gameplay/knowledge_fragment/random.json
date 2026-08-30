@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:loot_table",
+          "value": "echo_warrior:gameplay/knowledge_fragment/roman",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "echo_warrior:gameplay/knowledge_fragment/aztec",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "echo_warrior:gameplay/knowledge_fragment/egyptian",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "echo_warrior:gameplay/knowledge_fragment/chinese",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:loot_table",
+          "value": "echo_warrior:gameplay/knowledge_fragment/japanese",
+          "weight": 1
+        }
+      ]
+    }
+  ],
+  "random_sequence": "echo_warrior:gameplay/knowledge_fragment/random"
+}

@@ -27,6 +27,8 @@ public final class BattlefieldSavedData extends SavedData {
 			SalvageTracker.CODEC.listOf().optionalFieldOf("salvage_trackers", List.of())
 					.forGetter(data -> data.salvageTrackers.entrySet().stream()
 							.map(entry -> new SalvageTracker(entry.getKey(), entry.getValue())).toList()),
+			ReplacementJob.CODEC.listOf().optionalFieldOf("replacement_jobs", List.of())
+					.forGetter(data -> data.replacementJobs),
 			Codec.LONG.optionalFieldOf("last_placement_tick", -600L).forGetter(data -> data.lastPlacementTick)
 	).apply(instance, BattlefieldSavedData::new));
 	private static final SavedDataType<BattlefieldSavedData> TYPE = new SavedDataType<>(
@@ -35,6 +37,7 @@ public final class BattlefieldSavedData extends SavedData {
 	private final Map<Long, RegionState> regions = new HashMap<>();
 	private final List<CompletedSite> completedSites = new ArrayList<>();
 	private final Map<UUID, Long> salvageTrackers = new HashMap<>();
+	private final List<ReplacementJob> replacementJobs = new ArrayList<>();
 	private long lastPlacementTick = -600L;
 
 	public BattlefieldSavedData() {
@@ -44,6 +47,7 @@ public final class BattlefieldSavedData extends SavedData {
 			List<RegionState> regions,
 			List<CompletedSite> completedSites,
 			List<SalvageTracker> salvageTrackers,
+			List<ReplacementJob> replacementJobs,
 			long lastPlacementTick
 	) {
 		for (RegionState state : regions) this.regions.put(state.key(), state);
@@ -51,6 +55,7 @@ public final class BattlefieldSavedData extends SavedData {
 		for (SalvageTracker tracker : salvageTrackers) {
 			this.salvageTrackers.put(tracker.playerId(), tracker.centerPos());
 		}
+		this.replacementJobs.addAll(replacementJobs);
 		this.lastPlacementTick = lastPlacementTick;
 	}
 
@@ -69,7 +74,7 @@ public final class BattlefieldSavedData extends SavedData {
 					? 40L + level.getRandom().nextInt(561)
 					: 2400L + level.getRandom().nextInt(3601);
 			current = new RegionState(regionX, regionZ, Status.WAITING, BlockPos.ZERO.asLong(),
-					BlockPos.ZERO.asLong(), now + delay, chunkPos.pack(), level.getRandom().nextLong(), List.of());
+					BlockPos.ZERO.asLong(), now + delay, chunkPos.pack(), level.getRandom().nextLong(), "", List.of());
 			this.regions.put(key, current);
 			setDirty();
 		} else if (current.status == Status.COOLDOWN && now >= current.readyAt) {
@@ -91,7 +96,27 @@ public final class BattlefieldSavedData extends SavedData {
 		RegionState current = this.regions.get(key);
 		if (current != null && current.status == Status.ACTIVE) return current;
 		RegionState prepared = new RegionState(regionX, regionZ, Status.WAITING, BlockPos.ZERO.asLong(),
-				BlockPos.ZERO.asLong(), level.getGameTime(), chunkPos.pack(), level.getRandom().nextLong(), List.of());
+				BlockPos.ZERO.asLong(), level.getGameTime(), chunkPos.pack(), level.getRandom().nextLong(), "", List.of());
+		this.regions.put(key, prepared);
+		setDirty();
+		return prepared;
+	}
+
+	public boolean canUseReplacementRegion(ChunkPos chunkPos) {
+		int regionX = Math.floorDiv(chunkPos.x(), REGION_CHUNKS);
+		int regionZ = Math.floorDiv(chunkPos.z(), REGION_CHUNKS);
+		RegionState current = this.regions.get(ChunkPos.pack(regionX, regionZ));
+		return current == null || current.status == Status.WAITING;
+	}
+
+	public RegionState prepareReplacementRegion(ServerLevel level, ChunkPos chunkPos) {
+		int regionX = Math.floorDiv(chunkPos.x(), REGION_CHUNKS);
+		int regionZ = Math.floorDiv(chunkPos.z(), REGION_CHUNKS);
+		long key = ChunkPos.pack(regionX, regionZ);
+		RegionState current = this.regions.get(key);
+		if (current != null) return current.status == Status.WAITING ? current : null;
+		RegionState prepared = new RegionState(regionX, regionZ, Status.WAITING, BlockPos.ZERO.asLong(),
+				BlockPos.ZERO.asLong(), level.getGameTime(), chunkPos.pack(), level.getRandom().nextLong(), "", List.of());
 		this.regions.put(key, prepared);
 		setDirty();
 		return prepared;
@@ -108,10 +133,10 @@ public final class BattlefieldSavedData extends SavedData {
 		setDirty();
 	}
 
-	public void activate(long key, BlockPos center, BlockPos relic, List<BlockPos> brushables) {
+	public void activate(long key, BlockPos center, BlockPos relic, String culture, List<BlockPos> brushables) {
 		RegionState state = this.regions.get(key);
 		if (state == null) return;
-		this.regions.put(key, state.active(center.asLong(), relic.asLong(), toLongList(brushables)));
+		this.regions.put(key, state.active(center.asLong(), relic.asLong(), culture, toLongList(brushables)));
 		setDirty();
 	}
 
@@ -128,6 +153,7 @@ public final class BattlefieldSavedData extends SavedData {
 				this.completedSites.add(new CompletedSite(state.centerPos, now, remaining));
 				while (this.completedSites.size() > 96) this.completedSites.removeFirst();
 				entry.setValue(state.cooldown(now + 24000L));
+				scheduleReplacement(state.centerPos, now);
 			} else {
 				entry.setValue(state.withBrushables(remaining));
 			}
@@ -211,6 +237,33 @@ public final class BattlefieldSavedData extends SavedData {
 		return count;
 	}
 
+	public int replacementJobCount() {
+		return this.replacementJobs.size();
+	}
+
+	public ReplacementJob nextReadyReplacement(long now) {
+		ReplacementJob best = null;
+		for (ReplacementJob job : this.replacementJobs) {
+			if (job.readyAt > now || best != null && job.readyAt >= best.readyAt) continue;
+			best = job;
+		}
+		return best;
+	}
+
+	public void retryReplacement(long originCenter, long nextAttemptAt) {
+		for (int index = 0; index < this.replacementJobs.size(); index++) {
+			ReplacementJob job = this.replacementJobs.get(index);
+			if (job.originCenter != originCenter) continue;
+			this.replacementJobs.set(index, job.withRetry(nextAttemptAt));
+			setDirty();
+			return;
+		}
+	}
+
+	public void completeReplacement(long originCenter) {
+		if (this.replacementJobs.removeIf(job -> job.originCenter == originCenter)) setDirty();
+	}
+
 	public boolean isFarEnoughFromKnownSites(BlockPos center, double minimumDistance) {
 		double minimumSqr = minimumDistance * minimumDistance;
 		for (RegionState state : this.regions.values()) {
@@ -252,6 +305,20 @@ public final class BattlefieldSavedData extends SavedData {
 		setDirty();
 	}
 
+	private void scheduleReplacement(long originCenter, long now) {
+		for (ReplacementJob job : this.replacementJobs) {
+			if (job.originCenter == originCenter) return;
+		}
+		long seed = mix(originCenter ^ now * 0x9E3779B97F4A7C15L);
+		this.replacementJobs.add(new ReplacementJob(originCenter, now, seed, 0));
+	}
+
+	private static long mix(long value) {
+		value = (value ^ value >>> 30) * 0xBF58476D1CE4E5B9L;
+		value = (value ^ value >>> 27) * 0x94D049BB133111EBL;
+		return value ^ value >>> 31;
+	}
+
 	private static List<Long> without(List<Long> positions, long removed) {
 		List<Long> result = new ArrayList<>(Math.max(0, positions.size() - 1));
 		for (long position : positions) {
@@ -280,7 +347,7 @@ public final class BattlefieldSavedData extends SavedData {
 		COOLDOWN
 	}
 
-	public record ActiveSite(BlockPos center, BlockPos relic, List<BlockPos> brushables) {
+	public record ActiveSite(BlockPos center, BlockPos relic, String culture, List<BlockPos> brushables) {
 		public ActiveSite {
 			brushables = List.copyOf(brushables);
 		}
@@ -303,6 +370,19 @@ public final class BattlefieldSavedData extends SavedData {
 		}
 	}
 
+	public record ReplacementJob(long originCenter, long readyAt, long seed, int attempts) {
+		private static final Codec<ReplacementJob> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+				Codec.LONG.fieldOf("origin_center").forGetter(ReplacementJob::originCenter),
+				Codec.LONG.fieldOf("ready_at").forGetter(ReplacementJob::readyAt),
+				Codec.LONG.fieldOf("seed").forGetter(ReplacementJob::seed),
+				Codec.INT.optionalFieldOf("attempts", 0).forGetter(ReplacementJob::attempts)
+		).apply(instance, ReplacementJob::new));
+
+		private ReplacementJob withRetry(long nextAttemptAt) {
+			return new ReplacementJob(this.originCenter, nextAttemptAt, this.seed, this.attempts + 1);
+		}
+	}
+
 	public record RegionState(
 			int regionX,
 			int regionZ,
@@ -312,6 +392,7 @@ public final class BattlefieldSavedData extends SavedData {
 			long readyAt,
 			long candidateChunk,
 			long seed,
+			String culture,
 			List<Long> brushables
 	) {
 		private static final Codec<Status> STATUS_CODEC = Codec.STRING.xmap(Status::valueOf, Status::name);
@@ -324,6 +405,7 @@ public final class BattlefieldSavedData extends SavedData {
 				Codec.LONG.fieldOf("ready_at").forGetter(RegionState::readyAt),
 				Codec.LONG.fieldOf("candidate_chunk").forGetter(RegionState::candidateChunk),
 				Codec.LONG.fieldOf("seed").forGetter(RegionState::seed),
+				Codec.STRING.optionalFieldOf("culture", "").forGetter(RegionState::culture),
 				Codec.LONG.listOf().optionalFieldOf("brushables", List.of()).forGetter(RegionState::brushables)
 		).apply(instance, RegionState::new));
 
@@ -337,32 +419,32 @@ public final class BattlefieldSavedData extends SavedData {
 
 		public RegionState withCandidateChunk(long candidate) {
 			return new RegionState(this.regionX, this.regionZ, this.status, this.centerPos, this.relicPos,
-					this.readyAt, candidate, this.seed, this.brushables);
+					this.readyAt, candidate, this.seed, this.culture, this.brushables);
 		}
 
 		public RegionState withReadyAt(long tick) {
 			return new RegionState(this.regionX, this.regionZ, this.status, this.centerPos, this.relicPos,
-					tick, this.candidateChunk, this.seed, this.brushables);
+					tick, this.candidateChunk, this.seed, this.culture, this.brushables);
 		}
 
 		public RegionState withBrushables(List<Long> positions) {
 			return new RegionState(this.regionX, this.regionZ, this.status, this.centerPos, this.relicPos,
-					this.readyAt, this.candidateChunk, this.seed, positions);
+					this.readyAt, this.candidateChunk, this.seed, this.culture, positions);
 		}
 
 		public RegionState waiting(long now, long candidate, long newSeed) {
 			return new RegionState(this.regionX, this.regionZ, Status.WAITING, BlockPos.ZERO.asLong(),
-					BlockPos.ZERO.asLong(), now, candidate, newSeed, List.of());
+					BlockPos.ZERO.asLong(), now, candidate, newSeed, "", List.of());
 		}
 
-		public RegionState active(long center, long relic, List<Long> positions) {
+		public RegionState active(long center, long relic, String culture, List<Long> positions) {
 			return new RegionState(this.regionX, this.regionZ, Status.ACTIVE, center, relic,
-					Long.MAX_VALUE, this.candidateChunk, this.seed, positions);
+					Long.MAX_VALUE, this.candidateChunk, this.seed, culture, positions);
 		}
 
 		public RegionState cooldown(long until) {
 			return new RegionState(this.regionX, this.regionZ, Status.COOLDOWN, this.centerPos, this.relicPos,
-					until, this.candidateChunk, this.seed, List.of());
+					until, this.candidateChunk, this.seed, this.culture, List.of());
 		}
 
 		public List<Long> effectiveBrushables() {
@@ -373,7 +455,7 @@ public final class BattlefieldSavedData extends SavedData {
 		}
 
 		public ActiveSite activeSite() {
-			return new ActiveSite(BlockPos.of(this.centerPos), BlockPos.of(this.relicPos),
+			return new ActiveSite(BlockPos.of(this.centerPos), BlockPos.of(this.relicPos), this.culture,
 					toBlockPosList(effectiveBrushables()));
 		}
 	}

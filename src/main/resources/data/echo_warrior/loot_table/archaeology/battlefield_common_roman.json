@@ -1,0 +1,201 @@
+{
+  "type": "minecraft:archaeology",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:iron_ingot",
+          "weight": 264000
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:courage_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:fortitude_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:purity_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:wisdom_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:craft_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:gold_ingot",
+          "weight": 52800
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:netherite_scrap",
+          "weight": 1980
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "roman_tortoise_limits"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "roman_pilum_not_magic"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "roman_vindolanda_socks"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "roman_military_diploma"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "roman_hobnail_tracks"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "roman_monte_testaccio"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "roman_many_camp_gods"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "roman_games_in_forts"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:roman_legionary_relic",
+          "weight": 9900
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:plate_armor_accessory",
+          "weight": 396
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:hawkeye_lens_accessory",
+          "weight": 396
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:feast_ham_accessory",
+          "weight": 198
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:light_gathering_magnet_accessory",
+          "weight": 198
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:victors_laurel_accessory",
+          "weight": 132
+        }
+      ]
+    }
+  ],
+  "random_sequence": "echo_warrior:archaeology/battlefield_common_roman"
+}

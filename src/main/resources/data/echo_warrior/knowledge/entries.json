@@ -1,0 +1,379 @@
+{
+  "schema_version": 1,
+  "save_compatibility_note": "Before the first public release entries may be rewritten. After that boundary, preserve ids or add migrations.",
+  "entries": [
+    {
+      "id": "roman_tortoise_limits", "culture": "roman", "order": 1,
+      "title_key": "knowledge.echo_warrior.entry.roman_tortoise_limits.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_tortoise_limits.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:shield"}],
+      "evidence_type": "primary_text_and_relief",
+      "source_notes": "The exact circumstances varied; the page avoids treating testudo as a permanent or invulnerable stance.",
+      "sources": [{"kind": "book", "citation": "Vegetius, Epitome of Military Science, trans. N. P. Milner, 2nd ed., 1996"}, {"kind": "monument", "citation": "Trajan's Column, testudo scenes"}]
+    },
+    {
+      "id": "roman_pilum_not_magic", "culture": "roman", "order": 2,
+      "title_key": "knowledge.echo_warrior.entry.roman_pilum_not_magic.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_pilum_not_magic.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:trident"}, {"type": "item", "resource": "minecraft:shield"}],
+      "evidence_type": "primary_text_and_weapons_archaeology",
+      "source_notes": "The popular claim that every pilum was engineered to bend on impact is stronger than the evidence.",
+      "sources": [{"kind": "book", "citation": "Polybius, Histories 6.23"}, {"kind": "book", "citation": "M. C. Bishop and J. C. N. Coulston, Roman Military Equipment, 2nd ed., 2006"}]
+    },
+    {
+      "id": "roman_vindolanda_socks", "culture": "roman", "order": 3,
+      "title_key": "knowledge.echo_warrior.entry.roman_vindolanda_socks.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_vindolanda_socks.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:leather_boots"}, {"type": "item", "resource": "minecraft:paper"}],
+      "evidence_type": "archaeological_documents",
+      "source_notes": "Wooden ink tablets preserve ordinary correspondence and military paperwork from the frontier.",
+      "sources": [{"kind": "museum", "title": "The Vindolanda tablets", "url": "https://www.britishmuseum.org/collection/galleries/roman-britain/vindolanda-tablets"}]
+    },
+    {
+      "id": "roman_military_diploma", "culture": "roman", "order": 4,
+      "title_key": "knowledge.echo_warrior.entry.roman_military_diploma.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_military_diploma.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:copper_ingot"}, {"type": "item", "resource": "minecraft:name_tag"}],
+      "evidence_type": "inscribed_bronze_documents",
+      "source_notes": "Diplomas mainly concern qualifying auxiliary and fleet veterans; legionaries were normally citizens already.",
+      "sources": [{"kind": "book", "citation": "Margaret M. Roxan, Roman Military Diplomas 1954–1977, 1978"}, {"kind": "book", "citation": "Werner Eck and Andreas Pangerl, Neue Diplome für die Auxiliartruppen in den mösischen Provinzen, Chiron 38, 2008"}]
+    },
+    {
+      "id": "roman_hobnail_tracks", "culture": "roman", "order": 5,
+      "title_key": "knowledge.echo_warrior.entry.roman_hobnail_tracks.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_hobnail_tracks.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:iron_nugget"}, {"type": "item", "resource": "minecraft:leather_boots"}],
+      "evidence_type": "footwear_archaeology",
+      "source_notes": "Nail patterns and surviving leather vary by shoe type and period.",
+      "sources": [{"kind": "book", "citation": "Carol van Driel-Murray, Roman Footwear: A Contribution to the History of Leathercraft, 2001"}, {"kind": "site", "title": "Vindolanda Trust collections", "url": "https://www.vindolanda.com/"}]
+    },
+    {
+      "id": "roman_monte_testaccio", "culture": "roman", "order": 6,
+      "title_key": "knowledge.echo_warrior.entry.roman_monte_testaccio.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_monte_testaccio.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:decorated_pot"}, {"type": "item", "resource": "minecraft:honey_bottle"}],
+      "evidence_type": "archaeological_dump_and_inscriptions",
+      "source_notes": "The hill is overwhelmingly made of discarded transport amphorae, especially olive-oil containers.",
+      "sources": [{"kind": "book", "citation": "César Carreras Monfort and Pedro Paulo A. Funari, Britannia y el Mediterráneo, 1998"}, {"kind": "book", "citation": "J. Theodore Peña, Roman Pottery in the Archaeological Record, 2007"}]
+    },
+    {
+      "id": "roman_many_camp_gods", "culture": "roman", "order": 7,
+      "title_key": "knowledge.echo_warrior.entry.roman_many_camp_gods.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_many_camp_gods.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:golden_helmet"}, {"type": "item", "resource": "minecraft:candle"}],
+      "evidence_type": "inscriptions_and_archaeology",
+      "source_notes": "Mithras was important in some military communities but was never the single religion of the Roman army.",
+      "sources": [{"kind": "database", "title": "Roman Inscriptions of Britain", "url": "https://romaninscriptionsofbritain.org/"}, {"kind": "book", "citation": "Mary Beard, John North and Simon Price, Religions of Rome, 1998"}]
+    },
+    {
+      "id": "roman_games_in_forts", "culture": "roman", "order": 8,
+      "title_key": "knowledge.echo_warrior.entry.roman_games_in_forts.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_games_in_forts.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:stone_button"}, {"type": "item", "resource": "minecraft:paper"}],
+      "evidence_type": "small_find_archaeology",
+      "source_notes": "Gaming pieces and boards do not always reveal the exact rules that were played.",
+      "sources": [{"kind": "book", "citation": "Alexandra W. Croom, Roman Furniture, 2007"}, {"kind": "book", "citation": "Andrew Birley, Garrison Life at Vindolanda, 2002"}]
+    },
+
+    {
+      "id": "aztec_mexica_name", "culture": "aztec", "order": 1,
+      "title_key": "knowledge.echo_warrior.entry.aztec_mexica_name.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_mexica_name.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:name_tag"}, {"type": "item", "resource": "minecraft:map"}],
+      "evidence_type": "historical_terminology",
+      "source_notes": "Aztec is useful as a modern umbrella term, while Mexica and Tenochca are more specific in many contexts.",
+      "sources": [{"kind": "book", "citation": "Frances F. Berdan, Aztec Archaeology and Ethnohistory, 2014"}, {"kind": "book", "citation": "Michael E. Smith, The Aztecs, 3rd ed., 2012"}]
+    },
+    {
+      "id": "aztec_macuahuitl_edges", "culture": "aztec", "order": 2,
+      "title_key": "knowledge.echo_warrior.entry.aztec_macuahuitl_edges.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_macuahuitl_edges.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:wooden_sword"}, {"type": "item", "resource": "minecraft:obsidian"}],
+      "evidence_type": "historical_accounts_codices_and_lithic_archaeology",
+      "source_notes": "No securely proven pre-contact complete macuahuitl survives; reconstruction combines several evidence types.",
+      "sources": [{"kind": "book", "citation": "Ross Hassig, Aztec Warfare: Imperial Expansion and Political Control, 1988"}, {"kind": "book", "citation": "Frances F. Berdan and Patricia Rieff Anawalt, The Essential Codex Mendoza, 1997"}]
+    },
+    {
+      "id": "aztec_chinampa_not_floating", "culture": "aztec", "order": 3,
+      "title_key": "knowledge.echo_warrior.entry.aztec_chinampa_not_floating.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_chinampa_not_floating.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:dirt"}, {"type": "item", "resource": "minecraft:lily_pad"}],
+      "evidence_type": "landscape_archaeology_and_early_accounts",
+      "source_notes": "The common phrase floating gardens is picturesque but physically misleading.",
+      "sources": [{"kind": "book", "citation": "Pedro Armillas, Gardens on Swamps, Science 174, 1971"}, {"kind": "book", "citation": "Michael E. Smith, The Aztecs, 3rd ed., 2012"}]
+    },
+    {
+      "id": "aztec_cacao_money", "culture": "aztec", "order": 4,
+      "title_key": "knowledge.echo_warrior.entry.aztec_cacao_money.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_cacao_money.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "minecraft:cocoa_beans"}],
+      "evidence_type": "codices_and_colonial_accounts",
+      "source_notes": "Cacao was one medium of exchange among several, not a universal coinage system.",
+      "sources": [{"kind": "book", "citation": "Frances F. Berdan and Patricia Rieff Anawalt, The Essential Codex Mendoza, 1997"}, {"kind": "book", "citation": "Sophie D. Coe and Michael D. Coe, The True History of Chocolate, 3rd ed., 2013"}]
+    },
+    {
+      "id": "aztec_featherwork", "culture": "aztec", "order": 5,
+      "title_key": "knowledge.echo_warrior.entry.aztec_featherwork.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_featherwork.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "minecraft:feather"}],
+      "evidence_type": "surviving_objects_and_codices",
+      "source_notes": "Feather mosaics were composite works made by specialists; not every feather object used quetzal feathers.",
+      "sources": [{"kind": "book", "citation": "Alessandra Russo, Gerhard Wolf and Diana Fane, Images Take Flight: Feather Art in Mexico and Europe, 2015"}, {"kind": "museum", "title": "Museo del Templo Mayor", "url": "https://templomayor.inah.gob.mx/"}]
+    },
+    {
+      "id": "aztec_offerings_travelled", "culture": "aztec", "order": 6,
+      "title_key": "knowledge.echo_warrior.entry.aztec_offerings_travelled.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_offerings_travelled.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:nautilus_shell"}, {"type": "item", "resource": "minecraft:emerald"}, {"type": "item", "resource": "minecraft:tropical_fish"}],
+      "evidence_type": "controlled_archaeological_excavation",
+      "source_notes": "Species and materials from distant environments entered Tenochtitlan through tribute, trade and deliberate collecting.",
+      "sources": [{"kind": "museum", "title": "El Museo del Templo Mayor", "url": "https://lugares.inah.gob.mx/es/node/5284"}, {"kind": "article", "citation": "Leonardo López Luján, The Offerings of the Templo Mayor of Tenochtitlan, 2005"}]
+    },
+    {
+      "id": "aztec_warrior_distinctions", "culture": "aztec", "order": 7,
+      "title_key": "knowledge.echo_warrior.entry.aztec_warrior_distinctions.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_warrior_distinctions.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:golden_chestplate"}, {"type": "item", "resource": "minecraft:feather"}],
+      "evidence_type": "codices_and_early_colonial_accounts",
+      "source_notes": "Eagle and jaguar imagery existed within a broader, changing system of offices, costumes and achievements.",
+      "sources": [{"kind": "book", "citation": "Ross Hassig, Aztec Warfare, 1988"}, {"kind": "book", "citation": "Frances F. Berdan and Patricia Rieff Anawalt, The Essential Codex Mendoza, 1997"}]
+    },
+    {
+      "id": "aztec_huitzilopochtli_myth", "culture": "aztec", "order": 8,
+      "title_key": "knowledge.echo_warrior.entry.aztec_huitzilopochtli_myth.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_huitzilopochtli_myth.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:sunflower"}, {"type": "item", "resource": "minecraft:iron_sword"}],
+      "evidence_type": "myth_recorded_in_early_colonial_sources_and_temple_archaeology",
+      "source_notes": "Presented explicitly as a mythic narrative, not a historical battle report.",
+      "sources": [{"kind": "book", "citation": "Bernardino de Sahagún, Florentine Codex, Book 3, trans. Anderson and Dibble"}, {"kind": "museum", "title": "Zona Arqueológica Templo Mayor", "url": "https://inah.gob.mx/zonas/zona-arqueologica-templo-mayor"}]
+    },
+
+    {
+      "id": "egypt_giza_workers", "culture": "egyptian", "order": 1,
+      "title_key": "knowledge.echo_warrior.entry.egypt_giza_workers.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_giza_workers.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:bread"}, {"type": "item", "resource": "minecraft:brick"}, {"type": "item", "resource": "minecraft:iron_pickaxe"}],
+      "evidence_type": "settlement_cemetery_and_administrative_archaeology",
+      "source_notes": "The evidence contradicts the cinematic image of one vast chained slave gang, without implying that all labor was freely chosen.",
+      "sources": [{"kind": "project", "title": "The Giza Project at Harvard University", "url": "https://giza.fas.harvard.edu/"}, {"kind": "book", "citation": "Mark Lehner, The Complete Pyramids, 1997"}]
+    },
+    {
+      "id": "egypt_chariot_archery", "culture": "egyptian", "order": 2,
+      "title_key": "knowledge.echo_warrior.entry.egypt_chariot_archery.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_chariot_archery.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "minecraft:bow"}],
+      "evidence_type": "surviving_chariots_reliefs_and_texts",
+      "source_notes": "Elite representations emphasize royal success and should not be read as neutral battle photography.",
+      "sources": [{"kind": "book", "citation": "Robert Partridge, Fighting Pharaohs: Weapons and Warfare in Ancient Egypt, 2002"}, {"kind": "book", "citation": "Kathy Hansen, Chariots in Ancient Egypt, 2017"}]
+    },
+    {
+      "id": "egypt_faience_not_glass", "culture": "egyptian", "order": 3,
+      "title_key": "knowledge.echo_warrior.entry.egypt_faience_not_glass.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_faience_not_glass.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:light_blue_dye"}, {"type": "item", "resource": "minecraft:quartz"}],
+      "evidence_type": "materials_science_and_objects",
+      "source_notes": "Egyptian faience is a silica-rich glazed material; composition and production methods varied.",
+      "sources": [{"kind": "book", "citation": "Paul T. Nicholson and Ian Shaw, Ancient Egyptian Materials and Technology, 2000"}, {"kind": "museum", "title": "Senet and Twenty Squares", "url": "https://www.metmuseum.org/perspectives/ancient-egypt-board-games"}]
+    },
+    {
+      "id": "egypt_ostraca_attendance", "culture": "egyptian", "order": 4,
+      "title_key": "knowledge.echo_warrior.entry.egypt_ostraca_attendance.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_ostraca_attendance.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:sandstone"}, {"type": "item", "resource": "minecraft:black_dye"}],
+      "evidence_type": "inscribed_ostracon",
+      "source_notes": "This specific attendance register covers 280 days and lists reasons beside absent workers.",
+      "sources": [{"kind": "museum", "title": "Ostracon with register of attendance at work, EA5634", "url": "https://www.britishmuseum.org/collection/object/Y_EA5634"}]
+    },
+    {
+      "id": "egypt_senet_rules_lost", "culture": "egyptian", "order": 5,
+      "title_key": "knowledge.echo_warrior.entry.egypt_senet_rules_lost.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_senet_rules_lost.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:stone_button"}, {"type": "item", "resource": "minecraft:light_blue_dye"}],
+      "evidence_type": "game_boards_pieces_and_images",
+      "source_notes": "Modern rules are reconstructions; no complete ancient rulebook is known.",
+      "sources": [{"kind": "museum", "title": "Senet and Twenty Squares", "url": "https://www.metmuseum.org/perspectives/ancient-egypt-board-games"}, {"kind": "museum", "title": "Spool-Shaped Game Piece", "url": "https://www.metmuseum.org/art/collection/search/549121"}]
+    },
+    {
+      "id": "egypt_cats_and_bastet", "culture": "egyptian", "order": 6,
+      "title_key": "knowledge.echo_warrior.entry.egypt_cats_and_bastet.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_cats_and_bastet.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:cat_spawn_egg"}, {"type": "item", "resource": "minecraft:gold_nugget"}],
+      "evidence_type": "votive_archaeology_and_religious_iconography",
+      "source_notes": "The popular phrase Egyptians worshipped cats collapses distinctions among animals, divine manifestations, pets and votive offerings.",
+      "sources": [{"kind": "book", "citation": "Salima Ikram, Divine Creatures: Animal Mummies in Ancient Egypt, 2005"}, {"kind": "book", "citation": "Geraldine Pinch, Egyptian Mythology, 2002"}]
+    },
+    {
+      "id": "egypt_arrowhead_materials", "culture": "egyptian", "order": 7,
+      "title_key": "knowledge.echo_warrior.entry.egypt_arrowhead_materials.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_arrowhead_materials.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "minecraft:arrow"}],
+      "evidence_type": "weapons_archaeology",
+      "source_notes": "Material choice depended on period, purpose and supply; technological change was not a clean one-step replacement.",
+      "sources": [{"kind": "book", "citation": "W. V. Davies, Catalogue of Egyptian Antiquities in the British Museum VII: Tools and Weapons I, 1987"}, {"kind": "book", "citation": "Robert Partridge, Fighting Pharaohs, 2002"}]
+    },
+    {
+      "id": "egypt_book_of_dead_varied", "culture": "egyptian", "order": 8,
+      "title_key": "knowledge.echo_warrior.entry.egypt_book_of_dead_varied.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_book_of_dead_varied.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:paper"}, {"type": "item", "resource": "minecraft:feather"}],
+      "evidence_type": "funerary_manuscripts",
+      "source_notes": "Book of the Dead is a modern conventional title for a changing corpus of funerary spells.",
+      "sources": [{"kind": "book", "citation": "John H. Taylor, Journey through the Afterlife: Ancient Egyptian Book of the Dead, British Museum, 2010"}]
+    },
+
+    {
+      "id": "china_crossbow_trigger", "culture": "chinese", "order": 1,
+      "title_key": "knowledge.echo_warrior.entry.china_crossbow_trigger.title",
+      "body_key": "knowledge.echo_warrior.entry.china_crossbow_trigger.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "minecraft:crossbow"}],
+      "evidence_type": "weapon_mechanism_archaeology",
+      "source_notes": "Bronze trigger mechanisms survive even when organic stocks and bows decay.",
+      "sources": [{"kind": "museum", "title": "Crossbow-trigger mechanism (nuqi)", "url": "https://www.si.edu/object/crossbow-trigger-mechanism-nuqi%3Afsg_S2012.9.2405"}, {"kind": "book", "citation": "Joseph Needham and Robin D. S. Yates, Science and Civilisation in China, Vol. 5 Part 6, 1994"}]
+    },
+    {
+      "id": "china_terracotta_colors", "culture": "chinese", "order": 2,
+      "title_key": "knowledge.echo_warrior.entry.china_terracotta_colors.title",
+      "body_key": "knowledge.echo_warrior.entry.china_terracotta_colors.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:terracotta"}, {"type": "item", "resource": "minecraft:red_dye"}, {"type": "item", "resource": "minecraft:blue_dye"}],
+      "evidence_type": "pigment_analysis_and_conservation",
+      "source_notes": "Exposure after excavation can cause lacquer and pigment layers to curl and detach rapidly.",
+      "sources": [{"kind": "museum", "title": "Colors & Conservation of the Terracotta Army", "url": "https://learninglab.si.edu/collections/colors-conservation-of-the-terracotta-army/ReUnhHPJ1T92B2kB"}, {"kind": "article", "citation": "He Shimin et al., An exploratory study on the traditional craftsmanship of polychrome Terracotta Warriors, 2014"}]
+    },
+    {
+      "id": "china_bamboo_slips", "culture": "chinese", "order": 3,
+      "title_key": "knowledge.echo_warrior.entry.china_bamboo_slips.title",
+      "body_key": "knowledge.echo_warrior.entry.china_bamboo_slips.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "minecraft:bamboo"}],
+      "evidence_type": "excavated_manuscripts",
+      "source_notes": "Wood, bamboo and silk all carried writing; paper did not replace them everywhere at once.",
+      "sources": [{"kind": "book", "citation": "Enno Giele, Imperial Decision-Making and Communication in Early China, 2006"}, {"kind": "book", "citation": "Edward L. Shaughnessy, Rewriting Early Chinese Texts, 2006"}]
+    },
+    {
+      "id": "china_great_wall_network", "culture": "chinese", "order": 4,
+      "title_key": "knowledge.echo_warrior.entry.china_great_wall_network.title",
+      "body_key": "knowledge.echo_warrior.entry.china_great_wall_network.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:stone_bricks"}, {"type": "item", "resource": "minecraft:packed_mud"}],
+      "evidence_type": "landscape_archaeology_and_historical_texts",
+      "source_notes": "Different regions used rammed earth, stone, brick, trenches, forts and signal systems in different eras.",
+      "sources": [{"kind": "book", "citation": "Arthur Waldron, The Great Wall of China: From History to Myth, 1990"}, {"kind": "heritage", "title": "UNESCO: The Great Wall", "url": "https://whc.unesco.org/en/list/438/"}]
+    },
+    {
+      "id": "china_ji_combined_weapon", "culture": "chinese", "order": 5,
+      "title_key": "knowledge.echo_warrior.entry.china_ji_combined_weapon.title",
+      "body_key": "knowledge.echo_warrior.entry.china_ji_combined_weapon.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:iron_axe"}, {"type": "item", "resource": "minecraft:trident"}],
+      "evidence_type": "weapon_archaeology_and_inscriptions",
+      "source_notes": "Ji forms and mounting details changed over time; the simple hook-plus-spear silhouette is only a summary.",
+      "sources": [{"kind": "book", "citation": "Yang Hong, Weapons in Ancient China, 1992"}, {"kind": "book", "citation": "Donald B. Wagner, Iron and Steel in Ancient China, 1993"}]
+    },
+    {
+      "id": "china_cavalry_reforms", "culture": "chinese", "order": 6,
+      "title_key": "knowledge.echo_warrior.entry.china_cavalry_reforms.title",
+      "body_key": "knowledge.echo_warrior.entry.china_cavalry_reforms.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:saddle"}, {"type": "item", "resource": "minecraft:bow"}],
+      "evidence_type": "historical_texts_and_equipment_archaeology",
+      "source_notes": "The King Wuling story is transmitted in later historical texts; cavalry adoption was a broader process of frontier interaction.",
+      "sources": [{"kind": "book", "citation": "Nicola Di Cosmo, Ancient China and Its Enemies, 2002"}, {"kind": "book", "citation": "Records of the Grand Historian, chapter 43, Zhao family"}]
+    },
+    {
+      "id": "china_guandao_late", "culture": "chinese", "order": 7,
+      "title_key": "knowledge.echo_warrior.entry.china_guandao_late.title",
+      "body_key": "knowledge.echo_warrior.entry.china_guandao_late.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:guandao_warrior_relic"}],
+      "evidence_type": "weapons_history_and_later_iconography",
+      "source_notes": "The familiar heavy crescent-bladed guandao is securely visible in later sources, not contemporary Three Kingdoms evidence.",
+      "sources": [{"kind": "book", "citation": "Peter A. Lorge, Chinese Martial Arts: From Antiquity to the Twenty-First Century, 2012"}, {"kind": "book", "citation": "Mao Yuanyi, Wubei Zhi, 1621"}]
+    },
+    {
+      "id": "china_guan_yu_afterlife", "culture": "chinese", "order": 8,
+      "title_key": "knowledge.echo_warrior.entry.china_guan_yu_afterlife.title",
+      "body_key": "knowledge.echo_warrior.entry.china_guan_yu_afterlife.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:guandao_warrior_relic"}],
+      "evidence_type": "historical_biography_literature_and_religious_history",
+      "source_notes": "Presented as the later religious and literary afterlife of a historical general, not as contemporary biography.",
+      "sources": [{"kind": "book", "citation": "Barend J. ter Haar, Guan Yu: The Religious Afterlife of a Failed Hero, 2017"}, {"kind": "book", "citation": "Records of the Three Kingdoms, biography of Guan Yu"}]
+    },
+
+    {
+      "id": "japan_bow_before_sword", "culture": "japanese", "order": 1,
+      "title_key": "knowledge.echo_warrior.entry.japan_bow_before_sword.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_bow_before_sword.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:bow"}, {"type": "item", "resource": "minecraft:iron_sword"}, {"type": "item", "resource": "minecraft:saddle"}],
+      "evidence_type": "war_tales_documents_and_equipment",
+      "source_notes": "Weapon emphasis varied by century, social role and type of warfare.",
+      "sources": [{"kind": "book", "citation": "Karl F. Friday, Samurai, Warfare and the State in Early Medieval Japan, 2004"}, {"kind": "museum", "title": "Art of the Samurai", "url": "https://www.metmuseum.org/exhibitions/listings/2009/art-of-the-samurai"}]
+    },
+    {
+      "id": "japan_yari_battlefield", "culture": "japanese", "order": 2,
+      "title_key": "knowledge.echo_warrior.entry.japan_yari_battlefield.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_yari_battlefield.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:trident"}, {"type": "item", "resource": "minecraft:iron_sword"}],
+      "evidence_type": "weapons_and_battle_records",
+      "source_notes": "Yari included many blade and shaft forms and were used by warriors of different status.",
+      "sources": [{"kind": "book", "citation": "Morihiro Ogawa, ed., Art of the Samurai: Japanese Arms and Armor, 1156–1868, 2009"}, {"kind": "book", "citation": "Thomas D. Conlan, Weapons & Fighting Techniques of the Samurai Warrior, 1200–1877, 2008"}]
+    },
+    {
+      "id": "japan_laced_armor", "culture": "japanese", "order": 3,
+      "title_key": "knowledge.echo_warrior.entry.japan_laced_armor.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_laced_armor.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:iron_chestplate"}, {"type": "item", "resource": "minecraft:string"}, {"type": "item", "resource": "minecraft:honeycomb"}],
+      "evidence_type": "surviving_armor_and_technical_study",
+      "source_notes": "Construction changed substantially from early o-yoroi to later tosei gusoku and folding armors.",
+      "sources": [{"kind": "book", "citation": "Morihiro Ogawa, ed., Art of the Samurai, 2009"}, {"kind": "museum", "title": "Armor (Tatami Gusoku)", "url": "https://www.metmuseum.org/art/collection/search/35728"}]
+    },
+    {
+      "id": "japan_sword_hidden_signature", "culture": "japanese", "order": 4,
+      "title_key": "knowledge.echo_warrior.entry.japan_sword_hidden_signature.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_sword_hidden_signature.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:iron_sword"}, {"type": "item", "resource": "minecraft:name_tag"}],
+      "evidence_type": "surviving_signed_blades",
+      "source_notes": "Not every blade is signed, and signatures may be lost when a blade is shortened.",
+      "sources": [{"kind": "book", "citation": "Kanzan Sato, The Japanese Sword, 1983"}, {"kind": "museum", "title": "Art of the Samurai photo gallery", "url": "https://www.metmuseum.org/exhibitions/listings/2009/art-of-the-samurai/photo-gallery"}]
+    },
+    {
+      "id": "japan_daisho_edo", "culture": "japanese", "order": 5,
+      "title_key": "knowledge.echo_warrior.entry.japan_daisho_edo.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_daisho_edo.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:iron_sword"}, {"type": "item", "resource": "minecraft:stone_sword"}],
+      "evidence_type": "surviving_mountings_and_early_modern_regulation",
+      "source_notes": "Paired swords became an especially visible status marker under Tokugawa rule; earlier practice was less uniform.",
+      "sources": [{"kind": "book", "citation": "Morihiro Ogawa, ed., Art of the Samurai, 2009"}, {"kind": "book", "citation": "Constantine Nomikos Vaporis, Samurai: An Encyclopedia of Japan's Cultured Warriors, 2019"}]
+    },
+    {
+      "id": "japan_mongol_bombs", "culture": "japanese", "order": 6,
+      "title_key": "knowledge.echo_warrior.entry.japan_mongol_bombs.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_mongol_bombs.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "minecraft:fire_charge"}],
+      "evidence_type": "illustrated_scrolls_texts_and_maritime_archaeology",
+      "source_notes": "The famous round bomb appears in a later state of the invasion scroll; its visual history needs careful handling.",
+      "sources": [{"kind": "book", "citation": "Thomas D. Conlan, In Little Need of Divine Intervention, 2001"}, {"kind": "book", "citation": "James P. Delgado, Khubilai Khan's Lost Fleet, 2008"}]
+    },
+    {
+      "id": "japan_bushido_changed", "culture": "japanese", "order": 7,
+      "title_key": "knowledge.echo_warrior.entry.japan_bushido_changed.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_bushido_changed.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:book"}, {"type": "item", "resource": "minecraft:iron_sword"}],
+      "evidence_type": "intellectual_and_social_history",
+      "source_notes": "The page rejects a single timeless code while acknowledging real warrior ethics in different periods.",
+      "sources": [{"kind": "book", "citation": "Oleg Benesch, Inventing the Way of the Samurai, 2014"}, {"kind": "book", "citation": "Karl F. Friday, Bushido or Bull? in Budo Perspectives, 2005"}]
+    },
+    {
+      "id": "japan_tomoe_in_heike", "culture": "japanese", "order": 8,
+      "title_key": "knowledge.echo_warrior.entry.japan_tomoe_in_heike.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_tomoe_in_heike.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:book"}, {"type": "item", "resource": "minecraft:bow"}, {"type": "item", "resource": "minecraft:iron_sword"}],
+      "evidence_type": "literary_tradition_with_related_historical_evidence",
+      "source_notes": "Presented explicitly as a literary figure whose details vary among Heike textual traditions.",
+      "sources": [{"kind": "book", "citation": "The Tale of the Heike, trans. Royall Tyler, 2012"}, {"kind": "book", "citation": "Hitomi Tonomura, Women and Inheritance in Japan's Early Warrior Society, 1990"}]
+    }
+  ]
+}

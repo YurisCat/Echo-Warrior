@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "echo_warrior:plate_armor_accessory",
+    "echo_warrior:hawkeye_lens_accessory",
+    "echo_warrior:feast_ham_accessory",
+    "echo_warrior:light_gathering_magnet_accessory",
+    "echo_warrior:victors_laurel_accessory"
+  ]
+}

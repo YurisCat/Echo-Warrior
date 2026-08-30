@@ -1,0 +1,201 @@
+{
+  "type": "minecraft:archaeology",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:iron_ingot",
+          "weight": 264000
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:courage_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:fortitude_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:purity_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:wisdom_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:craft_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:gold_ingot",
+          "weight": 52800
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:netherite_scrap",
+          "weight": 1980
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "aztec_mexica_name"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "aztec_macuahuitl_edges"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "aztec_chinampa_not_floating"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "aztec_cacao_money"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "aztec_featherwork"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "aztec_offerings_travelled"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "aztec_warrior_distinctions"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "aztec_huitzilopochtli_myth"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:aztec_warrior_relic",
+          "weight": 9900
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:spiked_armor_accessory",
+          "weight": 248
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:fractured_crystal_blade_accessory",
+          "weight": 248
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:sunwheel_garland_accessory",
+          "weight": 248
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:training_notes_accessory",
+          "weight": 246
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:crack_ring_hammer_charm_accessory",
+          "weight": 330
+        }
+      ]
+    }
+  ],
+  "random_sequence": "echo_warrior:archaeology/battlefield_common_aztec"
+}

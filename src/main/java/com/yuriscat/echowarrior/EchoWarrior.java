@@ -7,6 +7,11 @@ import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
 import com.yuriscat.echowarrior.world.BattlefieldSystem;
 import com.yuriscat.echowarrior.world.EchoCompassSystem;
 import com.yuriscat.echowarrior.item.EchoAccessorySystem;
+import com.yuriscat.echowarrior.knowledge.KnowledgeLootSystem;
+import com.yuriscat.echowarrior.network.EchoCompassMessagePayload;
+import com.yuriscat.echowarrior.network.EchoCompassStatePayload;
+import com.yuriscat.echowarrior.network.EchoCompassPulsePayload;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -18,6 +23,9 @@ public final class EchoWarrior implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		PayloadTypeRegistry.clientboundPlay().register(EchoCompassStatePayload.TYPE, EchoCompassStatePayload.STREAM_CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(EchoCompassPulsePayload.TYPE, EchoCompassPulsePayload.STREAM_CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(EchoCompassMessagePayload.TYPE, EchoCompassMessagePayload.STREAM_CODEC);
 		ModEffects.initialize();
 		ModEntities.initialize();
 		ModBlocks.initialize();
@@ -25,6 +33,7 @@ public final class EchoWarrior implements ModInitializer {
 		ModRecipes.initialize();
 		ModMenus.initialize();
 		ModCreativeTabs.initialize();
+		KnowledgeLootSystem.initialize();
 		BattlefieldSystem.initialize();
 		EchoCompassSystem.initialize();
 		EchoExperienceSystem.initialize();

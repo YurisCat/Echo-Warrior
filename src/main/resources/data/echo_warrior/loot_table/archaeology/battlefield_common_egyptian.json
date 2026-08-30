@@ -1,0 +1,201 @@
+{
+  "type": "minecraft:archaeology",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:iron_ingot",
+          "weight": 264000
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:courage_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:fortitude_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:purity_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:wisdom_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:craft_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:gold_ingot",
+          "weight": 52800
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:netherite_scrap",
+          "weight": 1980
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "egypt_giza_workers"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "egypt_chariot_archery"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "egypt_faience_not_glass"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "egypt_ostraca_attendance"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "egypt_senet_rules_lost"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "egypt_cats_and_bastet"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "egypt_arrowhead_materials"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "egypt_book_of_dead_varied"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:egyptian_archer_relic",
+          "weight": 9900
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:tomato_fish_accessory",
+          "weight": 792
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:moondew_bottle_accessory",
+          "weight": 198
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:hollow_bird_bone_accessory",
+          "weight": 198
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:blood_pact_fang_accessory",
+          "weight": 66
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:memory_ritual_knife_accessory",
+          "weight": 66
+        }
+      ]
+    }
+  ],
+  "random_sequence": "echo_warrior:archaeology/battlefield_common_egyptian"
+}

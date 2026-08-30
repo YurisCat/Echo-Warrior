@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "echo_warrior:item/echo_compass/echo_compass_pointer_29"
+  }
+}

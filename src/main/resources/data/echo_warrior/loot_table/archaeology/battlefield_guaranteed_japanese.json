@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:archaeology",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:japanese_samurai_relic",
+          "weight": 1
+        }
+      ]
+    }
+  ],
+  "random_sequence": "echo_warrior:archaeology/battlefield_guaranteed_japanese"
+}

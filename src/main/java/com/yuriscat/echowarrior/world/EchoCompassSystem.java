@@ -2,13 +2,14 @@ package com.yuriscat.echowarrior.world;
 
 import com.yuriscat.echowarrior.ModItems;
 import com.yuriscat.echowarrior.item.EchoCompassItem;
+import com.yuriscat.echowarrior.network.EchoCompassMessagePayload;
+import com.yuriscat.echowarrior.network.EchoCompassStatePayload;
+import com.yuriscat.echowarrior.network.EchoCompassPulsePayload;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -18,7 +19,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.LodestoneTracker;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -26,8 +26,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
 
@@ -36,15 +34,14 @@ public final class EchoCompassSystem {
 	private static final double OUTSIDE_SOUND_RADIUS = 320.0;
 	private static final double INNER_ENTER_RADIUS = 24.0;
 	private static final double INNER_RELEASE_RADIUS = 48.0;
-	private static final double INNER_SPIN_DISTANCE = 32.0;
-	private static final double INNER_SPIN_MIN_TURNS_PER_TICK = 1.0 / 32.0;
-	private static final double INNER_SPIN_MAX_TURNS_PER_TICK = 1.0 / 8.0;
-	private static final double NO_TARGET_TURNS_PER_TICK = 1.0 / 10.0;
-	private static final double SPIN_TARGET_RADIUS = 1024.0;
 	private static final long SEARCH_INTERVAL = 40L;
+	private static final long OUTSIDE_DETECTION_REARM_DELAY = 100L;
 	private static final long SALVAGE_MESSAGE_INTERVAL = 60L;
+	private static final long SALVAGE_MESSAGE_WINDOW = 200L;
+	private static final long SALVAGE_MESSAGE_DISPLAY_DURATION = 48L;
 	private static final long SALVAGE_RELEASE_DELAY = 60L;
 	private static final Map<UUID, Tracking> TRACKING = new HashMap<>();
+	private static final Map<UUID, EchoCompassStatePayload> LAST_RENDER_STATES = new HashMap<>();
 	private static final Holder<SoundEvent> HUM = BuiltInRegistries.SOUND_EVENT
 			.wrapAsHolder(SoundEvents.AMETHYST_BLOCK_RESONATE);
 
@@ -56,10 +53,32 @@ public final class EchoCompassSystem {
 	}
 
 	public static void playToggle(ServerPlayer player, boolean enabled) {
-		Holder<SoundEvent> sound = enabled ? HUM : SoundEvents.UI_BUTTON_CLICK;
-		player.connection.send(new ClientboundSoundPacket(sound, SoundSource.PLAYERS,
-				player.getX(), player.getY() + 1.0, player.getZ(), 0.7F, enabled ? 0.72F : 0.55F,
+		player.connection.send(new ClientboundSoundPacket(HUM, SoundSource.PLAYERS,
+				player.getX(), player.getY() + 1.0, player.getZ(), 0.7F, enabled ? 1.28F : 0.68F,
 				player.getRandom().nextLong()));
+	}
+
+	public static boolean isInsideBattlefieldMode(ServerPlayer player) {
+		Tracking tracking = TRACKING.get(player.getUUID());
+		return tracking != null
+				&& (tracking.mode == Mode.INNER || tracking.mode == Mode.SALVAGE);
+	}
+
+	public static void sendMessage(ServerPlayer player, EchoCompassMessagePayload.Message message) {
+		sendMessage(player, message, 0);
+	}
+
+	private static void sendMessage(
+			ServerPlayer player,
+			EchoCompassMessagePayload.Message message,
+			int value
+	) {
+		EchoCompassMessagePayload payload = new EchoCompassMessagePayload(message, value);
+		if (ServerPlayNetworking.canSend(player, EchoCompassMessagePayload.TYPE)) {
+			ServerPlayNetworking.send(player, payload);
+		} else {
+			player.sendOverlayMessage(payload.component());
+		}
 	}
 
 	public static void onBattlefieldBlockRemoved(
@@ -75,8 +94,7 @@ public final class EchoCompassSystem {
 				if (result.remaining().isEmpty()) {
 					data.clearSalvageTracker(player.getUUID());
 					releaseToSearch(tracking, level.getGameTime());
-					player.sendOverlayMessage(Component.translatable(
-							"message.echo_warrior.echo_compass.site_quiet"));
+					sendMessage(player, EchoCompassMessagePayload.Message.SITE_QUIET);
 				} else {
 					data.setSalvageTracker(player.getUUID(), result.center());
 					enterSalvage(tracking, result.center(), level.getGameTime());
@@ -90,8 +108,7 @@ public final class EchoCompassSystem {
 				Tracking tracking = entry.getValue();
 				if (tracking.mode != Mode.SALVAGE || tracking.centerPos != result.center().asLong()) continue;
 				ServerPlayer player = level.getServer().getPlayerList().getPlayer(entry.getKey());
-				if (player != null) player.sendOverlayMessage(Component.translatable(
-						"message.echo_warrior.echo_compass.site_quiet"));
+				if (player != null) sendMessage(player, EchoCompassMessagePayload.Message.SITE_QUIET);
 				releaseToSearch(tracking, level.getGameTime());
 			}
 		}
@@ -102,6 +119,7 @@ public final class EchoCompassSystem {
 		while (iterator.hasNext()) {
 			if (server.getPlayerList().getPlayer(iterator.next().getKey()) == null) iterator.remove();
 		}
+		LAST_RENDER_STATES.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) tickPlayer(player);
 	}
 
@@ -111,7 +129,7 @@ public final class EchoCompassSystem {
 			if (player.level().dimension().equals(Level.OVERWORLD)) {
 				BattlefieldSavedData.get(player.level()).clearSalvageTracker(player.getUUID());
 			}
-			clearCompassTargets(player);
+			syncRenderState(player, EchoCompassStatePayload.inactive());
 			return;
 		}
 
@@ -147,24 +165,27 @@ public final class EchoCompassSystem {
 		}
 
 		if (site == null) {
-			spinCompassTargets(player, tracking, null);
+			updateOutsideDetection(player, tracking, false, now);
+			syncRenderState(player, EchoCompassStatePayload.noTarget());
 			if (!tracking.noTargetNotified) {
-				player.sendOverlayMessage(Component.translatable(
-						"message.echo_warrior.echo_compass.no_nearby_site"));
+				sendMessage(player, EchoCompassMessagePayload.Message.NO_NEARBY_SITE);
 				tracking.noTargetNotified = true;
 			}
 			return;
 		}
 
 		double centerDistance = horizontalDistance(player.position(), site.center().getCenter());
+		updateOutsideDetection(player, tracking, centerDistance <= OUTSIDE_SOUND_RADIUS, now);
 		if (tracking.mode == Mode.INNER && centerDistance > INNER_RELEASE_RADIUS) tracking.mode = Mode.OUTSIDE;
 		else if (tracking.mode == Mode.OUTSIDE && centerDistance <= INNER_ENTER_RADIUS) tracking.mode = Mode.INNER;
 
 		if (tracking.mode == Mode.INNER) {
-			spinCompassTargets(player, tracking, site.relic());
+			syncRenderState(player, new EchoCompassStatePayload(
+					EchoCompassStatePayload.Mode.INNER, site.relic().asLong()));
 			playDirectionalEcho(player, tracking, site.relic(), now);
 		} else {
-			setCompassTargets(player, site.center());
+			syncRenderState(player, new EchoCompassStatePayload(
+					EchoCompassStatePayload.Mode.OUTSIDE, site.center().asLong()));
 			playOutsideReminder(player, tracking, centerDistance, now);
 		}
 	}
@@ -194,7 +215,7 @@ public final class EchoCompassSystem {
 		BattlefieldSavedData.SalvageSite salvage = data.findSalvageByCenter(tracking.centerPos);
 		if (salvage == null || salvage.remaining().isEmpty()) {
 			data.clearSalvageTracker(player.getUUID());
-			player.sendOverlayMessage(Component.translatable("message.echo_warrior.echo_compass.site_quiet"));
+			sendMessage(player, EchoCompassMessagePayload.Message.SITE_QUIET);
 			releaseToSearch(tracking, now);
 			tickPlayer(player);
 			return;
@@ -214,9 +235,15 @@ public final class EchoCompassSystem {
 		}
 
 		BlockPos target = lockedOrNearest(player, tracking, salvage.remaining());
-		spinCompassTargets(player, tracking, target);
+		if (target != null) {
+			syncRenderState(player, new EchoCompassStatePayload(
+					EchoCompassStatePayload.Mode.SALVAGE, target.asLong()));
+		} else {
+			syncRenderState(player, EchoCompassStatePayload.noTarget());
+		}
 		playDirectionalEcho(player, tracking, target, now);
-		if (tracking.lastRemainingCount != salvage.remaining().size() || now >= tracking.nextMessage) {
+		if (now + SALVAGE_MESSAGE_DISPLAY_DURATION <= tracking.messageWindowEnds
+				&& (tracking.lastRemainingCount != salvage.remaining().size() || now >= tracking.nextMessage)) {
 			sendRemainingMessage(player, tracking, salvage.remaining().size(), now);
 		}
 	}
@@ -241,8 +268,7 @@ public final class EchoCompassSystem {
 	}
 
 	private static void sendRemainingMessage(ServerPlayer player, Tracking tracking, int count, long now) {
-		player.sendOverlayMessage(Component.translatable(
-				"message.echo_warrior.echo_compass.remaining_echoes", count));
+		sendMessage(player, EchoCompassMessagePayload.Message.REMAINING_ECHOES, count);
 		tracking.lastRemainingCount = count;
 		tracking.nextMessage = now + SALVAGE_MESSAGE_INTERVAL;
 	}
@@ -253,15 +279,46 @@ public final class EchoCompassSystem {
 			double distance,
 			long now
 	) {
-		if (distance > OUTSIDE_SOUND_RADIUS || selectedSoundCompass(player).isEmpty()
-				|| now < tracking.nextPulse) return;
+		if (distance > OUTSIDE_SOUND_RADIUS) return;
 		double closeness = Math.clamp(1.0 - distance / OUTSIDE_SOUND_RADIUS, 0.0, 1.0);
-		float volume = (float)(0.14 + closeness * 0.12);
-		float pitch = (float)(0.66 + closeness * 0.18);
-		player.connection.send(new ClientboundSoundPacket(HUM, SoundSource.AMBIENT,
-				player.getX(), player.getY() + 1.0, player.getZ(), volume, pitch,
-				player.getRandom().nextLong()));
-		tracking.nextPulse = now + (long)Math.round(80.0 + (1.0 - closeness) * 160.0);
+		long interval = Math.round(80.0 + (1.0 - closeness) * 160.0);
+		acceleratePendingPulse(tracking, interval);
+		if (now < tracking.nextPulse) return;
+		sendVisualPulse(player, closeness, false);
+		if (!selectedSoundCompass(player).isEmpty()) {
+			float volume = (float)(0.14 + closeness * 0.12);
+			float pitch = (float)(0.66 + closeness * 0.18);
+			player.connection.send(new ClientboundSoundPacket(HUM, SoundSource.AMBIENT,
+					player.getX(), player.getY() + 1.0, player.getZ(), volume, pitch,
+					player.getRandom().nextLong()));
+		}
+		scheduleNextPulse(tracking, now, interval);
+	}
+
+	private static void updateOutsideDetection(
+			ServerPlayer player,
+			Tracking tracking,
+			boolean withinDetectionRange,
+			long now
+	) {
+		if (withinDetectionRange) {
+			tracking.outsideDetectionLostSince = -1L;
+			if (!tracking.outsideDetectionLatched) {
+				tracking.outsideDetectionLatched = true;
+				sendMessage(player, EchoCompassMessagePayload.Message.ECHO_DETECTED);
+			}
+			return;
+		}
+
+		if (!tracking.outsideDetectionLatched) return;
+		if (tracking.outsideDetectionLostSince < 0L) {
+			tracking.outsideDetectionLostSince = now;
+			return;
+		}
+		if (now - tracking.outsideDetectionLostSince >= OUTSIDE_DETECTION_REARM_DELAY) {
+			tracking.outsideDetectionLatched = false;
+			tracking.outsideDetectionLostSince = -1L;
+		}
 	}
 
 	private static void playDirectionalEcho(
@@ -270,67 +327,85 @@ public final class EchoCompassSystem {
 			BlockPos target,
 			long now
 	) {
-		if (target == null || now < tracking.nextPulse) return;
+		if (target == null) return;
 		Vec3 targetCenter = target.getCenter();
 		Vec3 delta = targetCenter.subtract(player.position());
 		double distance = delta.length();
+		long interval = directionalPulseInterval(distance);
+		acceleratePendingPulse(tracking, interval);
+		if (now < tracking.nextPulse) return;
 		Vec3 direction = delta.multiply(1.0, 0.25, 1.0);
 		if (direction.lengthSqr() < 1.0E-6) direction = player.getLookAngle();
 		direction = direction.normalize();
 		double closeness = Math.clamp(1.0 - distance / 48.0, 0.0, 1.0);
+		double response = smoothstep(closeness);
+		sendVisualPulse(player, closeness, true);
 		Vec3 source = player.position().add(direction.scale(4.0 + (1.0 - closeness) * 3.0)).add(0.0, 1.0, 0.0);
-		float volume = (float)(0.28 + closeness * 0.52);
-		float pitch = (float)(0.70 + closeness * 0.32);
+		float volume = (float)(0.20 + response * 0.60);
+		float pitch = (float)(0.64 + response * 0.42);
 		player.connection.send(new ClientboundSoundPacket(HUM, SoundSource.AMBIENT,
 				source.x, source.y, source.z, volume, pitch, player.getRandom().nextLong()));
-		tracking.nextPulse = now + (long)Math.round(14.0 + (1.0 - closeness) * 56.0);
+		scheduleNextPulse(tracking, now, interval);
 	}
 
-	private static void setCompassTargets(ServerPlayer player, BlockPos target) {
-		LodestoneTracker desired = target == null ? null : new LodestoneTracker(
-				Optional.of(GlobalPos.of(Level.OVERWORLD, target)), false);
-		Inventory inventory = player.getInventory();
-		for (int slot = 0; slot < Math.min(36, inventory.getContainerSize()); slot++) {
-			setCompassTarget(inventory.getItem(slot), desired);
-		}
-		setCompassTarget(player.getOffhandItem(), desired);
+	private static void acceleratePendingPulse(Tracking tracking, long desiredInterval) {
+		// A pulse that was scheduled while the player was farther away must not keep
+		// the old, slower cadence after they approach the source or enter the ruin.
+		// Anchor the new cadence to the time of the previous pulse: this preserves
+		// its elapsed progress, while allowing an already-overdue faster pulse to
+		// fire immediately on the current server tick.
+		long acceleratedAt = tracking.lastPulseAt + desiredInterval;
+		if (acceleratedAt < tracking.nextPulse) tracking.nextPulse = acceleratedAt;
 	}
 
-	private static void spinCompassTargets(ServerPlayer player, Tracking tracking, BlockPos keyTarget) {
-		double speed = NO_TARGET_TURNS_PER_TICK;
-		if (keyTarget != null) {
-			double distance = player.position().distanceTo(keyTarget.getCenter());
-			double closeness = Math.clamp(1.0 - distance / INNER_SPIN_DISTANCE, 0.0, 1.0);
-			speed = INNER_SPIN_MIN_TURNS_PER_TICK
-					+ (INNER_SPIN_MAX_TURNS_PER_TICK - INNER_SPIN_MIN_TURNS_PER_TICK) * closeness;
-		}
-		tracking.spinPhase = (tracking.spinPhase + speed) % 1.0;
-
-		// CompassAngleState renders increasing frame indices clockwise. Keeping the virtual
-		// target aligned to player yaw makes the animation independent of where the player looks.
-		double worldAngle = Math.toRadians(player.getYRot()) + tracking.spinPhase * Math.PI * 2.0;
-		BlockPos origin = player.blockPosition();
-		BlockPos virtualTarget = new BlockPos(
-				origin.getX() + (int)Math.round(Math.cos(worldAngle) * SPIN_TARGET_RADIUS),
-				origin.getY(),
-				origin.getZ() + (int)Math.round(Math.sin(worldAngle) * SPIN_TARGET_RADIUS)
-		);
-		setCompassTargets(player, virtualTarget);
+	private static void scheduleNextPulse(Tracking tracking, long now, long interval) {
+		tracking.lastPulseAt = now;
+		tracking.nextPulse = now + interval;
 	}
 
-	private static void clearCompassTargets(ServerPlayer player) {
-		setCompassTargets(player, null);
+	private static long directionalPulseInterval(double distance) {
+		double clampedDistance = Math.clamp(distance, 0.0, 48.0);
+		if (clampedDistance <= 4.0) return stagedInterval(clampedDistance, 0.0, 4.0, 14.0, 18.0);
+		if (clampedDistance <= 10.0) return stagedInterval(clampedDistance, 4.0, 10.0, 18.0, 24.0);
+		if (clampedDistance <= 20.0) return stagedInterval(clampedDistance, 10.0, 20.0, 24.0, 36.0);
+		if (clampedDistance <= 32.0) return stagedInterval(clampedDistance, 20.0, 32.0, 36.0, 52.0);
+		return stagedInterval(clampedDistance, 32.0, 48.0, 52.0, 72.0);
 	}
 
-	private static void setCompassTarget(ItemStack stack, LodestoneTracker desired) {
-		if (!stack.is(ModItems.ECHO_COMPASS)) return;
-		LodestoneTracker current = stack.get(DataComponents.LODESTONE_TRACKER);
-		if (Objects.equals(current, desired)) return;
-		if (desired == null) stack.remove(DataComponents.LODESTONE_TRACKER);
-		else stack.set(DataComponents.LODESTONE_TRACKER, desired);
+	private static long stagedInterval(
+			double value,
+			double minimum,
+			double maximum,
+			double startTicks,
+			double endTicks
+	) {
+		double progress = Math.clamp((value - minimum) / (maximum - minimum), 0.0, 1.0);
+		double curvedProgress = smoothstep(progress);
+		return Math.round(startTicks + (endTicks - startTicks) * curvedProgress);
+	}
+
+	private static double smoothstep(double value) {
+		double clamped = Math.clamp(value, 0.0, 1.0);
+		return clamped * clamped * (3.0 - 2.0 * clamped);
+	}
+
+	private static void sendVisualPulse(ServerPlayer player, double closeness, boolean directional) {
+		if (!ServerPlayNetworking.canSend(player, EchoCompassPulsePayload.TYPE)) return;
+		ServerPlayNetworking.send(player, new EchoCompassPulsePayload((float)closeness, directional));
+	}
+
+	private static void syncRenderState(ServerPlayer player, EchoCompassStatePayload state) {
+		if (state.equals(LAST_RENDER_STATES.get(player.getUUID()))) return;
+		if (!ServerPlayNetworking.canSend(player, EchoCompassStatePayload.TYPE)) return;
+		ServerPlayNetworking.send(player, state);
+		LAST_RENDER_STATES.put(player.getUUID(), state);
 	}
 
 	private static boolean hasCompass(ServerPlayer player) {
+		// Moving an item between inventory slots temporarily places it in the active
+		// menu's carried stack. Treat that stack as still being held so a normal
+		// drag operation cannot erase the player's persisted salvage tracker.
+		if (player.containerMenu.getCarried().is(ModItems.ECHO_COMPASS)) return true;
 		if (player.getOffhandItem().is(ModItems.ECHO_COMPASS)) return true;
 		Inventory inventory = player.getInventory();
 		for (int slot = 0; slot < Math.min(36, inventory.getContainerSize()); slot++) {
@@ -361,8 +436,10 @@ public final class EchoCompassSystem {
 		tracking.centerPos = center.asLong();
 		tracking.lockedTarget = 0L;
 		tracking.outOfRangeSince = 0L;
+		tracking.lastPulseAt = now;
 		tracking.nextPulse = now;
 		tracking.nextMessage = now;
+		tracking.messageWindowEnds = now + SALVAGE_MESSAGE_WINDOW;
 		tracking.lastRemainingCount = -1;
 		tracking.noTargetNotified = false;
 	}
@@ -373,8 +450,10 @@ public final class EchoCompassSystem {
 		tracking.lockedTarget = 0L;
 		tracking.outOfRangeSince = 0L;
 		tracking.nextSearch = now;
+		tracking.lastPulseAt = now;
 		tracking.nextPulse = now;
 		tracking.nextMessage = now;
+		tracking.messageWindowEnds = 0L;
 		tracking.lastRemainingCount = -1;
 		tracking.noTargetNotified = false;
 	}
@@ -397,15 +476,19 @@ public final class EchoCompassSystem {
 		private long centerPos;
 		private long lockedTarget;
 		private long nextSearch;
+		private long lastPulseAt;
 		private long nextPulse;
 		private long nextMessage;
+		private long messageWindowEnds;
 		private long outOfRangeSince;
-		private double spinPhase;
+		private long outsideDetectionLostSince = -1L;
 		private int lastRemainingCount = -1;
 		private boolean noTargetNotified;
+		private boolean outsideDetectionLatched;
 
 		private Tracking(long now) {
 			this.nextSearch = now;
+			this.lastPulseAt = now;
 			this.nextPulse = now;
 			this.nextMessage = now;
 		}

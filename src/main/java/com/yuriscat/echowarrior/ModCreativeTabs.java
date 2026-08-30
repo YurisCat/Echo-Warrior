@@ -1,11 +1,15 @@
 package com.yuriscat.echowarrior;
 
+import com.yuriscat.echowarrior.knowledge.KnowledgeCatalog;
+import com.yuriscat.echowarrior.knowledge.KnowledgeStackData;
 import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.Map;
 
 public final class ModCreativeTabs {
 	public static final CreativeModeTab ECHO_WARRIOR = Registry.register(
@@ -17,7 +21,13 @@ public final class ModCreativeTabs {
 					.displayItems((parameters, output) -> {
 						output.accept(ModItems.ECHO_COMPASS);
 						output.accept(ModItems.TEST_ECHO_SUMMONER);
-						output.accept(ModItems.SMALL_KNOWLEDGE);
+						for (KnowledgeCatalog.Entry entry : KnowledgeCatalog.entries()) {
+							output.accept(KnowledgeStackData.fragment(entry.id()));
+						}
+						output.accept(KnowledgeStackData.collection(Map.of(
+								"roman_tortoise_limits", 1,
+								"aztec_macuahuitl_edges", 1
+						), "roman_tortoise_limits"));
 						output.accept(ModItems.COURAGE_LEGACY);
 						output.accept(ModItems.FORTITUDE_LEGACY);
 						output.accept(ModItems.PURITY_LEGACY);

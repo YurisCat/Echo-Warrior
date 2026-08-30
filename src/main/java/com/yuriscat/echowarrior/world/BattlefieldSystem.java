@@ -15,9 +15,7 @@ import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,7 +34,6 @@ import net.minecraft.world.level.block.entity.BrushableBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.storage.loot.LootTable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,11 +46,16 @@ import java.util.UUID;
 public final class BattlefieldSystem {
 	public static final AttachmentType<Boolean> PLAYER_MODIFIED = AttachmentRegistry.createPersistent(
 			EchoWarrior.id("player_modified_chunk"), Codec.BOOL);
-	private static final ResourceKey<LootTable> COMMON_LOOT = ResourceKey.create(
-			Registries.LOOT_TABLE, EchoWarrior.id("archaeology/battlefield_common"));
-	private static final ResourceKey<LootTable> GUARANTEED_LOOT = ResourceKey.create(
-			Registries.LOOT_TABLE, EchoWarrior.id("archaeology/battlefield_guaranteed_relic"));
 	private static final int FORCED_ATTEMPTS_PER_REGION = 4;
+	private static final int REPLACEMENT_IDEAL_ATTEMPTS = 8;
+	private static final int REPLACEMENT_NORMAL_ATTEMPTS = 24;
+	private static final int REPLACEMENT_WIDE_ATTEMPTS = 48;
+	private static final int REPLACEMENT_IDEAL_MIN_DISTANCE = 640;
+	private static final int REPLACEMENT_IDEAL_MAX_DISTANCE = 720;
+	private static final int REPLACEMENT_NORMAL_MIN_DISTANCE = 512;
+	private static final int REPLACEMENT_NORMAL_MAX_DISTANCE = 896;
+	private static final int REPLACEMENT_WIDE_MAX_DISTANCE = 1024;
+	private static final int REPLACEMENT_FALLBACK_MAX_DISTANCE = 1280;
 	private static final LongSet PENDING_REGIONS = new LongOpenHashSet();
 	private static final Map<Long, LongSet> LOADED_REGION_CHUNKS = new HashMap<>();
 	private static final Map<UUID, ForcedGenerationJob> FORCED_JOBS = new HashMap<>();
@@ -120,6 +122,7 @@ public final class BattlefieldSystem {
 		ServerLevel level = server.getLevel(Level.OVERWORLD);
 		if (level == null) return;
 		tickForcedGeneration(server, level);
+		tickReplacementGeneration(level);
 		if (PENDING_REGIONS.isEmpty() || level.getGameTime() % 20L != 0L) return;
 		BattlefieldSavedData data = BattlefieldSavedData.get(level);
 		long now = level.getGameTime();
@@ -141,7 +144,7 @@ public final class BattlefieldSystem {
 			if (candidateChunk == null) continue;
 			Placement placement = findAndPlace(level, data, state, candidateChunk);
 			if (placement != null) {
-				data.activate(key, placement.center, placement.relic, placement.brushables);
+				data.activate(key, placement.center, placement.relic, placement.culture.id(), placement.brushables);
 				data.markPlaced(now);
 				PENDING_REGIONS.remove(key);
 				LOADED_REGION_CHUNKS.remove(key);
@@ -151,6 +154,102 @@ public final class BattlefieldSystem {
 			}
 			data.defer(key, now + 200L);
 		}
+	}
+
+	private static void tickReplacementGeneration(ServerLevel level) {
+		long now = level.getGameTime();
+		if (now % 20L != 0L) return;
+		BattlefieldSavedData data = BattlefieldSavedData.get(level);
+		BattlefieldSavedData.ReplacementJob job = data.nextReadyReplacement(now);
+		if (job == null || now - data.lastPlacementTick() < 600L) return;
+
+		Placement placement;
+		forceGenerationLoading = true;
+		try {
+			placement = tryReplacementAttempt(level, data, job);
+		} finally {
+			forceGenerationLoading = false;
+		}
+		if (placement == null) {
+			int nextAttempt = job.attempts() + 1;
+			long retryDelay = nextAttempt % 8 == 0 ? 200L : 20L;
+			data.retryReplacement(job.originCenter(), now + retryDelay);
+			return;
+		}
+
+		ChunkPos centerChunk = new ChunkPos(
+				Math.floorDiv(placement.center.getX(), 16),
+				Math.floorDiv(placement.center.getZ(), 16));
+		BattlefieldSavedData.RegionState prepared = data.prepareReplacementRegion(level, centerChunk);
+		if (prepared == null) {
+			data.retryReplacement(job.originCenter(), now + 20L);
+			return;
+		}
+		data.activate(prepared.key(), placement.center, placement.relic, placement.culture.id(), placement.brushables);
+		data.markPlaced(now);
+		data.completeReplacement(job.originCenter());
+		PENDING_REGIONS.remove(prepared.key());
+		LOADED_REGION_CHUNKS.remove(prepared.key());
+		EchoWarrior.LOGGER.info("Generated replacement battlefield ruin at {} for completed site {}; guaranteed relic block at {}.",
+				placement.center, BlockPos.of(job.originCenter()), placement.relic);
+	}
+
+	private static Placement tryReplacementAttempt(
+			ServerLevel level,
+			BattlefieldSavedData data,
+			BattlefieldSavedData.ReplacementJob job
+	) {
+		BlockPos origin = BlockPos.of(job.originCenter());
+		ReplacementDistance distance = replacementDistance(job.attempts());
+		long attemptSeed = job.seed() ^ (long)job.attempts() * 0x9E3779B97F4A7C15L;
+		RandomSource random = RandomSource.create(attemptSeed);
+		double angle = random.nextDouble() * Math.PI * 2.0;
+		double targetDistance = distance.minimum
+				+ random.nextDouble() * (distance.maximum - distance.minimum);
+		int targetX = origin.getX() + (int)Math.round(Math.cos(angle) * targetDistance);
+		int targetZ = origin.getZ() + (int)Math.round(Math.sin(angle) * targetDistance);
+		ChunkPos candidateChunk = new ChunkPos(Math.floorDiv(targetX, 16), Math.floorDiv(targetZ, 16));
+
+		int originRegionX = Math.floorDiv(Math.floorDiv(origin.getX(), 16), BattlefieldSavedData.REGION_CHUNKS);
+		int originRegionZ = Math.floorDiv(Math.floorDiv(origin.getZ(), 16), BattlefieldSavedData.REGION_CHUNKS);
+		int candidateRegionX = Math.floorDiv(candidateChunk.x(), BattlefieldSavedData.REGION_CHUNKS);
+		int candidateRegionZ = Math.floorDiv(candidateChunk.z(), BattlefieldSavedData.REGION_CHUNKS);
+		if (originRegionX == candidateRegionX && originRegionZ == candidateRegionZ
+				|| !data.canUseReplacementRegion(candidateChunk)) return null;
+
+		level.getChunk(candidateChunk.x(), candidateChunk.z());
+		double minimumSqr = (double)distance.minimum * distance.minimum;
+		double maximumSqr = (double)distance.maximum * distance.maximum;
+		for (int localAttempt = 0; localAttempt < 8; localAttempt++) {
+			int x = candidateChunk.getMinBlockX() + 2 + random.nextInt(12);
+			int z = candidateChunk.getMinBlockZ() + 2 + random.nextInt(12);
+			BlockPos horizontal = new BlockPos(x, origin.getY(), z);
+			double actualDistance = horizontalDistanceSqr(origin, horizontal);
+			if (actualDistance < minimumSqr || actualDistance > maximumSqr) continue;
+			int radius = 7 + random.nextInt(4);
+			int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+			BlockPos center = new BlockPos(x, surface, z);
+			if (!level.getBiome(center).is(ModTags.HAS_BATTLEFIELD_RUIN)
+					|| !data.isFarEnoughFromKnownSites(center, 512.0)) continue;
+			loadSiteChunks(level, x, z, radius);
+			if (!isSafeSite(level, data, center, radius)) continue;
+			Placement placement = placeSite(level, center, radius, random);
+			if (placement != null) return placement;
+		}
+		return null;
+	}
+
+	private static ReplacementDistance replacementDistance(int attempts) {
+		if (attempts < REPLACEMENT_IDEAL_ATTEMPTS) {
+			return new ReplacementDistance(REPLACEMENT_IDEAL_MIN_DISTANCE, REPLACEMENT_IDEAL_MAX_DISTANCE);
+		}
+		if (attempts < REPLACEMENT_NORMAL_ATTEMPTS) {
+			return new ReplacementDistance(REPLACEMENT_NORMAL_MIN_DISTANCE, REPLACEMENT_NORMAL_MAX_DISTANCE);
+		}
+		if (attempts < REPLACEMENT_WIDE_ATTEMPTS) {
+			return new ReplacementDistance(REPLACEMENT_NORMAL_MIN_DISTANCE, REPLACEMENT_WIDE_MAX_DISTANCE);
+		}
+		return new ReplacementDistance(REPLACEMENT_NORMAL_MIN_DISTANCE, REPLACEMENT_FALLBACK_MAX_DISTANCE);
 	}
 
 	private static ChunkPos chooseLoadedCandidate(
@@ -291,7 +390,7 @@ public final class BattlefieldSystem {
 				Math.floorDiv(placement.center.getX(), 16),
 				Math.floorDiv(placement.center.getZ(), 16));
 		BattlefieldSavedData.RegionState prepared = data.prepareForcedRegion(level, centerChunk);
-		data.activate(prepared.key(), placement.center, placement.relic, placement.brushables);
+		data.activate(prepared.key(), placement.center, placement.relic, placement.culture.id(), placement.brushables);
 		data.markPlaced(level.getGameTime());
 		PENDING_REGIONS.remove(prepared.key());
 		LOADED_REGION_CHUNKS.remove(prepared.key());
@@ -379,6 +478,7 @@ public final class BattlefieldSystem {
 	}
 
 	private static Placement placeSite(ServerLevel level, BlockPos center, int radius, RandomSource random) {
+		BattlefieldCulture culture = BattlefieldCulture.random(random);
 		List<BlockPos> floorPositions = new ArrayList<>();
 		for (int dx = -radius; dx <= radius; dx++) {
 			for (int dz = -radius; dz <= radius; dz++) {
@@ -403,10 +503,10 @@ public final class BattlefieldSystem {
 			Block block = suspiciousFor(level.getBlockState(pos));
 			level.setBlock(pos, block.defaultBlockState(), Block.UPDATE_ALL);
 			if (level.getBlockEntity(pos) instanceof BrushableBlockEntity brushable) {
-				brushable.setLootTable(pos.equals(guaranteed) ? GUARANTEED_LOOT : COMMON_LOOT, random.nextLong());
+				brushable.setLootTable(pos.equals(guaranteed) ? culture.guaranteedLoot() : culture.commonLoot(), random.nextLong());
 			}
 		}
-		return new Placement(center, guaranteed, brushables);
+		return new Placement(center, guaranteed, culture, brushables);
 	}
 
 	private static void clearVegetation(ServerLevel level, BlockPos pos) {
@@ -458,6 +558,9 @@ public final class BattlefieldSystem {
 	private record RegionCandidate(int regionX, int regionZ, double distanceSqr) {
 	}
 
+	private record ReplacementDistance(int minimum, int maximum) {
+	}
+
 	private static final class ForcedGenerationJob {
 		private final UUID requester;
 		private final BlockPos origin;
@@ -489,6 +592,6 @@ public final class BattlefieldSystem {
 		}
 	}
 
-	private record Placement(BlockPos center, BlockPos relic, List<BlockPos> brushables) {
+	private record Placement(BlockPos center, BlockPos relic, BattlefieldCulture culture, List<BlockPos> brushables) {
 	}
 }

@@ -1,0 +1,16 @@
+{
+  "replace": false,
+  "values": [
+    "echo_warrior:feast_ham_accessory",
+    "echo_warrior:light_gathering_magnet_accessory",
+    "echo_warrior:spiked_armor_accessory",
+    "echo_warrior:fractured_crystal_blade_accessory",
+    "echo_warrior:sunwheel_garland_accessory",
+    "echo_warrior:training_notes_accessory",
+    "echo_warrior:moondew_bottle_accessory",
+    "echo_warrior:hollow_bird_bone_accessory",
+    "echo_warrior:chainmail_armor_accessory",
+    "echo_warrior:mountain_burden_blade_accessory",
+    "echo_warrior:battle_blindfold_accessory"
+  ]
+}

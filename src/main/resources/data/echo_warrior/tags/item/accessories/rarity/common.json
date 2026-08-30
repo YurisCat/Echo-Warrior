@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "echo_warrior:plate_armor_accessory",
+    "echo_warrior:hawkeye_lens_accessory",
+    "echo_warrior:tomato_fish_accessory",
+    "echo_warrior:battle_worn_whetstone_accessory",
+    "echo_warrior:twin_oath_badge_accessory",
+    "echo_warrior:heart_sprout_amber_accessory",
+    "echo_warrior:substitute_doll_accessory",
+    "echo_warrior:windchaser_feather_accessory"
+  ]
+}

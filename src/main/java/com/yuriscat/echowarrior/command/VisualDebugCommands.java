@@ -202,8 +202,10 @@ public final class VisualDebugCommands {
 	private static int reportNoActiveBattlefield(CommandSourceStack source, BattlefieldSavedData data) {
 		int waiting = data.count(BattlefieldSavedData.Status.WAITING);
 		int cooldown = data.count(BattlefieldSavedData.Status.COOLDOWN);
+		int replacements = data.replacementJobCount();
 		source.sendFailure(Component.literal("当前索引中没有已生成且未完成的战场遗迹；等待生成区域 "
-				+ waiting + " 个，冷却中区域 " + cooldown + " 个。请等待自然加载区块中的生成尝试。"));
+				+ waiting + " 个，冷却中区域 " + cooldown + " 个，异地补位任务 " + replacements
+				+ " 个。请等待生成尝试。"));
 		return 0;
 	}
 

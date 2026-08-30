@@ -1,44 +1,447 @@
 {
   "model": {
-    "type": "minecraft:range_dispatch",
-    "property": "minecraft:compass",
-    "target": "lodestone",
-    "wobble": false,
-    "scale": 32.0,
-    "entries": [
-      { "threshold": 0.0, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_16" } },
-      { "threshold": 0.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_17" } },
-      { "threshold": 1.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_18" } },
-      { "threshold": 2.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_19" } },
-      { "threshold": 3.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_20" } },
-      { "threshold": 4.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_21" } },
-      { "threshold": 5.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_22" } },
-      { "threshold": 6.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_23" } },
-      { "threshold": 7.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_24" } },
-      { "threshold": 8.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_25" } },
-      { "threshold": 9.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_26" } },
-      { "threshold": 10.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_27" } },
-      { "threshold": 11.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_28" } },
-      { "threshold": 12.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_29" } },
-      { "threshold": 13.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_30" } },
-      { "threshold": 14.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_31" } },
-      { "threshold": 15.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_00" } },
-      { "threshold": 16.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_01" } },
-      { "threshold": 17.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_02" } },
-      { "threshold": 18.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_03" } },
-      { "threshold": 19.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_04" } },
-      { "threshold": 20.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_05" } },
-      { "threshold": 21.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_06" } },
-      { "threshold": 22.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_07" } },
-      { "threshold": 23.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_08" } },
-      { "threshold": 24.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_09" } },
-      { "threshold": 25.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_10" } },
-      { "threshold": 26.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_11" } },
-      { "threshold": 27.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_12" } },
-      { "threshold": 28.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_13" } },
-      { "threshold": 29.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_14" } },
-      { "threshold": 30.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_15" } },
-      { "threshold": 31.5, "model": { "type": "minecraft:model", "model": "minecraft:item/compass_16" } }
+    "type": "minecraft:composite",
+    "models": [
+      {
+        "type": "minecraft:model",
+        "model": "echo_warrior:item/echo_compass_background"
+      },
+      {
+        "type": "minecraft:range_dispatch",
+        "property": "echo_warrior:echo_compass_angle",
+        "scale": 32.0,
+        "entries": [
+          {
+            "threshold": 0.0,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_16",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 0.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_17",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 1.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_18",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 2.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_19",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 3.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_20",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 4.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_21",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 5.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_22",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 6.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_23",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 7.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_24",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 8.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_25",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 9.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_26",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 10.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_27",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 11.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_28",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 12.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_29",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 13.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_30",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 14.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_31",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 15.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_00",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 16.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_01",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 17.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_02",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 18.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_03",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 19.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_04",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 20.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_05",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 21.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_06",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 22.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_07",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 23.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_08",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 24.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_09",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 25.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_10",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 26.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_11",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 27.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_12",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 28.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_13",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 29.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_14",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 30.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_15",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          },
+          {
+            "threshold": 31.5,
+            "model": {
+              "type": "minecraft:model",
+              "model": "echo_warrior:item/echo_compass_pointer_16",
+              "tints": [
+                {
+                  "type": "echo_warrior:echo_compass_pointer"
+                }
+              ]
+            }
+          }
+        ],
+        "fallback": {
+          "type": "minecraft:model",
+          "model": "echo_warrior:item/echo_compass_pointer_16",
+          "tints": [
+            {
+              "type": "echo_warrior:echo_compass_pointer"
+            }
+          ]
+        }
+      },
+      {
+        "type": "minecraft:model",
+        "model": "echo_warrior:item/echo_compass_highlight"
+      },
+      {
+        "type": "minecraft:condition",
+        "property": "echo_warrior:echo_compass_gold_frame",
+        "on_true": {
+          "type": "minecraft:model",
+          "model": "echo_warrior:item/echo_compass_frame_gold"
+        },
+        "on_false": {
+          "type": "minecraft:condition",
+          "property": "echo_warrior:echo_compass_iron_frame",
+          "on_true": {
+            "type": "minecraft:model",
+            "model": "echo_warrior:item/echo_compass_frame_iron"
+          },
+          "on_false": {
+            "type": "minecraft:model",
+            "model": "echo_warrior:item/echo_compass_frame_copper"
+          }
+        }
+      }
     ]
   }
 }

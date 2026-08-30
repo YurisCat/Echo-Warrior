@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "echo_warrior:substitute_doll_accessory",
+    "echo_warrior:windchaser_feather_accessory",
+    "echo_warrior:chainmail_armor_accessory",
+    "echo_warrior:mountain_burden_blade_accessory",
+    "echo_warrior:battle_blindfold_accessory"
+  ]
+}

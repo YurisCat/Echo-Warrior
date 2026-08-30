@@ -1,0 +1,201 @@
+{
+  "type": "minecraft:archaeology",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:iron_ingot",
+          "weight": 264000
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:courage_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:fortitude_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:purity_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:wisdom_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:craft_legacy",
+          "weight": 26400
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:gold_ingot",
+          "weight": 52800
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:netherite_scrap",
+          "weight": 1980
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "china_crossbow_trigger"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "china_terracotta_colors"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "china_bamboo_slips"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "china_great_wall_network"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "china_ji_combined_weapon"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "china_cavalry_reforms"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "china_guandao_late"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:knowledge_fragment",
+          "weight": 24750,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:custom_data": {
+                  "EchoWarriorKnowledgeId": "china_guan_yu_afterlife"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:guandao_warrior_relic",
+          "weight": 9900
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:battle_worn_whetstone_accessory",
+          "weight": 377
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:twin_oath_badge_accessory",
+          "weight": 377
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:heart_sprout_amber_accessory",
+          "weight": 377
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:peacemaker_accessory",
+          "weight": 94
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:cat_bell_fish_charm_accessory",
+          "weight": 95
+        }
+      ]
+    }
+  ],
+  "random_sequence": "echo_warrior:archaeology/battlefield_common_chinese"
+}

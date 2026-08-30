@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "echo_warrior:spiked_armor_accessory",
+    "echo_warrior:fractured_crystal_blade_accessory",
+    "echo_warrior:sunwheel_garland_accessory",
+    "echo_warrior:training_notes_accessory",
+    "echo_warrior:crack_ring_hammer_charm_accessory"
+  ]
+}
