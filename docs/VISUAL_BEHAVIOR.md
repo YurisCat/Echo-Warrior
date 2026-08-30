@@ -184,13 +184,14 @@ Model animation previews use a separate command branch:
 
 ```text
 /echo_warrior animation attack
+/echo_warrior animation attack_recover
 /echo_warrior animation hurt
 /echo_warrior animation shield_raise
 /echo_warrior animation shield_lower
 /echo_warrior animation reset
 ```
 
-Previewed attack animations do not deal damage. Shield raise/lower remain development-only previews until the shield skill is designed.
+`attack` previews the complete first-hit → follow-up chain, while `attack_recover` switches from the same first-hit terminal pose into the early recovery branch. Previewed attack animations do not deal damage. Shield raise/lower commands remain development previews of the poses also used by gameplay shield skills.
 
 ## Asset pipeline
 
@@ -198,6 +199,8 @@ Run the updater after changing the source model:
 
 ```text
 python scripts/update_roman_visual_assets.py import "path/to/modeler-delivery.bbmodel"
+python scripts/update_roman_visual_assets.py import-locomotion "path/to/modeler-delivery.bbmodel"
+python scripts/split_roman_animations.py
 python scripts/update_roman_visual_assets.py update
 python scripts/update_roman_visual_assets.py validate
 ```
@@ -210,3 +213,7 @@ python scripts/update_aztec_visual_assets.py validate
 ```
 
 Import mode accepts a complete modeler delivery, preserves the project's canonical UUID-to-bone naming, normalizes animation names, strips code-owned face keyframes, updates compatible GeckoLib pivots and animations, extracts the embedded runtime texture, and writes a model-artist handoff copy under `outputs/`. It deliberately stops if cube geometry, UVs, or UUIDs changed in a way that requires a reviewed full geometry export.
+
+`import-locomotion` is the restricted path for a delivery whose attack or reaction work is not ready to ship. It verifies matching cube and rig UUIDs, pivots, geometry, and UVs, then replaces only Roman `idle` and `walk` in the canonical Blockbench source and runtime animation file. Existing geometry, texture, attack, hurt, and shield clips remain untouched, while the normal code-owned face-bone stripping and validation still apply.
+
+The untouched 2026-08-26 Roman modeler delivery containing the new locomotion plus `attack_1` and `attack_2` is archived at `assets-source/blockbench/deliveries/roman_legionary_2026-08-26_full-animation-delivery.bbmodel`. `split_roman_animations.py` verifies that its geometry and rig still match the canonical model, imports only the two authored attacks, samples their Catmull-Rom curves on the original 24 FPS grid, and writes linear `attack_first`, `attack_follow`, and `attack_recover` clips. The recovery start is smoothly re-anchored to the exact `attack_2` branch pose. These derived runtime clips deliberately omit the shared root, upper-body locomotion root, lower-body/leg chain, and waist-cloth tracks, allowing idle/walk to remain the lower animation layer while the attack owns the torso, arms, shield, and weapon. The server synchronizes a Roman attack-advance flag only when its collision- and terrain-safe pursuit actually changes position; the client plays the walking lower body at the committed attack-speed scale only while that flag is active, then returns immediately to idle legs. Original `attack_1`/`attack_2` data and all code-owned face tracks remain untouched. Runtime assets are generated from the project-owned canonical model and never load the archive directly.

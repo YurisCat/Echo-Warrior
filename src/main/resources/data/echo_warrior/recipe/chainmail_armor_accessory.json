@@ -1,1 +1,1 @@
-{"type":"minecraft:crafting_shaped","category":"equipment","pattern":[" H ","FCF"," L "],"key":{"H":"minecraft:iron_helmet","C":"minecraft:iron_chestplate","L":"minecraft:iron_leggings","F":"echo_warrior:fortitude_legacy"},"result":{"id":"echo_warrior:chainmail_armor_accessory"}}
+{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["WWW","FCF","WWW"],"key":{"W":"#minecraft:wool","F":"echo_warrior:fortitude_legacy","C":"minecraft:iron_chestplate"},"result":{"id":"echo_warrior:chainmail_armor_accessory"}}

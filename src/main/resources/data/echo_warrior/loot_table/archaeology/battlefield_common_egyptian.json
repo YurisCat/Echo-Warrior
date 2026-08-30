@@ -7,47 +7,47 @@
         {
           "type": "minecraft:item",
           "name": "minecraft:iron_ingot",
-          "weight": 264000
+          "weight": 7560
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:courage_legacy",
-          "weight": 26400
+          "weight": 1008
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:fortitude_legacy",
-          "weight": 26400
+          "weight": 1008
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:purity_legacy",
-          "weight": 26400
+          "weight": 1008
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:wisdom_legacy",
-          "weight": 26400
+          "weight": 1008
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:craft_legacy",
-          "weight": 26400
+          "weight": 1008
         },
         {
           "type": "minecraft:item",
           "name": "minecraft:gold_ingot",
-          "weight": 52800
+          "weight": 5040
         },
         {
           "type": "minecraft:item",
           "name": "minecraft:netherite_scrap",
-          "weight": 1980
+          "weight": 1260
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -62,7 +62,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -77,7 +77,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -92,7 +92,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -107,7 +107,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -122,7 +122,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -137,7 +137,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -152,7 +152,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -167,32 +167,32 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:egyptian_archer_relic",
-          "weight": 9900
+          "weight": 2520
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:tomato_fish_accessory",
-          "weight": 792
+          "weight": 3024
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:moondew_bottle_accessory",
-          "weight": 198
+          "weight": 756
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:hollow_bird_bone_accessory",
-          "weight": 198
+          "weight": 756
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:blood_pact_fang_accessory",
-          "weight": 66
+          "weight": 252
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:memory_ritual_knife_accessory",
-          "weight": 66
+          "weight": 252
         }
       ]
     }

@@ -53,15 +53,27 @@ CULTURES = {
     },
 }
 
+# User-facing category weights are 3 / 3 / 2 / 2 / 1 / 0.5 / 2.
+# A 2520 multiplier keeps every category, knowledge page, legacy, and
+# culture-specific rarity split integral, including cultures missing a tier.
+WEIGHT_UNIT = 2520
+KNOWLEDGE_TOTAL_WEIGHT = 3 * WEIGHT_UNIT
+KNOWLEDGE_ENTRY_WEIGHT = KNOWLEDGE_TOTAL_WEIGHT // 8
+LEGACY_TOTAL_WEIGHT = 2 * WEIGHT_UNIT
+LEGACY_ENTRY_WEIGHT = LEGACY_TOTAL_WEIGHT // 5
+RELIC_WEIGHT = WEIGHT_UNIT
+ACCESSORY_TOTAL_WEIGHT = 2 * WEIGHT_UNIT
+TOTAL_WEIGHT = 27 * WEIGHT_UNIT // 2
+
 NEUTRAL_ENTRIES = [
-    ("minecraft:iron_ingot", 264000),
-    ("echo_warrior:courage_legacy", 26400),
-    ("echo_warrior:fortitude_legacy", 26400),
-    ("echo_warrior:purity_legacy", 26400),
-    ("echo_warrior:wisdom_legacy", 26400),
-    ("echo_warrior:craft_legacy", 26400),
-    ("minecraft:gold_ingot", 52800),
-    ("minecraft:netherite_scrap", 1980),
+    ("minecraft:iron_ingot", 3 * WEIGHT_UNIT),
+    ("echo_warrior:courage_legacy", LEGACY_ENTRY_WEIGHT),
+    ("echo_warrior:fortitude_legacy", LEGACY_ENTRY_WEIGHT),
+    ("echo_warrior:purity_legacy", LEGACY_ENTRY_WEIGHT),
+    ("echo_warrior:wisdom_legacy", LEGACY_ENTRY_WEIGHT),
+    ("echo_warrior:craft_legacy", LEGACY_ENTRY_WEIGHT),
+    ("minecraft:gold_ingot", 2 * WEIGHT_UNIT),
+    ("minecraft:netherite_scrap", WEIGHT_UNIT // 2),
 ]
 
 
@@ -73,10 +85,10 @@ def write_json(path: Path, value: object) -> None:
 def weighted_accessories(groups: dict[str, list[str]]) -> list[tuple[str, int]]:
     available = [(name, mass) for name, mass in (("common", 60), ("uncommon", 30), ("rare", 10)) if groups[name]]
     available_mass = sum(mass for _, mass in available)
-    remaining = 1320
+    remaining = ACCESSORY_TOTAL_WEIGHT
     result: list[tuple[str, int]] = []
     for tier_index, (tier, mass) in enumerate(available):
-        tier_total = remaining if tier_index == len(available) - 1 else round(1320 * mass / available_mass)
+        tier_total = remaining if tier_index == len(available) - 1 else round(ACCESSORY_TOTAL_WEIGHT * mass / available_mass)
         remaining -= tier_total
         items = groups[tier]
         item_remaining = tier_total
@@ -95,7 +107,7 @@ def knowledge_entry(entry_id: str) -> dict[str, object]:
     return {
         "type": "minecraft:item",
         "name": "echo_warrior:knowledge_fragment",
-        "weight": 24750,
+        "weight": KNOWLEDGE_ENTRY_WEIGHT,
         "functions": [{
             "function": "minecraft:set_components",
             "components": {"minecraft:custom_data": {"EchoWarriorKnowledgeId": entry_id}},
@@ -153,12 +165,12 @@ def main() -> None:
     for culture, config in CULTURES.items():
         entries = [item_entry(name, weight) for name, weight in NEUTRAL_ENTRIES]
         entries.extend(knowledge_entry(entry_id) for entry_id in knowledge_by_culture[culture])
-        entries.append(item_entry(config["relic"], 9900))
+        entries.append(item_entry(config["relic"], RELIC_WEIGHT))
         accessory_weights = weighted_accessories(config["accessories"])
         entries.extend(item_entry(name, weight) for name, weight in accessory_weights)
         total = sum(entry["weight"] for entry in entries)
-        if total != 660000:
-            raise ValueError(f"{culture} battlefield weights total {total}, expected 660000")
+        if total != TOTAL_WEIGHT:
+            raise ValueError(f"{culture} battlefield weights total {total}, expected {TOTAL_WEIGHT}")
         write_json(loot_dir / f"battlefield_common_{culture}.json", {
             "type": "minecraft:archaeology",
             "pools": [{"rolls": 1, "entries": entries}],

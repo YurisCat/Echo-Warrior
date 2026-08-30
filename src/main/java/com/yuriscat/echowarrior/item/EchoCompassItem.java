@@ -60,7 +60,6 @@ public final class EchoCompassItem extends Item {
 						.withStyle(style -> style.withColor(0xEEC39A)))
 				.append(Component.translatable("item.echo_warrior.echo_compass.tooltip.brush_suffix")
 						.withStyle(ChatFormatting.GRAY)));
-		builder.accept(Component.empty());
 		builder.accept(Component.translatable("item.echo_warrior.echo_compass.tooltip.sound_hint")
 				.withStyle(ChatFormatting.DARK_GRAY));
 	}

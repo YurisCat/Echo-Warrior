@@ -9,7 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.Map;
+import java.util.LinkedHashMap;
 
 public final class ModCreativeTabs {
 	public static final CreativeModeTab ECHO_WARRIOR = Registry.register(
@@ -21,18 +21,30 @@ public final class ModCreativeTabs {
 					.displayItems((parameters, output) -> {
 						output.accept(ModItems.ECHO_COMPASS);
 						output.accept(ModItems.TEST_ECHO_SUMMONER);
-						for (KnowledgeCatalog.Entry entry : KnowledgeCatalog.entries()) {
-							output.accept(KnowledgeStackData.fragment(entry.id()));
-						}
-						output.accept(KnowledgeStackData.collection(Map.of(
-								"roman_tortoise_limits", 1,
-								"aztec_macuahuitl_edges", 1
-						), "roman_tortoise_limits"));
+						output.accept(ModBlocks.ECHO_RECYCLER);
 						output.accept(ModItems.COURAGE_LEGACY);
 						output.accept(ModItems.FORTITUDE_LEGACY);
 						output.accept(ModItems.PURITY_LEGACY);
 						output.accept(ModItems.WISDOM_LEGACY);
 						output.accept(ModItems.CRAFT_LEGACY);
+						output.accept(ModBlocks.SUSPICIOUS_GRASS_BLOCK);
+						output.accept(ModBlocks.SUSPICIOUS_DIRT);
+						output.accept(new ItemStack(ModItems.ROMAN_LEGIONARY_RELIC));
+						output.accept(new ItemStack(ModItems.AZTEC_WARRIOR_RELIC));
+						output.accept(new ItemStack(ModItems.EGYPTIAN_ARCHER_RELIC));
+						output.accept(new ItemStack(ModItems.GUANDAO_WARRIOR_RELIC));
+						output.accept(new ItemStack(ModItems.JAPANESE_SAMURAI_RELIC));
+					})
+					.build()
+	);
+
+	public static final CreativeModeTab ACCESSORIES = Registry.register(
+			BuiltInRegistries.CREATIVE_MODE_TAB,
+			EchoWarrior.id("echo_warrior_accessories"),
+			FabricCreativeModeTab.builder()
+					.title(Component.translatable("itemGroup.echo_warrior.accessories"))
+					.icon(() -> new ItemStack(ModItems.MEMORY_RITUAL_KNIFE_ACCESSORY))
+					.displayItems((parameters, output) -> {
 						output.accept(ModItems.PLATE_ARMOR_ACCESSORY);
 						output.accept(ModItems.CHAINMAIL_ARMOR_ACCESSORY);
 						output.accept(ModItems.SPIKED_ARMOR_ACCESSORY);
@@ -58,18 +70,35 @@ public final class ModCreativeTabs {
 						output.accept(ModItems.HAWKEYE_LENS_ACCESSORY);
 						output.accept(ModItems.WINDCHASER_FEATHER_ACCESSORY);
 						output.accept(ModItems.HOLLOW_BIRD_BONE_ACCESSORY);
-						output.accept(ModBlocks.SUSPICIOUS_GRASS_BLOCK);
-						output.accept(ModBlocks.SUSPICIOUS_DIRT);
-						output.accept(new ItemStack(ModItems.ROMAN_LEGIONARY_RELIC));
-						output.accept(new ItemStack(ModItems.AZTEC_WARRIOR_RELIC));
-						output.accept(new ItemStack(ModItems.EGYPTIAN_ARCHER_RELIC));
-						output.accept(new ItemStack(ModItems.GUANDAO_WARRIOR_RELIC));
-						output.accept(new ItemStack(ModItems.JAPANESE_SAMURAI_RELIC));
+					})
+					.build()
+	);
+
+	public static final CreativeModeTab KNOWLEDGE_FRAGMENTS = Registry.register(
+			BuiltInRegistries.CREATIVE_MODE_TAB,
+			EchoWarrior.id("echo_warrior_knowledge_fragments"),
+			FabricCreativeModeTab.builder()
+					.title(Component.translatable("itemGroup.echo_warrior.knowledge_fragments"))
+					.icon(() -> new ItemStack(ModItems.KNOWLEDGE_FRAGMENT_COLLECTION))
+					.displayItems((parameters, output) -> {
+						output.accept(fullKnowledgeCollection());
+						for (KnowledgeCatalog.Entry entry : KnowledgeCatalog.entries()) {
+							output.accept(KnowledgeStackData.fragment(entry.id()));
+						}
 					})
 					.build()
 	);
 
 	private ModCreativeTabs() {
+	}
+
+	private static ItemStack fullKnowledgeCollection() {
+		LinkedHashMap<String, Integer> pages = new LinkedHashMap<>();
+		for (KnowledgeCatalog.Entry entry : KnowledgeCatalog.entries()) {
+			pages.put(entry.id(), 1);
+		}
+		String firstPage = KnowledgeCatalog.entries().isEmpty() ? "" : KnowledgeCatalog.entries().getFirst().id();
+		return KnowledgeStackData.collection(pages, firstPage);
 	}
 
 	public static void initialize() {

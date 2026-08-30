@@ -1,5 +1,6 @@
 package com.yuriscat.echowarrior.item;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -24,7 +25,10 @@ import java.util.function.Consumer;
 
 /** A hold-to-use inheritance item. Craft inheritance is recipe-only. */
 public final class LegacyItem extends Item {
-	private static final int USE_TICKS = 32;
+	private static final int USE_TICKS = 16;
+	private static final int POSITIVE_COLOR = 0x93CE85;
+	private static final int NEGATIVE_COLOR = 0xE46D6D;
+	private static final int TERM_COLOR = KnowledgeTooltip.KNOWLEDGE_COLOR;
 	private final LegacyType type;
 
 	public LegacyItem(Properties properties, LegacyType type) {
@@ -34,6 +38,12 @@ public final class LegacyItem extends Item {
 
 	public LegacyType type() {
 		return this.type;
+	}
+
+	@Override
+	public Component getName(ItemStack stack) {
+		return Component.translatable(this.getDescriptionId())
+				.withStyle(style -> style.withColor(this.type.nameColor));
 	}
 
 	@Override
@@ -56,10 +66,32 @@ public final class LegacyItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
 			Consumer<Component> builder, TooltipFlag flag) {
-		builder.accept(Component.translatable("item.echo_warrior.legacy." + this.type.id + ".effect"));
-		builder.accept(Component.translatable(this.type == LegacyType.CRAFT
-				? "item.echo_warrior.legacy.craft_hint"
-				: "item.echo_warrior.legacy.hold_hint"));
+		String prefix = "item.echo_warrior.legacy." + this.type.id;
+		builder.accept(detailLine(prefix + ".effect", coloredTerm(prefix + ".term", this.type.effectColor)));
+		builder.accept(detailLine(
+				"item.echo_warrior.legacy.accessory_material",
+				coloredTerm("item.echo_warrior.legacy.term.accessory", TERM_COLOR)
+		));
+		if (!TooltipShiftState.isShiftDown()) {
+			builder.accept(Component.translatable("item.echo_warrior.legacy.more_hint")
+					.withStyle(ChatFormatting.DARK_GRAY));
+			return;
+		}
+
+		builder.accept(Component.translatable("item.echo_warrior.legacy.lore.1")
+				.withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+		builder.accept(Component.translatable("item.echo_warrior.legacy.lore.2")
+				.withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+	}
+
+	private static Component detailLine(String translationKey, Component... arguments) {
+		return Component.literal("+").withStyle(ChatFormatting.GRAY)
+				.append(Component.translatable(translationKey, (Object[]) arguments)
+						.withStyle(ChatFormatting.GRAY));
+	}
+
+	private static Component coloredTerm(String translationKey, int color) {
+		return Component.translatable(translationKey).withStyle(style -> style.withColor(color));
 	}
 
 	@Override
@@ -86,16 +118,20 @@ public final class LegacyItem extends Item {
 	}
 
 	public enum LegacyType {
-		COURAGE("courage"),
-		FORTITUDE("fortitude"),
-		PURITY("purity"),
-		WISDOM("wisdom"),
-		CRAFT("craft");
+		COURAGE("courage", 0xB33A24, POSITIVE_COLOR),
+		FORTITUDE("fortitude", 0x4F9E2F, POSITIVE_COLOR),
+		PURITY("purity", 0xE3E3E3, NEGATIVE_COLOR),
+		WISDOM("wisdom", 0x2A86C2, POSITIVE_COLOR),
+		CRAFT("craft", 0xE0B72D, POSITIVE_COLOR);
 
 		private final String id;
+		private final int nameColor;
+		private final int effectColor;
 
-		LegacyType(String id) {
+		LegacyType(String id, int nameColor, int effectColor) {
 			this.id = id;
+			this.nameColor = nameColor;
+			this.effectColor = effectColor;
 		}
 	}
 }

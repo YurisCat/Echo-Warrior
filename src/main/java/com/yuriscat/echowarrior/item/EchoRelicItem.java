@@ -51,32 +51,28 @@ public class EchoRelicItem extends Item {
 		}
 
 		if (!EchoRelicState.initialized(stack)) {
-			builder.accept(Component.literal("天赋：等待生成").withStyle(ChatFormatting.DARK_GRAY));
+			builder.accept(Component.translatable("tooltip.echo_warrior.relic.talents.pending")
+					.withStyle(ChatFormatting.DARK_GRAY));
 			return;
 		}
 		int mask = EchoRelicState.traitMask(stack);
 		builder.accept(Component.empty());
 		if (mask == 0) {
-			builder.accept(Component.literal("没有天赋（本遗物的随机结果）").withStyle(ChatFormatting.DARK_GRAY));
+			builder.accept(Component.translatable("tooltip.echo_warrior.relic.talents.none")
+					.withStyle(ChatFormatting.DARK_GRAY));
 			return;
 		}
-		builder.accept(Component.literal("天赋：").withStyle(ChatFormatting.GOLD));
+		builder.accept(Component.translatable("tooltip.echo_warrior.relic.talents.header")
+				.withStyle(ChatFormatting.GOLD));
 		for (EchoTrait trait : EchoTrait.values()) {
 			if ((mask & trait.mask()) == 0) {
 				continue;
 			}
-			builder.accept(Component.literal(trait.displayName()).withStyle(ChatFormatting.AQUA));
-			builder.accept(Component.literal(traitDescription(trait)).withStyle(ChatFormatting.GRAY));
+			String nameKey = trait == EchoTrait.BIOME_AFFINITY
+					? EchoRelicState.biomeAffinity(stack).nameTranslationKey()
+					: trait.nameTranslationKey();
+			builder.accept(Component.translatable(nameKey).withStyle(ChatFormatting.AQUA));
+			builder.accept(Component.translatable(trait.descriptionTranslationKey()).withStyle(ChatFormatting.GRAY));
 		}
-	}
-
-	private static String traitDescription(EchoTrait trait) {
-		return switch (trait) {
-			case BAD_TEMPER -> "召唤与自然恢复燃料消耗+20%，攻击力+4";
-			case LAZY -> "召唤与自然恢复燃料消耗-20%，移动速度-25%";
-			case COURAGE -> "攻击力+2";
-			case SKINNY -> "生命值-25%，移动速度和攻击速度+25%";
-			case STURDY -> "护甲+4，移动速度-25%";
-		};
 	}
 }

@@ -7,7 +7,7 @@ $recipeRoot = Join-Path $projectRoot 'src\main\resources\data\echo_warrior\recip
 $atlas = Get-Content -LiteralPath $atlasPath -Raw | ConvertFrom-Json
 
 $atlas.schemaVersion = 2
-$atlas.meta.lastVerified = '2026-08-28'
+$atlas.meta.lastVerified = '2026-08-30'
 
 foreach ($category in $atlas.categories) {
     if ($category.id -eq 'growth') {
@@ -83,59 +83,66 @@ $legacyOverview = [pscustomobject][ordered]@{
 }
 
 $accessoryMetadata = @(
-    [ordered]@{id='plate_armor_accessory';name='板甲';effect='+2 防御';tier='常见';art='一块厚重、边缘铆接的铁制胸甲板碎片，轮廓简洁，强调可靠防护。'},
-    [ordered]@{id='chainmail_armor_accessory';name='全身锁链甲';effect='+4 防御，陆地移动速度 -15%';tier='精良';art='折叠成一束的全身锁链甲，垂下几段清楚的铁环，显得沉重而完整。'},
-    [ordered]@{id='spiked_armor_accessory';name='尖刺护甲';effect='+1 防御；受到近战生命伤害时按实际损失 1:1 反伤';tier='精良';art='嵌着仙人掌硬刺的胸甲残片，尖刺方向外翻，危险但仍像可以佩戴的遗物。'},
-    [ordered]@{id='battle_worn_whetstone_accessory';name='战痕磨刀石';effect='+2 攻击力';tier='常见';art='布满刀痕的小磨刀石，以磨损红绳束住，边缘残留金属亮屑。'},
-    [ordered]@{id='mountain_burden_blade_accessory';name='负山巨刃';effect='+4 攻击力，陆地移动速度 -20%';tier='精良';art='尺寸夸张的暗色巨刃，刀背像压着岩层，视觉重心明显下沉。'},
-    [ordered]@{id='fractured_crystal_blade_accessory';name='裂曜晶刃';effect='+4 攻击力，-6 防御';tier='精良';art='黑曜石与紫晶构成的短剑或匕首，裂纹透亮，像随时会碎裂的玻璃大炮。'},
-    [ordered]@{id='twin_oath_badge_accessory';name='双誓徽章';effect='+1 攻击力，+2 防御';tier='常见';art='剑与盾左右咬合成一枚徽章，两个方向权重均衡，没有一方压过另一方。'},
-    [ordered]@{id='battle_blindfold_accessory';name='盲眼战带';effect='+3 攻击力，主动索敌视野 -75%';tier='精良';art='磨损的黑色蒙眼布，正中缝有暗红色眼痕，表达舍弃观察换取直觉。'},
-    [ordered]@{id='crack_ring_hammer_charm_accessory';name='裂响锤坠';effect='攻击时 30% 暴击，造成 200% 伤害并播放一次暴击音效';tier='稀有';art='带裂纹的铁锤吊坠，四周带冲击波或碎裂铃环，形体紧凑而有爆发感。'},
-    [ordered]@{id='victors_laurel_accessory';name='胜者桂冠';effect='击杀任意有效生物后恢复 10% 饰品修正后的最大生命';tier='稀有';art='金绿相间的旧桂冠，叶尖磨损，像从许多胜利者手中一路传下。'},
-    [ordered]@{id='blood_pact_fang_accessory';name='血契獠牙';effect='每个攻击窗口 30% 概率恢复 4 点生命';tier='稀有';art='用暗红绳结缠住的苍白獠牙，根部有一滴凝固血珠。'},
-    [ordered]@{id='memory_ritual_knife_accessory';name='拾忆祭刀';effect='+2 攻击力；击杀时 0.5% 概率凝炼额外传承';tier='稀有';art='短小仪式刀，刀身映出五色微光；掉落表现为从战利品记忆中凝出额外传承。'},
-    [ordered]@{id='substitute_doll_accessory';name='替身木偶';effect='受到合格攻击时有 10% 概率完全闪避';tier='常见';art='小型木制或稻草玩偶，身上有替命用的白色刻痕与重新缝合的躯干。'},
-    [ordered]@{id='heart_sprout_amber_accessory';name='心芽琥珀';effect='+6 最大生命值';tier='常见';art='琥珀内部封存心形嫩芽，温暖透明，像仍有生命在缓慢生长。'},
-    [ordered]@{id='feast_ham_accessory';name='盛宴火腿';effect='+12 最大生命值，陆地移动速度 -15%';tier='精良';art='巨大而油亮的火腿，以绳索绑成可携带的肉鸽遗物，滑稽但非常有分量。'},
-    [ordered]@{id='peacemaker_accessory';name='和平使者';effect='+20 最大生命值，-4 攻击力';tier='稀有';art='被白布封住的剑或断刃，外圈形成柔和心形，表达拒绝伤害换取生存。'},
-    [ordered]@{id='sunwheel_garland_accessory';name='日轮花冠';effect='白昼获得生命恢复 I';tier='精良';art='向日葵编成的圆形花冠，花瓣排列如太阳齿轮。'},
-    [ordered]@{id='moondew_bottle_accessory';name='月露瓶';effect='夜间获得生命恢复 I';tier='精良';art='小型蓝色玻璃瓶，瓶壁凝着月牙形露珠，内部有安静冷光。'},
-    [ordered]@{id='tomato_fish_accessory';name='番茄鱼';effect='水中移动速度 +50%';tier='常见';art='一个红色鱼玩偶，浅色腹部，带明显缝线与纽扣眼；不要画成真实鱼或靴子。'},
-    [ordered]@{id='cat_bell_fish_charm_accessory';name='猫铃鱼符';effect='6 格内持续阻止苦力怕爆炸；主动锁敌状态下允许英灵主动锁定苦力怕';tier='稀有';art='猫脸小铃铛与鱼尾护符结合，既像玩具又像昂贵的驱爆祭具。'},
-    [ordered]@{id='light_gathering_magnet_accessory';name='拾光磁石';effect='英灵击杀产生的世界经验球 +50%';tier='精良';art='马蹄形磁石吸引数颗黄绿色经验光球，光球轨迹要清楚。'},
-    [ordered]@{id='training_notes_accessory';name='练兵札记';effect='只有英灵自身的成长经验获取 +50%';tier='精良';art='用红绳束起的磨损训练札记或小册，边角有反复翻阅的卷曲。'},
-    [ordered]@{id='hawkeye_lens_accessory';name='鹰眼透镜';effect='主动索敌视野 +50%，最终不超过 32 格';tier='常见';art='黄铜单片镜或短小窥镜，镜面中有锐利鹰眼轮廓。'},
-    [ordered]@{id='windchaser_feather_accessory';name='逐风羽饰';effect='陆地移动速度 +10%';tier='常见';art='被气流向后拉直的浅色羽毛，末端绑有轻薄丝线。'},
-    [ordered]@{id='hollow_bird_bone_accessory';name='空心鸟骨';effect='陆地移动速度 +20%，-8 最大生命值';tier='精良';art='由逐风羽饰进一步制成的空心鸟骨哨，骨壁薄而脆，带少量残羽。'}
+    [ordered]@{id='plate_armor_accessory';name='罗马环片坠';effect='+2 防御';tier='常见';art='三片铜色弧形甲片叠成小坠，保留铆钉与皮绳结构。'},
+    [ordered]@{id='chainmail_armor_accessory';name='锁帷重带';effect='+4 防御，陆地移动速度 -15%';tier='精良';art='深蓝织带包裹细密锁环，中央嵌一枚银色护片。'},
+    [ordered]@{id='spiked_armor_accessory';name='黑曜荆棘符';effect='+1 防御；受到近战生命伤害时按实际损失 1:1 反伤';tier='精良';art='紫黑色黑曜石尖片交错成荆棘状护符。'},
+    [ordered]@{id='battle_worn_whetstone_accessory';name='百战砺符';effect='+2 攻击力';tier='常见';art='浅灰色穿孔砺石佩片，边缘带磨痕并系红绳。'},
+    [ordered]@{id='mountain_burden_blade_accessory';name='负山根付';effect='+4 攻击力，陆地移动速度 -20%';tier='精良';art='棕红色山形根付，体量厚重，顶部留有系绳结构。'},
+    [ordered]@{id='fractured_crystal_blade_accessory';name='裂曜晶坠';effect='+4 攻击力，-6 防御';tier='精良';art='细长紫黑晶片，裂缝与刃缘呈现明亮紫色反光。'},
+    [ordered]@{id='twin_oath_badge_accessory';name='双鱼玉徽';effect='+1 攻击力，+2 防御';tier='常见';art='米白色圆玉佩，以两条首尾相随的鱼形成中央纹样。'},
+    [ordered]@{id='battle_blindfold_accessory';name='盲剑目隐';effect='+3 攻击力，主动索敌视野 -75%';tier='精良';art='青蓝色蒙眼布带卷叠成环，结扣处带冷白高光。'},
+    [ordered]@{id='crack_ring_hammer_charm_accessory';name='裂响祭祀石';effect='攻击时 30% 暴击，造成 200% 伤害并播放一次暴击音效';tier='稀有';art='深绿色祭祀石吊坠，表面有银白色裂响纹。'},
+    [ordered]@{id='victors_laurel_accessory';name='凯旋桂冠';effect='击杀任意有效生物后恢复 10% 饰品修正后的最大生命';tier='稀有';art='铜绿色月桂叶编成开口圆环，下方垂落金色系带。'},
+    [ordered]@{id='blood_pact_fang_accessory';name='血契河马牙';effect='每个攻击窗口 30% 概率恢复 4 点生命';tier='稀有';art='弯曲象牙色河马牙，根部残留暗色束带与暖色阴影。'},
+    [ordered]@{id='memory_ritual_knife_accessory';name='阿努比斯护符';effect='+2 攻击力；击杀时 0.5% 概率凝炼额外传承';tier='稀有';art=@('最终图标为青绿色阿努比斯小像护符，以胡狼首、竖耳与直立神像构成剪影。','来源参考古埃及晚期至托勒密时期的彩釉陶阿努比斯护符；其形象与防腐、墓地守护和亡者审判相关。')},
+    [ordered]@{id='substitute_doll_accessory';name='身代木偶';effect='受到合格攻击时有 10% 概率完全闪避';tier='常见';art='棕色木制小人，头顶与身体缠有醒目红绳。'},
+    [ordered]@{id='heart_sprout_amber_accessory';name='玉蝉';effect='+6 最大生命值';tier='常见';art='淡黄色玉蝉以浅色高光区分蝉翼与腹部。'},
+    [ordered]@{id='feast_ham_accessory';name='盛宴胸针';effect='+12 最大生命值，陆地移动速度 -15%';tier='精良';art='棕金色圆形胸针，中央以盛宴食物和叶穗形成紧凑浮雕。'},
+    [ordered]@{id='peacemaker_accessory';name='玉璧';effect='+20 最大生命值，-4 攻击力';tier='稀有';art='素白圆形玉璧，以中央圆孔和温润明暗构成主体。'},
+    [ordered]@{id='sunwheel_garland_accessory';name='托纳蒂乌花冠';effect='白昼获得生命恢复 I';tier='精良';art='金黄色太阳花冠，中心圆盘与放射状花瓣形成强轮廓。'},
+    [ordered]@{id='moondew_bottle_accessory';name='孔苏月露瓶';effect='夜间获得生命恢复 I';tier='精良';art='浅青色细颈小瓶，瓶身以月牙和冷色高光表现月露。'},
+    [ordered]@{id='tomato_fish_accessory';name='尼罗河红鱼符';effect='水中移动速度 +50%';tier='常见';art='红色圆胖鱼形玩偶，外观像番茄，并保留悬挂珠串。'},
+    [ordered]@{id='cat_bell_fish_charm_accessory';name='猫纹玉';effect='6 格内持续阻止苦力怕爆炸；主动锁敌状态下允许英灵主动锁定苦力怕';tier='稀有';art=@('最终图标为浅绿色猫形玉牌，以竖耳、圆润轮廓和中央猫纹表达主题。','来源参考国立故宫博物院所藏元至明玉猫形坠饰；游戏图标是适配 16×16 的再设计。')},
+    [ordered]@{id='light_gathering_magnet_accessory';name='鹰纹宝石';effect='英灵击杀产生的世界经验球 +50%';tier='精良';art=@('最终图标为红色椭圆鹰纹宝石，外缘使用银白托座。','来源参考希腊—罗马鹰纹缠丝玛瑙浮雕与雕刻宝石传统；聚拢经验球仍属于游戏功能。')},
+    [ordered]@{id='training_notes_accessory';name='墨西加鹰首唇饰';effect='只有英灵自身的成长经验获取 +50%';tier='精良';art=@('最终图标为金色墨西加鹰首唇饰，以弯曲鹰喙、镂空口部和金属高光构成。','来源参考 15～16 世纪墨西加金质鹰首唇饰；此类饰物佩戴于下唇下方的穿孔中，与权力、身份和精英战士相关。')},
+    [ordered]@{id='hawkeye_lens_accessory';name='鹰纹远目镜';effect='主动索敌视野 +50%，最终不超过 32 格';tier='常见';art='金色短筒远目镜，前端嵌淡蓝镜片，筒身带鹰纹。'},
+    [ordered]@{id='windchaser_feather_accessory';name='风神羽饰';effect='陆地移动速度 +10%';tier='常见';art='浅色羽毛束系在朱红漆扣上，辅以浅蓝飘带。'},
+    [ordered]@{id='hollow_bird_bone_accessory';name='尼罗鹮骨';effect='陆地移动速度 +20%，-8 最大生命值';tier='精良';art='细长中空白色鸟骨，两端磨圆穿绳，表面绘有蓝色条纹。'}
 )
 
 $ingredientNames = @{
-    '#minecraft:fishes'='任意原版鱼类'; 'echo_warrior:courage_legacy'='勇气的传承'; 'echo_warrior:fortitude_legacy'='坚毅的传承';
+    '#minecraft:wool'='任意颜色羊毛'; '#minecraft:planks'='任意木板'; '#minecraft:leaves'='任意树叶'; '#minecraft:fishes'='任意原版鱼类';
+    'echo_warrior:courage_legacy'='勇气的传承'; 'echo_warrior:fortitude_legacy'='坚毅的传承';
     'echo_warrior:purity_legacy'='纯净的传承'; 'echo_warrior:wisdom_legacy'='智慧的传承'; 'echo_warrior:craft_legacy'='工艺的传承';
-    'echo_warrior:windchaser_feather_accessory'='逐风羽饰'; 'minecraft:amethyst_shard'='紫水晶碎片'; 'minecraft:anvil'='铁砧';
+    'minecraft:amethyst_shard'='紫水晶碎片'; 'minecraft:anvil'='铁砧'; 'minecraft:bamboo'='竹子';
     'minecraft:bell'='钟'; 'minecraft:black_wool'='黑色羊毛'; 'minecraft:bone'='骨头'; 'minecraft:book'='书'; 'minecraft:cactus'='仙人掌';
+    'minecraft:copper_ingot'='铜锭'; 'minecraft:cyan_wool'='青色羊毛';
     'minecraft:cooked_porkchop'='熟猪排'; 'minecraft:diamond'='钻石'; 'minecraft:emerald'='绿宝石'; 'minecraft:feather'='羽毛';
-    'minecraft:flint'='燧石'; 'minecraft:ghast_tear'='恶魂之泪'; 'minecraft:glass_bottle'='玻璃瓶'; 'minecraft:glow_ink_sac'='荧光墨囊';
-    'minecraft:gold_nugget'='金粒'; 'minecraft:golden_apple'='金苹果'; 'minecraft:golden_sword'='金剑'; 'minecraft:honeycomb'='蜜脾';
+    'minecraft:flint'='燧石'; 'minecraft:ghast_tear'='恶魂之泪'; 'minecraft:glass'='玻璃'; 'minecraft:glass_bottle'='玻璃瓶'; 'minecraft:glow_ink_sac'='荧光墨囊';
+    'minecraft:gold_ingot'='金锭'; 'minecraft:gold_nugget'='金粒'; 'minecraft:golden_apple'='金苹果'; 'minecraft:golden_sword'='金剑'; 'minecraft:honeycomb'='蜜脾';
     'minecraft:ink_sac'='墨囊'; 'minecraft:iron_axe'='铁斧'; 'minecraft:iron_chestplate'='铁胸甲'; 'minecraft:iron_helmet'='铁头盔';
-    'minecraft:iron_ingot'='铁锭'; 'minecraft:iron_leggings'='铁护腿'; 'minecraft:iron_sword'='铁剑'; 'minecraft:leather'='皮革';
+    'minecraft:iron_ingot'='铁锭'; 'minecraft:iron_leggings'='铁护腿'; 'minecraft:iron_sword'='铁剑'; 'minecraft:lapis_lazuli'='青金石'; 'minecraft:leather'='皮革';
     'minecraft:lily_of_the_valley'='铃兰'; 'minecraft:oak_leaves'='橡树树叶'; 'minecraft:oak_planks'='橡木木板'; 'minecraft:oak_sapling'='橡树树苗';
     'minecraft:obsidian'='黑曜石'; 'minecraft:phantom_membrane'='幻翼膜'; 'minecraft:rabbit_foot'='兔子脚'; 'minecraft:red_wool'='红色羊毛';
-    'minecraft:redstone'='红石粉'; 'minecraft:shield'='盾牌'; 'minecraft:spider_eye'='蜘蛛眼'; 'minecraft:spyglass'='望远镜';
-    'minecraft:stick'='木棍'; 'minecraft:stone'='石头'; 'minecraft:string'='线'; 'minecraft:sugar'='糖'; 'minecraft:sunflower'='向日葵';
+    'minecraft:red_dye'='红色染料'; 'minecraft:redstone'='红石粉'; 'minecraft:shield'='盾牌'; 'minecraft:spider_eye'='蜘蛛眼'; 'minecraft:spyglass'='望远镜';
+    'minecraft:stick'='木棍'; 'minecraft:stone'='石头'; 'minecraft:string'='线'; 'minecraft:sugar'='糖'; 'minecraft:sunflower'='向日葵'; 'minecraft:terracotta'='陶瓦'; 'minecraft:tuff'='凝灰岩';
     'minecraft:tropical_fish'='热带鱼'; 'minecraft:white_wool'='白色羊毛'; 'minecraft:wooden_sword'='木剑'
 }
 $blockIcons = @{
     'minecraft:anvil'='anvil'; 'minecraft:black_wool'='black_wool'; 'minecraft:cactus'='cactus_side';
+    'minecraft:cyan_wool'='cyan_wool'; 'minecraft:glass'='glass';
     'minecraft:lily_of_the_valley'='lily_of_the_valley'; 'minecraft:oak_leaves'='oak_leaves'; 'minecraft:oak_planks'='oak_planks';
     'minecraft:oak_sapling'='oak_sapling'; 'minecraft:obsidian'='obsidian'; 'minecraft:red_wool'='red_wool'; 'minecraft:stone'='stone';
-    'minecraft:sunflower'='sunflower_front'; 'minecraft:white_wool'='white_wool'
+    'minecraft:sunflower'='sunflower_front'; 'minecraft:terracotta'='terracotta'; 'minecraft:tuff'='tuff'; 'minecraft:white_wool'='white_wool'
+}
+$tagIcons = @{
+    '#minecraft:wool'='/assets/minecraft/block/white_wool.png'; '#minecraft:planks'='/assets/minecraft/block/oak_planks.png';
+    '#minecraft:leaves'='/assets/minecraft/block/oak_leaves.png'; '#minecraft:fishes'='/assets/minecraft/item/cod.png'
 }
 
 function New-IngredientSlot([string]$ingredient) {
-    if ($ingredient -eq '#minecraft:fishes') {
-        return [pscustomobject][ordered]@{ name=$ingredientNames[$ingredient]; icon='/assets/minecraft/item/cod.png' }
+    if ($ingredient.StartsWith('#minecraft:')) {
+        return [pscustomobject][ordered]@{ name=$ingredientNames[$ingredient]; icon=$tagIcons[$ingredient] }
     }
     if ($ingredient.StartsWith('echo_warrior:')) {
         $path = $ingredient.Split(':')[1]
@@ -186,10 +193,10 @@ for ($index = 0; $index -lt $accessoryMetadata.Count; $index++) {
             summary=$entry.effect
             tags=@('饰品', $entry.tier, '六槽构筑', '固定数值', $entry.name)
             sections=@(
-                [pscustomobject][ordered]@{ type='stats'; title='固定效果'; items=@([pscustomobject][ordered]@{ label='效果'; value=$entry.effect; note='只影响绑定英灵；与等级无关' }, [pscustomobject][ordered]@{ label='考古稀有度'; value=$entry.tier; note='饰品总掉率为 0.2%' }) },
+                [pscustomobject][ordered]@{ type='stats'; title='固定效果'; items=@([pscustomobject][ordered]@{ label='效果'; value=$entry.effect; note='只影响绑定英灵；与等级无关' }, [pscustomobject][ordered]@{ label='考古稀有度'; value=$entry.tier; note='同文明饰品池总概率为 14.8148%' }) },
                 (New-RecipeSection $entry),
-                [pscustomobject][ordered]@{ type='prose'; title='绘制思路与参考'; paragraphs=@($entry.art) },
-                [pscustomobject][ordered]@{ type='callout'; tone='planned'; title='美术状态'; body="当前游戏与百科暂用原版图标占位，但资源已经固定为 echo_warrior:item/$($entry.id)。正式像素素材完成后可直接覆盖同名 PNG，无需改代码、模型或百科数据。" }
+                [pscustomobject][ordered]@{ type='prose'; title='美术造型与来源'; paragraphs=@($entry.art) },
+                [pscustomobject][ordered]@{ type='callout'; tone='info'; title='正式美术'; body="模型师制作的 16×16 正式像素图标已于 2026 年 8 月 30 日接入游戏与百科；运行时资源保持为 echo_warrior:item/$($entry.id)。" }
             )
             related=@('accessories_overview','legacy_overview')
         }
@@ -205,8 +212,9 @@ $accessoryOverview = [pscustomobject][ordered]@{
         tags=@('饰品','六槽','同名唯一','固定值','正式比赛范围')
         sections=@(
             [pscustomobject][ordered]@{ type='prose'; title='装卸规则'; paragraphs=@('饰品只能放进英灵召唤器的六个饰品槽，不会强化玩家。同名饰品最多一个，不同饰品允许组合。', '攻击、护甲和最大生命采用固定加减值；移速相对基础值相加，最终不低于基础值的 25%。取出最大生命饰品时保留当前生命的绝对数值，只有超过新上限时才截断。') },
-            [pscustomobject][ordered]@{ type='stats'; title='当前目录'; items=@([pscustomobject][ordered]@{label='饰品总数';value='25';note='3 件旧内容更名 + 22 件新内容'}, [pscustomobject][ordered]@{label='槽位';value='6';note='同名最多 1 件'}, [pscustomobject][ordered]@{label='普通考古总掉率';value='0.2%';note='常见/精良/稀有 = 60/30/10'}) },
-            [pscustomobject][ordered]@{ type='callout'; tone='planned'; title='正式美术待替换'; body='25 件饰品已经全部采用独立资源 ID 与百科绘制说明。当前原版图标只用于可玩占位和直观查表，正式美术素材计划在 2026 年 8 月 30 日前补齐。' }
+            [pscustomobject][ordered]@{ type='stats'; title='当前目录'; items=@([pscustomobject][ordered]@{label='饰品总数';value='25';note='全部已确定最终名称与正式美术'}, [pscustomobject][ordered]@{label='槽位';value='6';note='同名最多 1 件'}, [pscustomobject][ordered]@{label='普通考古总掉率';value='14.8148%';note='常见/精良/稀有 = 60/30/10'}) },
+            [pscustomobject][ordered]@{ type='callout'; tone='info'; title='稀有度名称颜色'; body='饰品使用原版物品稀有度颜色：常见为白色，精良为黄色，稀有为青色。颜色会显示在物品名称、悬浮提示及其他采用原版名称样式的界面中。' },
+            [pscustomobject][ordered]@{ type='callout'; tone='info'; title='正式美术与创造标签页'; body='25 件饰品的 16×16 RGBA 正式图标已于 2026 年 8 月 30 日接入游戏与百科。创造模式中可在独立的“英灵饰品”标签页查看全部 25 件饰品，标签图标为阿努比斯护符。' }
         )
         related=@('summoner','legacy_overview','leveling')
     }
@@ -218,7 +226,7 @@ $archaeology = $atlas.nodes | Where-Object id -eq 'archaeology'
 if ($archaeology) {
     $archaeology.article.sections += [pscustomobject][ordered]@{
         type='callout'; tone='info'; title='普通考古的饰品池'
-        body='饰品成品总概率为 0.2%。命中饰品池后：常见占 60%（8 件等权）、精良占 30%（11 件等权）、稀有占 10%（6 件等权）。五种传承合计 20%，彼此等权。'
+        body='同文明饰品成品总概率为 14.8148%。命中饰品池后仍按常见 60%、精良 30%、稀有 10% 分配；某文明缺少一档时，按现有档位原比例归一化。同文明知识碎片与五种传承分别在各自类别内等权。'
     }
     $archaeology.article.related += @('legacy_overview','accessories_overview')
 }

@@ -1,0 +1,10 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "echo_warrior:item/echo_recycler",
+    "model": {
+      "type": "minecraft:chest",
+      "texture": "echo_warrior:recycler"
+    }
+  }
+}

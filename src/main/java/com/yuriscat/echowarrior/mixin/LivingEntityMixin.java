@@ -1,7 +1,9 @@
 package com.yuriscat.echowarrior.mixin;
 
 import com.yuriscat.echowarrior.entity.JapaneseSamuraiEchoEntity;
+import com.yuriscat.echowarrior.item.EchoTalentSystem;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
@@ -37,5 +39,12 @@ public abstract class LivingEntityMixin {
 			((LivingEntity)(Object)this).setLastHurtMob(dragonPart.parentMob);
 			callback.cancel();
 		}
+	}
+
+	@Inject(method = "getDamageAfterMagicAbsorb", at = @At("RETURN"), cancellable = true)
+	private void echoWarrior$applyUnyieldingFinalReduction(DamageSource source, float damage,
+			CallbackInfoReturnable<Float> callback) {
+		callback.setReturnValue(EchoTalentSystem.modifyFinalIncomingDamage(
+				(LivingEntity)(Object)this, source, callback.getReturnValue()));
 	}
 }

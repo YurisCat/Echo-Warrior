@@ -31,6 +31,11 @@ public final class KnowledgeFragmentCollectionItem extends Item {
 	}
 
 	@Override
+	public Component getName(ItemStack stack) {
+		return KnowledgeTooltip.knowledgeName("item.echo_warrior.knowledge_fragment_collection");
+	}
+
+	@Override
 	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
 			Consumer<Component> builder, TooltipFlag flag) {
 		builder.accept(Component.translatable(

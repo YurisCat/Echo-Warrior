@@ -25,6 +25,14 @@ public final class ModDamageTypes {
 			Registries.DAMAGE_TYPE,
 			EchoWarrior.id("samurai_stab")
 	);
+	public static final ResourceKey<DamageType> ROMAN_FIRST_STRIKE = ResourceKey.create(
+			Registries.DAMAGE_TYPE,
+			EchoWarrior.id("roman_first_strike")
+	);
+	public static final ResourceKey<DamageType> ROMAN_FOLLOWUP = ResourceKey.create(
+			Registries.DAMAGE_TYPE,
+			EchoWarrior.id("roman_followup")
+	);
 	public static final ResourceKey<DamageType> SPIKED_ARMOR_REFLECTION = ResourceKey.create(
 			Registries.DAMAGE_TYPE,
 			EchoWarrior.id("spiked_armor_reflection")

@@ -29,15 +29,56 @@ CODE_OWNED_BONES = {"head", "left_eye", "right_eye", "eyebrows"}
 REMOVED_EYELID_BONES = {"eyelids", "left_eyelid", "right_eyelid"}
 REMOVED_EYELID_GROUP_UUIDS = {EYELIDS_UUID, RIGHT_EYELID_UUID, LEFT_EYELID_UUID}
 REMOVED_EYELID_CUBE_UUIDS = {RIGHT_EYELID_CUBE_UUID, LEFT_EYELID_CUBE_UUID}
+DERIVED_ATTACK_ANIMATIONS = {
+    "animation.roman_legionary.attack_first",
+    "animation.roman_legionary.attack_recover",
+    "animation.roman_legionary.attack_follow",
+}
+ATTACK_LOCOMOTION_BONES = {
+    "root",
+    "body_root",
+    "lower_body",
+    "hips",
+    "legs",
+    "left_leg",
+    "left_upper_leg",
+    "left_lower_leg",
+    "right_leg",
+    "right_upper_leg",
+    "right_lower_leg",
+    "waist_cloth_center",
+    "waist_cloth_left",
+    "waist_cloth_right",
+}
 ANIMATION_NAMES = {
     "idle": "animation.roman_legionary.idle",
     "animation2": "animation.roman_legionary.walk",
     "attack": "animation.roman_legionary.attack",
+    "attack_1": "animation.roman_legionary.attack_1",
+    "attack_2": "animation.roman_legionary.attack_2",
+    "attack_first": "animation.roman_legionary.attack_first",
+    "attack_recover": "animation.roman_legionary.attack_recover",
+    "attack_follow": "animation.roman_legionary.attack_follow",
     "shield": "animation.roman_legionary.shield_raise",
     "shield_return": "animation.roman_legionary.shield_lower",
     "hurt": "animation.roman_legionary.hurt",
 }
-REQUIRED_ANIMATIONS = set(ANIMATION_NAMES.values())
+REQUIRED_ANIMATIONS = {
+    "animation.roman_legionary.idle",
+    "animation.roman_legionary.walk",
+    "animation.roman_legionary.attack_1",
+    "animation.roman_legionary.attack_2",
+    "animation.roman_legionary.attack_first",
+    "animation.roman_legionary.attack_recover",
+    "animation.roman_legionary.attack_follow",
+    "animation.roman_legionary.shield_raise",
+    "animation.roman_legionary.shield_lower",
+    "animation.roman_legionary.hurt",
+}
+LOCOMOTION_ANIMATIONS = {
+    "animation.roman_legionary.idle",
+    "animation.roman_legionary.walk",
+}
 GEOMETRY_FIELDS = ("from", "to", "origin", "rotation", "inflate", "uv_offset", "box_uv", "mirror_uv", "faces")
 
 
@@ -84,8 +125,14 @@ def canonicalize_import(model: dict, previous: dict) -> None:
 
 
 def assert_compatible_geometry(model: dict, previous: dict) -> None:
-    previous_elements = {entry.get("uuid"): entry for entry in previous.get("elements", [])}
-    imported_elements = {entry.get("uuid"): entry for entry in model.get("elements", [])}
+    previous_element_entries = previous.get("elements", [])
+    imported_element_entries = model.get("elements", [])
+    previous_elements = {entry.get("uuid"): entry for entry in previous_element_entries}
+    imported_elements = {entry.get("uuid"): entry for entry in imported_element_entries}
+    if len(previous_elements) != len(previous_element_entries):
+        raise ValueError("Project source contains duplicate element UUIDs")
+    if len(imported_elements) != len(imported_element_entries):
+        raise ValueError("Imported model contains duplicate element UUIDs")
     if previous_elements.keys() != imported_elements.keys():
         raise ValueError("Imported model changes element UUIDs; automated GeckoLib geometry merge is unsafe")
 
@@ -97,6 +144,67 @@ def assert_compatible_geometry(model: dict, previous: dict) -> None:
                 changed.append(f"{previous_element.get('name', uuid)}:{field}")
     if changed:
         raise ValueError("Imported model changes cube geometry/UV fields: " + ", ".join(changed))
+
+
+def outliner_parent_maps(model: dict) -> tuple[dict[str, str | None], dict[str, str | None]]:
+    group_ids = {entry.get("uuid") for entry in model.get("groups", [])}
+    element_ids = {entry.get("uuid") for entry in model.get("elements", [])}
+    group_parents: dict[str, str | None] = {}
+    element_parents: dict[str, str | None] = {}
+
+    def visit(nodes: list, parent: str | None) -> None:
+        for node in nodes:
+            if isinstance(node, dict):
+                uuid = node.get("uuid")
+                next_parent = parent
+                if uuid in group_ids:
+                    if uuid in group_parents:
+                        raise ValueError(f"Blockbench group appears more than once in outliner: {uuid}")
+                    group_parents[uuid] = parent
+                    next_parent = uuid
+                visit(node.get("children", []), next_parent)
+            elif node in element_ids:
+                if node in element_parents:
+                    raise ValueError(f"Blockbench element appears more than once in outliner: {node}")
+                element_parents[node] = parent
+
+    visit(model.get("outliner", []), None)
+    missing_groups = group_ids - group_parents.keys()
+    missing_elements = element_ids - element_parents.keys()
+    if missing_groups:
+        raise ValueError(f"Blockbench groups are missing from outliner: {sorted(missing_groups)}")
+    if missing_elements:
+        raise ValueError(f"Blockbench elements are missing from outliner: {sorted(missing_elements)}")
+    return group_parents, element_parents
+
+
+def assert_compatible_animation_rig(model: dict, previous: dict) -> None:
+    previous_group_entries = previous.get("groups", [])
+    imported_group_entries = model.get("groups", [])
+    previous_groups = {entry.get("uuid"): entry for entry in previous_group_entries}
+    imported_groups = {entry.get("uuid"): entry for entry in imported_group_entries}
+    if len(previous_groups) != len(previous_group_entries):
+        raise ValueError("Project source contains duplicate group UUIDs")
+    if len(imported_groups) != len(imported_group_entries):
+        raise ValueError("Imported model contains duplicate group UUIDs")
+    if previous_groups.keys() != imported_groups.keys():
+        raise ValueError("Imported model changes group UUIDs; selective animation merge is unsafe")
+
+    changed: list[str] = []
+    for uuid, previous_group in previous_groups.items():
+        imported_group = imported_groups[uuid]
+        for field in ("origin", "rotation"):
+            if previous_group.get(field) != imported_group.get(field):
+                changed.append(f"{previous_group.get('name', uuid)}:{field}")
+    if changed:
+        raise ValueError("Imported model changes animation rig pivots: " + ", ".join(changed))
+
+    previous_group_parents, previous_element_parents = outliner_parent_maps(previous)
+    imported_group_parents, imported_element_parents = outliner_parent_maps(model)
+    if previous_group_parents != imported_group_parents:
+        raise ValueError("Imported model changes group parent hierarchy; selective animation merge is unsafe")
+    if previous_element_parents != imported_element_parents:
+        raise ValueError("Imported model changes cube-to-group assignments; selective animation merge is unsafe")
 
 
 def update_bbmodel(model: dict) -> None:
@@ -257,6 +365,12 @@ def validate(bbmodel: dict, geo: dict, animation: dict) -> list[str]:
         keyed = CODE_OWNED_BONES.intersection(value.get("bones", {}))
         if keyed:
             errors.append(f"Animation {animation_name} controls code-owned bones: {sorted(keyed)}")
+        if animation_name in DERIVED_ATTACK_ANIMATIONS:
+            locomotion_keyed = ATTACK_LOCOMOTION_BONES.intersection(value.get("bones", {}))
+            if locomotion_keyed:
+                errors.append(
+                    f"Layered attack {animation_name} controls locomotion bones: {sorted(locomotion_keyed)}"
+                )
     for source_animation in bbmodel.get("animations", []):
         groups_by_uuid = {entry.get("uuid"): entry.get("name") for entry in bbmodel.get("groups", [])}
         keyed = {
@@ -268,6 +382,17 @@ def validate(bbmodel: dict, geo: dict, animation: dict) -> list[str]:
             errors.append(
                 f"Blockbench animation {source_animation.get('name')} controls code-owned bones: {sorted(keyed)}"
             )
+        if source_animation.get("name") in DERIVED_ATTACK_ANIMATIONS:
+            locomotion_keyed = {
+                groups_by_uuid.get(uuid)
+                for uuid, animator in source_animation.get("animators", {}).items()
+                if animator.get("keyframes") and groups_by_uuid.get(uuid) in ATTACK_LOCOMOTION_BONES
+            }
+            if locomotion_keyed:
+                errors.append(
+                    f"Layered Blockbench attack {source_animation.get('name')} controls locomotion bones: "
+                    f"{sorted(locomotion_keyed)}"
+                )
     return errors
 
 
@@ -289,6 +414,56 @@ def import_model(source: Path) -> None:
     shutil.copy2(BBMODEL, HANDOFF)
 
 
+def import_locomotion(source: Path) -> None:
+    previous = read_json(BBMODEL)
+    model = read_json(source)
+    assert_compatible_geometry(model, previous)
+    assert_compatible_animation_rig(model, previous)
+    canonicalize_import(model, previous)
+    update_bbmodel(model)
+
+    replacements: dict[str, dict] = {}
+    for animation in model.get("animations", []):
+        name = animation.get("name")
+        if name not in LOCOMOTION_ANIMATIONS:
+            continue
+        if name in replacements:
+            raise ValueError(f"Imported model contains duplicate locomotion animation: {name}")
+        replacements[name] = animation
+
+    missing = LOCOMOTION_ANIMATIONS - replacements.keys()
+    if missing:
+        raise ValueError(f"Imported model is missing locomotion animations: {sorted(missing)}")
+
+    previous_animations = previous.get("animations", [])
+    existing = {animation.get("name") for animation in previous_animations}
+    missing = LOCOMOTION_ANIMATIONS - existing
+    if missing:
+        raise ValueError(f"Project source is missing locomotion animations: {sorted(missing)}")
+
+    for index, current in enumerate(previous_animations):
+        name = current.get("name")
+        replacement = replacements.get(name)
+        if replacement is None:
+            continue
+        for field in ("uuid", "saved", "path"):
+            if field in current:
+                replacement[field] = current[field]
+            else:
+                replacement.pop(field, None)
+        replacement.pop("group_name", None)
+        previous_animations[index] = replacement
+
+    update_bbmodel(previous)
+    animation = export_animation(previous)
+    errors = validate(previous, read_json(GEO), animation)
+    if errors:
+        raise ValueError("Selective locomotion import failed validation: " + "; ".join(errors))
+    write_json(BBMODEL, previous)
+    write_json(ANIMATION, animation)
+    shutil.copy2(BBMODEL, HANDOFF)
+
+
 def update_existing() -> None:
     bbmodel = read_json(BBMODEL)
     for animation in bbmodel.get("animations", []):
@@ -307,14 +482,22 @@ def update_existing() -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=("import", "update", "validate"), nargs="?", default="update")
+    parser.add_argument(
+        "mode",
+        choices=("import", "import-locomotion", "update", "validate"),
+        nargs="?",
+        default="update",
+    )
     parser.add_argument("source", nargs="?", type=Path)
     args = parser.parse_args()
 
-    if args.mode == "import":
+    if args.mode in {"import", "import-locomotion"}:
         if args.source is None:
-            parser.error("import mode requires a source .bbmodel path")
-        import_model(args.source.resolve())
+            parser.error(f"{args.mode} mode requires a source .bbmodel path")
+        if args.mode == "import":
+            import_model(args.source.resolve())
+        else:
+            import_locomotion(args.source.resolve())
     elif args.mode == "update":
         update_existing()
 

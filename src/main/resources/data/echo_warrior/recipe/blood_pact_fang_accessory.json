@@ -1,1 +1,1 @@
-{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["CRP"," G ","PSC"],"key":{"C":"echo_warrior:courage_legacy","R":"minecraft:redstone","P":"echo_warrior:purity_legacy","G":"minecraft:ghast_tear","S":"minecraft:spider_eye"},"result":{"id":"echo_warrior:blood_pact_fang_accessory"}}
+{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["GCG","BPB"," B "],"key":{"G":"minecraft:ghast_tear","C":"echo_warrior:courage_legacy","B":"minecraft:bone","P":"echo_warrior:purity_legacy"},"result":{"id":"echo_warrior:blood_pact_fang_accessory"}}

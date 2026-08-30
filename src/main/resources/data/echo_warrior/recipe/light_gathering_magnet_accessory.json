@@ -1,1 +1,1 @@
-{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["I I","IEI","WRW"],"key":{"I":"minecraft:iron_ingot","E":"minecraft:emerald","W":"echo_warrior:wisdom_legacy","R":"minecraft:redstone"},"result":{"id":"echo_warrior:light_gathering_magnet_accessory"}}
+{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["LRL","IDI","WIW"],"key":{"L":"minecraft:lapis_lazuli","R":"minecraft:redstone","I":"minecraft:iron_ingot","D":"minecraft:diamond","W":"echo_warrior:wisdom_legacy"},"result":{"id":"echo_warrior:light_gathering_magnet_accessory"}}

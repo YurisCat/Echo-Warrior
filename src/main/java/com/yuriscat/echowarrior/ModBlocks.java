@@ -1,13 +1,15 @@
 package com.yuriscat.echowarrior;
 
 import com.yuriscat.echowarrior.block.StableBrushableBlock;
+import com.yuriscat.echowarrior.block.RecyclerChestBlock;
+import com.yuriscat.echowarrior.item.RecyclerChestItem;
+import com.yuriscat.echowarrior.item.SuspiciousBlockItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -48,6 +50,11 @@ public final class ModBlocks {
 					.noLootTable()
 					.pushReaction(PushReaction.DESTROY)
 	);
+	public static final RecyclerChestBlock ECHO_RECYCLER = registerRecycler(
+			"echo_recycler",
+			BlockBehaviour.Properties.ofFullCopy(Blocks.CHEST)
+					.pushReaction(PushReaction.BLOCK)
+	);
 
 	private ModBlocks() {
 	}
@@ -67,7 +74,24 @@ public final class ModBlocks {
 		Block block = Registry.register(BuiltInRegistries.BLOCK, id, factory.apply(properties.setId(blockKey)));
 		ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM, id);
 		Registry.register(BuiltInRegistries.ITEM, id,
-				new BlockItem(block, new Item.Properties().setId(itemKey).stacksTo(1)));
+				new SuspiciousBlockItem(block, new Item.Properties().setId(itemKey).stacksTo(1)));
+		return block;
+	}
+
+	private static RecyclerChestBlock registerRecycler(String path, BlockBehaviour.Properties properties) {
+		Identifier id = EchoWarrior.id(path);
+		ResourceKey<Block> blockKey = ResourceKey.create(Registries.BLOCK, id);
+		RecyclerChestBlock block = Registry.register(
+				BuiltInRegistries.BLOCK,
+				id,
+				new RecyclerChestBlock(properties.setId(blockKey))
+		);
+		ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM, id);
+		Registry.register(
+				BuiltInRegistries.ITEM,
+				id,
+				new RecyclerChestItem(block, new Item.Properties().setId(itemKey).stacksTo(64))
+		);
 		return block;
 	}
 }

@@ -106,14 +106,30 @@ public final class TestEchoSummonerItem extends Item {
 			SlotAccess carriedItem
 	) {
 		if (clickAction != ClickAction.PRIMARY || other.isEmpty()) return false;
-		if (!slot.allowModification(player)) {
+		SummonerMenu openMenu = player.containerMenu instanceof SummonerMenu menu
+				&& menu.allowsDirectInsertionIntoSource(slot, player)
+				? menu
+				: null;
+		if (!slot.allowModification(player) && openMenu == null) {
 			playInsertionSound(player, false);
 			return true;
 		}
 		getOrCreateSummonerId(self);
+		boolean insertedFuel = SummonerFuel.isFuel(other);
+		ItemStack fuelForFeedback = insertedFuel ? other.copyWithCount(1) : ItemStack.EMPTY;
 		boolean insertedAccessory = EchoSummonerAccessory.isAccessory(other);
-		boolean inserted = insertIntoInternalSlot(self, other);
-		if (inserted && insertedAccessory && player.level() instanceof ServerLevel serverLevel) {
+		boolean insertedRelic = other.getItem() instanceof EchoRelicItem;
+		boolean inserted = openMenu == null
+				? insertIntoInternalSlot(self, other)
+				: openMenu.insertIntoOpenSummoner(other);
+		if (inserted && player.level().isClientSide()) {
+			if (insertedFuel) {
+				SummonerFuelInsertFeedback.playFuel(slot, fuelForFeedback);
+			} else if (insertedAccessory || insertedRelic) {
+				SummonerFuelInsertFeedback.playPolish(slot);
+			}
+		}
+		if (inserted && insertedAccessory && openMenu == null && player.level() instanceof ServerLevel serverLevel) {
 			EchoWarriorEntity spirit = findBoundSpirit(serverLevel, self);
 			if (spirit != null) spirit.applyModuleState();
 		}

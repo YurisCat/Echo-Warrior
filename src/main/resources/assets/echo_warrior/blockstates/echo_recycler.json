@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "echo_warrior:block/echo_recycler"
+    }
+  }
+}

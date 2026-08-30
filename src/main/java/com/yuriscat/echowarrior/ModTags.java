@@ -21,6 +21,12 @@ public final class ModTags {
 			Registries.ITEM,
 			EchoWarrior.id("battlefield_relics")
 	);
+	public static final TagKey<Item> RECYCLER_KNOWLEDGE = itemTag("recycler/knowledge");
+	public static final TagKey<Item> RECYCLER_LEGACY = itemTag("recycler/legacy");
+	public static final TagKey<Item> RECYCLER_ACCESSORY_COMMON = itemTag("recycler/accessory_common");
+	public static final TagKey<Item> RECYCLER_ACCESSORY_UNCOMMON = itemTag("recycler/accessory_uncommon");
+	public static final TagKey<Item> RECYCLER_ACCESSORY_RARE = itemTag("recycler/accessory_rare");
+	public static final TagKey<Item> RECYCLER_RELIC = itemTag("recycler/relic");
 	public static final TagKey<Biome> HAS_BATTLEFIELD_RUIN = TagKey.create(
 			Registries.BIOME,
 			EchoWarrior.id("has_battlefield_ruin")
@@ -31,5 +37,9 @@ public final class ModTags {
 	);
 
 	private ModTags() {
+	}
+
+	private static TagKey<Item> itemTag(String path) {
+		return TagKey.create(Registries.ITEM, EchoWarrior.id(path));
 	}
 }

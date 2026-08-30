@@ -147,6 +147,7 @@ public final class EchoExperienceSystem {
 		if (!(relic.getItem() instanceof EchoRelicItem)) {
 			return;
 		}
+		amount = EchoRelicState.addWiseGrowthExperience(relic, amount);
 
 		EchoRelicProgress.ProgressResult result = EchoRelicProgress.addExperience(relic, amount);
 		if (openMenu != null) {

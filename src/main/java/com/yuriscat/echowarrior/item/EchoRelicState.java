@@ -13,6 +13,8 @@ public final class EchoRelicState {
 	private static final String INITIALIZED_KEY = "EchoWarriorTraitsInitialized";
 	private static final String RELIC_ID_KEY = "EchoWarriorRelicId";
 	private static final String TRAIT_MASK_KEY = "EchoWarriorTraitMask";
+	private static final String BIOME_AFFINITY_KEY = "EchoWarriorBiomeAffinity";
+	private static final String WISE_GROWTH_REMAINDER_KEY = "EchoWarriorWiseGrowthRemainder";
 	private static final String ACTIVITY_MODE_KEY = "EchoWarriorActivityMode";
 	private static final String ALERT_MODE_KEY = "EchoWarriorAlertMode";
 	private static final String ENABLED_SKILLS_KEY = "EchoWarriorEnabledSkills";
@@ -57,12 +59,13 @@ public final class EchoRelicState {
 			return false;
 		}
 
-		int traitMask = rollTraits(random);
+		TraitRoll traits = rollTraits(random);
 		EchoHeroType heroType = EchoHeroType.fromRelic(relic);
 		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> {
 			tag.putBoolean(INITIALIZED_KEY, true);
 			tag.putString(RELIC_ID_KEY, UUID.randomUUID().toString());
-			tag.putInt(TRAIT_MASK_KEY, traitMask);
+			tag.putInt(TRAIT_MASK_KEY, traits.mask());
+			tag.putInt(BIOME_AFFINITY_KEY, traits.biomeAffinity().ordinal());
 			tag.putInt(ACTIVITY_MODE_KEY, ActivityMode.FOLLOW.ordinal());
 			tag.putInt(ALERT_MODE_KEY, AlertMode.DEFENSIVE.ordinal());
 			tag.putInt(ENABLED_SKILLS_KEY, heroType.defaultEnabledSkillsMask());
@@ -84,37 +87,31 @@ public final class EchoRelicState {
 		return true;
 	}
 
-	private static int rollTraits(RandomSource random) {
+	private static TraitRoll rollTraits(RandomSource random) {
 		int roll = random.nextInt(100);
-		int count = roll < 10 ? 0 : roll < 35 ? 1 : roll < 75 ? 2 : roll < 95 ? 3 : 4;
+		int count = roll < 60 ? 2 : roll < 90 ? 3 : 4;
 		List<EchoTrait> available = new ArrayList<>(List.of(EchoTrait.values()));
 		int mask = 0;
 		while (Integer.bitCount(mask) < count && !available.isEmpty()) {
 			EchoTrait selected = available.remove(random.nextInt(available.size()));
 			mask |= selected.mask();
-			if (selected == EchoTrait.BAD_TEMPER) {
-				available.remove(EchoTrait.LAZY);
-			} else if (selected == EchoTrait.LAZY) {
-				available.remove(EchoTrait.BAD_TEMPER);
-			} else if (selected == EchoTrait.SKINNY) {
-				available.remove(EchoTrait.STURDY);
-			} else if (selected == EchoTrait.STURDY) {
-				available.remove(EchoTrait.SKINNY);
-			}
+			available.removeIf(selected::conflictsWith);
 		}
-		return mask;
+		EchoBiomeAffinity affinity = EchoBiomeAffinity.values()[random.nextInt(EchoBiomeAffinity.values().length)];
+		return new TraitRoll(mask, affinity);
 	}
 
 	public static int rerollTraits(ItemStack relic, RandomSource random, long gameTime) {
 		if (!(relic.getItem() instanceof EchoRelicItem)) return 0;
-		int traitMask = rollTraits(random);
+		TraitRoll traits = rollTraits(random);
 		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> {
 			tag.putBoolean(INITIALIZED_KEY, true);
 			if (tag.getStringOr(RELIC_ID_KEY, "").isEmpty()) tag.putString(RELIC_ID_KEY, UUID.randomUUID().toString());
-			tag.putInt(TRAIT_MASK_KEY, traitMask);
+			tag.putInt(TRAIT_MASK_KEY, traits.mask());
+			tag.putInt(BIOME_AFFINITY_KEY, traits.biomeAffinity().ordinal());
 			tag.putLong(SHIELD_CHARGE_TIME_KEY, gameTime);
 		});
-		return traitMask;
+		return traits.mask();
 	}
 
 	public static boolean initialized(ItemStack relic) {
@@ -134,6 +131,10 @@ public final class EchoRelicState {
 
 	public static boolean hasTrait(ItemStack relic, EchoTrait trait) {
 		return (traitMask(relic) & trait.mask()) != 0;
+	}
+
+	public static EchoBiomeAffinity biomeAffinity(ItemStack relic) {
+		return EchoBiomeAffinity.byOrdinal(intValue(relic, BIOME_AFFINITY_KEY, EchoBiomeAffinity.WOODLAND.ordinal()));
 	}
 
 	public static ActivityMode activityMode(ItemStack relic) {
@@ -413,26 +414,21 @@ public final class EchoRelicState {
 	}
 
 	public static int summonCostPercent(ItemStack relic) {
-		int percent = 100;
-		if (hasTrait(relic, EchoTrait.BAD_TEMPER)) percent += 20;
-		if (hasTrait(relic, EchoTrait.LAZY)) percent -= 20;
-		return percent;
+		return hasTrait(relic, EchoTrait.LAZY) ? 85 : 100;
 	}
 
 	public static double maximumHealth(ItemStack relic) {
-		double value = EchoRelicProgress.maximumHealth(EchoHeroType.fromRelic(relic), EchoRelicProgress.level(relic));
-		return hasTrait(relic, EchoTrait.SKINNY) ? value * 0.75 : value;
+		return EchoRelicProgress.maximumHealth(EchoHeroType.fromRelic(relic), EchoRelicProgress.level(relic));
 	}
 
 	public static double attackDamage(ItemStack relic) {
 		double value = EchoRelicProgress.attackDamage(EchoHeroType.fromRelic(relic), EchoRelicProgress.level(relic));
-		if (hasTrait(relic, EchoTrait.BAD_TEMPER)) value += 4.0;
-		if (hasTrait(relic, EchoTrait.COURAGE)) value += 2.0;
+		if (hasTrait(relic, EchoTrait.COURAGE)) value += 1.0;
 		return value;
 	}
 
 	public static double armor(ItemStack relic) {
-		return EchoHeroType.fromRelic(relic).baseArmor() + (hasTrait(relic, EchoTrait.STURDY) ? 4.0 : 0.0);
+		return EchoHeroType.fromRelic(relic).baseArmor() + (hasTrait(relic, EchoTrait.STURDY) ? 2.0 : 0.0);
 	}
 
 	public static double movementSpeed(ItemStack relic) {
@@ -444,16 +440,23 @@ public final class EchoRelicState {
 	}
 
 	public static int movementPercent(ItemStack relic) {
-		int percent = 100;
-		if (hasTrait(relic, EchoTrait.LAZY)) percent -= 25;
-		if (hasTrait(relic, EchoTrait.SKINNY)) percent += 25;
-		if (hasTrait(relic, EchoTrait.STURDY)) percent -= 25;
-		return percent;
+		return hasTrait(relic, EchoTrait.SKINNY) ? 110 : 100;
 	}
 
 	public static int attackSpeedPercent(ItemStack relic) {
 		int base = Math.round(2000.0F / EchoHeroType.fromRelic(relic).baseAttackIntervalTicks());
-		return hasTrait(relic, EchoTrait.SKINNY) ? Math.round(base * 1.25F) : base;
+		return hasTrait(relic, EchoTrait.SKINNY) ? Math.round(base * 1.10F) : base;
+	}
+
+	public static int addWiseGrowthExperience(ItemStack relic, int baseAmount) {
+		if (baseAmount <= 0 || !hasTrait(relic, EchoTrait.WISE)) return Math.max(0, baseAmount);
+		float remainder = relic.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY)
+				.copyTag().getFloatOr(WISE_GROWTH_REMAINDER_KEY, 0.0F);
+		float exact = baseAmount * 1.25F + remainder;
+		int result = (int)Math.floor(exact);
+		CustomData.update(DataComponents.CUSTOM_DATA, relic,
+				tag -> tag.putFloat(WISE_GROWTH_REMAINDER_KEY, exact - result));
+		return result;
 	}
 
 	public static int attackIntervalTicks(ItemStack relic) {
@@ -471,6 +474,9 @@ public final class EchoRelicState {
 
 	private static long longValue(ItemStack stack, String key, long fallback) {
 		return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getLongOr(key, fallback);
+	}
+
+	private record TraitRoll(int mask, EchoBiomeAffinity biomeAffinity) {
 	}
 
 	public enum ActivityMode {

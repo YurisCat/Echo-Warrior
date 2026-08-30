@@ -91,7 +91,7 @@ public final class ModItems {
 	}
 
 	private static EchoAccessoryItem accessory(String path, EchoAccessoryItem.AccessoryType type) {
-		return register(path, properties -> new EchoAccessoryItem(properties.stacksTo(1), type));
+		return register(path, properties -> new EchoAccessoryItem(properties.stacksTo(1).rarity(type.rarity()), type));
 	}
 
 	private static <T extends Item> T register(String path, java.util.function.Function<Item.Properties, T> factory) {

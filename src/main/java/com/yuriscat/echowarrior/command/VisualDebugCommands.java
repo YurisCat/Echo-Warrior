@@ -2,6 +2,7 @@ package com.yuriscat.echowarrior.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.yuriscat.echowarrior.block.entity.RecyclerChestBlockEntity;
 import com.yuriscat.echowarrior.entity.GuandaoWarriorEchoEntity;
 import com.yuriscat.echowarrior.entity.JapaneseSamuraiEchoEntity;
 import com.yuriscat.echowarrior.entity.RomanLegionaryEchoEntity;
@@ -25,6 +26,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 
 import java.util.Comparator;
 import java.util.Set;
@@ -48,6 +51,14 @@ public final class VisualDebugCommands {
 						.then(Commands.argument("count", IntegerArgumentType.integer(1, 8))
 								.executes(context -> generateBattlefields(context.getSource(),
 										IntegerArgumentType.getInteger(context, "count")))));
+		var recyclerCommands = Commands.literal("recycler")
+				.then(Commands.literal("trigger")
+						.executes(context -> triggerRecycler(context.getSource())))
+				.then(Commands.literal("effect")
+						.then(recyclerEffectCommand("normal", RecyclerChestBlockEntity.EffectTier.NORMAL))
+						.then(recyclerEffectCommand("rare", RecyclerChestBlockEntity.EffectTier.RARE))
+						.then(recyclerEffectCommand("super", RecyclerChestBlockEntity.EffectTier.SUPER))
+						.then(recyclerEffectCommand("failure", RecyclerChestBlockEntity.EffectTier.FAILURE)));
 		dispatcher.register(Commands.literal("echo_warrior")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
 				.then(Commands.literal("visual")
@@ -78,6 +89,7 @@ public final class VisualDebugCommands {
 						.then(visualCommand("reset", RomanLegionaryEchoEntity.VisualTestMode.RESET)))
 				.then(Commands.literal("animation")
 						.then(animationCommand("attack", RomanLegionaryEchoEntity.AnimationTestMode.ATTACK))
+						.then(animationCommand("attack_recover", RomanLegionaryEchoEntity.AnimationTestMode.ATTACK_RECOVER))
 						.then(animationCommand("hurt", RomanLegionaryEchoEntity.AnimationTestMode.HURT))
 						.then(animationCommand("shield_raise", RomanLegionaryEchoEntity.AnimationTestMode.SHIELD_RAISE))
 						.then(animationCommand("shield_lower", RomanLegionaryEchoEntity.AnimationTestMode.SHIELD_LOWER))
@@ -90,7 +102,56 @@ public final class VisualDebugCommands {
 										.executes(context -> setGuandaoAnimationDebug(context.getSource(), false)))))
 				.then(Commands.literal("relic")
 						.then(Commands.literal("reroll_traits").executes(context -> rerollTraits(context.getSource()))))
-				.then(battlefieldCommands));
+				.then(battlefieldCommands)
+				.then(recyclerCommands));
+	}
+
+	private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> recyclerEffectCommand(
+			String name,
+			RecyclerChestBlockEntity.EffectTier tier
+	) {
+		return Commands.literal(name).executes(context -> playRecyclerEffect(context.getSource(), tier));
+	}
+
+	private static int triggerRecycler(CommandSourceStack source) {
+		RecyclerChestBlockEntity recycler = lookedAtRecycler(source);
+		if (recycler == null) return 0;
+		ServerPlayer player = source.getPlayer();
+		if (player == null) return 0;
+		if (!recycler.triggerManual(player.level())) {
+			source.sendFailure(Component.literal("该回收箱正在封存，或其中没有可回收的物品。"));
+			return 0;
+		}
+		source.sendSuccess(() -> Component.literal("已立即尝试一次回收；这次测试不会占用自然午夜回收次数。"), false);
+		return 1;
+	}
+
+	private static int playRecyclerEffect(
+			CommandSourceStack source,
+			RecyclerChestBlockEntity.EffectTier tier
+	) {
+		RecyclerChestBlockEntity recycler = lookedAtRecycler(source);
+		if (recycler == null) return 0;
+		ServerPlayer player = source.getPlayer();
+		if (player == null) return 0;
+		recycler.playDebugEffect(player.level(), tier);
+		source.sendSuccess(() -> Component.literal("已播放回收箱 " + tier.name().toLowerCase() + " 特效。"), false);
+		return 1;
+	}
+
+	private static RecyclerChestBlockEntity lookedAtRecycler(CommandSourceStack source) {
+		ServerPlayer player = source.getPlayer();
+		if (player == null) {
+			source.sendFailure(Component.literal("该指令必须由玩家执行。"));
+			return null;
+		}
+		HitResult hit = player.pick(8.0, 1.0F, false);
+		if (!(hit instanceof BlockHitResult blockHit) || hit.getType() != HitResult.Type.BLOCK
+				|| !(player.level().getBlockEntity(blockHit.getBlockPos()) instanceof RecyclerChestBlockEntity recycler)) {
+			source.sendFailure(Component.literal("请看向 8 格内的英灵杂物回收箱。"));
+			return null;
+		}
+		return recycler;
 	}
 
 	private static int locateBattlefield(CommandSourceStack source) {

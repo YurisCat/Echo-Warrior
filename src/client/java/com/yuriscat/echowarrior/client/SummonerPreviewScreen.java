@@ -3,31 +3,29 @@ package com.yuriscat.echowarrior.client;
 import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.ModEntities;
 import com.yuriscat.echowarrior.ModItems;
+import com.yuriscat.echowarrior.item.EchoBiomeAffinity;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoRelicItem;
+import com.yuriscat.echowarrior.item.EchoTrait;
 import com.yuriscat.echowarrior.layout.SummonerLayout;
 import com.yuriscat.echowarrior.layout.SummonerLayout.Element;
-import com.yuriscat.echowarrior.layout.SummonerLayout.Offset;
 import com.yuriscat.echowarrior.menu.SummonerMenu;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +36,9 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	private static final int HEADER_TEXT_COLOR = 0xFFE0E0E0;
 	private static final int POSITIVE_TEXT_COLOR = 0xFF55FF55;
 	private static final int NEGATIVE_TEXT_COLOR = 0xFFFF5555;
+	private static final int SUMMON_BUTTON_WIDTH = 56;
+	private static final int SUMMON_BUTTON_HEIGHT = 19;
+	private static final int MAX_BUTTON_SOUL_PARTICLES = 72;
 	private static final int[] MODULE_SLOT_X = {8, 37, 66, 94, 123, 152};
 	private static final int[] ATTRIBUTE_ICON_X = {61, 134, 61, 116, 61, 116, 61, 116};
 	private static final int[] ATTRIBUTE_ICON_Y = {19, 19, 32, 32, 45, 45, 58, 58};
@@ -121,7 +122,32 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			icon("traits/lazy.png"),
 			icon("traits/courage.png"),
 			icon("traits/skinny.png"),
-			icon("traits/sturdy.png")
+			icon("traits/sturdy.png"),
+			icon("traits/undead_slayer.png"),
+			icon("traits/arthropod_slayer.png"),
+			icon("traits/raider_slayer.png"),
+			icon("traits/giant_slayer.png"),
+			icon("traits/nether_reaper.png"),
+			icon("traits/end_reaper.png"),
+			icon("traits/otherworld_reaper.png"),
+			icon("traits/biome_affinity_woodland.png"),
+			icon("traits/night_owl.png"),
+			icon("traits/perfectionist.png"),
+			icon("traits/last_stand.png"),
+			icon("traits/unyielding.png"),
+			icon("traits/eloquence.png"),
+			icon("traits/wise.png"),
+			icon("traits/mentor.png"),
+			icon("traits/lucky.png"),
+			icon("traits/fishing.png")
+	};
+	private static final Identifier[] BIOME_AFFINITY_ICONS = {
+			icon("traits/biome_affinity_woodland.png"),
+			icon("traits/biome_affinity_openland.png"),
+			icon("traits/biome_affinity_wasteland.png"),
+			icon("traits/biome_affinity_cold.png"),
+			icon("traits/biome_affinity_waters.png"),
+			icon("traits/biome_affinity_underground.png")
 	};
 	private static final Identifier[] ACTIVITY_ICONS = {
 			icon("modes/activity/follow.png"),
@@ -150,18 +176,6 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	private final SummonerLayout layout = SummonerLayout.get();
 	private LivingEntity previewEntity;
 	private int previewHeroType = -1;
-	private Button layoutButton;
-	private Button saveButton;
-	private Button undoButton;
-	private Button resetButton;
-	private boolean editingLayout;
-	private Element selectedElement;
-	private Element draggingElement;
-	private EnumMap<Element, Offset> editSnapshot;
-	private double dragStartMouseX;
-	private double dragStartMouseY;
-	private int dragStartOffsetX;
-	private int dragStartOffsetY;
 	private boolean summonButtonHeld;
 	private int feedbackTicks;
 	private int lastFeedbackValue;
@@ -185,66 +199,6 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	protected void init() {
 		super.init();
 		refreshPreviewEntity();
-
-		this.layoutButton = this.addRenderableWidget(Button.builder(
-				Component.literal("布局"),
-				button -> beginLayoutEditing()
-		).bounds(this.leftPos + IMAGE_WIDTH + 4, this.topPos + 3, 27, 12).build());
-
-		int editorX = Math.min(this.width - 50, this.leftPos + IMAGE_WIDTH + 4);
-		this.saveButton = this.addRenderableWidget(Button.builder(
-				Component.literal("保存"),
-				button -> saveLayoutAndClose()
-		).bounds(editorX, this.topPos + 4, 46, 16).build());
-		this.undoButton = this.addRenderableWidget(Button.builder(
-				Component.literal("撤销"),
-				button -> undoLayoutChanges()
-		).bounds(editorX, this.topPos + 23, 46, 16).build());
-		this.resetButton = this.addRenderableWidget(Button.builder(
-				Component.literal("重置"),
-				button -> this.layout.reset()
-		).bounds(editorX, this.topPos + 42, 46, 16).build());
-		updateEditorButtonVisibility();
-	}
-
-	private void beginLayoutEditing() {
-		this.editSnapshot = this.layout.snapshot();
-		this.editingLayout = true;
-		this.selectedElement = Element.BASIC_INFO;
-		this.draggingElement = null;
-		updateEditorButtonVisibility();
-	}
-
-	private void saveLayoutAndClose() {
-		this.layout.save();
-		this.editingLayout = false;
-		this.draggingElement = null;
-		updateEditorButtonVisibility();
-		this.onClose();
-	}
-
-	private void undoLayoutChanges() {
-		if (this.editSnapshot != null) {
-			this.layout.restore(this.editSnapshot);
-		}
-	}
-
-	private void cancelLayoutEditing() {
-		undoLayoutChanges();
-		this.editingLayout = false;
-		this.selectedElement = null;
-		this.draggingElement = null;
-		updateEditorButtonVisibility();
-	}
-
-	private void updateEditorButtonVisibility() {
-		if (this.layoutButton == null) {
-			return;
-		}
-		this.layoutButton.visible = !this.editingLayout;
-		this.saveButton.visible = this.editingLayout;
-		this.undoButton.visible = this.editingLayout;
-		this.resetButton.visible = this.editingLayout;
 	}
 
 	@Override
@@ -287,16 +241,8 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		renderSummonButton(graphics, relicLoaded, mouseX, mouseY);
 		renderProgressFills(graphics, relicLoaded);
 		renderFuelTransferParticles(graphics);
-		renderButtonSoulParticles(graphics);
+		renderButtonSoulParticles(graphics, partialTick);
 		renderEmptySlotHints(graphics);
-	}
-
-	@Override
-	public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-		super.extractContents(graphics, mouseX, mouseY, partialTick);
-		if (this.editingLayout) {
-			renderLayoutEditor(graphics);
-		}
 	}
 
 	@Override
@@ -365,55 +311,6 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		for (int index = 0; index < visibleLines; index++) {
 			graphics.text(this.font, lines.get(index), left + 7, top + 5 + index * 10, 0xFFF4F0E8, false);
 		}
-	}
-
-	@Override
-	protected void extractSlots(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-		if (!this.editingLayout) {
-			super.extractSlots(graphics, mouseX, mouseY);
-			return;
-		}
-
-		for (int index = 0; index < this.menu.slots.size(); index++) {
-			Slot slot = this.menu.slots.get(index);
-			ItemStack stack = slot.getItem();
-			if (stack.isEmpty()) {
-				continue;
-			}
-			int[] position = editorSlotPosition(index);
-			graphics.item(stack, position[0], position[1]);
-			graphics.itemDecorations(this.font, stack, position[0], position[1]);
-		}
-	}
-
-	private int[] editorSlotPosition(int menuSlot) {
-		if (menuSlot < SummonerMenu.MODULE_SLOT_COUNT) {
-			return new int[] {
-					rx(Element.MODULES, MODULE_SLOT_X[menuSlot]),
-					ry(Element.MODULES, 94)
-			};
-		}
-		if (menuSlot == SummonerMenu.FUEL_SLOT) {
-			return new int[] {rx(Element.FUEL_SLOT, 179), ry(Element.FUEL_SLOT, 172)};
-		}
-		if (menuSlot == SummonerMenu.RELIC_SLOT) {
-			return new int[] {rx(Element.RELIC_SLOT, 217), ry(Element.RELIC_SLOT, 172)};
-		}
-
-		int playerSlot = menuSlot - SummonerMenu.CUSTOM_SLOT_COUNT;
-		if (playerSlot < 27) {
-			int row = playerSlot / 9;
-			int column = playerSlot % 9;
-			return new int[] {
-					rx(Element.PLAYER_INVENTORY, 8 + column * 18),
-					ry(Element.PLAYER_INVENTORY, 120 + row * 18)
-			};
-		}
-		int column = playerSlot - 27;
-		return new int[] {
-				rx(Element.PLAYER_INVENTORY, 8 + column * 18),
-				ry(Element.PLAYER_INVENTORY, 177)
-		};
 	}
 
 	private boolean hasRelicLoaded() {
@@ -533,7 +430,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			int slotX = 157 - (count - 1 - displayed) * 11;
 			blitSized(
 					graphics,
-					TALENT_ICONS[talentIndex],
+					talentIcon(talentIndex),
 					x(Element.TALENTS, slotX),
 					y(Element.TALENTS, 6),
 					11,
@@ -541,6 +438,13 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			);
 			displayed++;
 		}
+	}
+
+	private Identifier talentIcon(int talentIndex) {
+		if (talentIndex == EchoTrait.BIOME_AFFINITY.ordinal()) {
+			return BIOME_AFFINITY_ICONS[EchoBiomeAffinity.byOrdinal(this.menu.biomeAffinity()).ordinal()];
+		}
+		return TALENT_ICONS[talentIndex];
 	}
 
 	private void renderModeButtons(GuiGraphicsExtractor graphics, boolean active, int mouseX, int mouseY) {
@@ -646,41 +550,112 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		}
 	}
 
-	private void renderButtonSoulParticles(GuiGraphicsExtractor graphics) {
+	private void renderButtonSoulParticles(GuiGraphicsExtractor graphics, float partialTick) {
 		for (ButtonSoulParticle particle : this.buttonSoulParticles) {
-			float progress = particle.age / (float)particle.lifetime;
-			double eased = progress * progress * (3.0 - 2.0 * progress);
-			double x = particle.startX + (particle.endX - particle.startX) * eased;
-			double y = particle.startY + (particle.endY - particle.startY) * eased
-					- Math.sin(progress * Math.PI) * particle.arc;
-			int alpha = Math.clamp(Math.round(255.0F * (1.0F - progress)), 32, 255);
+			double activeAge = particle.age + partialTick - particle.delay;
+			if (activeAge < 0.0) continue;
+			double progress = clamp01(activeAge / particle.lifetime);
+			double eased = particle.inward ? easeInBack(progress) : easeOutBack(progress);
+			double deltaX = particle.endX - particle.startX;
+			double deltaY = particle.endY - particle.startY;
+			double distance = Math.max(0.001, Math.sqrt(deltaX * deltaX + deltaY * deltaY));
+			double waveEnvelope = Math.pow(Math.max(0.0, Math.sin(progress * Math.PI)), 0.72);
+			double wobble = Math.sin(particle.phase + progress * Math.PI * 2.0 * particle.waves)
+					* particle.sway * waveEnvelope;
+			double x = particle.startX + deltaX * eased - deltaY / distance * wobble;
+			double y = particle.startY + deltaY * eased + deltaX / distance * wobble;
+			double fadeStart = particle.inward ? 0.82 : 0.58;
+			double fade = 1.0 - smoothstep(fadeStart, 1.0, progress);
+			double brightness = particle.inward
+					? 0.62 + 0.38 * smoothstep(0.0, 0.72, progress)
+					: 1.0;
+			int alpha = Math.clamp((int)Math.round(255.0 * fade * brightness), 0, 255);
+			if (alpha <= 0) continue;
 			int color = alpha << 24 | particle.color & 0xFFFFFF;
-			int size = progress < 0.55F ? 2 : 1;
+			int glow = Math.max(1, alpha / 4) << 24 | particle.color & 0xFFFFFF;
+			int size = particle.inward
+					? (progress > 0.68 ? 2 : 1)
+					: (progress < 0.28 ? 2 : 1);
 			int px = (int)Math.round(x);
 			int py = (int)Math.round(y);
+			graphics.fill(px - 1, py, px + size + 1, py + 1, glow);
+			graphics.fill(px, py - 1, px + 1, py + size + 1, glow);
 			graphics.fill(px, py, px + size, py + size, color);
-			if (size > 1) graphics.fill(px, py - 1, px + 1, py, color);
 		}
 	}
 
 	private void spawnButtonSoulParticles(boolean dismissing) {
 		if (this.minecraft.level == null) return;
-		var random = this.minecraft.level.getRandom();
-		int centerX = x(Element.SUMMON_BUTTON, 206);
-		int centerY = y(Element.SUMMON_BUTTON, 152);
-		int count = dismissing ? 18 : 14;
-		for (int index = 0; index < count && this.buttonSoulParticles.size() < 36; index++) {
-			double offsetX = random.nextInt(37) - 18;
-			double offsetY = random.nextInt(17) - 8;
-			double startX = dismissing ? centerX + offsetX : centerX + random.nextInt(7) - 3;
-			double startY = dismissing ? centerY + offsetY : centerY + random.nextInt(5) - 2;
-			double endX = dismissing ? centerX : centerX + offsetX;
-			double endY = dismissing ? centerY : centerY + offsetY;
+		RandomSource random = this.minecraft.level.getRandom();
+		int buttonLeft = x(Element.SUMMON_BUTTON, 178);
+		int buttonTop = y(Element.SUMMON_BUTTON, 143);
+		int count = dismissing ? 27 : 24;
+		for (int index = 0; index < count && this.buttonSoulParticles.size() < MAX_BUTTON_SOUL_PARTICLES; index++) {
+			double[] inside = randomPointInsideButton(random, buttonLeft, buttonTop);
+			double[] around = randomPointAroundButton(random, buttonLeft, buttonTop);
+			double startX = dismissing ? around[0] : inside[0];
+			double startY = dismissing ? around[1] : inside[1];
+			double endX = dismissing ? inside[0] : around[0];
+			double endY = dismissing ? inside[1] : around[1];
 			int color = index % 3 == 0 ? 0x61F4EB : index % 3 == 1 ? 0x50BFE6 : 0x477DE1;
-			int lifetime = 12 + random.nextInt(8);
-			double arc = (random.nextDouble() - 0.5) * 5.0;
-			this.buttonSoulParticles.add(new ButtonSoulParticle(startX, startY, endX, endY, arc, lifetime, color));
+			int delay = random.nextInt(5);
+			int lifetime = 14 + random.nextInt(9);
+			double sway = 2.0 + random.nextDouble() * 4.5;
+			double phase = random.nextDouble() * Math.PI * 2.0;
+			double waves = 0.8 + random.nextDouble() * 1.45;
+			this.buttonSoulParticles.add(new ButtonSoulParticle(
+					startX,
+					startY,
+					endX,
+					endY,
+					sway,
+					phase,
+					waves,
+					delay,
+					lifetime,
+					color,
+					dismissing
+			));
 		}
+	}
+
+	private static double[] randomPointInsideButton(RandomSource random, int left, int top) {
+		return new double[] {
+				left + 4.0 + random.nextDouble() * (SUMMON_BUTTON_WIDTH - 8.0),
+				top + 3.0 + random.nextDouble() * (SUMMON_BUTTON_HEIGHT - 6.0)
+		};
+	}
+
+	private static double[] randomPointAroundButton(RandomSource random, int left, int top) {
+		double margin = 4.0 + random.nextDouble() * 11.0;
+		return switch (random.nextInt(4)) {
+			case 0 -> new double[] {left + random.nextDouble() * SUMMON_BUTTON_WIDTH, top - margin};
+			case 1 -> new double[] {left + SUMMON_BUTTON_WIDTH + margin, top + random.nextDouble() * SUMMON_BUTTON_HEIGHT};
+			case 2 -> new double[] {left + random.nextDouble() * SUMMON_BUTTON_WIDTH, top + SUMMON_BUTTON_HEIGHT + margin};
+			default -> new double[] {left - margin, top + random.nextDouble() * SUMMON_BUTTON_HEIGHT};
+		};
+	}
+
+	private static double easeOutBack(double progress) {
+		double shifted = progress - 1.0;
+		double strength = 1.45;
+		return 1.0 + (strength + 1.0) * shifted * shifted * shifted
+				+ strength * shifted * shifted;
+	}
+
+	private static double easeInBack(double progress) {
+		double strength = 1.2;
+		return (strength + 1.0) * progress * progress * progress
+				- strength * progress * progress;
+	}
+
+	private static double smoothstep(double edge0, double edge1, double value) {
+		double progress = clamp01((value - edge0) / (edge1 - edge0));
+		return progress * progress * (3.0 - 2.0 * progress);
+	}
+
+	private static double clamp01(double value) {
+		return Math.max(0.0, Math.min(1.0, value));
 	}
 
 	private void renderEmptySlotHints(GuiGraphicsExtractor graphics) {
@@ -724,21 +699,20 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 
 	private void renderInteractiveTooltips(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean active) {
 		if (active) {
-			String[] talentNames = {"坏脾气", "慵懒", "勇气", "瘦削", "壮硕"};
-			String[] talentEffects = {
-					"召唤与自然恢复燃料消耗+20%，攻击力+4",
-					"召唤与自然恢复燃料消耗-20%，移动速度-25%",
-					"攻击力+2",
-					"生命值-25%，移动速度和攻击速度+25%",
-					"护甲+4，移动速度-25%"
-			};
 			int traitCount = Integer.bitCount(this.menu.traitMask());
 			int displayed = 0;
 			for (int talentIndex = 0; talentIndex < TALENT_ICONS.length; talentIndex++) {
 				if ((this.menu.traitMask() & 1 << talentIndex) == 0) continue;
 				int slotX = 157 - (traitCount - 1 - displayed) * 11;
 				if (isInside(mouseX, mouseY, x(Element.TALENTS, slotX), y(Element.TALENTS, 6), 11, 11)) {
-					showTooltip(graphics, mouseX, mouseY, talentNames[talentIndex], talentEffects[talentIndex]);
+					EchoTrait trait = EchoTrait.values()[talentIndex];
+					Component name = Component.translatable(trait.nameTranslationKey());
+					Component effect = Component.translatable(trait.descriptionTranslationKey());
+					if (trait == EchoTrait.BIOME_AFFINITY) {
+						EchoBiomeAffinity affinity = EchoBiomeAffinity.byOrdinal(this.menu.biomeAffinity());
+						name = Component.translatable(affinity.nameTranslationKey());
+					}
+					showTooltip(graphics, mouseX, mouseY, name, effect);
 					return;
 				}
 				displayed++;
@@ -866,8 +840,12 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			return;
 		}
 		for (int index = 0; index < SummonerMenu.MODULE_SLOT_COUNT; index++) {
-			if (isInside(mouseX, mouseY, x(Element.MODULES, MODULE_SLOT_X[index]), y(Element.MODULES, 94), 16, 16)) {
-				showTooltip(graphics, mouseX, mouseY, "饰品槽", "可安装英灵饰品；同名饰品最多一个，不同饰品可以叠加。");
+			if (this.menu.summonerContainer().getItem(index).isEmpty()
+					&& isInside(mouseX, mouseY, x(Element.MODULES, MODULE_SLOT_X[index]), y(Element.MODULES, 94), 16, 16)) {
+				showTooltip(graphics, mouseX, mouseY,
+						"饰品槽",
+						"在此安装英灵饰品",
+						"同名饰品不能重复安装");
 				return;
 			}
 		}
@@ -884,6 +862,16 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		lines.add(Component.literal(title).withStyle(ChatFormatting.GOLD));
 		for (String description : descriptions) {
 			lines.add(Component.literal(description).withStyle(ChatFormatting.GRAY));
+		}
+		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
+	}
+
+	private void showTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
+			Component title, Component... descriptions) {
+		List<Component> lines = new java.util.ArrayList<>();
+		lines.add(title.copy().withStyle(ChatFormatting.GOLD));
+		for (Component description : descriptions) {
+			lines.add(description.copy().withStyle(ChatFormatting.GRAY));
 		}
 		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
 	}
@@ -1015,7 +1003,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			this.feedbackTicks--;
 		}
 		this.fuelTransferParticles.removeIf(particle -> ++particle.age > particle.lifetime);
-		this.buttonSoulParticles.removeIf(particle -> ++particle.age > particle.lifetime);
+		this.buttonSoulParticles.removeIf(particle -> ++particle.age > particle.delay + particle.lifetime);
 
 		int feedbackValue = this.menu.actionFeedbackValue();
 		if (feedbackValue != 0 && feedbackValue != this.lastFeedbackValue) {
@@ -1058,20 +1046,28 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		private final double startY;
 		private final double endX;
 		private final double endY;
-		private final double arc;
+		private final double sway;
+		private final double phase;
+		private final double waves;
+		private final int delay;
 		private final int lifetime;
 		private final int color;
+		private final boolean inward;
 		private int age;
 
 		private ButtonSoulParticle(double startX, double startY, double endX, double endY,
-				double arc, int lifetime, int color) {
+				double sway, double phase, double waves, int delay, int lifetime, int color, boolean inward) {
 			this.startX = startX;
 			this.startY = startY;
 			this.endX = endX;
 			this.endY = endY;
-			this.arc = arc;
+			this.sway = sway;
+			this.phase = phase;
+			this.waves = waves;
+			this.delay = delay;
 			this.lifetime = lifetime;
 			this.color = color;
+			this.inward = inward;
 		}
 	}
 
@@ -1094,34 +1090,6 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		return result + suffix;
 	}
 
-	private void renderLayoutEditor(GuiGraphicsExtractor graphics) {
-		for (Element element : Element.values()) {
-			int left = x(element, element.baseX);
-			int top = y(element, element.baseY);
-			int right = left + element.width;
-			int bottom = top + element.height;
-			int color = element == this.selectedElement ? 0xFFFFFF40 : 0xAA49D7FF;
-			drawBorder(graphics, left, top, right, bottom, color);
-		}
-
-		int panelX = Math.min(this.width - 122, this.leftPos + IMAGE_WIDTH + 4);
-		int panelY = this.topPos + 62;
-		graphics.fill(panelX - 2, panelY - 2, panelX + 120, panelY + 39, 0xCC111111);
-		graphics.text(this.font, "拖动区域调整位置", panelX, panelY, 0xFFFFFFFF, false);
-		if (this.selectedElement != null) {
-			graphics.text(this.font, "选中：" + this.selectedElement.serializedName, panelX, panelY + 11, 0xFFFFFF55, false);
-			graphics.text(
-					this.font,
-					"x=" + this.layout.x(this.selectedElement, this.selectedElement.baseX)
-							+ "  y=" + this.layout.y(this.selectedElement, this.selectedElement.baseY),
-					panelX,
-					panelY + 22,
-					0xFFFFFFFF,
-					false
-			);
-		}
-	}
-
 	private static void drawBorder(GuiGraphicsExtractor graphics, int left, int top, int right, int bottom, int color) {
 		graphics.fill(left, top, right, top + 1, color);
 		graphics.fill(left, bottom - 1, right, bottom, color);
@@ -1131,52 +1099,32 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (!this.editingLayout) {
-			if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-				if (hasRelicLoaded()) {
-					for (int index = 0; index < 3; index++) {
-						if (isInside(event.x(), event.y(), x(Element.ACTIVITY, 178 + index * 19), y(Element.ACTIVITY, 90), 18, 18)) {
-							sendMenuButton(SummonerMenu.BUTTON_ACTIVITY_START + index);
-							return true;
-						}
-						if (isInside(event.x(), event.y(), x(Element.ALERT, 178 + index * 19), y(Element.ALERT, 123), 18, 18)) {
-							sendMenuButton(SummonerMenu.BUTTON_ALERT_START + index);
-							return true;
-						}
+		if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+			if (hasRelicLoaded()) {
+				for (int index = 0; index < 3; index++) {
+					if (isInside(event.x(), event.y(), x(Element.ACTIVITY, 178 + index * 19), y(Element.ACTIVITY, 90), 18, 18)) {
+						sendMenuButton(SummonerMenu.BUTTON_ACTIVITY_START + index);
+						return true;
 					}
-					for (int index = 0; index < this.menu.skillCount(); index++) {
-						if (isInside(event.x(), event.y(), x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
-							sendMenuButton(SummonerMenu.BUTTON_SKILL_START + index);
-							return true;
-						}
+					if (isInside(event.x(), event.y(), x(Element.ALERT, 178 + index * 19), y(Element.ALERT, 123), 18, 18)) {
+						sendMenuButton(SummonerMenu.BUTTON_ALERT_START + index);
+						return true;
 					}
 				}
-				if (isInside(event.x(), event.y(), x(Element.SUMMON_BUTTON, 178), y(Element.SUMMON_BUTTON, 143), 56, 19)) {
-					this.summonButtonHeld = true;
-					sendSummonAction();
-					return true;
+				for (int index = 0; index < this.menu.skillCount(); index++) {
+					if (isInside(event.x(), event.y(), x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
+						sendMenuButton(SummonerMenu.BUTTON_SKILL_START + index);
+						return true;
+					}
 				}
 			}
-			return super.mouseClicked(event, doubleClick);
+			if (isInside(event.x(), event.y(), x(Element.SUMMON_BUTTON, 178), y(Element.SUMMON_BUTTON, 143), 56, 19)) {
+				this.summonButtonHeld = true;
+				sendSummonAction();
+				return true;
+			}
 		}
-
-		if (isOverEditorButton(event.x(), event.y())) {
-			return super.mouseClicked(event, doubleClick);
-		}
-		if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-			return true;
-		}
-
-		Element hit = findElement(event.x(), event.y());
-		this.selectedElement = hit;
-		this.draggingElement = hit;
-		if (hit != null) {
-			this.dragStartMouseX = event.x();
-			this.dragStartMouseY = event.y();
-			this.dragStartOffsetX = this.layout.offsetX(hit);
-			this.dragStartOffsetY = this.layout.offsetY(hit);
-		}
-		return true;
+		return super.mouseClicked(event, doubleClick);
 	}
 
 	private void sendSummonAction() {
@@ -1193,74 +1141,9 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		if (!this.editingLayout || this.draggingElement == null) {
-			return this.editingLayout || super.mouseDragged(event, dragX, dragY);
-		}
-		int newX = this.dragStartOffsetX + (int)Math.round(event.x() - this.dragStartMouseX);
-		int newY = this.dragStartOffsetY + (int)Math.round(event.y() - this.dragStartMouseY);
-		this.layout.setOffset(this.draggingElement, newX, newY);
-		return true;
-	}
-
-	@Override
 	public boolean mouseReleased(MouseButtonEvent event) {
 		this.summonButtonHeld = false;
-		if (this.editingLayout) {
-			this.draggingElement = null;
-			return true;
-		}
 		return super.mouseReleased(event);
-	}
-
-	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (!this.editingLayout) {
-			return super.keyPressed(event);
-		}
-		if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
-			cancelLayoutEditing();
-			return true;
-		}
-		if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER) {
-			saveLayoutAndClose();
-			return true;
-		}
-		if (this.selectedElement == null) {
-			return true;
-		}
-
-		int step = event.hasShiftDown() ? 5 : 1;
-		switch (event.key()) {
-			case GLFW.GLFW_KEY_LEFT -> this.layout.move(this.selectedElement, -step, 0);
-			case GLFW.GLFW_KEY_RIGHT -> this.layout.move(this.selectedElement, step, 0);
-			case GLFW.GLFW_KEY_UP -> this.layout.move(this.selectedElement, 0, -step);
-			case GLFW.GLFW_KEY_DOWN -> this.layout.move(this.selectedElement, 0, step);
-			default -> {
-				return true;
-			}
-		}
-		return true;
-	}
-
-	private boolean isOverEditorButton(double mouseX, double mouseY) {
-		return this.saveButton.isMouseOver(mouseX, mouseY)
-				|| this.undoButton.isMouseOver(mouseX, mouseY)
-				|| this.resetButton.isMouseOver(mouseX, mouseY);
-	}
-
-	private Element findElement(double mouseX, double mouseY) {
-		Element[] values = Element.values();
-		for (int index = values.length - 1; index >= 0; index--) {
-			Element element = values[index];
-			int left = x(element, element.baseX);
-			int top = y(element, element.baseY);
-			if (mouseX >= left && mouseX < left + element.width
-					&& mouseY >= top && mouseY < top + element.height) {
-				return element;
-			}
-		}
-		return null;
 	}
 
 	private int x(Element element, int baseX) {

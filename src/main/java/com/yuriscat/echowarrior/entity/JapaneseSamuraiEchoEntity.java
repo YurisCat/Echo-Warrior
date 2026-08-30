@@ -17,6 +17,7 @@ import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoAccessorySystem;
 import com.yuriscat.echowarrior.item.EchoRelicState;
+import com.yuriscat.echowarrior.item.EchoTalentSystem;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
@@ -367,7 +368,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	}
 
 	private void startNormalAttack(ItemStack relic, LivingEntity target, long now, int skillSnapshot) {
-		int interval = relic.isEmpty() ? BASE_ATTACK_CYCLE_TICKS : EchoRelicState.attackIntervalTicks(relic);
+		int interval = relic.isEmpty() ? BASE_ATTACK_CYCLE_TICKS : EchoTalentSystem.attackIntervalTicks(this, relic);
 		float speed = BASE_ATTACK_CYCLE_TICKS / (float)interval;
 		int firstTicks = scaledAttackTicks(BASE_FIRST_TICKS, interval);
 		this.nextNormalAttackAt = now + interval;
@@ -460,7 +461,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 			LivingEntity locked = resolveLiving(level, this.lockedTargetUuid);
 			this.secondSlashPrimaryUuid = locked != null && followTargets.contains(locked)
 					? locked.getUUID() : followTargets.getFirst().getUUID();
-			int interval = relic.isEmpty() ? BASE_ATTACK_CYCLE_TICKS : EchoRelicState.attackIntervalTicks(relic);
+			int interval = relic.isEmpty() ? BASE_ATTACK_CYCLE_TICKS : EchoTalentSystem.attackIntervalTicks(this, relic);
 			int duration = scaledAttackTicks(BASE_FOLLOW_TICKS, interval);
 			int hit = scaledAttackTicks(BASE_FOLLOW_HIT_TICKS, interval);
 			beginAttackTracking();
@@ -470,7 +471,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	}
 
 	private void startAttackRecovery(ItemStack relic, long now) {
-		int interval = relic.isEmpty() ? BASE_ATTACK_CYCLE_TICKS : EchoRelicState.attackIntervalTicks(relic);
+		int interval = relic.isEmpty() ? BASE_ATTACK_CYCLE_TICKS : EchoTalentSystem.attackIntervalTicks(this, relic);
 		int duration = scaledAttackTicks(BASE_RECOVER_TICKS, interval);
 		setAction(ACTION_ATTACK_RECOVER, now, duration, Long.MAX_VALUE,
 				BASE_ATTACK_CYCLE_TICKS / (float)interval, ATTACK_RECOVER_TRIGGER);

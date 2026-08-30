@@ -1,6 +1,47 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "echo_warrior:item/test_echo_summoner"
+    "type": "minecraft:select",
+    "property": "echo_warrior:summoner_relic_icon",
+    "cases": [
+      {
+        "when": "roman_legionary",
+        "model": {
+          "type": "minecraft:model",
+          "model": "echo_warrior:item/roman_legionary_relic"
+        }
+      },
+      {
+        "when": "aztec_warrior",
+        "model": {
+          "type": "minecraft:model",
+          "model": "echo_warrior:item/aztec_warrior_relic"
+        }
+      },
+      {
+        "when": "egyptian_archer",
+        "model": {
+          "type": "minecraft:model",
+          "model": "echo_warrior:item/egyptian_archer_relic"
+        }
+      },
+      {
+        "when": "guandao_warrior",
+        "model": {
+          "type": "minecraft:model",
+          "model": "echo_warrior:item/guandao_warrior_relic"
+        }
+      },
+      {
+        "when": "japanese_samurai",
+        "model": {
+          "type": "minecraft:model",
+          "model": "echo_warrior:item/japanese_samurai_relic"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "echo_warrior:item/test_echo_summoner"
+    }
   }
 }

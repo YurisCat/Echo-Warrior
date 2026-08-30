@@ -1,1 +1,1 @@
-{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["IAC","IIC"," S "],"key":{"I":"minecraft:iron_ingot","A":"minecraft:anvil","C":"echo_warrior:courage_legacy","S":"minecraft:stick"},"result":{"id":"echo_warrior:mountain_burden_blade_accessory"}}
+{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["BSB","C C","BSB"],"key":{"B":"minecraft:bamboo","S":"minecraft:string","C":"echo_warrior:courage_legacy"},"result":{"id":"echo_warrior:mountain_burden_blade_accessory"}}

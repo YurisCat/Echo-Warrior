@@ -16,6 +16,7 @@ import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoAccessorySystem;
 import com.yuriscat.echowarrior.item.EchoRelicState;
+import com.yuriscat.echowarrior.item.EchoTalentSystem;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
@@ -1280,7 +1281,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	private int meleeAttackInterval() {
 		ItemStack relic = currentRelic();
 		return relic.isEmpty() ? EchoHeroType.GUANDAO_WARRIOR.baseAttackIntervalTicks()
-				: EchoRelicState.attackIntervalTicks(relic);
+				: EchoTalentSystem.attackIntervalTicks(this, relic);
 	}
 
 	private boolean skillEnabled(int skill) {

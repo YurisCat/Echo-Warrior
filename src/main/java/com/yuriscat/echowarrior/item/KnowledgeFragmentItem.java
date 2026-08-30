@@ -27,6 +27,11 @@ public final class KnowledgeFragmentItem extends Item {
 	}
 
 	@Override
+	public Component getName(ItemStack stack) {
+		return KnowledgeTooltip.knowledgeName("item.echo_warrior.knowledge_fragment");
+	}
+
+	@Override
 	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
 			Consumer<Component> builder, TooltipFlag flag) {
 		KnowledgeStackData.fragmentId(stack).flatMap(KnowledgeCatalog::entry).ifPresent(entry -> builder.accept(
@@ -37,5 +42,6 @@ public final class KnowledgeFragmentItem extends Item {
 		));
 		builder.accept(Component.translatable("item.echo_warrior.knowledge_fragment.read_hint")
 				.withStyle(ChatFormatting.DARK_GRAY));
+		KnowledgeTooltip.appendFragmentDetails(builder);
 	}
 }

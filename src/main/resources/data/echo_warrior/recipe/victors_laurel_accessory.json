@@ -1,1 +1,1 @@
-{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["LCL","PGP"," C "],"key":{"L":"minecraft:oak_leaves","C":"echo_warrior:courage_legacy","P":"echo_warrior:purity_legacy","G":"minecraft:golden_apple"},"result":{"id":"echo_warrior:victors_laurel_accessory"}}
+{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["LCL","P P","LGL"],"key":{"L":"#minecraft:leaves","C":"echo_warrior:courage_legacy","P":"echo_warrior:purity_legacy","G":"minecraft:golden_apple"},"result":{"id":"echo_warrior:victors_laurel_accessory"}}

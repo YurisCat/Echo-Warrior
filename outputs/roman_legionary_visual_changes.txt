@@ -15,3 +15,10 @@
 - 待机、行走、攻击、受伤和未来盾牌动画不要给这些骨骼添加关键帧。
 - 修改后请回传完整 .bbmodel 源文件，不要只回传 GeckoLib JSON。
 - 直接查看 roman_legionary_visual_bones_reference.png；需要矢量版时使用同名 SVG。
+
+条件二连击接入补充（2026-08-31）：
+1. 模型师原始 `attack_1` 与 `attack_2` 均保留在主文件中，便于继续修改和对照。
+2. 游戏运行使用三个派生片段：`attack_first` 为 `attack_2` 第 0～13 帧，`attack_follow` 为 `attack_2` 第 13～25 帧，`attack_recover` 为 `attack_1` 第 13～19 帧。
+3. 三段均按原始 24 FPS 曲线逐帧烘焙；收势起点已平滑校正到 `attack_2` 第 13 帧，追击与收势都不会在分叉处跳姿势。
+4. 派生片段仍不包含 head、left_eye、right_eye、eyebrows 的关键帧，现有表情与注视系统未被覆盖。
+5. 2026-08-31 起，三个派生片段还会自动移除 root、body_root、下半身、双腿和腰布关键帧，让游戏在实际追步时叠加行走腿部；模型师原始 attack_1 / attack_2 不做删除或改写。

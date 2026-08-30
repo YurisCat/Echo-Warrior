@@ -1,10 +1,13 @@
 package com.yuriscat.echowarrior.client;
 
 import com.yuriscat.echowarrior.ModBlocks;
+import com.yuriscat.echowarrior.ModBlockEntities;
 import com.yuriscat.echowarrior.ModMenus;
 import com.yuriscat.echowarrior.ModEntities;
 import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.item.EchoCompassItem;
+import com.yuriscat.echowarrior.item.SummonerFuelInsertFeedback;
+import com.yuriscat.echowarrior.item.TooltipShiftState;
 import com.yuriscat.echowarrior.network.EchoCompassMessagePayload;
 import com.yuriscat.echowarrior.network.EchoCompassStatePayload;
 import com.yuriscat.echowarrior.network.EchoCompassPulsePayload;
@@ -15,11 +18,14 @@ import net.fabricmc.fabric.api.client.rendering.v1.BlockColorRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockTintSources;
 import net.minecraft.client.color.item.ItemTintSources;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.item.properties.conditional.ConditionalItemModelProperties;
 import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperties;
+import net.minecraft.client.renderer.item.properties.select.SelectItemModelProperties;
 
 import java.util.List;
 
@@ -27,12 +33,23 @@ public final class EchoWarriorClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		EchoCompassItem.setClientInsideBattlefieldSupplier(EchoCompassClientState::isInsideBattlefieldMode);
+		TooltipShiftState.setClientShiftDownSupplier(Minecraft.getInstance()::hasShiftDown);
+		SummonerFuelInsertFeedback.setClientHandler((slot, feedback) -> {
+			if (Minecraft.getInstance().screen instanceof SummonerFuelParticleHost host) {
+				switch (feedback.effect()) {
+					case FUEL -> host.echoWarrior$spawnFuelInsertionParticles(slot, feedback.item());
+					case POLISH -> host.echoWarrior$spawnInsertionPolish(slot);
+				}
+			}
+		});
 		RangeSelectItemModelProperties.ID_MAPPER.put(
 				EchoWarrior.id("echo_compass_angle"), EchoCompassAngleProperty.MAP_CODEC);
 		ConditionalItemModelProperties.ID_MAPPER.put(
 				EchoWarrior.id("echo_compass_gold_frame"), EchoCompassGoldFrameProperty.MAP_CODEC);
 		ConditionalItemModelProperties.ID_MAPPER.put(
 				EchoWarrior.id("echo_compass_iron_frame"), EchoCompassIronFrameProperty.MAP_CODEC);
+		SelectItemModelProperties.ID_MAPPER.put(
+				EchoWarrior.id("summoner_relic_icon"), SummonerRelicIconProperty.TYPE);
 		ItemTintSources.ID_MAPPER.put(
 				EchoWarrior.id("echo_compass_pointer"), EchoCompassPointerTintSource.MAP_CODEC);
 		ClientPlayNetworking.registerGlobalReceiver(EchoCompassStatePayload.TYPE, (payload, context) ->
@@ -67,7 +84,9 @@ public final class EchoWarriorClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.GUANDAO_WARRIOR_ECHO, GuandaoWarriorEchoRenderer::new);
 		EntityRendererRegistry.register(ModEntities.JAPANESE_SAMURAI_ECHO, JapaneseSamuraiEchoRenderer::new);
 		EntityRendererRegistry.register(ModEntities.EGYPTIAN_ARCHER_ARROW, EgyptianArcherArrowRenderer::new);
+		BlockEntityRenderers.register(ModBlockEntities.RECYCLER_CHEST, RecyclerChestRenderer::new);
 		MenuScreens.register(ModMenus.SUMMONER, SummonerPreviewScreen::new);
 		MenuScreens.register(ModMenus.KNOWLEDGE_READER, KnowledgeReaderScreen::new);
+		MenuScreens.register(ModMenus.RECYCLER, RecyclerScreen::new);
 	}
 }

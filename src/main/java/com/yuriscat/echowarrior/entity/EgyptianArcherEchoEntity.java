@@ -16,6 +16,7 @@ import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoAccessorySystem;
 import com.yuriscat.echowarrior.item.EchoRelicState;
+import com.yuriscat.echowarrior.item.EchoTalentSystem;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
@@ -3731,7 +3732,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.enabledSkills = EchoRelicState.enabledSkills(relic);
 		this.arrowMode = EchoRelicState.egyptianArrowMode(relic);
 		this.entityData.set(ARROW_MODE, this.arrowMode.ordinal());
-		this.entityData.set(ATTACK_INTERVAL, EchoRelicState.attackIntervalTicks(relic));
+		this.entityData.set(ATTACK_INTERVAL, EchoTalentSystem.attackIntervalTicks(this, relic));
 		if (previousActivity != this.activityMode || previousAlert != this.alertMode || resetAnchor) {
 			this.setTarget(null);
 			this.highThreatTarget = null;

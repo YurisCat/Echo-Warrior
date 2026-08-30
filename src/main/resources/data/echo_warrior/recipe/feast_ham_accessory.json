@@ -1,1 +1,1 @@
-{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["PKK","KKP"," B "],"key":{"P":"echo_warrior:purity_legacy","K":"minecraft:cooked_porkchop","B":"minecraft:bone"},"result":{"id":"echo_warrior:feast_ham_accessory"}}
+{"type":"minecraft:crafting_shaped","category":"equipment","pattern":[" KB","PKK","KP "],"key":{"K":"minecraft:cooked_porkchop","B":"minecraft:bone","P":"echo_warrior:purity_legacy"},"result":{"id":"echo_warrior:feast_ham_accessory"}}

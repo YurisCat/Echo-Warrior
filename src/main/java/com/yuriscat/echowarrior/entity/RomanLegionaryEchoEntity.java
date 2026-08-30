@@ -8,17 +8,21 @@ import com.geckolib.animation.RawAnimation;
 import com.geckolib.animation.object.PlayState;
 import com.geckolib.animation.state.AnimationTest;
 import com.geckolib.util.GeckoLibUtil;
+import com.yuriscat.echowarrior.ModDamageTypes;
 import com.yuriscat.echowarrior.ModEffects;
 import com.yuriscat.echowarrior.ModItems;
 import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
 import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoRelicState;
+import com.yuriscat.echowarrior.item.EchoTalentSystem;
 import com.yuriscat.echowarrior.item.EchoAccessorySystem;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -26,6 +30,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -48,13 +53,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.tslat.smartbrainlib.api.SmartBrainOwner;
-import net.tslat.smartbrainlib.api.core.behaviour.custom.attack.AnimatableMeleeAttack;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.move.MoveToWalkTarget;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.path.SetWalkTargetToAttackTarget;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.target.InvalidateAttackTarget;
@@ -97,6 +103,14 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final EntityDataAccessor<Long> ATTENTION_STARTED_AT = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.LONG);
 	private static final EntityDataAccessor<Long> CAUGHT_REACTION_START = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.LONG);
 	private static final EntityDataAccessor<Boolean> SHIELD_RAISED = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Byte> MELEE_ACTION = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Float> MELEE_ACTION_SPEED = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Boolean> MELEE_ADVANCING = SynchedEntityData.defineId(RomanLegionaryEchoEntity.class, EntityDataSerializers.BOOLEAN);
+
+	private static final byte MELEE_ACTION_NONE = 0;
+	private static final byte MELEE_ACTION_FIRST = 1;
+	private static final byte MELEE_ACTION_RECOVER = 2;
+	private static final byte MELEE_ACTION_FOLLOW = 3;
 
 	public static final int MAX_LIFETIME_TICKS = 20 * 120;
 	public static final int SUMMONER_GRACE_TICKS = 20 * 5;
@@ -120,15 +134,37 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final float CAUGHT_EXIT_MAX_WALK_ANGLE = 130.0F;
 	private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.roman_legionary.idle");
 	private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.roman_legionary.walk");
-	private static final RawAnimation ATTACK = RawAnimation.begin().thenPlay("animation.roman_legionary.attack");
+	private static final RawAnimation ATTACK_FIRST = RawAnimation.begin()
+			.thenPlay("animation.roman_legionary.attack_first")
+			.thenPlayAndHold("animation.roman_legionary.attack_follow");
+	private static final RawAnimation ATTACK_RECOVER = RawAnimation.begin()
+			.thenPlayAndHold("animation.roman_legionary.attack_recover");
 	private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.roman_legionary.hurt");
 	private static final RawAnimation SHIELD_RAISE = RawAnimation.begin().thenPlayAndHold("animation.roman_legionary.shield_raise");
 	private static final RawAnimation SHIELD_LOWER = RawAnimation.begin().thenPlay("animation.roman_legionary.shield_lower");
 	private static final int MOVEMENT_ANIMATION_RELEASE_TICKS = 4;
 	private static final String ACTION_CONTROLLER = "action";
-	private static final String ATTACK_TRIGGER = "attack";
+	private static final String ATTACK_FIRST_TRIGGER = "attack_first";
+	private static final String ATTACK_RECOVER_TRIGGER = "attack_recover";
 	private static final String HURT_TRIGGER = "hurt";
-	private static final int ATTACK_ANIMATION_TICKS = 20;
+	private static final int BASE_ATTACK_INTERVAL_TICKS = 20;
+	private static final int BASE_FIRST_TICKS = 11;
+	private static final int BASE_FIRST_HIT_TICKS = 6;
+	private static final int BASE_RECOVER_TICKS = 5;
+	private static final int BASE_FOLLOW_TICKS = 10;
+	private static final int BASE_FOLLOW_HIT_TICKS = 5;
+	private static final float FOLLOW_DAMAGE_MULTIPLIER = 0.5F;
+	private static final double FIRST_STRIKE_RANGE = 2.25;
+	private static final double FOLLOW_COMMIT_RANGE = 2.75;
+	private static final double FOLLOW_STRIKE_RANGE = 3.10;
+	private static final double ATTACK_TRACKING_STOP_RANGE = 1.70;
+	private static final double FIRST_TRACKING_SPEED = 0.30;
+	private static final double FIRST_TRACKING_LIMIT = 1.50;
+	private static final double FOLLOW_TRACKING_SPEED = 0.20;
+	private static final double FOLLOW_TRACKING_LIMIT = 0.75;
+	private static final double ATTACK_TRACKING_MAX_SUBSTEP = 0.25;
+	private static final float ATTACK_TRACKING_TURN_PER_TICK = 15.0F;
+	private static final float ATTACK_TRACKING_TOTAL_TURN = 45.0F;
 	private static final Identifier LEGION_ARMOR_ID = Identifier.fromNamespaceAndPath("echo_warrior", "legion_endures_armor");
 	private static final Identifier LEGION_KNOCKBACK_ID = Identifier.fromNamespaceAndPath("echo_warrior", "legion_endures_knockback");
 	private static final AttributeModifier LEGION_ARMOR = new AttributeModifier(LEGION_ARMOR_ID, 12.0, AttributeModifier.Operation.ADD_VALUE);
@@ -204,6 +240,17 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private long caughtExitOwnerAvoidUntil = -1L;
 	private Vec3 caughtExitOwnerAvoidPoint = Vec3.ZERO;
 	private long attackAnimationUntil;
+	private long attackRecoveryPreviewAt = -1L;
+	private long nextMeleeAttackAt;
+	private long meleeActionEndsAt;
+	private long meleeHitAt = Long.MAX_VALUE;
+	private boolean meleeHitResolved;
+	private @Nullable UUID lockedMeleeTargetUuid;
+	private int committedMeleeInterval = BASE_ATTACK_INTERVAL_TICKS;
+	private float attackTrackingStartYaw;
+	private double attackTrackingTravelled;
+	private boolean attackTrackingStopped = true;
+	private boolean attackTrackingMovedThisTick;
 	private EchoRelicState.ActivityMode activityMode = EchoRelicState.ActivityMode.FOLLOW;
 	private EchoRelicState.AlertMode alertMode = EchoRelicState.AlertMode.DEFENSIVE;
 	private int enabledSkills = EchoHeroType.ROMAN_LEGIONARY.allSkillsEnabledMask();
@@ -254,6 +301,9 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		entityData.define(ATTENTION_STARTED_AT, 0L);
 		entityData.define(CAUGHT_REACTION_START, -100L);
 		entityData.define(SHIELD_RAISED, false);
+		entityData.define(MELEE_ACTION, MELEE_ACTION_NONE);
+		entityData.define(MELEE_ACTION_SPEED, 1.0F);
+		entityData.define(MELEE_ADVANCING, false);
 	}
 
 	@Override
@@ -280,27 +330,345 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	public List<? extends BehaviorControl<?>> getFightingBehaviours(RomanLegionaryEchoEntity owner) {
 		return List.of(
 				new InvalidateAttackTarget<RomanLegionaryEchoEntity>(),
-				new SetWalkTargetToAttackTarget<RomanLegionaryEchoEntity>().speedModifier(1.15F).closeEnoughDist(1),
-				new AnimatableMeleeAttack<RomanLegionaryEchoEntity>(6)
-						.attackInterval((entity, target) -> entity.meleeAttackInterval())
-						.canAttack((entity, target) -> entity.canPerformMeleeHit(target))
-						.whenStarting(RomanLegionaryEchoEntity::startMeleeAttackAnimation)
+				new SetWalkTargetToAttackTarget<RomanLegionaryEchoEntity>().speedModifier(1.15F).closeEnoughDist(1)
 		);
 	}
 
-	private boolean canPerformMeleeHit(LivingEntity target) {
+	private boolean isValidMeleeTarget(LivingEntity target) {
 		return this.shieldChargeTarget == null
 				&& !isLegionEnduresActive()
 				&& target.isAlive()
 				&& this.canAttack(target)
 				&& this.hasLineOfSight(target)
-				&& this.isWithinMeleeAttackRange(target);
+				&& isWithinAttackActivityBoundary(target.position());
 	}
 
-	private void startMeleeAttackAnimation() {
-		long now = this.level().getGameTime();
-		this.attackAnimationUntil = now + ATTACK_ANIMATION_TICKS;
-		this.triggerAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
+	private boolean canStartMeleeAttack(LivingEntity target) {
+		return isValidMeleeTarget(target) && this.isWithinMeleeAttackRange(target);
+	}
+
+	private boolean canPerformMeleeHit(LivingEntity target, double range) {
+		return isValidMeleeTarget(target) && isWithinRomanStrikeRange(target, range);
+	}
+
+	private byte meleeAction() {
+		return this.entityData.get(MELEE_ACTION);
+	}
+
+	private float meleeActionAnimationSpeed() {
+		return this.entityData.get(MELEE_ACTION_SPEED);
+	}
+
+	private boolean isAttackPresentationOwned(long now) {
+		return meleeAction() != MELEE_ACTION_NONE || now < this.attackAnimationUntil;
+	}
+
+	private void tryStartMeleeAttack(long now) {
+		LivingEntity target = this.getTarget();
+		if (target == null || now < this.nextMeleeAttackAt || now < this.attackAnimationUntil
+				|| !canStartMeleeAttack(target)) {
+			return;
+		}
+
+		this.committedMeleeInterval = Math.max(1, meleeAttackInterval());
+		float speed = BASE_ATTACK_INTERVAL_TICKS / (float)this.committedMeleeInterval;
+		int duration = scaledAttackTicks(BASE_FIRST_TICKS, this.committedMeleeInterval);
+		int hit = scaledAttackTicks(BASE_FIRST_HIT_TICKS, this.committedMeleeInterval);
+		this.lockedMeleeTargetUuid = target.getUUID();
+		faceTargetImmediately(target);
+		beginAttackTracking();
+		setMeleeAction(MELEE_ACTION_FIRST, now, duration, now + hit, speed, ATTACK_FIRST_TRIGGER);
+	}
+
+	private void tickMeleeAction(ServerLevel level, long now) {
+		this.attackTrackingMovedThisTick = false;
+		stopMovementIntent();
+		switch (meleeAction()) {
+			case MELEE_ACTION_FIRST -> tickMeleeFirst(level, now);
+			case MELEE_ACTION_RECOVER -> {
+				if (now >= this.meleeActionEndsAt) finishMeleeAction(now, true);
+			}
+			case MELEE_ACTION_FOLLOW -> tickMeleeFollow(level, now);
+			default -> finishMeleeAction(now, true);
+		}
+		this.entityData.set(MELEE_ADVANCING,
+				meleeAction() != MELEE_ACTION_NONE && this.attackTrackingMovedThisTick);
+	}
+
+	private void tickMeleeFirst(ServerLevel level, long now) {
+		tickAttackTracking(level, this.lockedMeleeTargetUuid,
+				FIRST_TRACKING_SPEED, FIRST_TRACKING_LIMIT);
+		if (!this.meleeHitResolved && now >= this.meleeHitAt) {
+			this.meleeHitResolved = true;
+			LivingEntity target = resolveLiving(level, this.lockedMeleeTargetUuid);
+			if (target != null && canPerformMeleeHit(target, FIRST_STRIKE_RANGE)) {
+				dealRomanMeleeDamage(level, target,
+						level.damageSources().source(ModDamageTypes.ROMAN_FIRST_STRIKE, this), 1.0F);
+			}
+		}
+		if (now < this.meleeActionEndsAt) {
+			return;
+		}
+
+		LivingEntity target = resolveLiving(level, this.lockedMeleeTargetUuid);
+		if (target == null || !canPerformMeleeHit(target, FOLLOW_COMMIT_RANGE)) {
+			startMeleeRecovery(now);
+			return;
+		}
+		faceTargetImmediately(target);
+		beginAttackTracking();
+		int duration = scaledAttackTicks(BASE_FOLLOW_TICKS, this.committedMeleeInterval);
+		int hit = scaledAttackTicks(BASE_FOLLOW_HIT_TICKS, this.committedMeleeInterval);
+		continueMeleeAction(MELEE_ACTION_FOLLOW, now, duration, now + hit);
+	}
+
+	private void startMeleeRecovery(long now) {
+		int duration = scaledAttackTicks(BASE_RECOVER_TICKS, this.committedMeleeInterval);
+		float speed = BASE_ATTACK_INTERVAL_TICKS / (float)this.committedMeleeInterval;
+		setMeleeAction(MELEE_ACTION_RECOVER, now, duration, Long.MAX_VALUE, speed, ATTACK_RECOVER_TRIGGER);
+	}
+
+	private void tickMeleeFollow(ServerLevel level, long now) {
+		if (!this.meleeHitResolved && now <= this.meleeHitAt) {
+			tickAttackTracking(level, this.lockedMeleeTargetUuid,
+					FOLLOW_TRACKING_SPEED, FOLLOW_TRACKING_LIMIT);
+		}
+		if (!this.meleeHitResolved && now >= this.meleeHitAt) {
+			this.meleeHitResolved = true;
+			LivingEntity target = resolveLiving(level, this.lockedMeleeTargetUuid);
+			if (target != null && canPerformMeleeHit(target, FOLLOW_STRIKE_RANGE)) {
+				dealRomanMeleeDamage(level, target,
+						level.damageSources().source(ModDamageTypes.ROMAN_FOLLOWUP, this),
+						FOLLOW_DAMAGE_MULTIPLIER);
+			}
+		}
+		if (now >= this.meleeActionEndsAt) {
+			finishMeleeAction(now, true);
+		}
+	}
+
+	private void setMeleeAction(byte action, long now, int duration, long hitAt, float speed, String trigger) {
+		stopAllActionTriggers();
+		this.entityData.set(MELEE_ACTION, action);
+		this.entityData.set(MELEE_ACTION_SPEED, speed);
+		this.meleeActionEndsAt = now + duration;
+		this.meleeHitAt = hitAt;
+		this.meleeHitResolved = false;
+		this.attackAnimationUntil = this.meleeActionEndsAt;
+		this.attackRecoveryPreviewAt = -1L;
+		this.entityData.set(MELEE_ADVANCING, false);
+		stopMovementIntent();
+		this.triggerAnim(ACTION_CONTROLLER, trigger);
+	}
+
+	private void continueMeleeAction(byte action, long now, int duration, long hitAt) {
+		this.entityData.set(MELEE_ACTION, action);
+		this.meleeActionEndsAt = now + duration;
+		this.meleeHitAt = hitAt;
+		this.meleeHitResolved = false;
+		this.attackAnimationUntil = this.meleeActionEndsAt;
+		stopMovementIntent();
+	}
+
+	private void finishMeleeAction(long now, boolean applyCooldown) {
+		byte previous = meleeAction();
+		stopAllActionTriggers();
+		this.entityData.set(MELEE_ACTION, MELEE_ACTION_NONE);
+		this.entityData.set(MELEE_ACTION_SPEED, 1.0F);
+		this.meleeActionEndsAt = 0L;
+		this.meleeHitAt = Long.MAX_VALUE;
+		this.meleeHitResolved = false;
+		this.lockedMeleeTargetUuid = null;
+		this.attackTrackingTravelled = 0.0;
+		this.attackTrackingStopped = true;
+		this.attackTrackingMovedThisTick = false;
+		this.entityData.set(MELEE_ADVANCING, false);
+		this.attackAnimationUntil = 0L;
+		this.attackRecoveryPreviewAt = -1L;
+		if (applyCooldown && previous != MELEE_ACTION_NONE) {
+			this.nextMeleeAttackAt = Math.max(this.nextMeleeAttackAt, now + this.committedMeleeInterval);
+		}
+	}
+
+	private boolean dealRomanMeleeDamage(
+			ServerLevel level,
+			LivingEntity target,
+			DamageSource source,
+			float multiplier
+	) {
+		float damage = (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE) * multiplier;
+		boolean hurt = target.hurtServer(level, source, damage);
+		if (hurt) this.setLastHurtMob(target);
+		return hurt;
+	}
+
+	private void stopAllActionTriggers() {
+		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_FIRST_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_RECOVER_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+	}
+
+	private void beginAttackTracking() {
+		this.attackTrackingTravelled = 0.0;
+		this.attackTrackingStartYaw = this.yBodyRot;
+		this.attackTrackingStopped = false;
+	}
+
+	private void tickAttackTracking(
+			ServerLevel level,
+			@Nullable UUID targetUuid,
+			double baseSpeed,
+			double travelLimit
+	) {
+		if (this.attackTrackingStopped || targetUuid == null) return;
+		LivingEntity target = resolveLiving(level, targetUuid);
+		if (target == null || !isValidMeleeTarget(target)) {
+			this.attackTrackingStopped = true;
+			return;
+		}
+		float desired = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		float fromStart = net.minecraft.util.Mth.wrapDegrees(desired - this.attackTrackingStartYaw);
+		if (Math.abs(fromStart) > ATTACK_TRACKING_TOTAL_TURN) {
+			this.attackTrackingStopped = true;
+			return;
+		}
+		float delta = net.minecraft.util.Mth.wrapDegrees(desired - this.yBodyRot);
+		float yaw = this.yBodyRot + net.minecraft.util.Mth.clamp(
+				delta, -ATTACK_TRACKING_TURN_PER_TICK, ATTACK_TRACKING_TURN_PER_TICK);
+		this.setYRot(yaw);
+		this.setYBodyRot(yaw);
+		this.setYHeadRot(yaw);
+
+		if (this.attackTrackingTravelled >= travelLimit) return;
+		double requested = baseSpeed * meleeActionAnimationSpeed();
+		while (requested > 1.0E-5 && this.attackTrackingTravelled < travelLimit) {
+			Vec3 towardTarget = target.position().subtract(this.position()).multiply(1.0, 0.0, 1.0);
+			double distance = towardTarget.length();
+			if (distance <= ATTACK_TRACKING_STOP_RANGE || distance < 1.0E-5) return;
+			double step = Math.min(ATTACK_TRACKING_MAX_SUBSTEP, Math.min(requested, Math.min(
+					travelLimit - this.attackTrackingTravelled,
+					distance - ATTACK_TRACKING_STOP_RANGE)));
+			if (step <= 1.0E-5) return;
+			Vec3 before = this.position();
+			if (!moveAttackTrackingStep(level, towardTarget.scale(step / distance))) {
+				this.attackTrackingStopped = true;
+				return;
+			}
+			double travelled = horizontalDistance(before, this.position());
+			if (travelled <= 1.0E-5) {
+				this.attackTrackingStopped = true;
+				return;
+			}
+			this.attackTrackingTravelled += travelled;
+			this.attackTrackingMovedThisTick = true;
+			requested -= travelled;
+		}
+	}
+
+	private boolean moveAttackTrackingStep(ServerLevel level, Vec3 horizontalDelta) {
+		Vec3 safe = safeAttackTrackingDestination(level, this.position().add(horizontalDelta));
+		if (safe == null) return false;
+		double verticalVelocity = this.getDeltaMovement().y;
+		this.snapTo(safe.x, safe.y, safe.z, this.getYRot(), this.getXRot());
+		this.setDeltaMovement(0.0, verticalVelocity, 0.0);
+		return true;
+	}
+
+	private @Nullable Vec3 safeAttackTrackingDestination(ServerLevel level, Vec3 desired) {
+		for (double dy : new double[] {0.0, 1.0, -1.0}) {
+			Vec3 candidate = new Vec3(desired.x, desired.y + dy, desired.z);
+			if (!isWithinAttackActivityBoundary(candidate)) continue;
+			AABB moved = this.getBoundingBox().move(candidate.subtract(this.position()));
+			if (!level.noCollision(this, moved) || !hasSafeAttackTrackingSupport(level, candidate)) continue;
+			return candidate;
+		}
+		return null;
+	}
+
+	private static boolean hasSafeAttackTrackingSupport(ServerLevel level, Vec3 candidate) {
+		BlockPos feet = BlockPos.containing(candidate);
+		BlockPos head = feet.above();
+		BlockPos floor = feet.below();
+		BlockState floorState = level.getBlockState(floor);
+		if (!floorState.isFaceSturdy(level, floor, Direction.UP)
+				|| !level.getFluidState(feet).isEmpty()
+				|| !level.getFluidState(head).isEmpty()) return false;
+		return !isAttackTrackingHazard(level.getBlockState(feet))
+				&& !isAttackTrackingHazard(level.getBlockState(head))
+				&& !isAttackTrackingHazard(floorState);
+	}
+
+	private static boolean isAttackTrackingHazard(BlockState state) {
+		return state.is(BlockTags.FIRE)
+				|| state.is(Blocks.POWDER_SNOW)
+				|| state.is(Blocks.MAGMA_BLOCK)
+				|| state.is(Blocks.CAMPFIRE)
+				|| state.is(Blocks.SOUL_CAMPFIRE);
+	}
+
+	private boolean isWithinAttackActivityBoundary(Vec3 point) {
+		LivingEntity owner = this.getOwner();
+		Vec3 center = this.activityMode == EchoRelicState.ActivityMode.FOLLOW && owner != null
+				? owner.position() : this.activityAnchor;
+		double radius = this.activityMode == EchoRelicState.ActivityMode.WAIT ? 8.0
+				: this.activityMode == EchoRelicState.ActivityMode.WANDER ? 24.0 : 32.0;
+		return point.distanceToSqr(center) <= radius * radius;
+	}
+
+	private boolean isWithinRomanStrikeRange(LivingEntity target, double range) {
+		AABB ownBox = this.getBoundingBox();
+		AABB targetBox = target.getBoundingBox();
+		if (targetBox.maxY < ownBox.minY - 1.0 || targetBox.minY > ownBox.maxY + 1.0) return false;
+		return horizontalDistance(this.position(), target.position()) <= range + target.getBbWidth() * 0.5;
+	}
+
+	private static double horizontalDistance(Vec3 first, Vec3 second) {
+		double x = first.x - second.x;
+		double z = first.z - second.z;
+		return Math.sqrt(x * x + z * z);
+	}
+
+	private void stopMovementIntent() {
+		this.getNavigation().stop();
+		this.getMoveControl().setWait();
+		this.setSpeed(0.0F);
+		this.setXxa(0.0F);
+		this.setZza(0.0F);
+		this.setDeltaMovement(0.0, this.getDeltaMovement().y, 0.0);
+		BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.WALK_TARGET);
+	}
+
+	private void faceTargetImmediately(LivingEntity target) {
+		float yaw = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		this.setYRot(yaw);
+		this.setYBodyRot(yaw);
+		this.setYHeadRot(yaw);
+	}
+
+	private void tickAttackPreview(long now) {
+		if (meleeAction() != MELEE_ACTION_NONE) return;
+		if (this.attackRecoveryPreviewAt >= 0L && now >= this.attackRecoveryPreviewAt) {
+			this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_FIRST_TRIGGER);
+			this.triggerAnim(ACTION_CONTROLLER, ATTACK_RECOVER_TRIGGER);
+			this.attackRecoveryPreviewAt = -1L;
+		}
+		if (now < this.attackAnimationUntil) {
+			stopMovementIntent();
+		} else if (this.attackAnimationUntil != 0L) {
+			stopAllActionTriggers();
+			this.attackAnimationUntil = 0L;
+			this.attackRecoveryPreviewAt = -1L;
+		}
+	}
+
+	private static int scaledAttackTicks(int baseTicks, int interval) {
+		return Math.max(1, (int)Math.ceil(baseTicks * interval / (double)BASE_ATTACK_INTERVAL_TICKS));
+	}
+
+	private static @Nullable LivingEntity resolveLiving(ServerLevel level, @Nullable UUID uuid) {
+		if (uuid == null) return null;
+		Entity entity = level.getEntity(uuid);
+		return entity instanceof LivingEntity living ? living : null;
 	}
 
 	@Override
@@ -322,19 +690,26 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			dismiss();
 			return;
 		}
+		long now = serverLevel.getGameTime();
+		tickAttackPreview(now);
 		tickCombatSkills(serverLevel, owner);
+		ItemStack relic = currentRelic();
+		if (meleeAction() != MELEE_ACTION_NONE) {
+			if (relic.isEmpty()) finishMeleeAction(now, true);
+			else tickMeleeAction(serverLevel, now);
+		} else if (!relic.isEmpty() && !isAttackPresentationOwned(now)) {
+			tryStartMeleeAttack(now);
+		}
 		if (this.tickCount % 5 == 0) {
-			ItemStack relic = currentRelic();
 			if (!relic.isEmpty()) tickFormation(serverLevel, owner, relic);
 		}
 
-		if (this.tickCount % 5 == 0) {
+		if (this.tickCount % 5 == 0 && !isAttackPresentationOwned(now)) {
 			LivingEntity target = selectProtectiveTarget(owner);
 			applySelectedCombatTarget(target);
 			enforceActivityBoundary(owner);
 		}
 		if (this.tickCount % 20 == 0) {
-			ItemStack relic = currentRelic();
 			if (!relic.isEmpty()) {
 				applyRelicState(relic, false);
 				tickNaturalHealing(serverLevel, relic);
@@ -344,13 +719,15 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			EchoExperienceSystem.markParticipation(this, this.getTarget());
 		}
 
+		boolean actionOwned = isAttackPresentationOwned(now);
+		if (actionOwned) stopMovementIntent();
 		EchoActivityMovement.tick(serverLevel, this, this.activityMode, this.activityAnchor,
 				this.getTarget() != null || this.shieldChargeTarget != null || isLegionEnduresActive()
-						|| serverLevel.getGameTime() < this.attackAnimationUntil || isVisualInteractionMovementOwned());
+						|| actionOwned || isVisualInteractionMovementOwned());
 		tickVisualAwareness(serverLevel, owner);
 		EchoWaterSafety.tick(serverLevel, this, owner,
 				this.activityMode == EchoRelicState.ActivityMode.FOLLOW
-						&& this.shieldChargeTarget == null && !isLegionEnduresActive());
+						&& this.shieldChargeTarget == null && !isLegionEnduresActive() && !actionOwned);
 	}
 
 	private void tickCombatSkills(ServerLevel level, LivingEntity owner) {
@@ -472,8 +849,11 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	}
 
 	private void raiseShield() {
-		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
-		this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+		if (this.level() instanceof ServerLevel level) {
+			finishMeleeAction(level.getGameTime(), true);
+		} else {
+			stopAllActionTriggers();
+		}
 		this.entityData.set(SHIELD_RAISED, true);
 	}
 
@@ -1898,7 +2278,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	@Override
 	public boolean isFollowMovementSuppressed() {
-		return isVisualInteractionMovementOwned();
+		return isVisualInteractionMovementOwned() || isAttackPresentationOwned(this.level().getGameTime());
 	}
 
 	public enum VisualTestMode {
@@ -1915,6 +2295,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 
 	public enum AnimationTestMode {
 		ATTACK,
+		ATTACK_RECOVER,
 		HURT,
 		SHIELD_RAISE,
 		SHIELD_LOWER,
@@ -1928,11 +2309,20 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		long now = level.getGameTime();
 		switch (mode) {
 			case ATTACK -> {
-				this.attackAnimationUntil = now + ATTACK_ANIMATION_TICKS;
-				this.triggerAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
+				finishMeleeAction(now, true);
+				lowerShield();
+				this.attackAnimationUntil = now + BASE_FIRST_TICKS + BASE_FOLLOW_TICKS;
+				this.triggerAnim(ACTION_CONTROLLER, ATTACK_FIRST_TRIGGER);
+			}
+			case ATTACK_RECOVER -> {
+				finishMeleeAction(now, true);
+				lowerShield();
+				this.attackAnimationUntil = now + BASE_FIRST_TICKS + BASE_RECOVER_TICKS;
+				this.attackRecoveryPreviewAt = now + BASE_FIRST_TICKS;
+				this.triggerAnim(ACTION_CONTROLLER, ATTACK_FIRST_TRIGGER);
 			}
 			case HURT -> {
-				this.attackAnimationUntil = 0L;
+				finishMeleeAction(now, true);
 				setReaction(VISUAL_HURT, now + 10);
 				this.entityData.set(CURIOUS_TILT, (byte)0);
 				this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1);
@@ -1941,9 +2331,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			case SHIELD_RAISE -> raiseShield();
 			case SHIELD_LOWER -> lowerShield();
 			case RESET -> {
-				this.attackAnimationUntil = 0L;
-				this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_TRIGGER);
-				this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+				finishMeleeAction(now, false);
 				lowerShield();
 			}
 		}
@@ -2124,7 +2512,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			Entity attackerEntity = source.getEntity();
 			long now = level.getGameTime();
 			endCaughtExit(now, true);
-			triggerHurtPresentation(now, now >= this.attackAnimationUntil
+			triggerHurtPresentation(now, meleeAction() == MELEE_ACTION_NONE && now >= this.attackAnimationUntil
 					&& this.shieldChargeTarget == null && !isLegionEnduresActive());
 			if (attackerEntity instanceof LivingEntity living) {
 				applyAttention(new AttentionCandidate(living, living.getEyePosition(), 1100,
@@ -2202,13 +2590,14 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	}
 
 	public boolean shouldFollowOwner() {
-		return this.activityMode == EchoRelicState.ActivityMode.FOLLOW && !isLegionEnduresActive();
+		return this.activityMode == EchoRelicState.ActivityMode.FOLLOW
+				&& !isLegionEnduresActive() && !isAttackPresentationOwned(this.level().getGameTime());
 	}
 
 	public int meleeAttackInterval() {
 		ItemStack relic = currentRelic();
 		return relic.isEmpty() ? EchoHeroType.ROMAN_LEGIONARY.baseAttackIntervalTicks()
-				: EchoRelicState.attackIntervalTicks(relic);
+				: EchoTalentSystem.attackIntervalTicks(this, relic);
 	}
 
 	@Override
@@ -2270,6 +2659,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	public void recallTo(Player player) {
 		if (this.level() instanceof ServerLevel serverLevel) {
 			long now = serverLevel.getGameTime();
+			finishMeleeAction(now, true);
 			if (this.mutualGazePlayerUuid != null) {
 				endMutualGaze(now);
 			}
@@ -2298,6 +2688,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			return;
 		}
 		if (this.level() instanceof ServerLevel serverLevel) {
+			finishMeleeAction(serverLevel.getGameTime(), false);
 			serverLevel.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 24, 0.35, 0.7, 0.35, 0.02);
 			serverLevel.playSound(null, this.blockPosition(), SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 0.7F, 0.75F);
 		}
@@ -2367,8 +2758,12 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	@Override
 	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
 		controllers.add(new AnimationController<RomanLegionaryEchoEntity>("movement", 3, this::selectMovementAnimation));
-		controllers.add(new AnimationController<RomanLegionaryEchoEntity>(ACTION_CONTROLLER, 2, test -> PlayState.STOP)
-				.triggerableAnim(ATTACK_TRIGGER, ATTACK)
+		controllers.add(new AnimationController<RomanLegionaryEchoEntity>(ACTION_CONTROLLER, 0, test -> {
+			test.setControllerSpeed(test.animatable().meleeActionAnimationSpeed());
+			return PlayState.STOP;
+		})
+				.triggerableAnim(ATTACK_FIRST_TRIGGER, ATTACK_FIRST)
+				.triggerableAnim(ATTACK_RECOVER_TRIGGER, ATTACK_RECOVER)
 				.triggerableAnim(HURT_TRIGGER, HURT));
 		controllers.add(new AnimationController<RomanLegionaryEchoEntity>("shield_pose", 0, this::selectShieldAnimation));
 	}
@@ -2391,6 +2786,15 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	}
 
 	private PlayState selectMovementAnimation(AnimationTest<RomanLegionaryEchoEntity> test) {
+		byte action = test.animatable().meleeAction();
+		if (action != MELEE_ACTION_NONE) {
+			boolean advancing = (action == MELEE_ACTION_FIRST || action == MELEE_ACTION_FOLLOW)
+					&& test.animatable().entityData.get(MELEE_ADVANCING);
+			this.movementAnimationActive = false;
+			test.setControllerSpeed(advancing ? test.animatable().meleeActionAnimationSpeed() : 1.0F);
+			return test.setAndContinue(advancing ? WALK : IDLE);
+		}
+		test.setControllerSpeed(1.0F);
 		int currentTick = test.animatable().tickCount;
 		if (test.isMoving()) {
 			this.movementAnimationActive = true;

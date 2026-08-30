@@ -7,47 +7,47 @@
         {
           "type": "minecraft:item",
           "name": "minecraft:iron_ingot",
-          "weight": 264000
+          "weight": 7560
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:courage_legacy",
-          "weight": 26400
+          "weight": 1008
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:fortitude_legacy",
-          "weight": 26400
+          "weight": 1008
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:purity_legacy",
-          "weight": 26400
+          "weight": 1008
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:wisdom_legacy",
-          "weight": 26400
+          "weight": 1008
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:craft_legacy",
-          "weight": 26400
+          "weight": 1008
         },
         {
           "type": "minecraft:item",
           "name": "minecraft:gold_ingot",
-          "weight": 52800
+          "weight": 5040
         },
         {
           "type": "minecraft:item",
           "name": "minecraft:netherite_scrap",
-          "weight": 1980
+          "weight": 1260
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -62,7 +62,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -77,7 +77,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -92,7 +92,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -107,7 +107,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -122,7 +122,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -137,7 +137,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -152,7 +152,7 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:knowledge_fragment",
-          "weight": 24750,
+          "weight": 945,
           "functions": [
             {
               "function": "minecraft:set_components",
@@ -167,32 +167,32 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:guandao_warrior_relic",
-          "weight": 9900
+          "weight": 2520
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:battle_worn_whetstone_accessory",
-          "weight": 377
+          "weight": 1440
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:twin_oath_badge_accessory",
-          "weight": 377
+          "weight": 1440
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:heart_sprout_amber_accessory",
-          "weight": 377
+          "weight": 1440
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:peacemaker_accessory",
-          "weight": 94
+          "weight": 360
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:cat_bell_fish_charm_accessory",
-          "weight": 95
+          "weight": 360
         }
       ]
     }

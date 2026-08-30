@@ -72,7 +72,9 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	private final DataSlot spiritMovement = DataSlot.standalone();
 	private final DataSlot summonCostPercent = DataSlot.standalone();
 	private final DataSlot fuelAmount = DataSlot.standalone();
-	private final DataSlot traitMask = DataSlot.standalone();
+	private final DataSlot traitMaskLow = DataSlot.standalone();
+	private final DataSlot traitMaskHigh = DataSlot.standalone();
+	private final DataSlot biomeAffinity = DataSlot.standalone();
 	private final DataSlot relicSyncToken = DataSlot.standalone();
 	private final DataSlot activityMode = DataSlot.standalone();
 	private final DataSlot alertMode = DataSlot.standalone();
@@ -133,7 +135,9 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		this.addDataSlot(this.spiritMovement);
 		this.addDataSlot(this.summonCostPercent);
 		this.addDataSlot(this.fuelAmount);
-		this.addDataSlot(this.traitMask);
+		this.addDataSlot(this.traitMaskLow);
+		this.addDataSlot(this.traitMaskHigh);
+		this.addDataSlot(this.biomeAffinity);
 		this.addDataSlot(this.relicSyncToken);
 		this.addDataSlot(this.activityMode);
 		this.addDataSlot(this.alertMode);
@@ -283,7 +287,10 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			this.spiritMovement.set((int)Math.round(EchoRelicState.movementPercent(relic)
 					* EchoAccessorySystem.movementMultiplier(this.summonerContainer)));
 			this.summonCostPercent.set(EchoRelicState.summonCostPercent(relic));
-			this.traitMask.set(EchoRelicState.traitMask(relic));
+			int mask = EchoRelicState.traitMask(relic);
+			this.traitMaskLow.set(mask & 0xFFFF);
+			this.traitMaskHigh.set(mask >>> 16);
+			this.biomeAffinity.set(EchoRelicState.biomeAffinity(relic).ordinal());
 			this.relicSyncToken.set(relicSyncToken(relic));
 			this.activityMode.set(EchoRelicState.activityMode(relic).ordinal());
 			this.alertMode.set(EchoRelicState.alertMode(relic).ordinal());
@@ -316,7 +323,9 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			this.spiritArmor.set(0);
 			this.spiritMovement.set(0);
 			this.summonCostPercent.set(100);
-			this.traitMask.set(0);
+			this.traitMaskLow.set(0);
+			this.traitMaskHigh.set(0);
+			this.biomeAffinity.set(0);
 			this.relicSyncToken.set(0);
 			this.activityMode.set(0);
 			this.alertMode.set(1);
@@ -504,6 +513,46 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		return this.summonerContainer;
 	}
 
+	public boolean allowsDirectInsertionIntoSource(Slot slot, Player player) {
+		boolean lockedSource = player == this.owner
+				&& slot instanceof LockedSlot
+				&& slot.container == this.owner.getInventory()
+				&& slot.getContainerSlot() == this.sourceInventorySlot;
+		if (!lockedSource) {
+			return false;
+		}
+		return this.owner.level().isClientSide()
+				? slot.getItem().getItem() instanceof TestEchoSummonerItem
+				: !currentSummonerStack().isEmpty();
+	}
+
+	public boolean insertIntoOpenSummoner(ItemStack carried) {
+		if (carried.isEmpty()
+				|| (!this.owner.level().isClientSide() && currentSummonerStack().isEmpty())) {
+			return false;
+		}
+		if (isFuel(carried)) {
+			return insertIntoMenuSlot(FUEL_SLOT, carried, carried.getCount());
+		}
+		if (isRelic(carried)) {
+			return insertIntoMenuSlot(RELIC_SLOT, carried, 1);
+		}
+		if (EchoSummonerAccessory.isAccessory(carried)) {
+			for (int moduleSlot = 0; moduleSlot < MODULE_SLOT_COUNT; moduleSlot++) {
+				if (insertIntoMenuSlot(moduleSlot, carried, 1)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean insertIntoMenuSlot(int menuSlot, ItemStack carried, int maximumAmount) {
+		int previousCount = carried.getCount();
+		this.slots.get(menuSlot).safeInsert(carried, maximumAmount);
+		return carried.getCount() < previousCount;
+	}
+
 	public boolean matchesSummoner(UUID id) {
 		return id != null && id.equals(this.summonerId);
 	}
@@ -555,7 +604,10 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	public boolean moduleReducesMovement() { return EchoAccessorySystem.movementMultiplier(this.summonerContainer) < 1.0; }
 	public int summonCostPercent() { return this.summonCostPercent.get(); }
 	public int fuelAmount() { return this.fuelAmount.get(); }
-	public int traitMask() { return this.traitMask.get(); }
+	public int traitMask() {
+		return this.traitMaskLow.get() & 0xFFFF | (this.traitMaskHigh.get() & 0xFFFF) << 16;
+	}
+	public int biomeAffinity() { return this.biomeAffinity.get(); }
 	public int relicSyncToken() { return this.relicSyncToken.get(); }
 	public int activityMode() { return this.activityMode.get(); }
 	public int alertMode() { return this.alertMode.get(); }

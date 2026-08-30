@@ -2,6 +2,7 @@ package com.yuriscat.echowarrior.entity;
 
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoAccessorySystem;
+import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -24,6 +25,13 @@ public interface EchoWarriorEntity extends OwnableEntity {
 	void bindTo(Player owner, UUID summonerUuid);
 
 	void applyRelicState(ItemStack relic, boolean resetAnchor);
+
+	default ItemStack activeRelic() {
+		LivingEntity owner = this.getOwner();
+		UUID summonerUuid = this.getSummonerUuid();
+		if (!(owner instanceof Player player) || summonerUuid == null) return ItemStack.EMPTY;
+		return TestEchoSummonerItem.relicStack(TestEchoSummonerItem.findSummonerStack(player, summonerUuid));
+	}
 
 	default void applyModuleState() {
 		EchoAccessorySystem.apply(this);

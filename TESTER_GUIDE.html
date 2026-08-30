@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Echo Warrior 测试环境使用指南</title>
+  <style>
+    :root {
+      --ink: #eaf7f6;
+      --muted: #9bb9b7;
+      --surface: rgba(13, 30, 34, 0.92);
+      --surface-2: rgba(18, 42, 46, 0.84);
+      --line: rgba(140, 210, 199, 0.18);
+      --cyan: #65e6d0;
+      --cyan-strong: #29cbb1;
+      --gold: #f3c969;
+      --red: #ff817d;
+      --green: #7ce3a5;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 14% 12%, rgba(41, 203, 177, 0.18), transparent 31rem),
+        radial-gradient(circle at 86% 8%, rgba(243, 201, 105, 0.12), transparent 27rem),
+        linear-gradient(155deg, #071317 0%, #0b2024 52%, #071518 100%);
+      font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+      line-height: 1.68;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.24;
+      background-image:
+        linear-gradient(rgba(101, 230, 208, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(101, 230, 208, 0.05) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: linear-gradient(to bottom, black, transparent 72%);
+    }
+
+    button, code { font: inherit; }
+
+    button { color: inherit; }
+
+    .page {
+      position: relative;
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 44px 0 72px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(26px, 5vw, 54px);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background:
+        linear-gradient(120deg, rgba(16, 48, 51, 0.98), rgba(8, 24, 28, 0.95)),
+        var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 310px;
+      height: 310px;
+      right: -90px;
+      top: -120px;
+      border: 1px solid rgba(101, 230, 208, 0.18);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 32px rgba(101, 230, 208, 0.035),
+        0 0 0 72px rgba(101, 230, 208, 0.025),
+        0 0 90px rgba(41, 203, 177, 0.18);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 13px;
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 26px;
+      height: 2px;
+      background: currentColor;
+      box-shadow: 8px 0 18px currentColor;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      margin-bottom: 14px;
+      font-size: clamp(34px, 6vw, 68px);
+      line-height: 1.06;
+      letter-spacing: -0.045em;
+    }
+
+    .hero p {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin-bottom: 24px;
+      color: var(--muted);
+      font-size: clamp(16px, 2vw, 19px);
+    }
+
+    .meta-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 6px 12px;
+      border: 1px solid rgba(101, 230, 208, 0.2);
+      border-radius: 999px;
+      color: #cceae6;
+      background: rgba(4, 16, 19, 0.34);
+      font-size: 13px;
+    }
+
+    .meta-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 12px rgba(124, 227, 165, 0.8);
+    }
+
+    .shell {
+      margin-top: 24px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 9px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(4, 15, 18, 0.52);
+    }
+
+    .tab {
+      min-height: 58px;
+      padding: 10px 16px;
+      border: 1px solid transparent;
+      border-radius: 16px;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+      transition: color 160ms ease, background 160ms ease, border-color 160ms ease, transform 160ms ease;
+    }
+
+    .tab:hover { color: var(--ink); background: rgba(101, 230, 208, 0.06); }
+    .tab:active { transform: translateY(1px); }
+    .tab[aria-selected="true"] {
+      color: #04231e;
+      border-color: rgba(101, 230, 208, 0.52);
+      background: linear-gradient(135deg, var(--cyan), #a9f4e7);
+      box-shadow: 0 9px 24px rgba(41, 203, 177, 0.18);
+    }
+
+    .tab:focus-visible, .copy:focus-visible, a:focus-visible, summary:focus-visible {
+      outline: 3px solid var(--gold);
+      outline-offset: 3px;
+    }
+
+    .panel {
+      padding: clamp(22px, 5vw, 50px);
+      animation: panel-in 220ms ease-out;
+    }
+
+    .panel[hidden] { display: none; }
+
+    @keyframes panel-in {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .lead {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
+      gap: 24px;
+      align-items: start;
+      margin-bottom: 34px;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      font-size: clamp(25px, 4vw, 38px);
+      line-height: 1.2;
+      letter-spacing: -0.025em;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 18px;
+      line-height: 1.4;
+    }
+
+    .muted { color: var(--muted); }
+
+    .quick-card {
+      padding: 20px;
+      border: 1px solid rgba(101, 230, 208, 0.22);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(36, 87, 83, 0.36), rgba(12, 31, 34, 0.58));
+    }
+
+    .quick-card strong { display: block; margin-bottom: 8px; color: var(--cyan); }
+    .quick-card p { margin: 0; color: #cae2df; }
+
+    .steps {
+      position: relative;
+      display: grid;
+      gap: 0;
+      margin: 0 0 34px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .step {
+      position: relative;
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 17px;
+      padding-bottom: 28px;
+    }
+
+    .step:last-child { padding-bottom: 0; }
+
+    .step:not(:last-child)::before {
+      content: "";
+      position: absolute;
+      left: 23px;
+      top: 44px;
+      bottom: 2px;
+      width: 1px;
+      background: linear-gradient(var(--cyan-strong), rgba(101, 230, 208, 0.08));
+    }
+
+    .step-number {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(101, 230, 208, 0.45);
+      border-radius: 15px;
+      color: #062923;
+      background: linear-gradient(145deg, #b6f8ec, var(--cyan));
+      font-weight: 800;
+      box-shadow: 0 8px 24px rgba(41, 203, 177, 0.14);
+    }
+
+    .step-body { padding-top: 2px; }
+    .step-body p { margin-bottom: 10px; color: var(--muted); }
+    .step-body p:last-child { margin-bottom: 0; }
+
+    .file {
+      color: var(--gold);
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-weight: 700;
+    }
+
+    .callout {
+      margin: 22px 0 30px;
+      padding: 18px 20px;
+      border-left: 4px solid var(--cyan);
+      border-radius: 4px 16px 16px 4px;
+      background: rgba(101, 230, 208, 0.08);
+    }
+
+    .callout.warning {
+      border-left-color: var(--gold);
+      background: rgba(243, 201, 105, 0.08);
+    }
+
+    .callout.danger {
+      border-left-color: var(--red);
+      background: rgba(255, 129, 125, 0.08);
+    }
+
+    .callout strong { display: block; margin-bottom: 4px; }
+    .callout p { margin-bottom: 0; color: #c9dfdc; }
+
+    .command-box {
+      overflow: hidden;
+      margin: 15px 0 20px;
+      border: 1px solid rgba(149, 215, 204, 0.18);
+      border-radius: 16px;
+      background: #061317;
+    }
+
+    .command-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px 10px 16px;
+      border-bottom: 1px solid rgba(149, 215, 204, 0.13);
+      color: #96b8b3;
+      font-size: 13px;
+    }
+
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow-x: auto;
+      color: #d9fff8;
+      font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+      font-size: 14px;
+      line-height: 1.65;
+      tab-size: 2;
+    }
+
+    .copy {
+      padding: 7px 11px;
+      border: 1px solid rgba(101, 230, 208, 0.25);
+      border-radius: 9px;
+      cursor: pointer;
+      color: var(--cyan);
+      background: rgba(101, 230, 208, 0.07);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .copy:hover { background: rgba(101, 230, 208, 0.14); }
+
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 22px 0 32px;
+    }
+
+    .compare-card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface-2);
+    }
+
+    .compare-card.keep { border-top: 3px solid var(--green); }
+    .compare-card.drop { border-top: 3px solid var(--red); }
+    .compare-card ul { margin: 12px 0 0; padding-left: 20px; color: var(--muted); }
+    .compare-card li + li { margin-top: 5px; }
+
+    details {
+      border-top: 1px solid var(--line);
+      padding: 17px 0;
+    }
+
+    details:last-child { border-bottom: 1px solid var(--line); }
+
+    summary {
+      cursor: pointer;
+      color: #dff5f1;
+      font-weight: 700;
+    }
+
+    details p { margin: 12px 0 0; color: var(--muted); }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 22px;
+      padding: 0 4px;
+      color: #789793;
+      font-size: 13px;
+    }
+
+    @media (max-width: 760px) {
+      .page { width: min(100% - 20px, 1100px); padding-top: 10px; }
+      .hero { border-radius: 20px; }
+      .shell { border-radius: 20px; }
+      .lead, .compare { grid-template-columns: 1fr; }
+      .panel { padding: 22px 18px 30px; }
+      .tab { min-height: 62px; padding: 8px 10px; font-size: 14px; }
+      .hero::after { opacity: 0.55; }
+      .footer { flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="eyebrow">Echo Warrior · Tester Kit</div>
+      <h1>测试环境获取与更新指南</h1>
+      <p>不需要 Git 基础，也不需要单独安装 Java。第一次从 QQ 离线包开始；以后只获取 GitHub 上较小的代码更新。</p>
+      <div class="meta-row" aria-label="环境信息">
+        <span class="meta"><span class="meta-dot" aria-hidden="true"></span>Windows 10/11 x64</span>
+        <span class="meta">目标分支：main</span>
+        <span class="meta">离线包日期：2026-08-27</span>
+        <span class="meta">测试世界：CATTEST</span>
+      </div>
+    </header>
+
+    <section class="shell" aria-label="操作指南">
+      <div class="tabs" role="tablist" aria-label="选择使用场景">
+        <button class="tab" id="tab-first" type="button" role="tab" aria-selected="true" aria-controls="panel-first" data-tab="first">第一次使用</button>
+        <button class="tab" id="tab-update" type="button" role="tab" aria-selected="false" aria-controls="panel-update" data-tab="update">每次强制更新</button>
+      </div>
+
+      <section class="panel" id="panel-first" role="tabpanel" aria-labelledby="tab-first" data-panel="first">
+        <div class="lead">
+          <div>
+            <h2>第一次只需：解压、检查、启动</h2>
+            <p class="muted">QQ 离线包已经带上 PortableGit、Java 25、测试世界和构建依赖。不要在压缩软件预览窗口里直接运行文件。</p>
+          </div>
+          <aside class="quick-card">
+            <strong>开始前请让开发者完成</strong>
+            <p>把你的 GitHub 账号加入私有仓库协作者，并确认你已经接受邀请。首次检查不联网，但以后更新需要此权限。</p>
+          </aside>
+        </div>
+
+        <ol class="steps">
+          <li class="step">
+            <span class="step-number">1</span>
+            <div class="step-body">
+              <h3>完整解压 QQ 收到的 ZIP</h3>
+              <p>建议解压到较短、容易找到的路径，例如 <span class="file">D:\Echo-Warrior-Test</span>。不要只拖出其中几个文件，也不要直接在 ZIP 内双击 BAT。</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-number">2</span>
+            <div class="step-body">
+              <h3>双击 <span class="file">首次安装.bat</span></h3>
+              <p>它不会安装系统软件，只检查包内 Git、Java、Gradle 缓存和 <span class="file">CATTEST</span>，再执行一次离线编译。看到绿色“首次检查完成”即可。</p>
+              <p>若 Windows 安全提示阻止运行，可右键原始 ZIP → 属性 → 勾选“解除锁定”，然后重新解压。</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-number">3</span>
+            <div class="step-body">
+              <h3>双击 <span class="file">启动测试.bat</span></h3>
+              <p>脚本会使用包内 Java 与离线缓存编译项目，随后启动 Minecraft 并进入 <span class="file">CATTEST</span>。第一次启动通常比以后慢。</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-number">4</span>
+            <div class="step-body">
+              <h3>以后不要重新解压整个包</h3>
+              <p>收到“代码已更新”的通知后，切换上方的“每次强制更新”标签页，按那里操作即可。测试世界和游戏设置会继续保留。</p>
+            </div>
+          </li>
+        </ol>
+
+        <div class="callout warning">
+          <strong>为什么没有普通的 GitHub 克隆步骤？</strong>
+          <p>项目源码本身不大，真正耗时的是 Gradle、Minecraft、Fabric 与模组依赖。离线包已经包含一个可继续更新的 Git 工作目录，因此第一次不必从 GitHub 下载完整项目。</p>
+        </div>
+
+        <details>
+          <summary>排障：我想确认 PortableGit 和离线编译是否可用</summary>
+          <p>在项目根目录空白处按住 Shift 右键，选择“在终端中打开”，依次执行：</p>
+          <div class="command-box">
+            <div class="command-head"><span>PowerShell · 首次检查的核心命令</span><button class="copy" type="button" data-copy="first-check">复制</button></div>
+            <pre id="first-check"><code>.\.toolchains\portable-git\cmd\git.exe --version
+.\.toolchains\jdk-25\bin\java.exe -version
+$env:GRADLE_USER_HOME = "$PWD\.toolchains\gradle-user-home"
+.\gradlew.bat --offline --no-daemon classes</code></pre>
+          </div>
+        </details>
+
+        <details>
+          <summary>备用：没有离线包时，普通克隆命令是什么？</summary>
+          <p>以下命令只能取得源码；它不会自动提供 Java 25、CATTEST 和离线依赖，因此仍应优先使用完整离线包。</p>
+          <div class="command-box">
+            <div class="command-head"><span>PowerShell · 仅克隆源码</span><button class="copy" type="button" data-copy="manual-clone">复制</button></div>
+            <pre id="manual-clone"><code>git clone https://github.com/YurisCat/Echo-Warrior.git Echo-Warrior-Test
+cd Echo-Warrior-Test</code></pre>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel" id="panel-update" role="tabpanel" aria-labelledby="tab-update" data-panel="update" hidden>
+        <div class="lead">
+          <div>
+            <h2>更新时强制以远端代码为准</h2>
+            <p class="muted">这套流程适合只负责测试、不需要保留源码修改的电脑。生成的测试世界、配置、截图和日志不会因为强制更新而消失。</p>
+          </div>
+          <aside class="quick-card">
+            <strong>日常最短流程</strong>
+            <p>关闭 Minecraft → 双击 <span class="file">强制更新.bat</span> → 等待绿色成功提示 → 双击 <span class="file">启动测试.bat</span>。</p>
+          </aside>
+        </div>
+
+        <div class="callout danger">
+          <strong>强制更新会抛弃源码改动</strong>
+          <p>如果你手动改过 Java、资源、脚本或文档，这些修改会被远端 <span class="file">origin/main</span> 覆盖。需要保留的反馈请发到 QQ、截图或项目目录之外的文档中。</p>
+        </div>
+
+        <ol class="steps">
+          <li class="step">
+            <span class="step-number">1</span>
+            <div class="step-body">
+              <h3>正常关闭 Minecraft</h3>
+              <p>不要让旧版本客户端继续运行。更新脚本检测到本项目客户端仍在运行时会停止，并提示先关闭游戏。</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-number">2</span>
+            <div class="step-body">
+              <h3>双击 <span class="file">强制更新.bat</span></h3>
+              <p>第一次连接私有仓库时可能弹出浏览器。登录被开发者邀请的 GitHub 账号并授权 Git Credential Manager；以后通常不需要重复登录。</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-number">3</span>
+            <div class="step-body">
+              <h3>等待代码覆盖和离线构建检查</h3>
+              <p>看到绿色“更新成功”才表示本轮完成。如果提示缺少新依赖，不要反复重试下载，直接向开发者索取新版离线支持包。</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-number">4</span>
+            <div class="step-body">
+              <h3>双击 <span class="file">启动测试.bat</span></h3>
+              <p>更新脚本不会自动打开 Minecraft，避免把 Git、构建与游戏启动错误混在一起。</p>
+            </div>
+          </li>
+        </ol>
+
+        <div class="compare" aria-label="更新会删除和保留的内容">
+          <section class="compare-card drop">
+            <h3>会被覆盖或清理</h3>
+            <ul>
+              <li>受 Git 管理文件的本地修改</li>
+              <li>未被 Git 管理的散落源码文件</li>
+              <li>已经从远端删除的旧代码</li>
+            </ul>
+          </section>
+          <section class="compare-card keep">
+            <h3>会继续保留</h3>
+            <ul>
+              <li><span class="file">run/</span> 与 CATTEST 世界</li>
+              <li>游戏配置、截图、日志与崩溃报告</li>
+              <li>包内 Java、PortableGit 和离线缓存</li>
+              <li>本指南及三个测试员 BAT 入口</li>
+            </ul>
+          </section>
+        </div>
+
+        <details open>
+          <summary>脚本实际执行了哪些 Git 命令？</summary>
+          <p><span class="file">reset --hard</span> 负责抛弃受管理文件的修改；<span class="file">clean -fd</span> 负责移除非忽略的散落文件。它没有使用危险的 <span class="file">clean -fdx</span>，所以不会删除测试环境。</p>
+          <div class="command-box">
+            <div class="command-head"><span>PowerShell · 强制同步核心命令</span><button class="copy" type="button" data-copy="force-update">复制</button></div>
+            <pre id="force-update"><code>.\.toolchains\portable-git\cmd\git.exe fetch --prune origin main
+.\.toolchains\portable-git\cmd\git.exe reset --hard origin/main
+.\.toolchains\portable-git\cmd\git.exe clean -fd
+$env:GRADLE_USER_HOME = "$PWD\.toolchains\gradle-user-home"
+.\gradlew.bat --offline --no-daemon classes</code></pre>
+          </div>
+        </details>
+
+        <details>
+          <summary>提示没有仓库权限或登录失败</summary>
+          <p>确认 GitHub 账号已经接受开发者发送的私有仓库协作者邀请，并确保浏览器登录的是同一个账号。仍失败时，把命令窗口完整截图发给开发者。</p>
+        </details>
+
+        <details>
+          <summary>提示离线模式缺少依赖</summary>
+          <p>这通常表示项目升级了 Gradle、Minecraft、Fabric API、SmartBrainLib 或 GeckoLib。代码可能已经更新成功，但旧缓存无法构建；请索取新版离线支持包。</p>
+        </details>
+
+        <details>
+          <summary>为什么测试产生很多文件却不影响 Git 更新？</summary>
+          <p><span class="file">run/</span>、<span class="file">build/</span>、<span class="file">.gradle/</span> 和 <span class="file">.toolchains/</span> 已被项目忽略。Git 默认不把这些运行产物当成源码修改，因此强制更新只需要覆盖真正的项目文件。</p>
+        </details>
+      </section>
+    </section>
+
+    <footer class="footer">
+      <span>Echo Warrior 私有测试环境 · 仅供项目测试</span>
+      <span id="tab-status" aria-live="polite">当前标签：第一次使用</span>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      var storageKey = 'echo-warrior-tester-guide-tab-v1';
+      var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-tab]'));
+      var panels = Array.prototype.slice.call(document.querySelectorAll('[data-panel]'));
+      var status = document.getElementById('tab-status');
+
+      function selectTab(name, focusTab) {
+        var selected = tabs.find(function (tab) { return tab.dataset.tab === name; });
+        if (!selected) { selected = tabs[0]; name = selected.dataset.tab; }
+
+        tabs.forEach(function (tab) {
+          var active = tab === selected;
+          tab.setAttribute('aria-selected', active ? 'true' : 'false');
+          tab.tabIndex = active ? 0 : -1;
+        });
+
+        panels.forEach(function (panel) {
+          panel.hidden = panel.dataset.panel !== name;
+        });
+
+        status.textContent = '当前标签：' + (name === 'first' ? '第一次使用' : '每次强制更新');
+        try { localStorage.setItem(storageKey, name); } catch (error) { }
+        if (focusTab) { selected.focus(); }
+      }
+
+      tabs.forEach(function (tab, index) {
+        tab.addEventListener('click', function () { selectTab(tab.dataset.tab, false); });
+        tab.addEventListener('keydown', function (event) {
+          if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') { return; }
+          event.preventDefault();
+          var direction = event.key === 'ArrowRight' ? 1 : -1;
+          var nextIndex = (index + direction + tabs.length) % tabs.length;
+          selectTab(tabs[nextIndex].dataset.tab, true);
+        });
+      });
+
+      function fallbackCopy(text) {
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }
+
+      document.querySelectorAll('[data-copy]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var target = document.getElementById(button.dataset.copy);
+          var text = target ? target.innerText.trim() : '';
+          var original = button.textContent;
+          var done = function () {
+            button.textContent = '已复制';
+            window.setTimeout(function () { button.textContent = original; }, 1400);
+          };
+
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(done, function () {
+              fallbackCopy(text); done();
+            });
+          } else {
+            fallbackCopy(text); done();
+          }
+        });
+      });
+
+      var saved = 'first';
+      try { saved = localStorage.getItem(storageKey) || 'first'; } catch (error) { }
+      selectTab(saved, false);
+    }());
+  </script>
+</body>
+</html>

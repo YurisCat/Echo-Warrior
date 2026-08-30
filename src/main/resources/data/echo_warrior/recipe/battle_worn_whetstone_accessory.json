@@ -1,1 +1,1 @@
-{"type":"minecraft:crafting_shapeless","category":"equipment","ingredients":["minecraft:stone","minecraft:flint","minecraft:iron_ingot","echo_warrior:courage_legacy"],"result":{"id":"echo_warrior:battle_worn_whetstone_accessory"}}
+{"type":"minecraft:crafting_shaped","category":"equipment","pattern":["  C","FI ","SS "],"key":{"C":"echo_warrior:courage_legacy","F":"minecraft:flint","I":"minecraft:iron_ingot","S":"minecraft:stone"},"result":{"id":"echo_warrior:battle_worn_whetstone_accessory"}}
