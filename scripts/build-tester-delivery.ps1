@@ -11,6 +11,14 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = (Resolve-Path -LiteralPath (Split-Path -Parent $PSScriptRoot)).Path
+$modVersionLine = Get-Content -LiteralPath (Join-Path $projectRoot 'gradle.properties') |
+    Where-Object { $_ -match '^mod_version=' } |
+    Select-Object -First 1
+if ([string]::IsNullOrWhiteSpace($modVersionLine)) {
+    throw 'gradle.properties 中缺少 mod_version。'
+}
+$modVersion = ($modVersionLine -split '=', 2)[1].Trim()
+$safeModVersion = $modVersion -replace '[^0-9A-Za-z._-]', '_'
 
 if ([string]::IsNullOrWhiteSpace($PortableGitRoot)) {
     $PortableGitRoot = Join-Path $projectRoot 'temporary-delivery\_staging\portable-git'
@@ -27,7 +35,7 @@ $gradleSource = (Resolve-Path -LiteralPath $GradleUserHomeSource).Path
 $output = (Resolve-Path -LiteralPath $OutputRoot).Path
 $portableGit = Join-Path $portableRoot 'cmd\git.exe'
 $sourceGit = (Get-Command git.exe).Source
-$packageName = "Echo-Warrior-Tester-Kit-$PackageDate"
+$packageName = "Echo-Warrior-Tester-Kit-$safeModVersion"
 $packageRoot = Join-Path $output $packageName
 $archivePath = Join-Path $output "$packageName.zip"
 $checksumPath = "$archivePath.sha256.txt"
@@ -174,6 +182,7 @@ $sourceStatus = (& $sourceGit -C $projectRoot status --short | Out-String).TrimE
 $manifest = @(
     'Echo Warrior Windows x64 Tester Kit',
     "package_date=$PackageDate",
+    "mod_version=$modVersion",
     "source_head=$sourceRevision",
     "package_snapshot=$snapshotRevision",
     'branch=main',
