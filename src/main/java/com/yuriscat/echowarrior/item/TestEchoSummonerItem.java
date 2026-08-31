@@ -421,6 +421,13 @@ public final class TestEchoSummonerItem extends Item {
 		return summonerId == null ? null : EchoBindingSystem.findLoadedSpirit(level.getServer(), summonerId);
 	}
 
+	public static void commitCreativeInventoryUpdate(ServerPlayer player, ItemStack stack) {
+		if (!(stack.getItem() instanceof TestEchoSummonerItem)) return;
+		EchoBindingSystem.commitPhysicalStack(player.level(), stack);
+		EchoWarriorEntity spirit = findBoundSpirit(player.level(), stack);
+		if (spirit != null) spirit.applyModuleState();
+	}
+
 	public static boolean reconstructFromBinding(ServerPlayer controller, EchoBindingSavedData.Binding binding) {
 		if (!binding.active() || !controller.getUUID().equals(binding.controllerId())) return false;
 		ServerLevel level = controller.level();

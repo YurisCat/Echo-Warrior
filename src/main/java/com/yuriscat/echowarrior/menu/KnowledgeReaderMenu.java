@@ -144,8 +144,7 @@ public final class KnowledgeReaderMenu extends AbstractContainerMenu {
 	}
 
 	private static void deliverOrDrop(Player player, ItemStack stack) {
-		player.getInventory().add(stack);
-		if (!stack.isEmpty()) player.drop(stack, false);
+		player.getInventory().placeItemBackInInventory(stack);
 	}
 
 	@Override

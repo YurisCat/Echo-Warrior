@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "locale": "zh_cn",
   "meta": {
     "title": "Echo Archive",
@@ -142,7 +142,7 @@
               },
               {
                 "title": "选择英灵",
-                "body": "查看罗马军团兵、阿兹特克勇士、埃及弓箭手与关刀甲胄战士，以及后续候选英灵。"
+                "body": "查看罗马军团兵、阿兹特克勇士、埃及弓箭手、中国关刀战士与日本武士，并沿角色节点展开各自技能。"
               }
             ]
           },
@@ -285,7 +285,7 @@
             "type": "callout",
             "tone": "warning",
             "title": "当前进度",
-            "body": "四位英灵均已有开发版战斗闭环；比赛 MVP 的最低验收仍为前三英灵、考古、回声罗盘与基础升级，关刀甲胄战士是用户批准加入的第四位正式开发英灵。"
+            "body": "五位英灵均已有开发版战斗闭环；比赛 MVP 的最低验收仍为前三英灵、考古、回声罗盘与基础升级。中国关刀战士与日本武士是在前三英灵闭环建立后获批加入的第四、第五位正式开发英灵。"
           }
         ],
         "related": [
@@ -912,9 +912,9 @@
                 "icon": "/assets/echo-warrior/item/egyptian_archer_relic.png"
               },
               {
-                "title": "关刀甲胄战士遗物",
+                "title": "中国关刀战士遗物",
                 "meta": "开发版可用",
-                "body": "召唤关刀甲胄战士，保存四项技能状态与连招冷却。",
+                "body": "召唤中国关刀战士，保存四项技能状态与连招冷却。",
                 "icon": "/assets/echo-warrior/item/guandao_warrior_relic.png"
               }
             ]
@@ -1128,7 +1128,7 @@
               },
               {
                 "title": "潜行右键",
-                "body": "英灵未在场时召唤；英灵已经出现时，把仍在场的英灵召回玩家附近。"
+                "body": "英灵未在场时召唤；英灵已经出现时，把仍在场的英灵召回玩家附近的可站立安全落点。附近没有安全落点时，不会把英灵传送进空气或方块。"
               },
               {
                 "title": "界面内收回",
@@ -1312,7 +1312,7 @@
               {
                 "title": "跟随",
                 "meta": "围绕主人",
-                "body": "在主人附近移动和战斗。只有跟随状态会随控制者跨维度安全重建；旧维度实体和投射物会因绑定代数失效，不强制加载旧区块。",
+                "body": "在主人附近移动和战斗。超过约 32 格时只传送到可站立、无碰撞的安全落点；主人明显悬空时，已经位于下方附近的英灵会留在地面稳定等待，不会向空气反复寻路或传送。主人水平移动过远后，英灵才会尝试移动到其投影附近的地表安全落点。只有跟随状态会随控制者跨维度安全重建；旧维度实体和投射物会因绑定代数失效，不强制加载旧区块。",
                 "icon": "/assets/echo-warrior/gui/modes/activity/follow.png"
               },
               {
@@ -1415,11 +1415,12 @@
     {
       "id": "roman_legionary",
       "categoryId": "heroes",
+      "nodeType": "hero",
       "title": "罗马军团兵",
       "subtitle": "持盾近战、防护与拦截",
       "status": "implemented",
-      "x": 430,
-      "y": 245,
+      "x": 210,
+      "y": 155,
       "icon": "/assets/echo-warrior/item/roman_legionary_relic.png",
       "symbol": "I",
       "connections": [
@@ -1438,14 +1439,6 @@
         {
           "targetId": "legion_endures",
           "kind": "skill"
-        },
-        {
-          "targetId": "aztec_warrior",
-          "kind": "related"
-        },
-        {
-          "targetId": "japanese_samurai",
-          "kind": "related"
         }
       ],
       "article": {
@@ -1492,7 +1485,7 @@
               },
               {
                 "label": "安全传送",
-                "value": "16",
+                "value": "32",
                 "note": "超过距离尝试返回"
               },
               {
@@ -1569,11 +1562,13 @@
     {
       "id": "soldier_formation",
       "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "roman_legionary",
       "title": "士兵阵列",
       "subtitle": "常驻可切换光环",
       "status": "implemented",
-      "x": 210,
-      "y": 430,
+      "x": 75,
+      "y": 45,
       "icon": "/assets/echo-warrior/gui/skills/roman_legionary/soldier_formation.png",
       "symbol": "A",
       "connections": [
@@ -1625,11 +1620,13 @@
     {
       "id": "shield_charge",
       "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "roman_legionary",
       "title": "举盾冲锋",
       "subtitle": "反弹飞矢与惊退爆手",
       "status": "implemented",
-      "x": 650,
-      "y": 430,
+      "x": 345,
+      "y": 45,
       "icon": "/assets/echo-warrior/gui/skills/roman_legionary/shield_charge.png",
       "symbol": "C",
       "connections": [
@@ -1716,11 +1713,13 @@
     {
       "id": "legion_endures",
       "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "roman_legionary",
       "title": "军团永存",
       "subtitle": "五秒蓄力与释放",
       "status": "development",
-      "x": 650,
-      "y": 570,
+      "x": 210,
+      "y": 290,
       "icon": "/assets/echo-warrior/gui/skills/roman_legionary/legion_endures.png",
       "symbol": "E",
       "connections": [
@@ -1756,11 +1755,13 @@
     {
       "id": "legionary_bulwark",
       "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "roman_legionary",
       "title": "军团壁垒",
       "subtitle": "以朝向换取可靠的正面防护",
       "status": "implemented",
-      "x": 430,
-      "y": 500,
+      "x": 210,
+      "y": 35,
       "icon": "/assets/echo-warrior/gui/skills/roman_legionary/legionary_bulwark.png",
       "symbol": "B",
       "connections": [
@@ -1815,21 +1816,34 @@
     {
       "id": "aztec_warrior",
       "categoryId": "heroes",
+      "nodeType": "hero",
       "title": "阿兹特克勇士",
       "subtitle": "沉重横扫、流血与跳劈追猎",
       "status": "development",
-      "x": 155,
-      "y": 210,
+      "x": 650,
+      "y": 155,
       "icon": "/assets/echo-warrior/item/aztec_warrior_relic.png",
       "symbol": "A",
       "connections": [
         {
-          "targetId": "roman_legionary",
-          "kind": "related"
+          "targetId": "aztec_quetzalcoatl_curse",
+          "kind": "skill"
         },
         {
-          "targetId": "japanese_samurai",
-          "kind": "related"
+          "targetId": "aztec_sun_blessing",
+          "kind": "skill"
+        },
+        {
+          "targetId": "aztec_obsidian_wound",
+          "kind": "skill"
+        },
+        {
+          "targetId": "aztec_pursuit",
+          "kind": "skill"
+        },
+        {
+          "targetId": "aztec_macuahuitl",
+          "kind": "skill"
         }
       ],
       "article": {
@@ -1950,6 +1964,11 @@
           }
         ],
         "related": [
+          "aztec_quetzalcoatl_curse",
+          "aztec_sun_blessing",
+          "aztec_obsidian_wound",
+          "aztec_pursuit",
+          "aztec_macuahuitl",
           "roman_legionary",
           "summoner",
           "leveling",
@@ -1960,29 +1979,34 @@
     {
       "id": "egyptian_archer",
       "categoryId": "heroes",
+      "nodeType": "hero",
       "title": "埃及弓箭手",
       "subtitle": "移动射击、箭型切换与全向后撤",
       "status": "development",
-      "x": 430,
-      "y": 420,
+      "x": 210,
+      "y": 490,
       "icon": "/assets/echo-warrior/item/egyptian_archer_relic.png",
       "symbol": "E",
       "connections": [
         {
-          "targetId": "roman_legionary",
-          "kind": "related"
+          "targetId": "egyptian_cat_god",
+          "kind": "skill"
         },
         {
-          "targetId": "aztec_warrior",
-          "kind": "related"
+          "targetId": "egyptian_leaf_arrow",
+          "kind": "skill"
         },
         {
-          "targetId": "guandao_warrior",
-          "kind": "related"
+          "targetId": "egyptian_cone_arrow",
+          "kind": "skill"
         },
         {
-          "targetId": "japanese_samurai",
-          "kind": "related"
+          "targetId": "egyptian_chariot_volley",
+          "kind": "skill"
+        },
+        {
+          "targetId": "egyptian_backstep",
+          "kind": "skill"
         }
       ],
       "article": {
@@ -2096,6 +2120,11 @@
           }
         ],
         "related": [
+          "egyptian_cat_god",
+          "egyptian_leaf_arrow",
+          "egyptian_cone_arrow",
+          "egyptian_chariot_volley",
+          "egyptian_backstep",
           "summoner",
           "roman_legionary",
           "aztec_warrior",
@@ -2108,25 +2137,30 @@
     {
       "id": "guandao_warrior",
       "categoryId": "heroes",
-      "title": "关刀甲胄战士",
+      "nodeType": "hero",
+      "title": "中国关刀战士",
       "subtitle": "重甲、范围斩击与四段推进连招",
       "status": "development",
-      "x": 705,
-      "y": 595,
+      "x": 650,
+      "y": 490,
       "icon": "/assets/echo-warrior/item/guandao_warrior_relic.png",
       "symbol": "关",
       "connections": [
         {
-          "targetId": "egyptian_archer",
-          "kind": "related"
+          "targetId": "guandao_armor_clad",
+          "kind": "skill"
         },
         {
-          "targetId": "summoner",
-          "kind": "related"
+          "targetId": "guandao_growing_valor",
+          "kind": "skill"
         },
         {
-          "targetId": "japanese_samurai",
-          "kind": "related"
+          "targetId": "guandao_crescent_blade",
+          "kind": "skill"
+        },
+        {
+          "targetId": "guandao_combo",
+          "kind": "skill"
         }
       ],
       "article": {
@@ -2220,7 +2254,7 @@
             "type": "callout",
             "tone": "info",
             "title": "眼神、神情与受伤反馈",
-            "body": "关刀甲胄战士使用与其他战士相同的自然注意、玩家主动对视、被主人发现偷看后的反应与离场、眨眼、歪头、独立瞳孔追踪、苦力怕警觉、快速接近目标和伤害来源注视。普通行进时优先看向前进方向，战斗目标、普通攻击与连招保留身体朝向优先级。攻击动作不会被全身受伤动画打断；非攻击状态下，3.25 格内从任意方向造成伤害的合法近战敌人会被立即锁定，并以每 tick 最多约 30° 平滑转身。朝向误差超过 25° 时只转身、不播放普通攻击；达到门槛后起手并锁定该刀方向。攻击中出现的新伤害来源会成为下一击目标，不会把已经合法开始的挥刀扭向背后；原目标在前摇中死亡时允许当前动画自然挥空。远程或距离外攻击者则允许当前受击动作播完后追击。连续受击不会不断重播全身受伤动作，实际伤害、疼痛眨眼、受伤表情和伤害来源注视仍然保留。"
+            "body": "中国关刀战士使用与其他战士相同的自然注意、玩家主动对视、被主人发现偷看后的反应与离场、眨眼、歪头、独立瞳孔追踪、苦力怕警觉、快速接近目标和伤害来源注视。普通行进时优先看向前进方向，战斗目标、普通攻击与连招保留身体朝向优先级。攻击动作不会被全身受伤动画打断；非攻击状态下，3.25 格内从任意方向造成伤害的合法近战敌人会被立即锁定，并以每 tick 最多约 30° 平滑转身。朝向误差超过 25° 时只转身、不播放普通攻击；达到门槛后起手并锁定该刀方向。攻击中出现的新伤害来源会成为下一击目标，不会把已经合法开始的挥刀扭向背后；原目标在前摇中死亡时允许当前动画自然挥空。远程或距离外攻击者则允许当前受击动作播完后追击。连续受击不会不断重播全身受伤动作，实际伤害、疼痛眨眼、受伤表情和伤害来源注视仍然保留。"
           },
           {
             "type": "callout",
@@ -2230,6 +2264,10 @@
           }
         ],
         "related": [
+          "guandao_armor_clad",
+          "guandao_growing_valor",
+          "guandao_crescent_blade",
+          "guandao_combo",
           "summoner",
           "relics_overview",
           "egyptian_archer",
@@ -2241,29 +2279,30 @@
     {
       "id": "japanese_samurai",
       "categoryId": "heroes",
+      "nodeType": "hero",
       "title": "日本武士",
       "subtitle": "中甲、高机动与闪避循环决斗",
       "status": "development",
-      "x": 705,
-      "y": 210,
+      "x": 430,
+      "y": 825,
       "icon": "/assets/echo-warrior/item/japanese_samurai_relic.png",
       "symbol": "侍",
       "connections": [
         {
-          "targetId": "roman_legionary",
-          "kind": "related"
+          "targetId": "samurai_zanshin",
+          "kind": "skill"
         },
         {
-          "targetId": "aztec_warrior",
-          "kind": "related"
+          "targetId": "samurai_fumikomi",
+          "kind": "skill"
         },
         {
-          "targetId": "egyptian_archer",
-          "kind": "related"
+          "targetId": "samurai_zan",
+          "kind": "skill"
         },
         {
-          "targetId": "guandao_warrior",
-          "kind": "related"
+          "targetId": "samurai_stab",
+          "kind": "skill"
         }
       ],
       "article": {
@@ -2357,6 +2396,12 @@
           {
             "type": "callout",
             "tone": "info",
+            "title": "眼神与神情",
+            "body": "日本武士现已具备与其他英灵一致的自然注视、玩家对视、被主人发现偷看后的回避、眨眼、偶发歪头、瞳孔追踪、苦力怕警觉和受击来源注视。行走时会优先看向前进方向；存在战斗目标，或正在普通攻击、刺、踏込、后撤和受伤动作时，社交互动立即让位，并保留动作本身的头部和眉毛姿势。动作结束后眼神平滑恢复。残影只冻结生成当刻的最终姿势，不会在空中继续转眼或眨眼。"
+          },
+          {
+            "type": "callout",
+            "tone": "info",
             "title": "残影与可选第二阶段",
             "body": "残影是客户端冻结的模型骨骼姿态快照，不是实体，不具备 AI、碰撞、阴影或伤害判定，并遵守深度测试而不会透墙。新召唤的武士默认使用原始贴图并开启 2A：残影先完整保持约 2 tick，再以附着模型的固定噪声逐步溶解，同时从各自初始不透明度按年龄平滑变淡；时间线上最早生成的残影会最先透明并消失。踏込和真实后撤只在本体已经经过的位置留下快照，残影不会跑到本体前方。额外附色改为可选模式，输入 /echo_warrior visual samurai_afterimage_neutral off 后，残影使用高对比灰度派生贴图乘以高饱和残心青／踏込金；输入 neutral on 恢复无额外附色的原始贴图。主体使用场景光照，不强制全亮；原有白色窄亮边会因第二次完整模型绘制覆盖主体，因此暂时移除。2B 同样因当前 outline 通道会错误显示为实心白色剪影而停用，开启指令会拒绝执行。48～63 道会降低新残影密度，64 道起只保留粒子回退，总硬上限 96。2A 仍可用 samurai_afterimage_advanced on|off 切换；重新召唤或重启后全部恢复上述默认值。"
           },
@@ -2368,6 +2413,10 @@
           }
         ],
         "related": [
+          "samurai_zanshin",
+          "samurai_fumikomi",
+          "samurai_zan",
+          "samurai_stab",
           "summoner",
           "relics_overview",
           "roman_legionary",
@@ -2376,6 +2425,786 @@
           "guandao_warrior",
           "leveling"
         ]
+      }
+    },
+    {
+      "id": "aztec_quetzalcoatl_curse",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "aztec_warrior",
+      "title": "羽蛇神的诅咒",
+      "subtitle": "受击时反噬攻击者",
+      "status": "development",
+      "x": 515,
+      "y": 45,
+      "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/quetzalcoatls_curse.png",
+      "symbol": "咒",
+      "connections": [
+        {
+          "targetId": "aztec_warrior",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "阿兹特克勇士或主人承受可归因的直接伤害时，有概率令攻击者陷入虚弱。",
+        "tags": ["阿兹特克勇士", "被动", "虚弱", "反击"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "触发结果",
+            "items": [
+              { "label": "触发率", "value": "60%" },
+              { "label": "虚弱 I", "value": "75% · 5 秒" },
+              { "label": "虚弱 II", "value": "25% · 3 秒" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "直接伤害才会检定",
+            "body": "只有能归因到攻击者、且英灵或主人实际承受的直接伤害会触发；虚弱 I 不会覆盖或降级已经存在的虚弱 II。"
+          }
+        ],
+        "related": ["aztec_warrior", "aztec_sun_blessing", "aztec_obsidian_wound"]
+      }
+    },
+    {
+      "id": "aztec_sun_blessing",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "aztec_warrior",
+      "title": "维齐洛波奇特利的祝福",
+      "subtitle": "日照下的攻击与恢复",
+      "status": "development",
+      "x": 650,
+      "y": 35,
+      "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/huitzilopochtlis_blessing.png",
+      "symbol": "日",
+      "connections": [
+        {
+          "targetId": "aztec_warrior",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "白天直视天空时，英灵与符合距离条件的主人分别获得日照祝福。",
+        "tags": ["阿兹特克勇士", "日照", "攻击强化", "恢复"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "祝福参数",
+            "items": [
+              { "label": "近战攻击", "value": "+15%" },
+              { "label": "恢复", "value": "每 4 秒 1 点" },
+              { "label": "主人进入距离", "value": "32 格" },
+              { "label": "距离退出", "value": "超过 34 格持续 10 tick" }
+            ]
+          },
+          {
+            "type": "prose",
+            "title": "独立判定与清理",
+            "paragraphs": [
+              "英灵与主人分别检查自身是否处于白天并直视天空；主人还必须在线、存活、非旁观，并与英灵处于同一维度。雨雪和雷暴不会单独取消祝福。",
+              "关闭技能、更换遗物、英灵死亡或遣散、绑定失效与重新连接都会立即清理效果，服务端也会移除失去有效来源的永久属性修饰器。"
+            ]
+          }
+        ],
+        "related": ["aztec_warrior", "aztec_quetzalcoatl_curse", "aztec_pursuit"]
+      }
+    },
+    {
+      "id": "aztec_obsidian_wound",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "aztec_warrior",
+      "title": "黑曜石创口",
+      "subtitle": "可致死的刷新式流血",
+      "status": "development",
+      "x": 785,
+      "y": 45,
+      "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/obsidian_wound.png",
+      "symbol": "血",
+      "connections": [
+        {
+          "targetId": "aztec_warrior",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "黑曜石刃造成可致死流血；效果不叠加，但再次触发会刷新持续时间。",
+        "tags": ["阿兹特克勇士", "流血", "持续伤害", "可致死"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "创口参数",
+            "items": [
+              { "label": "持续时间", "value": "6 秒" },
+              { "label": "每秒伤害", "value": "1 点" },
+              { "label": "普通主目标", "value": "30% 触发" },
+              { "label": "横扫 / 追猎", "value": "每个目标 15%" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "warning",
+            "title": "会完成击杀",
+            "body": "创口伤害绕过普通受击冷却，不会和近战命中争抢无敌帧；持续伤害可以把目标降至 0 生命。"
+          }
+        ],
+        "related": ["aztec_warrior", "aztec_macuahuitl", "aztec_pursuit"]
+      }
+    },
+    {
+      "id": "aztec_pursuit",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "aztec_warrior",
+      "title": "追猎",
+      "subtitle": "充能式跳劈切入",
+      "status": "development",
+      "x": 535,
+      "y": 290,
+      "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/pursuit.png",
+      "symbol": "跃",
+      "connections": [
+        {
+          "targetId": "aztec_warrior",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "从中距离跳向锁定目标，落地造成伤害，并短暂强化后续横扫与生存能力。",
+        "tags": ["阿兹特克勇士", "跳劈", "充能", "切入"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "追猎参数",
+            "items": [
+              { "label": "充能", "value": "2 层" },
+              { "label": "恢复", "value": "每层 6 秒" },
+              { "label": "施放距离", "value": "4～10 格" },
+              { "label": "落地伤害", "value": "100% 攻击" },
+              { "label": "最短间隔", "value": "2 秒" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "三秒强势期",
+            "body": "落地后 3 秒内获得 +25% 移速、20% 伤害减免和 +50 个百分点击退抗性；马夸威特横扫同步扩大至 180°、3 格和 75% 溅射伤害。"
+          }
+        ],
+        "related": ["aztec_warrior", "aztec_macuahuitl", "aztec_obsidian_wound"]
+      }
+    },
+    {
+      "id": "aztec_macuahuitl",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "aztec_warrior",
+      "title": "马夸威特",
+      "subtitle": "正面大范围横扫",
+      "status": "development",
+      "x": 765,
+      "y": 290,
+      "icon": "/assets/echo-warrior/gui/skills/aztec_warrior/macuahuitl_mastery.png",
+      "symbol": "斩",
+      "connections": [
+        {
+          "targetId": "aztec_warrior",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "把普通攻击改为正面扇区横扫；追猎落地后的强势期会进一步扩大范围与溅射伤害。",
+        "tags": ["阿兹特克勇士", "横扫", "范围伤害", "马夸威特"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "横扫范围",
+            "items": [
+              { "label": "基础角度", "value": "160°" },
+              { "label": "基础距离", "value": "2.5 格" },
+              { "label": "主目标", "value": "100% 伤害" },
+              { "label": "基础溅射", "value": "50% 伤害" },
+              { "label": "强势期", "value": "180° / 3 格 / 75%" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "仍遵守友军与视线检查",
+            "body": "横扫只结算扇区内有视线的合法敌人，不会穿墙命中，也不会伤害主人、同主人英灵或其他受保护友军。"
+          }
+        ],
+        "related": ["aztec_warrior", "aztec_pursuit", "aztec_obsidian_wound"]
+      }
+    },
+    {
+      "id": "egyptian_cat_god",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "egyptian_archer",
+      "title": "赞美猫神",
+      "subtitle": "苦力怕保护与亡灵克制",
+      "status": "development",
+      "x": 75,
+      "y": 380,
+      "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/cat_god.png",
+      "symbol": "猫",
+      "connections": [
+        {
+          "targetId": "egyptian_archer",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "以 30 格球形光环保护周围区域免受苦力怕主动引爆，并强化对亡灵的直接攻击。",
+        "tags": ["埃及弓箭手", "光环", "苦力怕", "亡灵克制"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "猫神庇护",
+            "items": [
+              { "label": "光环半径", "value": "30 格球形" },
+              { "label": "亡灵增伤", "value": "+20%" },
+              { "label": "主动警戒联动", "value": "可主动攻击苦力怕" }
+            ]
+          },
+          {
+            "type": "prose",
+            "title": "苦力怕反应",
+            "paragraphs": [
+              "苦力怕进入光环后不会立刻逃跑；当其尝试点燃或受到直接伤害时，点燃会被取消，并进入类似被动动物的慌乱逃窜。技能关闭后保护立即消失，已经开始的慌乱自然结束。",
+              "技能开启且警戒状态为主动出击时，埃及弓箭手会主动攻击视线内的苦力怕，并在目标进入慌乱后继续射击；切换其他警戒状态后恢复通用规则。"
+            ]
+          }
+        ],
+        "related": ["egyptian_archer", "egyptian_chariot_volley", "egyptian_backstep"]
+      }
+    },
+    {
+      "id": "egyptian_leaf_arrow",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "egyptian_archer",
+      "title": "叶形箭",
+      "subtitle": "流血与轻微减速箭型",
+      "status": "development",
+      "x": 210,
+      "y": 370,
+      "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/leaf_arrow.png",
+      "symbol": "叶",
+      "connections": [
+        {
+          "targetId": "egyptian_archer",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "箭型槽中的持续压制选项：保留正常箭伤害，并附加短时流血与减速。",
+        "tags": ["埃及弓箭手", "箭型", "流血", "减速"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "箭型效果",
+            "items": [
+              { "label": "直接伤害", "value": "正常箭伤害" },
+              { "label": "流血", "value": "4 秒共 2 点" },
+              { "label": "减速", "value": "2 秒轻微减速" },
+              { "label": "尾迹", "value": "黄色粒子" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "与锥锋箭共用一个技能槽",
+            "body": "箭型槽按“关闭（普通箭）→ 叶形箭 → 锥锋箭”循环切换并随遗物保存。流血不会叠加，只会刷新持续时间。"
+          }
+        ],
+        "related": ["egyptian_archer", "egyptian_cone_arrow"]
+      }
+    },
+    {
+      "id": "egyptian_cone_arrow",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "egyptian_archer",
+      "title": "锥锋箭",
+      "subtitle": "穿甲与概率贯穿箭型",
+      "status": "development",
+      "x": 345,
+      "y": 380,
+      "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/cone_arrow.png",
+      "symbol": "锥",
+      "connections": [
+        {
+          "targetId": "egyptian_archer",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "箭型槽中的破甲选项：在伤害结算前忽略部分护甲，并可能贯穿至第二个目标。",
+        "tags": ["埃及弓箭手", "箭型", "穿甲", "贯穿"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "箭型效果",
+            "items": [
+              { "label": "忽略护甲", "value": "35%" },
+              { "label": "贯穿概率", "value": "25%" },
+              { "label": "额外目标", "value": "最多 1 个" },
+              { "label": "尾迹", "value": "黑色主题" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "箭型循环",
+            "body": "锥锋箭与叶形箭共用一个技能槽；再次点击会回到普通箭状态。普通箭不会附加流血、减速、穿甲、贯穿或特殊尾迹。"
+          }
+        ],
+        "related": ["egyptian_archer", "egyptian_leaf_arrow"]
+      }
+    },
+    {
+      "id": "egyptian_chariot_volley",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "egyptian_archer",
+      "title": "战车与齐射之魂",
+      "subtitle": "移动射击、撤退与追加箭",
+      "status": "development",
+      "x": 85,
+      "y": 625,
+      "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/chariot_volley.png",
+      "symbol": "驰",
+      "connections": [
+        {
+          "targetId": "egyptian_archer",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "允许埃及弓箭手在必要时边移动边射击，以安全撤退路线维持距离，并在敌群中概率追加一箭。",
+        "tags": ["埃及弓箭手", "移动射击", "距离控制", "齐射"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "距离与齐射",
+            "items": [
+              { "label": "开始撤退", "value": "威胁进入 8 格" },
+              { "label": "停止撤退", "value": "最近威胁退出 10 格" },
+              { "label": "齐射判定", "value": "16 格内至少 2 敌人" },
+              { "label": "追加概率", "value": "15% 起 · 最高 55%" },
+              { "label": "每轮追加", "value": "最多 1 箭" }
+            ]
+          },
+          {
+            "type": "prose",
+            "title": "稳定而非持续乱跑",
+            "paragraphs": [
+              "10～20 格且视线通畅时以站立射击为主；超过 20 格或失去视线时才接近或调整位置。路线受阻时会尝试斜后与侧向绕行，并可在落脚安全时后跳上一格台阶。",
+              "关闭技能会禁用常规距离控制与追加齐射，但敌人真正贴身后的基础求生撤退仍然保留。"
+            ]
+          }
+        ],
+        "related": ["egyptian_archer", "egyptian_backstep", "egyptian_cat_god"]
+      }
+    },
+    {
+      "id": "egyptian_backstep",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "egyptian_archer",
+      "title": "后撤步",
+      "subtitle": "全向安全跳跃与应急齐射",
+      "status": "development",
+      "x": 335,
+      "y": 625,
+      "icon": "/assets/echo-warrior/gui/skills/egyptian_archer/backstep.png",
+      "symbol": "退",
+      "connections": [
+        {
+          "targetId": "egyptian_archer",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "近身受压时搜索最安全的五格后撤落点，完整检查跳跃轨迹，并在动作中对可见敌人齐射。",
+        "tags": ["埃及弓箭手", "后撤", "充能", "齐射", "安全路径"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "后撤参数",
+            "items": [
+              { "label": "充能", "value": "2 层" },
+              { "label": "恢复", "value": "每层 6 秒" },
+              { "label": "触发近距", "value": "4 格" },
+              { "label": "目标落点", "value": "约 5 格" },
+              { "label": "齐射扫描", "value": "12 格内最多 6 敌人" },
+              { "label": "放箭时机", "value": "动作第 11 tick" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "warning",
+            "title": "不会为了动作穿墙",
+            "body": "整条抛物线使用实体碰撞箱检查墙体、地面和危险方块；环境变化时停在最后安全位置。找不到完整安全路径时不会消耗充能，也不会生成幽灵箭。"
+          }
+        ],
+        "related": ["egyptian_archer", "egyptian_chariot_volley", "egyptian_cat_god"]
+      }
+    },
+    {
+      "id": "guandao_armor_clad",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "guandao_warrior",
+      "title": "甲胄傍身",
+      "subtitle": "投射物伤害与击退防护",
+      "status": "development",
+      "x": 515,
+      "y": 380,
+      "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/armor_clad.png",
+      "symbol": "甲",
+      "connections": [
+        {
+          "targetId": "guandao_warrior",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "重甲提供可独立关闭的远程防护，大幅降低投射物伤害与最终击退。",
+        "tags": ["中国关刀战士", "被动", "投射物", "减伤", "抗击退"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "甲胄防护",
+            "items": [
+              { "label": "投射物减伤", "value": "50%" },
+              { "label": "投射物击退", "value": "降低 95%" },
+              { "label": "关闭反馈", "value": "从下一次伤害起失效" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "只针对投射物",
+            "body": "该技能不替代基础 12 点护甲，也不会额外减免近战、爆炸或环境伤害；技能关闭后两项保护立即停止。"
+          }
+        ],
+        "related": ["guandao_warrior", "guandao_growing_valor", "guandao_crescent_blade"]
+      }
+    },
+    {
+      "id": "guandao_growing_valor",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "guandao_warrior",
+      "title": "越战越勇",
+      "subtitle": "挥击叠层与低生命减伤",
+      "status": "development",
+      "x": 785,
+      "y": 380,
+      "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/growing_valor.png",
+      "symbol": "勇",
+      "connections": [
+        {
+          "targetId": "guandao_warrior",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "有效挥击逐层提高攻击，并按缺失生命提供最终减伤；刀刃火焰会同步显示当前攻势。",
+        "tags": ["中国关刀战士", "叠层", "攻击强化", "低生命减伤"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "攻势层数",
+            "items": [
+              { "label": "层数上限", "value": "5 层" },
+              { "label": "每层攻击", "value": "+6%" },
+              { "label": "持续时间", "value": "8 秒 · 命中刷新" },
+              { "label": "濒死减伤", "value": "最高 30%" }
+            ]
+          },
+          {
+            "type": "prose",
+            "title": "一刀只叠一层",
+            "paragraphs": [
+              "同一次范围挥击命中多人也只增加一层。刀刃始终保留红橙火焰，并随层数增密；五层时使用更密集的火焰和红金火星脉冲表示巅峰。",
+              "关闭技能会立即清空层数，并同时停止攻击增幅、低生命减伤和对应的强化火焰反馈。"
+            ]
+          }
+        ],
+        "related": ["guandao_warrior", "guandao_crescent_blade", "guandao_combo"]
+      }
+    },
+    {
+      "id": "guandao_crescent_blade",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "guandao_warrior",
+      "title": "偃月刀",
+      "subtitle": "二百二十度范围普攻",
+      "status": "development",
+      "x": 515,
+      "y": 625,
+      "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/crescent_blade.png",
+      "symbol": "月",
+      "connections": [
+        {
+          "targetId": "guandao_warrior",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "把普通攻击变为宽广的正面扇区斩击，对范围内全部合法目标造成完整伤害。",
+        "tags": ["中国关刀战士", "范围攻击", "偃月刀", "横扫"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "斩击扇区",
+            "items": [
+              { "label": "角度", "value": "220°" },
+              { "label": "距离", "value": "3.25 格" },
+              { "label": "范围目标", "value": "100% 完整伤害" },
+              { "label": "每次挥击", "value": "每目标只结算一次" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "先转身，再起手",
+            "body": "侧后方目标会先触发平滑转身，身体尚未基本对准时不会朝旧方向挥刀。关闭技能后保留同一动画，但只伤害起手锁定的单个目标。"
+          }
+        ],
+        "related": ["guandao_warrior", "guandao_growing_valor", "guandao_combo"]
+      }
+    },
+    {
+      "id": "guandao_combo",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "guandao_warrior",
+      "title": "关刀连段招式",
+      "subtitle": "智能四段推进连招",
+      "status": "development",
+      "x": 785,
+      "y": 625,
+      "icon": "/assets/echo-warrior/gui/skills/guandao_warrior/guandao_combo.png",
+      "symbol": "连",
+      "connections": [
+        {
+          "targetId": "guandao_warrior",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "面对敌群或无法快速击杀的强敌时，完整施展四段范围连招并向战线内推进。",
+        "tags": ["中国关刀战士", "连招", "范围伤害", "推进", "冷却"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "四段连招",
+            "items": [
+              { "label": "起手距离", "value": "4.5 格内" },
+              { "label": "四段伤害", "value": "70% / 100% / 70% / 180%" },
+              { "label": "原始推进", "value": "共 3 格" },
+              { "label": "首击追踪修正", "value": "最多 0.75 格" },
+              { "label": "基础冷却", "value": "12 秒" },
+              { "label": "受击减冷却", "value": "每次 0.5 秒" }
+            ]
+          },
+          {
+            "type": "prose",
+            "title": "起手与阶段效果",
+            "paragraphs": [
+              "附近至少有两个敌人，或当前强敌无法被约两次普通攻击击杀时，才会优先起手。第一段给予近乎原地的短浮空，第二段会弹开正面来袭的敌方投射物。",
+              "冷却从起手时开始，近战或投射物造成的实际伤害都能缩短剩余冷却且不设上限。关闭技能只阻止新连招；已经起手的动作会自然完成。"
+            ]
+          }
+        ],
+        "related": ["guandao_warrior", "guandao_crescent_blade", "guandao_growing_valor"]
+      }
+    },
+    {
+      "id": "samurai_zanshin",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "japanese_samurai",
+      "title": "残心",
+      "subtitle": "低生命与命中后的闪避循环",
+      "status": "development",
+      "x": 280,
+      "y": 710,
+      "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/zanshin.png",
+      "symbol": "心",
+      "connections": [
+        {
+          "targetId": "japanese_samurai",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "生命越低越容易闪避；完成攻击命中后还会短暂提高闪避，并把成功闪避转化为踏込充能。",
+        "tags": ["日本武士", "闪避", "低生命", "残心", "充能循环"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "闪避概率",
+            "items": [
+              { "label": "满血基础", "value": "20%" },
+              { "label": "1 点生命", "value": "60%" },
+              { "label": "命中后加成", "value": "+20 个百分点 · 1 秒" },
+              { "label": "最终上限", "value": "80%" }
+            ]
+          },
+          {
+            "type": "prose",
+            "title": "可以与不可以闪避的伤害",
+            "paragraphs": [
+              "近战、投射物、爆炸和范围伤害均可触发闪避。成功时会取消整次伤害、击退与该次攻击新附加的状态，并立即恢复一层踏込。",
+              "既有燃烧、中毒、凋零、坠落等持续或环境伤害不能触发闪避，也不会被闪避清除。关闭技能会立即移除临时闪避加成。"
+            ]
+          }
+        ],
+        "related": ["japanese_samurai", "samurai_fumikomi", "samurai_zan", "samurai_stab"]
+      }
+    },
+    {
+      "id": "samurai_fumikomi",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "japanese_samurai",
+      "title": "踏込",
+      "subtitle": "安全路径上的免伤冲刺",
+      "status": "development",
+      "x": 580,
+      "y": 710,
+      "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/fumikomi.png",
+      "symbol": "踏",
+      "connections": [
+        {
+          "targetId": "japanese_samurai",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "目标位于近战外但在八格内时，沿完整安全地面路径冲刺接战；只有真正接上攻击才消耗充能。",
+        "tags": ["日本武士", "冲刺", "充能", "免伤", "安全路径"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "踏込参数",
+            "items": [
+              { "label": "充能上限", "value": "3 层" },
+              { "label": "自然恢复", "value": "每 5 秒 1 层" },
+              { "label": "触发距离", "value": "近战外～8 格" },
+              { "label": "停止距离", "value": "约 2 格" },
+              { "label": "冲刺时间", "value": "6～14 tick" },
+              { "label": "内置冷却", "value": "10 tick" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "warning",
+            "title": "不会穿墙或白扣充能",
+            "body": "冲刺保留重力，可平滑通过一格高低差，但不能穿墙、越过二格障碍、低顶或危险落差。只有成功抵达并在同一 tick 接上普通攻击才扣除一层；受阻或失去目标会保留充能。"
+          }
+        ],
+        "related": ["japanese_samurai", "samurai_zanshin", "samurai_zan"]
+      }
+    },
+    {
+      "id": "samurai_zan",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "japanese_samurai",
+      "title": "斩",
+      "subtitle": "根据战场分支的两连斩",
+      "status": "development",
+      "x": 280,
+      "y": 960,
+      "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/zan.png",
+      "symbol": "斩",
+      "connections": [
+        {
+          "targetId": "japanese_samurai",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "第一刀先做小范围斩击；命中后若更宽的正面扇区仍有可见敌人，则无待机帧衔接第二刀。",
+        "tags": ["日本武士", "两连斩", "范围伤害", "追步", "分支攻击"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "两刀分支",
+            "items": [
+              { "label": "第一刀", "value": "90° / 2.25 格" },
+              { "label": "第二刀检查", "value": "160° / 2.75 格" },
+              { "label": "主目标", "value": "每刀 100%" },
+              { "label": "次要目标", "value": "每刀 50%" },
+              { "label": "首段追步", "value": "累计最多 1.5 格" },
+              { "label": "次段追步", "value": "累计最多 0.75 格" }
+            ]
+          },
+          {
+            "type": "prose",
+            "title": "分支时锁定伤害集合",
+            "paragraphs": [
+              "第一刀后若正面仍有可见目标，就在已经预载的动画中继续第二刀；第二段只追随分支时记录的主目标，不会在动作途中改追旁边敌人。",
+              "关闭技能后仍会播放第一刀并追随锁定目标，但只造成单体基础伤害，不产生第一刀范围伤害或第二刀。"
+            ]
+          }
+        ],
+        "related": ["japanese_samurai", "samurai_fumikomi", "samurai_stab"]
+      }
+    },
+    {
+      "id": "samurai_stab",
+      "categoryId": "heroes",
+      "nodeType": "skill",
+      "parentId": "japanese_samurai",
+      "title": "刺",
+      "subtitle": "刺入与拔刀的高伤处决",
+      "status": "development",
+      "x": 580,
+      "y": 960,
+      "icon": "/assets/echo-warrior/gui/skills/japanese_samurai/stab.png",
+      "symbol": "刺",
+      "connections": [
+        {
+          "targetId": "japanese_samurai",
+          "kind": "skill"
+        }
+      ],
+      "article": {
+        "summary": "近战范围内优先施展的固定速度处决技：刺入贯穿队列，随后只对最初命中集合结算高伤拔刀。",
+        "tags": ["日本武士", "处决", "贯穿", "两段伤害", "冷却"],
+        "sections": [
+          {
+            "type": "stats",
+            "title": "刺击参数",
+            "items": [
+              { "label": "冷却", "value": "10 秒" },
+              { "label": "刺入范围", "value": "2.75 格 · 半径 0.4 格" },
+              { "label": "刺入伤害", "value": "150%" },
+              { "label": "拔刀伤害", "value": "300%" },
+              { "label": "命中时机", "value": "起手后 16 / 20 tick" },
+              { "label": "动画速度", "value": "固定 1.0 倍" }
+            ]
+          },
+          {
+            "type": "callout",
+            "tone": "info",
+            "title": "两段都遵守真实防御",
+            "body": "两段绕过普通受伤冷却，但仍受护甲与真正无敌状态影响。刺入会短暂停住实际命中的目标；拔刀只结算第一段已经命中的集合，不会追加后来进入范围的敌人。"
+          }
+        ],
+        "related": ["japanese_samurai", "samurai_zan", "samurai_zanshin"]
       }
     },
     {
@@ -2431,7 +3260,7 @@
                 "note": "满级生命 / 远程攻击"
               },
               {
-                "label": "关刀甲胄战士",
+                "label": "中国关刀战士",
                 "value": "60 / 14",
                 "note": "满级生命 / 攻击"
               },

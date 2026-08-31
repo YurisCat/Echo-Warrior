@@ -43,6 +43,14 @@ import java.util.Map;
  */
 public final class JapaneseSamuraiEchoRenderer
 		extends GeoEntityRenderer<JapaneseSamuraiEchoEntity, EntityRenderState> {
+	private static final float EYE_YAW_LIMIT = 34.0F;
+	private static final float EYE_PITCH_LIMIT = 24.0F;
+	private static final float LOCOMOTION_HEAD_YAW_LIMIT = 15.0F;
+	private static final float LOCOMOTION_EYE_YAW_LIMIT = 10.0F;
+	private static final float MAX_EYE_X = 0.82F;
+	private static final float MAX_EYE_Y = 0.46F;
+	private static final float FULL_IDLE_PARENT_COMPENSATION_DEGREES = 3.0F;
+	private static final float NO_PARENT_COMPENSATION_DEGREES = 8.0F;
 	private static final int PER_SAMURAI_LIMIT = 8;
 	private static final int FALLBACK_THRESHOLD = 48;
 	private static final int SOFT_LIMIT = 64;
@@ -76,10 +84,32 @@ public final class JapaneseSamuraiEchoRenderer
 			"echo_warrior_samurai_afterimage_entity_id", Integer.class);
 	private static final DataTicket<Vec3> ENTITY_POSITION = DataTickets.create(
 			"echo_warrior_samurai_afterimage_entity_position", Vec3.class);
+	private static final DataTicket<Vec3> VISUAL_ENTITY_POSITION = DataTickets.create(
+			"echo_warrior_samurai_visual_entity_position", Vec3.class);
+	private static final DataTicket<Vec3> ATTENTION_POINT = DataTickets.create(
+			"echo_warrior_samurai_attention_point", Vec3.class);
+	private static final DataTicket<Vec3> EYE_ATTENTION_POINT = DataTickets.create(
+			"echo_warrior_samurai_eye_attention_point", Vec3.class);
 	private static final DataTicket<Float> BODY_YAW = DataTickets.create(
 			"echo_warrior_samurai_afterimage_body_yaw", Float.class);
 	private static final DataTicket<Long> GAME_TIME = DataTickets.create(
 			"echo_warrior_samurai_afterimage_game_time", Long.class);
+	private static final DataTicket<Byte> REACTION = DataTickets.create(
+			"echo_warrior_samurai_reaction", Byte.class);
+	private static final DataTicket<Long> BLINK_START = DataTickets.create(
+			"echo_warrior_samurai_blink_start", Long.class);
+	private static final DataTicket<Byte> BLINK_COUNT = DataTickets.create(
+			"echo_warrior_samurai_blink_count", Byte.class);
+	private static final DataTicket<Byte> CURIOUS_TILT = DataTickets.create(
+			"echo_warrior_samurai_curious_tilt", Byte.class);
+	private static final DataTicket<Integer> VISUAL_SEQUENCE = DataTickets.create(
+			"echo_warrior_samurai_visual_sequence", Integer.class);
+	private static final DataTicket<Long> ATTENTION_STARTED_AT = DataTickets.create(
+			"echo_warrior_samurai_attention_started_at", Long.class);
+	private static final DataTicket<Long> CAUGHT_REACTION_START = DataTickets.create(
+			"echo_warrior_samurai_caught_reaction_start", Long.class);
+	private static final DataTicket<Byte> ACTION_STATE = DataTickets.create(
+			"echo_warrior_samurai_action_state", Byte.class);
 	private static final DataTicket<Integer> EVENT_SEQUENCE = DataTickets.create(
 			"echo_warrior_samurai_afterimage_sequence", Integer.class);
 	private static final DataTicket<Byte> EVENT_KIND = DataTickets.create(
@@ -102,6 +132,7 @@ public final class JapaneseSamuraiEchoRenderer
 			"echo_warrior_samurai_afterimage_pass_kind", Byte.class);
 
 	private final Map<Integer, Integer> lastSequences = new HashMap<>();
+	private final Map<Integer, VisualState> visualStates = new HashMap<>();
 	private final List<Afterimage> afterimages = new ArrayList<>();
 	private long retryAdvancedRenderingAt = Long.MIN_VALUE;
 
@@ -125,8 +156,23 @@ public final class JapaneseSamuraiEchoRenderer
 				Mth.lerp(partialTick, entity.yo, entity.getY()),
 				Mth.lerp(partialTick, entity.zo, entity.getZ())
 		));
+		renderState.addGeckolibData(VISUAL_ENTITY_POSITION, new Vec3(
+				Mth.lerp(partialTick, entity.xo, entity.getX()),
+				Mth.lerp(partialTick, entity.yo, entity.getY()) + entity.getEyeHeight(),
+				Mth.lerp(partialTick, entity.zo, entity.getZ())
+		));
+		renderState.addGeckolibData(ATTENTION_POINT, entity.getSyncedAttentionPoint());
+		renderState.addGeckolibData(EYE_ATTENTION_POINT, entity.getSyncedEyeAttentionPoint());
 		renderState.addGeckolibData(BODY_YAW, Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot));
 		renderState.addGeckolibData(GAME_TIME, entity.level().getGameTime());
+		renderState.addGeckolibData(REACTION, entity.getVisualReaction());
+		renderState.addGeckolibData(BLINK_START, entity.getBlinkStart());
+		renderState.addGeckolibData(BLINK_COUNT, entity.getBlinkCount());
+		renderState.addGeckolibData(CURIOUS_TILT, entity.getCuriousTilt());
+		renderState.addGeckolibData(VISUAL_SEQUENCE, entity.getVisualSequence());
+		renderState.addGeckolibData(ATTENTION_STARTED_AT, entity.getAttentionStartedAt());
+		renderState.addGeckolibData(CAUGHT_REACTION_START, entity.getCaughtReactionStart());
+		renderState.addGeckolibData(ACTION_STATE, entity.action());
 		renderState.addGeckolibData(EVENT_SEQUENCE, entity.afterimageSequence());
 		renderState.addGeckolibData(EVENT_KIND, entity.afterimageKind());
 		renderState.addGeckolibData(EVENT_ORIGIN, entity.afterimageOrigin());
@@ -327,6 +373,7 @@ public final class JapaneseSamuraiEchoRenderer
 	public void adjustModelBonesForRender(RenderPassInfo<EntityRenderState> renderPass, BoneSnapshots snapshots) {
 		super.adjustModelBonesForRender(renderPass, snapshots);
 		if (renderPass.getOrDefaultGeckolibData(AFTERIMAGE_PASS_MODE, PASS_NONE) != PASS_NONE) return;
+		applyVisualPresentation(renderPass, snapshots);
 
 		int entityId = renderPass.getGeckolibData(ENTITY_ID);
 		int sequence = renderPass.getGeckolibData(EVENT_SEQUENCE);
@@ -355,6 +402,191 @@ public final class JapaneseSamuraiEchoRenderer
 			addAfterimage(new Afterimage(entityId, origin, yaw, kind, neutral, advanced, createdAt, 10.0F,
 					kind == JapaneseSamuraiEchoEntity.AFTERIMAGE_FUMIKOMI ? 0.42F : 0.46F, pose));
 		}
+	}
+
+	private void applyVisualPresentation(
+			RenderPassInfo<EntityRenderState> renderPass,
+			BoneSnapshots snapshots
+	) {
+		int entityId = renderPass.getGeckolibData(ENTITY_ID);
+		if (this.visualStates.size() > 256 && !this.visualStates.containsKey(entityId)) this.visualStates.clear();
+		VisualState state = this.visualStates.computeIfAbsent(entityId, ignored -> new VisualState());
+		float age = renderPass.renderState().ageInTicks;
+		float deltaTicks = state.lastAge < 0.0F ? 1.0F : Mth.clamp(age - state.lastAge, 0.0F, 1.0F);
+		state.lastAge = age;
+
+		// Japanese combat clips deliberately animate Head and Eyebrow. Ease the
+		// procedural pose back to neutral in the background, but never overwrite
+		// those authored bones while a committed action is playing.
+		if (renderPass.getGeckolibData(ACTION_STATE) != JapaneseSamuraiEchoEntity.ACTION_NONE) {
+			state.headYaw = approach(state.headYaw, 0.0F, 0.45F, deltaTicks);
+			state.headPitch = approach(state.headPitch, 0.0F, 0.45F, deltaTicks);
+			state.headTilt = approach(state.headTilt, 0.0F, 0.45F, deltaTicks);
+			state.eyeX = approach(state.eyeX, 0.0F, 0.65F, deltaTicks);
+			state.eyeY = approach(state.eyeY, 0.0F, 0.65F, deltaTicks);
+			state.pupilScale = approach(state.pupilScale, 1.0F, 0.3F, deltaTicks);
+			state.lastSequence = renderPass.getGeckolibData(VISUAL_SEQUENCE);
+			return;
+		}
+
+		Vec3 entityPosition = renderPass.getGeckolibData(VISUAL_ENTITY_POSITION);
+		Vec3 attentionPoint = renderPass.getGeckolibData(ATTENTION_POINT);
+		Vec3 eyeAttentionPoint = renderPass.getGeckolibData(EYE_ATTENTION_POINT);
+		float bodyYaw = renderPass.getGeckolibData(BODY_YAW);
+		byte reaction = renderPass.getGeckolibData(REACTION);
+		long gameTime = renderPass.getGeckolibData(GAME_TIME);
+		float partialTick = renderPass.renderState().getPartialTick();
+		int sequence = renderPass.getGeckolibData(VISUAL_SEQUENCE);
+		float attentionAge = gameTime + partialTick - renderPass.getGeckolibData(ATTENTION_STARTED_AT);
+		float caughtReactionAge = gameTime + partialTick - renderPass.getGeckolibData(CAUGHT_REACTION_START);
+
+		Vec3 headDelta = attentionPoint.subtract(entityPosition);
+		double headHorizontal = Math.sqrt(headDelta.x * headDelta.x + headDelta.z * headDelta.z);
+		boolean locomotionGaze = reaction == JapaneseSamuraiEchoEntity.VISUAL_LOCOMOTION;
+		float headYawLimit = locomotionGaze ? LOCOMOTION_HEAD_YAW_LIMIT : 75.0F;
+		float desiredHeadWorldYaw = headHorizontal < 1.0E-4 ? bodyYaw : worldYawToward(headDelta);
+		float desiredHeadYaw = Mth.clamp(Mth.wrapDegrees(desiredHeadWorldYaw - bodyYaw),
+				-headYawLimit, headYawLimit);
+		float desiredHeadPitch = headHorizontal < 1.0E-4 ? 0.0F
+				: Mth.clamp(worldPitchToward(headDelta, headHorizontal), -35.0F, 40.0F);
+		float desiredTilt = reaction == JapaneseSamuraiEchoEntity.VISUAL_CURIOUS
+				? renderPass.getGeckolibData(CURIOUS_TILT) * 10.0F : 0.0F;
+
+		float headResponsiveness;
+		if (reaction == JapaneseSamuraiEchoEntity.VISUAL_STARTLED
+				|| reaction == JapaneseSamuraiEchoEntity.VISUAL_HURT) {
+			headResponsiveness = 0.55F;
+		} else if (reaction == JapaneseSamuraiEchoEntity.VISUAL_CAUGHT) {
+			headResponsiveness = 0.36F;
+		} else if (reaction == JapaneseSamuraiEchoEntity.VISUAL_MUTUAL_GAZE) {
+			headResponsiveness = attentionAge < 2.0F ? 0.0F : 0.24F;
+		} else if (locomotionGaze) {
+			headResponsiveness = 0.28F;
+		} else {
+			headResponsiveness = 0.18F;
+		}
+		state.headYaw = approach(state.headYaw, desiredHeadYaw, headResponsiveness, deltaTicks);
+		state.headPitch = approach(state.headPitch, desiredHeadPitch, headResponsiveness, deltaTicks);
+		state.headTilt = approach(state.headTilt, desiredTilt, 0.16F, deltaTicks);
+
+		Vec3 eyeDelta = eyeAttentionPoint.subtract(entityPosition);
+		double eyeHorizontal = Math.sqrt(eyeDelta.x * eyeDelta.x + eyeDelta.z * eyeDelta.z);
+		float desiredEyeWorldYaw = eyeHorizontal < 1.0E-4 ? desiredHeadWorldYaw : worldYawToward(eyeDelta);
+		float desiredEyeWorldPitch = eyeHorizontal < 1.0E-4
+				? desiredHeadPitch : worldPitchToward(eyeDelta, eyeHorizontal);
+		float eyeYawLimit = locomotionGaze ? LOCOMOTION_EYE_YAW_LIMIT : EYE_YAW_LIMIT;
+		float eyeTargetYaw = Mth.clamp(Mth.wrapDegrees(desiredEyeWorldYaw - bodyYaw - state.headYaw),
+				-eyeYawLimit, eyeYawLimit);
+		float eyeTargetPitch = Mth.clamp(desiredEyeWorldPitch - state.headPitch,
+				-EYE_PITCH_LIMIT, EYE_PITCH_LIMIT);
+		float unrolledEyeX = -eyeTargetYaw / EYE_YAW_LIMIT * MAX_EYE_X;
+		float unrolledEyeY = -eyeTargetPitch / EYE_PITCH_LIMIT * MAX_EYE_Y;
+		float tiltRadians = toRadians(state.headTilt);
+		float tiltCos = Mth.cos(tiltRadians);
+		float tiltSin = Mth.sin(tiltRadians);
+		float desiredEyeX = unrolledEyeX * tiltCos + unrolledEyeY * tiltSin;
+		float desiredEyeY = -unrolledEyeX * tiltSin + unrolledEyeY * tiltCos;
+		float eyeResponsiveness = reaction == JapaneseSamuraiEchoEntity.VISUAL_STARTLED
+				|| reaction == JapaneseSamuraiEchoEntity.VISUAL_HURT ? 0.92F
+				: reaction == JapaneseSamuraiEchoEntity.VISUAL_CAUGHT ? 0.9F
+				: reaction == JapaneseSamuraiEchoEntity.VISUAL_MUTUAL_GAZE ? 0.82F : 0.58F;
+		state.eyeX = approach(state.eyeX, desiredEyeX, eyeResponsiveness, deltaTicks);
+		state.eyeY = approach(state.eyeY, desiredEyeY, eyeResponsiveness, deltaTicks);
+
+		float desiredPupilScale = switch (reaction) {
+			case JapaneseSamuraiEchoEntity.VISUAL_HURT -> 0.6F;
+			case JapaneseSamuraiEchoEntity.VISUAL_STARTLED -> 0.48F;
+			case JapaneseSamuraiEchoEntity.VISUAL_CAUGHT -> Mth.lerp(
+					Mth.clamp((caughtReactionAge - 3.0F) / 7.0F, 0.0F, 1.0F), 0.8F, 1.0F);
+			default -> 1.0F;
+		};
+		state.pupilScale = approach(state.pupilScale, desiredPupilScale,
+				desiredPupilScale < state.pupilScale ? 0.8F : 0.18F, deltaTicks);
+
+		float convergence = eyeHorizontal < 3.0 && eyeHorizontal > 0.1
+				? (float)((3.0 - eyeHorizontal) / 3.0) * 0.09F : 0.0F;
+		float blink = reaction == JapaneseSamuraiEchoEntity.VISUAL_STARTLED ? 0.0F
+				: reaction == JapaneseSamuraiEchoEntity.VISUAL_HURT
+						? calculateHurtBlink(gameTime + partialTick, renderPass.getGeckolibData(BLINK_START))
+						: calculateBlink(gameTime + partialTick, renderPass.getGeckolibData(BLINK_START),
+						renderPass.getGeckolibData(BLINK_COUNT));
+
+		float inheritedRotX = inheritedRotation(snapshots, AxisComponent.X);
+		float inheritedRotY = inheritedRotation(snapshots, AxisComponent.Y);
+		float inheritedRotZ = inheritedRotation(snapshots, AxisComponent.Z);
+		float inheritedMagnitude = Math.max(Math.abs(inheritedRotX),
+				Math.max(Math.abs(inheritedRotY), Math.abs(inheritedRotZ)));
+		float inheritedMagnitudeDegrees = inheritedMagnitude * Mth.RAD_TO_DEG;
+		float parentCompensation = 1.0F - (float)Mth.smoothstep(Mth.clamp(
+				(inheritedMagnitudeDegrees - FULL_IDLE_PARENT_COMPENSATION_DEGREES)
+						/ (NO_PARENT_COMPENSATION_DEGREES - FULL_IDLE_PARENT_COMPENSATION_DEGREES),
+				0.0F, 1.0F));
+
+		snapshots.ifPresent("Head", bone -> bone.setRotation(
+				toRadians(-state.headPitch) - inheritedRotX * parentCompensation,
+				toRadians(-state.headYaw) - inheritedRotY * parentCompensation,
+				toRadians(state.headTilt) - inheritedRotZ * parentCompensation));
+		snapshots.ifPresent("Eyes_Left", bone -> bone
+				.setTranslation(state.eyeX - convergence, state.eyeY, 0.0F)
+				.setScale(state.pupilScale, state.pupilScale, 1.0F));
+		snapshots.ifPresent("Eyes_Right", bone -> bone
+				.setTranslation(state.eyeX + convergence, state.eyeY, 0.0F)
+				.setScale(state.pupilScale, state.pupilScale, 1.0F));
+		snapshots.ifPresent("Eyebrow", bone -> bone.setTranslation(0.0F, -2.0F * blink, 0.0F));
+
+		if (state.lastSequence != sequence) {
+			state.lastSequence = sequence;
+			state.lastAge = age;
+		}
+	}
+
+	private static float inheritedRotation(BoneSnapshots snapshots, AxisComponent component) {
+		float result = 0.0F;
+		for (String boneName : List.of("Main", "Body", "Upper_Body", "Upper_Body2")) {
+			result += snapshots.get(boneName).map(bone -> switch (component) {
+				case X -> bone.getRotX();
+				case Y -> bone.getRotY();
+				case Z -> bone.getRotZ();
+			}).orElse(0.0F);
+		}
+		return result;
+	}
+
+	private static float calculateBlink(float now, long blinkStart, byte blinkCount) {
+		if (blinkCount <= 0) return 0.0F;
+		float result = blinkPulse(now - blinkStart);
+		if (blinkCount > 1) result = Math.max(result, blinkPulse(now - blinkStart - 4.0F));
+		return result;
+	}
+
+	private static float blinkPulse(float elapsed) {
+		if (elapsed < 0.0F || elapsed > 3.0F) return 0.0F;
+		return Mth.sin(elapsed / 3.0F * (float)Math.PI);
+	}
+
+	private static float calculateHurtBlink(float now, long blinkStart) {
+		float elapsed = now - blinkStart;
+		if (elapsed < 0.0F || elapsed > 6.0F) return 0.0F;
+		if (elapsed <= 1.6F) return elapsed / 1.6F;
+		if (elapsed <= 2.2F) return 1.0F;
+		return 1.0F - (elapsed - 2.2F) / 3.8F;
+	}
+
+	private static float approach(float current, float target, float responsiveness, float deltaTicks) {
+		float weight = 1.0F - (float)Math.pow(1.0F - responsiveness, Math.max(0.0F, deltaTicks));
+		return Mth.lerp(weight, current, target);
+	}
+
+	private static float toRadians(float degrees) {
+		return degrees * ((float)Math.PI / 180.0F);
+	}
+
+	private static float worldYawToward(Vec3 delta) {
+		return (float)(Math.atan2(delta.z, delta.x) * 180.0 / Math.PI) - 90.0F;
+	}
+
+	private static float worldPitchToward(Vec3 delta, double horizontal) {
+		return Mth.clamp((float)(-Math.atan2(delta.y, horizontal) * 180.0 / Math.PI), -35.0F, 40.0F);
 	}
 
 	private static Map<String, FrozenBone> capturePose(
@@ -408,6 +640,7 @@ public final class JapaneseSamuraiEchoRenderer
 	private void pruneExpired(double now) {
 		this.afterimages.removeIf(afterimage -> now - afterimage.createdAt >= afterimage.lifetime);
 		if (this.lastSequences.size() > 256) this.lastSequences.clear();
+		if (this.visualStates.size() > 256) this.visualStates.clear();
 	}
 
 	private void evictLowestPriority() {
@@ -445,4 +678,17 @@ public final class JapaneseSamuraiEchoRenderer
 			float rotX, float rotY, float rotZ,
 			boolean hidden, boolean childrenHidden
 	) {}
+
+	private enum AxisComponent { X, Y, Z }
+
+	private static final class VisualState {
+		private float headYaw;
+		private float headPitch;
+		private float headTilt;
+		private float eyeX;
+		private float eyeY;
+		private float pupilScale = 1.0F;
+		private float lastAge = -1.0F;
+		private int lastSequence = -1;
+	}
 }

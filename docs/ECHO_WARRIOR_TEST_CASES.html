@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Echo Warrior 测试用例</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#100f14;--bg2:#191720;--panel:#211e29;--panel2:#292531;--line:#494252;
+  --text:#f1ece2;--muted:#aaa4b3;--gold:#d7b96e;--cyan:#78cad0;--green:#79c68d;
+  --red:#e17777;--orange:#e3a15f;--violet:#a990df;--shadow:0 18px 48px #0007;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;color:var(--text);font:15px/1.62 system-ui,"Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  background:
+    radial-gradient(circle at 14% -8%,#493b52 0,transparent 28%),
+    radial-gradient(circle at 88% 8%,#173c40 0,transparent 22%),
+    linear-gradient(160deg,var(--bg2),var(--bg) 58%);
+  min-height:100vh;
+}
+body:before{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;
+  background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);
+  background-size:32px 32px;mask-image:linear-gradient(to bottom,#000,transparent 78%);
+}
+button,input,select,textarea{font:inherit}
+button{color:inherit}
+.app{max-width:1320px;margin:auto;padding:28px 22px 90px;position:relative}
+.hero{
+  position:relative;overflow:hidden;border:1px solid #5c5265;border-radius:18px;padding:26px;
+  background:linear-gradient(135deg,#2b2633e8,#1a1821ed);box-shadow:var(--shadow);
+}
+.hero:after{
+  content:"";position:absolute;width:240px;height:240px;border:1px solid #d7b96e42;border-radius:50%;
+  right:-74px;top:-108px;box-shadow:0 0 0 32px #d7b96e0b,0 0 0 72px #78cad009;
+  animation:orbit 14s linear infinite;
+}
+@keyframes orbit{to{transform:rotate(360deg)}}
+.brand{display:flex;gap:18px;align-items:center;position:relative;z-index:1}
+.brand-icon{
+  width:58px;height:58px;image-rendering:pixelated;object-fit:contain;padding:10px;border-radius:14px;
+  background:#15131a;border:1px solid #5e5464;box-shadow:inset 0 0 22px #78cad018,0 8px 24px #0007;
+  animation:float 4.2s ease-in-out infinite;
+}
+@keyframes float{50%{transform:translateY(-4px)}}
+h1{font-size:clamp(25px,4vw,38px);line-height:1.16;margin:0;color:#f4dfaa;letter-spacing:.02em}
+.subtitle{margin:7px 0 0;color:var(--muted);max-width:900px}
+.version{color:var(--cyan)}
+.principles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px;position:relative;z-index:1}
+.principle{border:1px solid #4f4858;border-radius:11px;background:#17151cbb;padding:12px 13px;display:flex;gap:10px}
+.principle svg{color:var(--gold);flex:none;margin-top:2px}.principle b{display:block}.principle small{color:var(--muted)}
+.meta,.control-panel,.section-block{
+  margin-top:16px;border:1px solid var(--line);border-radius:14px;background:#1c1922e8;box-shadow:0 12px 34px #0004;
+}
+.meta{padding:17px}.meta h2,.control-panel h2{font-size:16px;margin:0 0 12px;color:#e7d6aa;display:flex;align-items:center;gap:8px}
+.meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.field label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px}
+.field input,.field select,.filters input,.filters select{
+  width:100%;border:1px solid #4a4451;border-radius:8px;background:#121117;color:var(--text);padding:9px 10px;outline:0;
+}
+.field input:focus,.field select:focus,.filters input:focus,.filters select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #78cad016}
+.control-panel{position:sticky;top:10px;z-index:15;padding:14px 16px;backdrop-filter:blur(14px)}
+.summary-row{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.summary{font-weight:700;color:#ead49c;min-width:220px}
+.progress{height:9px;background:#0e0d12;border:1px solid #3d3743;border-radius:99px;overflow:hidden;flex:1;min-width:190px}
+.progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--cyan),var(--green));transition:width .35s cubic-bezier(.2,.8,.2,1);position:relative}
+.progress-bar:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,#fff8,transparent);animation:shine 2.2s linear infinite}
+@keyframes shine{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.status-counts{display:flex;gap:8px;flex-wrap:wrap}.count{font-size:12px;padding:3px 8px;border-radius:99px;border:1px solid #4d4655;background:#141219}
+.count.pass{color:var(--green)}.count.fail{color:var(--red)}.count.blocked{color:var(--orange)}
+.filters{display:grid;grid-template-columns:1.6fr repeat(3,minmax(120px,.7fr));gap:8px;margin-top:12px}
+.search-wrap{position:relative}.search-wrap svg{position:absolute;left:10px;top:10px;color:var(--muted)}.search-wrap input{padding-left:35px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.btn,.file-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #504957;border-radius:8px;
+  background:#29242f;color:var(--text);padding:8px 11px;cursor:pointer;transition:.18s ease;text-decoration:none;
+}
+.btn:hover,.file-btn:hover{transform:translateY(-1px);border-color:var(--gold);background:#342e3b}
+.btn.primary{background:linear-gradient(135deg,#725d32,#4b693f);border-color:#a98b48}.btn.danger{color:#efaaaa}
+.file-btn input{display:none}
+.section-block{overflow:hidden}
+.section-title{
+  padding:15px 18px;background:linear-gradient(90deg,#2a2531,#201d27);display:flex;align-items:center;gap:10px;
+  position:relative;z-index:1;border-bottom:1px solid #443e49;
+}
+.section-title img{width:24px;height:24px;image-rendering:pixelated;object-fit:contain}.section-title h2{font-size:18px;margin:0;color:#ead7a5}.section-title small{color:var(--muted);margin-left:auto}
+.cases{padding:10px}
+.case{
+  border:1px solid #403a46;border-radius:11px;background:linear-gradient(145deg,#24202a,#1c1921);
+  margin:8px 0;transition:border-color .2s,transform .2s,box-shadow .2s;
+}
+.case:hover{border-color:#635a6c;box-shadow:0 10px 26px #0004}
+.case[data-status="pass"]{border-left:3px solid var(--green)}
+.case[data-status="fail"]{border-left:3px solid var(--red)}
+.case[data-status="blocked"]{border-left:3px solid var(--orange)}
+.case.paste-target{box-shadow:0 0 0 2px #a98b48,0 10px 28px #0006}
+.case-head{width:100%;border:0;background:transparent;padding:12px 13px;display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer}
+.case-head .chev{transition:transform .28s cubic-bezier(.2,.8,.2,1);color:var(--muted)}.case.open .case-head .chev{transform:rotate(180deg)}
+.case-id{font:700 12px/1.2 ui-monospace,Consolas,monospace;color:var(--cyan);padding:4px 7px;border-radius:6px;background:#0e2528}
+.priority{font:700 11px/1.2 ui-monospace,Consolas,monospace;padding:4px 7px;border-radius:6px}
+.priority.P0{background:#4b2024;color:#ffb0b0}.priority.P1{background:#45351e;color:#f4ce82}.priority.P2{background:#29374d;color:#a9c9ff}
+.case-name{font-weight:700;flex:1}.case-brief{font-size:12px;color:var(--muted);max-width:350px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.head-status{border:1px solid #49424f;background:#121117;color:var(--text);border-radius:7px;padding:6px 8px;cursor:pointer}
+.case-shell{display:grid;grid-template-rows:0fr;transition:grid-template-rows .34s cubic-bezier(.2,.8,.2,1)}
+.case.open .case-shell{grid-template-rows:1fr}.case-inner{overflow:hidden}
+.case-body{border-top:1px solid #3e3844;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;opacity:0;transform:translateY(-7px);transition:.24s ease}
+.case.open .case-body{opacity:1;transform:none;transition-delay:.07s}
+.box{border:1px solid #3c3642;border-radius:9px;background:#17151c;padding:12px}.box.full{grid-column:1/-1}
+.box h3{font-size:13px;margin:0 0 7px;color:#dcc58d;display:flex;align-items:center;gap:7px}.box p{margin:0;color:#d7d1d9}.box ol{margin:0;padding-left:22px}.box li+li{margin-top:5px}
+.expected{border-color:#355540;background:#142019}.risk{border-color:#574332;background:#211a14}
+.result-grid{display:grid;grid-template-columns:180px 180px 1fr;gap:10px}.result-grid label{font-size:12px;color:var(--muted)}
+.result-grid select,.result-grid input,textarea{width:100%;margin-top:4px;border:1px solid #48414e;border-radius:8px;background:#111016;color:var(--text);padding:9px;outline:0}
+textarea{min-height:90px;resize:vertical}
+.attachment-box{transition:border-color .2s,background .2s,box-shadow .2s;outline:0}.attachment-box.drag-over{border-color:#b99a52;background:#221f17;box-shadow:inset 0 0 0 1px #b99a52}
+.attachment-bar{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.attachment-bar small{color:var(--muted)}.attachment-bar kbd{border:1px solid #5a5260;border-bottom-width:2px;border-radius:5px;background:#24212a;color:#f0e8dc;padding:1px 5px;font:700 11px/1.4 ui-monospace,Consolas,monospace}
+.previews{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;margin-top:10px}
+.shot{position:relative;border:1px solid #49414e;border-radius:8px;overflow:hidden;background:#0d0c10;min-height:95px}.shot img{width:100%;height:120px;object-fit:cover;display:block;cursor:zoom-in}
+.shot button{position:absolute;right:6px;top:6px;border:1px solid #ffffff30;background:#140f14db;border-radius:6px;padding:5px;cursor:pointer}
+.empty{padding:48px;text-align:center;color:var(--muted)}
+.toast{position:fixed;right:22px;bottom:22px;z-index:40;background:#26212d;border:1px solid #63586d;border-radius:9px;padding:11px 14px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);pointer-events:none;transition:.25s}
+.toast.show{opacity:1;transform:none}
+.lightbox{position:fixed;inset:0;z-index:50;background:#08070beF;display:none;align-items:center;justify-content:center;padding:30px}.lightbox.open{display:flex}.lightbox img{max-width:94vw;max-height:90vh;object-fit:contain;box-shadow:0 20px 70px #000;border:1px solid #665c70}.lightbox button{position:absolute;right:22px;top:22px}
+.footer{color:var(--muted);font-size:12px;text-align:center;margin-top:28px}
+@media(max-width:900px){.principles{grid-template-columns:1fr}.meta-grid{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.case-body{grid-template-columns:1fr}.box.full{grid-column:auto}.result-grid{grid-template-columns:1fr}.case-brief{display:none}}
+@media(max-width:560px){.app{padding:12px 10px 60px}.hero{padding:18px}.brand{align-items:flex-start}.brand-icon{width:48px;height:48px}.meta-grid,.filters{grid-template-columns:1fr}.control-panel{position:relative;top:auto}.section-title{position:relative;top:auto}.case-head{align-items:flex-start;flex-wrap:wrap}.case-name{min-width:65%}.head-status{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="hero">
+    <div class="brand">
+      <img class="brand-icon" id="brandIcon" alt="Echo Warrior 召唤器图标">
+      <div>
+        <h1>Echo Warrior 测试用例</h1>
+        <p class="subtitle">适用版本 <span class="version">0.1.0-test.20260831.1</span>。这是可离线使用的单文件测试工具：逐项执行、记录实际结果、附加截图，最后导出独立结果 HTML 或可继续编辑的 JSON。</p>
+      </div>
+    </div>
+    <div class="principles">
+      <div class="principle"><span data-icon="shield-alert"></span><div><b>P0 先测</b><small>崩溃、存档、物品丢失、复制、核心流程与多人控制权。</small></div></div>
+      <div class="principle"><span data-icon="list-checks"></span><div><b>按步骤复现</b><small>不要只写“坏了”；记录位置、模式、物品、人数和稳定复现步骤。</small></div></div>
+      <div class="principle"><span data-icon="image"></span><div><b>保留证据</b><small>失败时附截图；崩溃或异常同步同时保留 latest.log。</small></div></div>
+    </div>
+  </header>
+
+  <section class="meta">
+    <h2><span data-icon="clipboard"></span>测试环境</h2>
+    <div class="meta-grid">
+      <div class="field"><label>测试员</label><input data-meta="tester" placeholder="姓名或昵称"></div>
+      <div class="field"><label>测试日期</label><input data-meta="date" type="date"></div>
+      <div class="field"><label>PCL 实例名称</label><input data-meta="instance" placeholder="实例名称"></div>
+      <div class="field"><label>Java 版本</label><input data-meta="java" placeholder="应为 Java 25"></div>
+      <div class="field"><label>操作系统</label><input data-meta="os" placeholder="例如 Windows 11"></div>
+      <div class="field"><label>显卡与驱动</label><input data-meta="gpu" placeholder="显卡型号 / 驱动"></div>
+      <div class="field"><label>测试类型</label><select data-meta="mode"><option value="">请选择</option><option>单人</option><option>局域网</option><option>专用服务器</option></select></div>
+      <div class="field"><label>额外模组</label><input data-meta="mods" placeholder="例如 JEI；没有则写无"></div>
+    </div>
+  </section>
+
+  <section class="control-panel">
+    <div class="summary-row">
+      <div class="summary" id="summary">正在载入测试用例</div>
+      <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="status-counts" id="statusCounts"></div>
+    </div>
+    <div class="filters">
+      <div class="search-wrap"><span data-icon="search"></span><input id="search" placeholder="搜索编号、标题、步骤或预期结果"></div>
+      <select id="sectionFilter"><option value="">全部分区</option></select>
+      <select id="priorityFilter"><option value="">全部优先级</option><option value="P0">P0</option><option value="P1">P1</option><option value="P2">P2</option></select>
+      <select id="statusFilter"><option value="">全部状态</option><option value="untested">未测试</option><option value="pass">通过</option><option value="fail">失败</option><option value="blocked">阻塞</option><option value="skip">跳过</option></select>
+    </div>
+    <div class="toolbar">
+      <button class="btn" id="expandVisible"><span data-icon="unfold"></span>展开当前用例</button>
+      <button class="btn" id="collapseAll"><span data-icon="fold"></span>全部收起</button>
+      <button class="btn primary" id="exportHtml"><span data-icon="file-down"></span>导出独立结果 HTML</button>
+      <button class="btn" id="exportJson"><span data-icon="download"></span>导出可编辑 JSON</button>
+      <label class="file-btn"><span data-icon="upload"></span>导入 JSON<input id="importJson" type="file" accept=".json,application/json"></label>
+      <button class="btn danger" id="reset"><span data-icon="trash"></span>清空全部结果</button>
+    </div>
+  </section>
+
+  <main id="content"></main>
+  <div class="footer">此文件可直接离线打开。界面图标使用离线内嵌的 Lucide SVG；分区图标使用 Echo Warrior 的 Minecraft 像素资源。所有填写内容保存在当前浏览器的 IndexedDB 中。</div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="lightbox" id="lightbox"><button class="btn" id="closeLightbox"><span data-icon="x"></span>关闭</button><img id="lightboxImage" alt="测试截图预览"></div>
+
+<script>
+"use strict";
+const VERSION="0.1.0-test.20260831.1";
+const SCHEMA="echo-warrior-test-cases-v1";
+const mcIcons={
+  summoner:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAHhlWElmTU0AKgAAAAgABQESAAMAAAABAAEAAAEaAAUAAAABAAAASgEbAAUAAAABAAAAUgEoAAMAAAABAAIAAIdpAAQAAAABAAAAWgAAAAAAAABIAAAAAQAAAEgAAAABAAKgAgAEAAAAAQAAABCgAwAEAAAAAQAAABAAAAAAiKeUQwAAAAlwSFlzAAALEwAACxMBAJqcGAAAABxpRE9UAAAAAgAAAAAAAAAIAAAAKAAAAAgAAAAIAAAAtJq5ZscAAACASURBVDgRYmDAAfy9XP6DMA5p/MIgjft3rARjsgyCGdDXUfP/7YtrYEy0QTDNMA3F2Qn/QZhog5ANeHzr7X8QhhkCMwgYABhhAw4wkOaTx2rBGmCalyw4/h+G8RoAkiRkAChgQeqwuQAULWDbQQGHjHduOvcfhEFisJiBGgD2BgAAAP//MQh4FwAAAKBJREFUY2BAgP8nj9X+7+uo+b/jUASYBrFheP+Olf+LsxPA+O2La/9B2N/L5T9M+3+QAphikAS6QSD5ipkPwRgkh9UAkCJsBoHEQLYjGwCyBMUFIAUwA2A0zEUwAxy8mv+DMMh2oNPhzgd5AyYAtglmAIwGGQ4zDEQjqQfpRQFwSWQXAVWAxWEGQvkoGtE5KAbBDECj0fVg5cMNwioLFAQAh9OJIon71jYAAAAASUVORK5CYII=",
+  manual:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAATBJREFUOI3FkzFLw0AYhp+U/oGmIXQUHHXp0tWlUwcn6ZJJ6Vawg9ZFcBBcWh30BySLcRCnDqFDQFxdpNC6FUIRLCFNf0JcvCO5BC0uvtPd8b33Pt93HPy3tPRm0Gsnm5jObh+lT1ONna4lCyvVmlyvV0uC+RR/PCGMYq5dXwMoiYL+xYks9kYelWoN17EBcB0bb+Sxtb0LQPDxmW3h1GomAKah0+lamWRVw8ubPIFp6AzvriS269iZdNexeXv15SVpgjJAGMX0j88xDR0A6/BIFqTXRcoRqKlpEhGW1q8E9cbPJGVADmTQayfiud5nC2kU6a39Fqah52egqt5oyuR0+nq1zLVQUs3BfFqIKshEm4UEYRTjjyc83D/D93DVRFWaenCwt7PRf3h6meW8f9IX5pqGbExYx60AAAAASUVORK5CYII=",
+  knowledge:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAV1JREFUOI2FkzFLw0AYhp+If6BWpFMRujWCzZLVJYNk6CDq0qldOqlDrYNCxcVBsoi4iS6pgzh1CA4Fce2SCnUMBCy2iDU/IS4mXNpr+i65y8e93/O93MECXR3th2n15UWHmq0GQHhy/aREtWgNoMgMbKsemmUT3xvQfXkH4Pvnl7XVFZqtBns7NZ7fPpS5BJE03UDTDYLJGN8boOkGzcMzAI4rRmi1u8qMgW3Vw6KaJ5PN4fa6sVEmmyOYjClpBQD84Wh+BuuFjcS3/XAPQKVao6jm6bteeoiZbC6xN8tm/O/RfsUfjuIMlmT4AG6vi+8N0iKaTyDiOx0nxk81sK16KB4U8SNFWYhKjCCmL+JH8/ddLzH/zAjT6Yv4su4Jg6/PgLvbNgDG9iaablCp1ggm47i7TImrvLulhgB6SYX/63t6foDTcaT4MyMIxfgxXV7cSDtLCWSKqKYaxPoDdkeO8XzObbsAAAAASUVORK5CYII=",
+  accessory:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAVBJREFUOI29kz1PwlAUhp8awAVo6F5DTBMGhy7IAk5sBt1M9C84qZuTMLmhP4MfwMqEOAgJEQORiIa4MGDaVGDQ5Tpom16+ZDCe9bzPe957Ti78RxmmLgxTFwBqPCzUeFi4vbVV4PPTE1y4mC9I/aUGLtzrNhg6NsV8gV63IWkCvyVo12+ZKEEOcznuGvWZ/sIEhqmL/UyK9WiIUrlMpVpDiyhUqjVJpyyCNTVGNr0FgDX63lkque1pzvIXOP2xMvMEw9TFwW6GSq2NNRI0Wx0sx2bo2JTKZY6P9jzDmQQu/PH+CcDNw5Nk7hq5JSUwTF1kd9JYI4EWDWEkkkyUIG+DAQQU7h+fGTo2Tn8sDQ34YQAtomAkklxeXaOpMU84D8Z/hWarI8FuZIDu68tcmOkz+mEATY0thaUlqvGwSGxselNXgZm+gv+T8LPlZfCf1BfRYZTAgdkAkAAAAABJRU5ErkJggg==",
+  roman:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAZBJREFUOI2Fk7FLw0AYxX8JpRqbG4polUKh0KEFodLipJt2cXMVXBV07F/gf+Dk4NhB8B9wULq5iFAUhEoXndQWQ4ckthbpOcScudrqN3159967d5f7DMbUOik5Dq/TNkax2DjRlhm0y5YPwG0vESwMfzihWSwUb5lSCer+ArOmq+3kDAWHidcfw2FK1mkbsSip7i+o/ig3x+JiEYCXl2d2Wn21HjVXZ0palkwmEtquK5VNAG4uzzW86/t0ez0DwBx3WQDZTAb3sYX72CKbyUyiERsVTcXjAHwMBthCBL3jkM/lFN5tNpXGDOOXCgUAbCGwhcD1PEVyPU/hAKVCgaRlyV8JADzX/beP1sQ7AKhV96hV9/6i/E5gC8F1o6Fhbceh7Tg8vb2xUS5PNpiKxzm7uGC1GPz/meISAOl0WuN8DAbqW3sHlbU1AI53t5U4rPe7e/ZPTgG4vLpS70AZrJOS88Y0eRmEejA+NYMo3pF9fRbC6sg+eWxmTZcDy1dDtPzdO0OhibUE0SSjWLRGR/oL6LSXK0SX1pAAAAAASUVORK5CYII=",
+  aztec:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAhpJREFUOI2Nkk9Ik3EYxz/vy/suFBWbLIxtnuah9yD2blIHPSQEy0MgpKMOGQMPLQ/ePXvYzUOtYPBKg4IiGLKDb3SYUIcGNsTk7RiaI5a0TTaNnOzXYb0vvjWiB378Hp7n+X6fv9BBhpYTwv7P6p1ipU7gS7MTSNfuuuwin+HTy7fsLaWkjgRDywmhPU47jqeP+l0Ecw9qjm7dn3eIlLNZQ9lVFuPdWMUW9VLLRZCI9qDpMivGMWJ2AkDsLaUkBbDZxDBgFdtA+z8rtu318G2ncgkgGlCFneV/JGU2ADD3m5ISDajCBmq6TK9f/ie4XmqR4HcisyHk0KCCpstsJDNMVmMkxw3GdmYo5E5db2xnhuS4wWQ1xkYyg6bLhAYVnHSJF/cAePVkHYDdShNNl9F0md1K0+WzY50ZLES6BMBivBuAXr9MvdRy2rF1ezMrxjEADzd/uO8o2KcKK58X4aBHlNd84sSaEifWlCiv+UQ46BFWPi+CfarrIl1bAFj/csKtcPuI7oxEAHi+vdlu4UONG0GPAzb3m5K0EOkSdulWscW8b5rR+HWM91uu6uJXR9ky3pA+yKLpstOKAjBZjcGF8/z0fSV9kOWKlWPu2WUGvF4AvlcqZPoMCgenzPumOadehG9VbrLaJqh8LAPl9pG8awA9DhhgwOulkDslZTY4Gj/k6POhewZ/SjSgipp/xGXrL21j7jf/iv8FSQTekCDlDRkAAAAASUVORK5CYII=",
+  egyptian:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAaRJREFUOI2lkU+IEmEYxn8TE0Q4YUH2x9ggYklpmUODq+CiGO1eiz10CengTYjyEu1l7VK3iMCbh2Xosif3mkuCFFYiLFIYiJvQaoUDISlKdZgOOt9YDdNC7+V7vvd9nofn/T74z5IsoHhDJkBSbaDXg47k2dmgX5UAZEt8fj4yIUUNKuOIs8HMrNXEHPSr0gG3eIVUkUKq6LqC7Db0zB1zFf9mcPrCKQBOnD0ksNus1dxHguHHr/9MIFkPaO3q0+wfGPW+AHDYd1L0erUGANfyy7Sar+wEn3dHU9T4y2hWaPNmEixoCdEYvH8kcPbK0uTcfiF6SiAj8NtaCTmpNkguGgCkNrpsPn3G1celKaUCwHftLgBbtxNcv7FC/qYfAP2ngazXg+wcTEzdIRCPE+0cBSDMDwCirAIQiKsogQx33kwT1EtI6ZjHTEaPi1id7jnClzXHF3/9vMYZ/wdx118ayLnyUAJMm2ZwafyJB9+yrB3JAghcau9B22bmykNJ4o9KxzwmwP17Kmvvbk0MLj5h/WFdiBzjORkp3pCpeEOmZepUvwCi34xjyf0OQgAAAABJRU5ErkJggg==",
+  guandao:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAdRJREFUOI2Nkk1rE0Ecxn8jLYgNpcF42EOHUQ9mQAM26KG9BARlYUGPkvRcBPsN7En8CGnxA2hvFgrrUQIL7aHFQmzopkhkUXBBVwwxfTkExkPMNBtT8TnNM8/zf50R/AfKwjHDfN3EYnAWYyNGgm+YS5YfiuNUkolhc6FQSFVaa7WADmvH0Lh15c/tFDf3v1vPxHCwlJJMJkO32wXg3YcjADqeRoLVGkB5H7NuYnHhX+0v7VZY3Lg9Vhs7wije3H/Oj5/XwdPnemwHUkpc1yWXy+G6LkoptMxxOdtCKZXSpJR/72D67XvMlk/y4DEASZJY0+CcJAlm5SnTbcdq9hnLwjHzMzGP7l3l8OMvawg/nyUaYLvtnL+DO1unwCQAuwsXAVj8Nmn1Z6fx+GWUhWOqWcxBrWYAA5h4c9XEm6uWH9RqpprFDP/MVAdfT0CXSuTzeQCmZq8BWK5LJV6dpAsLAM/zTL1ep9frsfdyxQaO4ujLJ+aevACgWCzi+74QnucZpRT511W22w7zM/0ZtczRuzvXb3Nnzy5z4GlWlomiqD+C1pqwskwjCOjIIkophNaEYdhPtvSQZhgSBAFyQdJUCq01URSdjQDg+36Kj2JU931f/AbGkbrIC71+uAAAAABJRU5ErkJggg==",
+  samurai:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAdxJREFUOI2lkzFIW1EUhr8XwkOSV6pDfNwlUkVINrFDkORBrFm7uAmRkAoFQZcOXQSHtF06dHETU90Uhzp0jX3DU6KFQibrktRmeUgHU2LEQXq79N6+lwgd+k/nP/fcc//z33vhP2EEiZ2Yl73epebxuA1Af+7yxwdjoIGdmJdDwyMA3HauULFCMHfbudJNIqogeMq/EKyNAFixrFRyAfb2VykujmleXBxjb381NIYVy8qQAoWdzSI1z2Nro6FzWxsNap7HzmZxQE00SEZTk7xyJdtLJQDqdzkAZqJHPC+VKFebjKYmaZ98vr+BQrnaZHupxOtkEoB2e4JytXmvH4byID33lLcvMnqh5nmhwoLj6Pjlu1O+Hn7k+ubYCCmoeR5v1tcRQuD7PkIIAHzf5/2f+NnyMmCGZVixrFyrVCQgz1xXrlgJuWIl5MXBrrw42NX8zHUlINcqFRm6hamMScFxEEKQzueZNkymDRM752DnHM3T+TxCCAqOw1TGDJuoZu426iy0TkMKFe826gP+6Kecm52VzfNzft3N6MVH498B+Nb6+6gi0ToTqRRHrmvQ95mkEILuz3GSj58AEB+OA9Dr9ABof/nEg4ctfN/Xe0MNlCplUD+ub46NYB3Abx1rrrWeH0FrAAAAAElFTkSuQmCC"
+};
+const lucide={
+  "shield-alert":'<path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3v8Z"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+  "list-checks":'<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
+  "image":'<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+  "clipboard":'<rect width="16" height="18" x="4" y="4" rx="2"/><path d="M9 4.5V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5"/><path d="M8 9h8M8 13h6"/>',
+  "search":'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  "unfold":'<path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>',
+  "fold":'<path d="m7 20 5-5 5 5"/><path d="m7 4 5 5 5-5"/>',
+  "file-down":'<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/>',
+  "download":'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  "upload":'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
+  "trash":'<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/>',
+  "chevron":'<path d="m6 9 6 6 6-6"/>',
+  "info":'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  "steps":'<path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 3v6M16 9v6M8 15v6"/>',
+  "target":'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  "paperclip":'<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+  "x":'<path d="M18 6 6 18M6 6l12 12"/>',
+  "alert":'<path d="M21.73 18 13.73 4a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
+  "check":'<path d="M20 6 9 17l-5-5"/>'
+};
+function icon(name,size){
+  return '<svg aria-hidden="true" width="'+(size||18)+'" height="'+(size||18)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(lucide[name]||lucide.info)+'</svg>';
+}
+document.querySelectorAll("[data-icon]").forEach(function(el){el.innerHTML=icon(el.dataset.icon);});
+document.getElementById("brandIcon").src=mcIcons.summoner;
+
+const testCases=[];
+function add(section,priority,title,risk,preconditions,steps,expected){
+  testCases.push({section:section,priority:priority,title:title,risk:risk,preconditions:preconditions,steps:steps,expected:expected});
+}
+function addRows(section,priority,rows){
+  rows.forEach(function(row){add(section,priority,row[0],row[1],row[2],row[3],row[4]);});
+}
+
+addRows("P0 安装、启动与日志", "P0", [
+  ["测试目录文件完整性","缺少任一必需 JAR 会导致启动失败，重复或错误版本可能造成模组冲突。","新建一个干净的 Minecraft 26.1.2 Fabric 实例。",["确认 mods 目录只放入本包提供的 Echo Warrior、Fabric API、GeckoLib、SmartBrainLib；JEI 可一并放入。","启动实例并进入主菜单。","打开模组列表或查看 latest.log 中的加载列表。"],"游戏正常进入主菜单；Echo Warrior 版本为 0.1.0-test.20260831.1；四个必需模组均加载一次，JEI 若安装也只加载一次。"],
+  ["缺少 Fabric API 时的失败信息","依赖缺失若只表现为无提示崩溃，测试员难以自行定位。","复制实例后暂时移走 Fabric API。",["启动该实例。","记录启动器显示的错误文本。","恢复 Fabric API 后再次启动。"],"缺失时应明确指出 Fabric API 依赖；恢复后正常启动，不留下损坏配置或存档。"],
+  ["缺少 GeckoLib 时的失败信息","实体渲染依赖缺失可能造成启动崩溃或进入世界后缺失模型。","复制实例后暂时移走 GeckoLib。",["启动实例。","记录错误文本。","恢复 GeckoLib 并再次启动。"],"缺失时明确指出 GeckoLib；恢复后可进入世界且英灵模型正常。"],
+  ["缺少 SmartBrainLib 时的失败信息","AI 依赖缺失必须在加载阶段被阻止，不能带病进入存档。","复制实例后暂时移走 SmartBrainLib。",["启动实例。","记录错误文本。","恢复 SmartBrainLib。"],"缺失时明确指出 SmartBrainLib；恢复后正常。"],
+  ["错误 Java 版本","Java 版本不匹配可能在启动器里表现为难懂的类版本错误。","准备 Java 25 与一个低于 25 的 Java 运行时。",["先用 Java 25 启动并进入主菜单。","再把复制实例切到较低 Java 版本启动。","记录 PCL 显示的错误。"],"Java 25 正常；较低版本被明确拒绝，不会改坏原实例。"],
+  ["重复放入同一模组","测试员可能重复拖入相同 JAR，需确认错误可诊断。","在 mods 中复制一份 Echo Warrior JAR 并改名。",["启动实例。","记录 Fabric Loader 或 PCL 的冲突提示。","移除副本后重启。"],"重复模组被加载器明确识别；移除副本后恢复正常。"],
+  ["首次创建世界","注册表、数据包或资源加载错误常在建世界时才暴露。","干净实例，使用默认数据包。",["创建新的创造模式世界，允许作弊。","进入世界等待 60 秒。","退出到标题画面后重新进入。"],"世界可创建、保存、重进；没有数据包错误、注册表缺失、持续报错或明显卡死。"],
+  ["加载旧测试世界","版本升级可能使旧物品组件、实体或 SavedData 无法读取。","备份后使用上一测试版创建的世界。",["复制旧世界到当前实例。","进入世界并检查已有召唤器、遗物、英灵和遗迹数据。","退出并再次进入。"],"存档可加载；兼容数据不会导致崩溃、物品清空或实体无限复制。若有明确不兼容，应给出可理解提示。"],
+  ["资源重载","纹理、语言、模型和数据在 F3+T 后可能丢失或重复注册。","已进入世界，背包中准备主要模组物品。",["按 F3+T 执行资源重载。","打开创造栏、教程和召唤器 GUI。","召唤五种英灵各一次。"],"重载完成；无缺失纹理、重复声音、模型消失或 GUI 贴图偏移。"],
+  ["latest.log 基线检查","表面正常时仍可能持续刷异常，导致长时间游玩后日志膨胀或卡顿。","完成一次进入世界、打开 GUI、召唤与战斗。",["退出世界。","打开 logs/latest.log。","搜索 ERROR、Exception、Mixin、Missing、Failed、echo_warrior。"],"除已知无害信息外没有持续异常、每 tick 重复警告、缺失资源或绑定修复循环。"]
+]);
+
+addRows("P0 JEI 与全部配方", "P0", [
+  ["JEI 版本与启动兼容","错误 JEI 版本可能直接阻断测试包启动。","mods 中安装随包提供的 JEI 29.33.0.87。",["启动 Minecraft 26.1.2 Fabric 实例。","进入创造模式世界。","打开物品栏并确认 JEI 面板出现。"],"JEI 正常加载，物品列表可见；没有依赖冲突、崩溃或界面严重重叠。"],
+  ["不安装 JEI 的基线","JEI 不是 Echo Warrior 的必需依赖，模组必须能单独运行。","复制实例并移走 JEI。",["启动并进入同一个世界。","打开召唤器、教程、知识碎片界面。","执行一次召唤与战斗。"],"不安装 JEI 时所有模组功能正常；仅缺少 JEI 查看配方功能。"],
+  ["回声罗盘配方","配方注册、标签原料或摆放方向错误会卡住核心探索入口。","JEI 已加载。",["在 JEI 搜索回声罗盘。","查看配方。","按显示配方在工作台合成。"],"显示中央指南针、正方向紫水晶碎片、四角铜锭；可正常合成且产物正确。"],
+  ["召唤器配方","召唤器是核心物品，配方任何缺失都属于阻断问题。","JEI 已加载。",["搜索英灵之魂召唤器。","确认 3×3 排列。","在工作台实际合成。"],"第一行铁锭/玻璃板/铁锭，第二行铁锭/末影珍珠/铁锭，第三行铁锭/箱子/铁锭；产物为一个召唤器。"],
+  ["回收箱配方的木板标签","混合木板与知识碎片限制容易出现标签边界错误。","准备多种木板、独立知识碎片、知识碎片集。",["在 JEI 查看回收箱配方。","用四种不同木板混合合成。","把中央独立碎片换成知识碎片集再尝试。"],"混合木板可用；中央独立知识碎片可用；知识碎片集不可替代中央材料。"],
+  ["教程手册无序配方","无序配方可能错误要求固定格位或错误接受知识碎片集。","准备书、独立知识碎片、知识碎片集。",["在不同合成格放置书与独立碎片。","交换两者位置再合成。","改用知识碎片集尝试。"],"书与独立碎片任意位置都能得到手册；知识碎片集不能替代独立碎片。"],
+  ["25 件饰品配方可查询","遗漏任一 JSON、标签或本地化会让玩家无法通过 JEI 获得饰品。","JEI 已加载，切到中文。",["在 JEI 搜索英灵饰品标签页中的每一件饰品。","逐一点击查看配方。","检查原料和产物图标是否缺失。"],"25 件饰品均能查到唯一且可用的正式配方；没有空白配方、缺失纹理或错误产物。"],
+  ["JEI 覆盖与输入冲突","JEI 面板可能遮挡 241×201 召唤器 GUI，或吞掉滚轮、点击与悬浮。","窗口使用较小分辨率，JEI 开启。",["分别打开召唤器 GUI、教程手册、知识碎片和回收箱。","把窗口缩小到常见最低尺寸并切换 GUI 缩放。","测试点击、滚轮、悬浮和 Esc。"],"JEI 不遮挡关键按钮与槽位，不导致误点击或无法关闭；如空间不足，JEI 面板可正常隐藏或重新布局。"],
+  ["配方问题在无 JEI 环境复现","避免把 JEI 自身显示问题误报成 Echo Warrior 配方故障。","发现任一配方异常后，准备无 JEI 的复制实例。",["记录 JEI 中异常截图。","移走 JEI，按教程或已知摆法在工作台测试。","比较有无 JEI 的结果。"],"报告中能区分“配方本身不能合成”和“仅 JEI 显示错误”；实际配方结果保持一致。"]
+]);
+
+addRows("P1 教程手册", "P1", [
+  ["手册首次打开与关闭","教程是测试员理解系统的入口，打不开或无法关闭会严重影响体验。","获得一份全新的教程手册。",["主手右键打开。","分别用关闭按钮、Esc 和 E 退出。","再次右键打开。"],"三种关闭方式均有效；界面不会吞键或卡住；再次打开正常。"],
+  ["44 页与五章节完整性","页面数量或目录偏移会造成内容不可达。","全新手册。",["按顺序翻完全部页面并记录页数。","依次点击五个章节条带。","检查每个章节首尾页。"],"共 44 页；标题、搜寻英灵、回声英灵、英灵饰品、制作人员名单五章节都可达，无空白页或越界。"],
+  ["阅读位置保存在物品实例","页码若绑定玩家而非物品，会在多本手册间串页。","准备两本全新手册 A、B。",["把 A 翻到中间页并关闭。","打开 B，确认仍为初始页。","交换槽位、丢给另一玩家后再打开 A。"],"A 保持自己的阅读页；B 独立；换槽、转交、退出重进后页码仍随物品保存。"],
+  ["章节条带悬浮与选中动画","命中区域与视觉位置错开会造成看似可点但点不到。","打开手册。",["依次把鼠标移入五个章节条带。","点击每个条带并观察选中位置。","快速来回悬浮和点击。"],"悬浮整体向左平滑移动约 4 像素；选中条带移出约 6 像素并锁定；图标、提示与点击区域一致，无抖动或残影。"],
+  ["前后翻页边界","首尾按钮若未隐藏或越界，可能打开空页或抛异常。","打开第一页。",["检查上一页按钮。","连续点击下一页到最后一页。","检查下一页按钮，再连续快速点击边界。"],"第一页无可用上一页；最后一页无可用下一页；快速点击不越界、不跳页、不崩溃。"],
+  ["教程中的配方附件","标签原料轮换、网格绘制或输出槽可能显示错误。","打开所有含配方的页面。",["观察 3×3 网格、箭头和输出槽。","等待至少 80 tick 观察标签原料轮换。","悬浮所有原料与产物。"],"布局与工作台一致；标签代表物每 40 tick 轮换且不闪空；悬浮名称正确。"],
+  ["教程中的技能附件只读","教程技能图标若可点击修改遗物会造成越权。","打开五位英灵技能页面。",["悬浮每个技能图标阅读说明。","单击、双击、右键技能图标。","回到召唤器检查技能状态。"],"教程仅展示说明，任何点击都不会改变实际遗物技能开关。"],
+  ["埃及五技能显示","箭型循环按钮与五个正式图标容易漏项或错位。","打开埃及弓箭手页面。",["逐一核对赞美猫神、叶形箭、锥锋箭、战车与齐射之魂、后撤步。","检查是否出现不存在的普通箭技能。"],"五个正式图标和说明齐全，不显示普通箭占位，不错位、不缺纹理。"],
+  ["25 件饰品页面与实际效果一致","教程文本与代码不一致会误导测试和平衡反馈。","准备创造模式饰品标签页。",["逐一浏览 25 件饰品页面。","与物品 Shift 悬浮说明对照。","与召唤器安装后的面板数值或行为抽查对照。"],"名称、稀有度、效果、负面代价和配方均一致，无旧名称、旧数值或重复页面。"],
+  ["可点击跳转附件","跳转目标错误可能把玩家带到另一件饰品或错误章节。","打开“你会发现……”页面。",["点击知识碎片附件。","返回后点击轮换传承。","等待饰品轮换并点击不同饰品。"],"分别跳到知识页、传承页和当时显示的具体饰品页；返回与页码记忆正常。"],
+  ["中英文溢出","英文长文本或小窗口可能越出纸张、遮挡按钮。","分别切换简体中文与英语；准备小窗口和不同 GUI 缩放。",["浏览封面、知识页、召唤器页、最长饰品页和制作名单。","观察标题、正文、括号说明和感谢语。"],"中文保持默认字号；英文只在必要时缩小且完整可读，不截断、不重叠、不溢出纸张。"],
+  ["制作名单与像素头像","提交版署名与人工素材必须完整、清晰。","打开制作人员名单章节。",["检查静态像素头像。","检查感谢语、制作名单与两页来源。","执行 F3+T 后再次检查。"],"头像清晰且像素比例正确；名单和来源完整；资源重载后不缺失。"]
+]);
+
+addRows("P0 回声罗盘与定位边界", "P0", [
+  ["无目标时的确定性旋转","无目标时随机摆动会让玩家误以为附近存在遗迹。","主世界 2048 格内确保没有活动遗迹。",["主手持罗盘观察至少 10 秒。","换副手与物品栏观察。","退出重进后再次观察。"],"指针持续确定性顺时针旋转，约 0.5 秒一圈；只提示一次附近无目标，不随机左右摆动。"],
+  ["仅主世界工作","跨维度误定位可能指向无意义坐标并产生持续声音。","主世界有活动遗迹，准备下界与末地传送门。",["在主世界确认罗盘指向遗迹。","进入下界观察声音、文字和指针。","进入末地重复。"],"主世界正常；下界和末地不产生遗迹定位、远途提醒或错误目标。"],
+  ["2048 格索引边界","等于边界附近容易出现一会儿有目标一会儿无目标的抖动。","使用管理员命令获取遗迹坐标。",["分别站在约 2047、2048、2049 格位置。","每个位置等待至少一次索引刷新。","反复跨过边界。"],"边界行为稳定，不持续刷提示、不加载远方区块、不突然指向错误遗迹。"],
+  ["持有位置白名单","容器内罗盘若仍工作会造成不必要同步和提示。","准备主手、副手、快捷栏、主物品栏、收纳袋、潜影盒、普通箱子。",["依次把同一罗盘放到各位置。","每次等待 5 秒并观察提示、声音和指针语义。"],"仅主手、副手、快捷栏和主物品栏实例工作；收纳袋、潜影盒、箱子、地面掉落物不工作。"],
+  ["鼠标拿起时保持清场追踪","拖动物品的一瞬间若解除追踪，会丢失个人清场状态。","完成保底方块并进入清场模式。",["打开物品栏，用鼠标拿起罗盘停留数秒。","换槽后关闭物品栏。","再真正放入箱子并取回。"],"鼠标拿起和换槽不清除追踪；真正放入容器后停止工作，取回后按规则恢复或重新定位。"],
+  ["每个罗盘实例独立开关","开关若错误保存在玩家身上，多只罗盘会互相覆盖。","准备两只罗盘 A、B。",["关闭 A 的远途声音。","保持 B 开启并进入 320 格范围。","交换主副手和槽位。"],"A 保持关闭、B 保持开启；指针都工作；声音实例选择符合优先级。"],
+  ["双持让渡与刷子优先","罗盘抢占另一只手右键会破坏刷取、食用或其他物品交互。","一手罗盘，另一手分别放刷子、食物、方块和可交互物品。",["遗迹外逐一右键。","遗迹内瞄准可疑方块用刷子右键。","另一只手非空时尝试切换罗盘。"],"另一只手的有效交互优先；对刷取方块时刷子必定开始考古；罗盘不切换、不播放切换反馈。"],
+  ["开关反馈与框体","声音、消息和铜铁框不同步会让玩家无法判断当前状态。","遗迹外安全位置，另一只手为空。",["右键关闭远途声音。","再次右键开启。","快速连续点击并观察最终状态。"],"关闭为铁框、降调声和关闭消息；开启为铜框、升调声和开启消息；最终状态与最后一次有效操作一致。"],
+  ["320 格进入提示与 5 秒重布防","边缘来回移动可能刷屏或完全无法再次触发。","已知活动遗迹中心坐标。",["从 330 格外进入到 319 格。","在 319/321 格附近快速往返。","离开范围并连续停留至少 5 秒后再次进入。"],"首次进入只提示一次；短暂跨边不重复；连续离开满 5 秒后可再次提示。该提示不受远途声音开关影响。"],
+  ["远途声音频率与单实例选择","多只罗盘可能叠加声音造成噪音。","携带三只开启声音的罗盘，分别置于主手、快捷栏和主物品栏。",["从约 300 格逐步接近遗迹。","在远近位置分别计时至少两次声音间隔。","关闭高优先级实例后继续观察。"],"每名玩家一次只播放一个私有声音；远处约 12 秒、近处约 4 秒平滑缩短；关闭高优先级后选择下一只开启实例。"],
+  ["遗迹内 24 格模式切换","外部指向与内部旋转模式若切换迟滞，会误导玩家越过遗迹。","活动遗迹尚有关键方块。",["从 30 格走到 23 格。","观察指针、声音和方向文字。","离开到 49 格再观察。"],"24 格内切到遗迹内变速旋转并锁定关键方块；离开 48 格后才回到遗迹外模式，边界无频繁抖动。"],
+  ["遗迹内五段距离反馈","硬跳档或定时器不随接近提前会让方向反馈失真。","锁定一个可疑方块。",["分别停在约 45、30、15、7、2 格。","每段记录回响间隔、音量、音高和指针速度。","在旧冷却未结束时快速靠近。"],"间隔从约 3.6 秒平滑降至约 0.7 秒，音量音高增强；快速接近会提前下一次回响，不继续等待旧远距离冷却。"],
+  ["手持方向文字与库存静默","仅库存中的罗盘不应在屏幕上显示方向文字。","一只罗盘分别置于主手、副手、快捷栏非选中格和主物品栏。",["在每个位置等待回响。","观察“罗盘嗡嗡作响”文字、声音和指针。"],"主副手显示方向文字；仅库存时不显示该文字，但罗盘逻辑和可用实例规则保持正确。"],
+  ["方向文字左右上下定位","文字偏移错误可能跑出安全区或与目标方向相反。","遗迹内锁定方块。",["让目标分别位于镜头左、右、上、下。","改变窗口尺寸与 GUI 缩放。","观察多次随机漂移。"],"文字整体方向与目标相符，始终处于屏幕安全范围；随机漂移幅度小，不遮挡关键 HUD。"],
+  ["听觉辅助金框闪烁","关闭声音后仍必须有等价视觉距离反馈。","关闭当前罗盘远途声音，进入遗迹内。",["从 24 格逐步靠近目标。","在 2 格内停留。","再远离到 25 格。"],"24 格内铜金闪烁随接近加快，2 格内稳定金框；关闭声音不影响此反馈。"],
+  ["保底方块非刷子消失","爆炸、替换或直接破坏不能掉保底遗物，也不能把遗迹永久卡住。","生成新遗迹并定位保底方块。",["备份世界。","分别用直接破坏、爆炸、替换或下落方式令保底方块消失。","检查掉落、遗迹状态与罗盘。"],"不掉保底遗物；遗迹立即完成并进入冷却；罗盘不再锁死在已消失方块。"],
+  ["个人清场与 10 秒文字窗口","共享剩余数量提示若永久重复会刷屏，若过早停止又无法理解状态。","正常刷出保底遗物，周围仍有普通考古方块。",["保持在中心 48 格内并携带罗盘。","观察前 12 秒的剩余数量文字。","继续按声音找到并移除剩余方块。"],"前 10 秒立即、变化时及约每 3 秒提示；之后只保留定位回响；目标消失后切换最近剩余方块，归零立即释放。"],
+  ["清场跨重登与服务器重启","个人清场归属若未持久化，重登后会丢失剩余方块定位。","已进入清场模式且仍有剩余方块。",["退出游戏并重新进入。","如可用，重启服务器后再次进入。","确认仍携带同一罗盘并在范围内。"],"个人清场恢复，继续定位剩余方块；不会重新生成遗物或错误指向其他遗迹。"],
+  ["离开清场范围释放","离开后仍绑定旧遗迹会阻止寻找新遗迹。","已完成保底并进入清场。",["持续 3 秒离开中心 48 格。","走向另一活动遗迹。","重新靠近旧遗迹。"],"离开满 3 秒后释放个人清场并可寻找新遗迹；旧遗迹不再错误抢占目标。"]
+]);
+
+addRows("P0 战场遗迹与考古", "P0", [
+  ["正式生成命令 1 至 8","批量命令可能卡死服务器、重复区域或忽略数量边界。","主世界创造模式，允许作弊。",["执行 /echo_warrior battlefield generate 1。","执行 generate 8 并观察进度。","尝试 0、9 和非数字参数。"],"1 至 8 正常排队且逐步报告；非法数量被拒绝或限制；服务器不长时间冻结。"],
+  ["定位与安全传送命令","传送到方块内部、悬崖或遗迹正中心会干扰外部指针测试。","至少一处活动遗迹。",["执行 battlefield locate 记录中心与保底坐标。","执行 battlefield teleport 多次。","检查落点与中心距离。"],"locate 信息准确；teleport 落在中心外约 32 至 50 格的安全位置，不窒息、不落空、不直接踩在考古方块上。"],
+  ["不安全地形拒绝","生成器覆盖建筑、树木、方块实体或玩家改造会破坏世界。","准备陡坡、树林、村庄、箱子区域和玩家铺设地面。",["在这些区域附近多次请求生成。","巡查候选点。","检查原有方块与方块实体。"],"高差、结构、方块实体和已修改区域被放弃；只清理草花等可替换植物，不砍树、不覆盖建筑。"],
+  ["遗迹直径与考古数量","范围或数量偏差会改变定位、掉落和平衡。","生成至少 10 处正式遗迹。",["测量天然空地直径。","统计每处可疑方块。","记录地表类型。"],"直径约 15 至 21 格；每处 6 至 9 个外观一致的可疑方块；地表保持自然且高差安全。"],
+  ["恰好一个保底方块","零保底阻断核心循环，多个保底可复制遗物。","生成多处遗迹，使用调试命令或备份逐个刷取。",["完整刷取每处全部可疑方块。","统计遗物数量与来源。"],"每个遗迹恰好一个保底方块；其余为普通考古，不会额外保底。"],
+  ["文明绑定与遗物一致","文明映射错位会掉落不匹配遗物和知识。","生成多处遗迹并记录持久化文明。",["对每种文明至少完成一处遗迹。","刷取保底并记录遗物。","刷普通方块并记录知识条目。"],"保底只掉该文明对应遗物；普通知识只来自该文明 8 页；重启后文明不改变。"],
+  ["自定义可疑草与泥土外观稳定","坐标决定的痕迹和旋转若重载变化，会出现闪烁或存档不一致。","找到可疑草方块和可疑泥土。",["截图记录痕迹组合与方向。","刷取到不同阶段后离开区块再返回。","重启客户端和服务器后复查。"],"同一坐标的两层痕迹、组合、朝向和刷取阶段稳定；侧面直立、顶部随模型旋转；无额外数据膨胀。"],
+  ["单独放置可疑方块","创造玩家放置后若能刷出物品会形成无限掉落。","从创造栏取得自定义可疑草和泥土。",["单独放置。","用刷子完整刷取。","直接破坏。"],"物品提示说明单独放置无掉落；刷取和破坏均不产出战场战利品。"],
+  ["普通方块各种消失方式更新计数","非刷取移除若不更新登记，清场会永远指向空气。","遗迹保底已完成且仍有普通方块。",["分别刷取、直接破坏、爆炸、替换、触发下落。","每次观察剩余数量和罗盘目标。"],"所有方式都从登记中移除并更新共享剩余数；罗盘不会锁定不存在方块。"],
+  ["普通考古掉落类别抽样","权重或文明池错误可能让某类永不出现或跨文明污染。","准备大量备份世界或生成足够遗迹。",["刷取至少 200 个普通方块并分类记录。","检查铁、知识、传承、金、额外遗物、下界合金碎片、饰品。","按文明检查知识与饰品池。"],"七类均可出现，长期比例接近设计权重；知识和遗物不跨文明；饰品档位与文明池合理，无空掉落表。"],
+  ["活动遗迹最小间距","生成任务并发时可能在同一区域重叠。","连续请求多处正式遗迹。",["记录所有中心坐标。","计算最近两处活动遗迹距离。","重启后再次请求。"],"活动遗迹中心至少相距 512 格；每个 48×48 区块区域最多一个活动遗迹。"],
+  ["完成后的异地补位","完成后若没有补位，核心探索循环会中断；若立即覆盖旧处则可刷取。","正常完成一处遗迹。",["记录完成时间和坐标。","等待补位调度并定期 locate。","确认新中心距离旧中心。"],"持久化补位任务开始尝试；优先约 640 至 720 格，失败时按规则放宽；不会覆盖活动或冷却区域。"],
+  ["24000 tick 本地冷却","倒计时或重启处理错误可能让旧区域立即重复生成。","完成遗迹并记录旧区域。",["在冷却结束前反复加载旧区域。","重启服务器后继续加载。","达到约 24000 游戏刻后加载自然区块。"],"冷却前不在旧区域重生；服务器停机不推进；结束后仍需符合自然加载和安全条件才补充。"],
+  ["生成节流与失败退避","不安全世界中持续每 tick 搜索会造成卡顿。","在大范围陡坡、海洋或高改造区域请求多处生成。",["观察 TPS、内存和 latest.log。","持续至少 3 分钟。","检查失败后的尝试频率。"],"补位检查每秒至多一次，连续失败后约 10 秒退避；全维度成功放置约 30 秒至多一处；不留下强加载区块。"],
+  ["多人同时刷取同一方块","两个客户端同时完成刷取可能复制同一战利品。","两名玩家同时面向同一保底或普通可疑方块。",["倒数后同时使用刷子。","重复测试高延迟与不同角度。","检查掉落、统计和日志。"],"同一方块只结算一次、只掉一份战利品；剩余数量只减少一次；无幽灵方块或客户端不同步。"],
+  ["刷取中途卸载与重登","刷取阶段保存不完整可能重置进度或重复掉落。","开始刷取但未完成。",["中途离开区块并返回。","中途退出世界再进入。","完成刷取。"],"刷取阶段按 Minecraft 正常规则恢复或重置，但最终只结算一次；遗迹登记不损坏。"],
+  ["遗迹完成瞬间并发","保底消失、普通方块消失和玩家离开同 tick 发生时容易产生状态竞争。","多人在保底和普通方块旁准备。",["一人完成保底的同时另一人破坏普通方块，第三人离开范围。","重复多次并重启。"],"完成、剩余数量、个人清场和冷却状态一致；没有负数、重复补位或永久锁定。"]
+]);
+
+addRows("P1 知识碎片与合集", "P1", [
+  ["40 页目录完整","条目 ID 缺失会显示空白页、错误标题或无法收集。","从创造模式知识碎片标签页取得全满合集。",["按古罗马、墨西加、古埃及、古代中国、日本武家顺序翻阅。","每个文明统计 8 页。","检查标题、正文、来源类型和配图。"],"共 40 个稳定条目，每文明 8 页；没有空白、重复 ID、缺失本地化或跨文明顺序。"],
+  ["不同条目不混堆","组件相同判断错误会把两个页面合成一堆并丢失其中一个 ID。","准备两个不同条目与两个相同条目。",["尝试把不同条目堆叠。","把相同条目堆到 64。","拆分、丢弃、拾取后复查。"],"相同 ID 可堆叠到 64；不同 ID 永不混堆；操作后标题与正文不变。"],
+  ["碎片与合集无序合并","合并规则错误会吞物品、复制数量或接受单格重合成。","准备多个碎片和两本合集。",["在 2×2 与 3×3 合成栏用不同位置组合。","合并多个合集并记录第一本阅读页。","只放一本合集尝试。"],"至少两个已占用格才可合成；每格只消耗一件；数量总和守恒；阅读位置继承扫描到的第一本合集；单独一本不可重合成。"],
+  ["整叠左键放入合集","整叠插入若只消耗一张或重复生成翻页会导致数量错误。","手持一叠相同碎片，物品栏中有合集。",["左键把整叠放入合集。","打开合集检查角落 xN。","加入重复与新条目。"],"整叠数量全部进入；重复只增加该 ID 数量，不重复生成页；新条目按规范顺序出现。"],
+  ["合集无容量上限","大量条目与数量可能溢出组件、界面或保存格式。","通过命令或反复合并制造每页高数量合集。",["加入全部 40 页并把若干页提高到大数量。","翻页、退出重进和跨服务器传递。"],"数量准确保存，不溢出为负数、不截断；界面仍能打开并显示 xN。"],
+  ["首尾翻页与按钮命中","页按钮阴影或命中框错位会误点拆页。","打开只含两页的合集。",["在第一页检查上一页按钮。","点击下一页到末页。","悬浮按钮边缘并快速点击。"],"首尾隐藏无效按钮，不循环；阴影只偏移按钮非透明像素；点击区域与图标一致。"],
+  ["拆出一张后仍有重复","拆页可能错误跳页或一次减去全部重复。","当前页数量至少 3。",["点击“从册中拆出一张该页”。","检查背包、合集 xN 和当前页。","连续拆一次。"],"每次只减 1 并给出一张独立碎片；仍有数量时停在当前页；总数守恒。"],
+  ["拆空当前页后的跳转","删除页面后索引更新容易越界或跳到错误文明。","合集至少含前、中、后多页，当前页数量 1。",["拆空中间页。","再拆空最后一页。","再拆空第一页。"],"优先跳到规范顺序中的下一页；无下一页时回到上一页；无空白或越界。"],
+  ["总数 2 拆成 1 的特殊转换","合集变回碎片时可能复制或把剩余条目清空。","合集总数恰好 2，可为相同或不同页面。",["在当前页拆出一张。","检查源槽与背包。","分别测试背包有空间和已满。"],"源槽立即变成剩余独立碎片；拆出的另一张进入背包或掉脚边；界面关闭；两张相同页面也正确。"],
+  ["背包已满时拆页","满背包是高频边缘，错误处理可能吞掉碎片。","填满所有背包槽并打开合集。",["拆出一张。","观察脚边掉落物。","拾取前退出重进。"],"碎片完整掉在玩家脚边，不消失、不进入隐藏槽；合集数量正确减少。"],
+  ["单页与合集界面布局","不同背景尺寸、文字校正和图标透明度可能错位。","准备有配图和无配图的中英文页面。",["分别打开独立碎片与合集。","悬浮配图前后截图。","改变 GUI 缩放。"],"背景按原始像素比例绘制；文字视觉居中且不截断；未悬浮配图 50% alpha，悬浮为原色并显示 1 像素高亮框与名称。"],
+  ["27 张配图绑定","弱关联页面错误显示图标或高绑定页面漏图会破坏史料展示。","全满合集。",["逐页统计配图数量。","检查 24 个饰品替换条目与原 3 个高绑定条目。"],"当前 40 页中恰好 27 页显示一张核心图标；其余无弱关联占位；图标颜色和透明轮廓保持原始资源。"],
+  ["额外箱子来源","战利品注入可能污染其他箱表或数量概率错误。","生成制图师村庄、简单地牢、废弃矿井和要塞图书馆大量样本。",["统计各箱知识碎片出现率与数量。","检查文明分布。","确认普通村庄房屋未被错误污染。"],"概率长期接近 25%、25%、15%、75%；要塞图书馆为 1 至 2 张，其余恰好 1 张；先文明等权再页面等权；不污染无关村庄箱。"],
+  ["创造标签页顺序","开发与测试取物入口若重复或乱序，会增加人工测试错误。","打开创造模式物品栏。",["进入知识碎片标签页。","检查首项全满合集。","向后核对 40 个独立页面顺序，再检查主标签页。"],"首项为全满合集且阅读位置为第一页；随后 40 页按规范顺序；知识物品不重复占用主标签页。"]
+]);
+
+addRows("P0 英灵杂物回收箱", "P0", [
+  ["普通箱子阶段的自由存取","午夜前错误锁定或只接受可回收物会让箱子无法作为缓冲容器。","放置新回收箱，时间远离午夜。",["放入可回收与不可回收物。","使用玩家与漏斗取放。","破坏并重新放置。"],"午夜交易前像普通 27 格单箱；任意物品可自由存取；新放置不会追赶刚错过的午夜。"],
+  ["午夜与睡眠触发一次","时间跳跃和倒拨容易重复结算并复制收益。","箱中放入确定可回收物。",["自然跨过午夜。","使用睡眠再次跨过午夜。","倒拨时间并反复 set time 到午夜。"],"每个有效午夜最多触发一次；睡眠跳过仍触发；倒拨和重复设时不重复回收。"],
+  ["未加载区块补做","强加载会损害性能，不补做又会漏掉玩家收益。","箱中放入物品后卸载区块。",["在区块卸载时跨过多个午夜。","返回加载区块。","观察批次数量与时机。"],"不会强加载；返回后只补做一次，多个错过午夜合并为一批，不重复结算。"],
+  ["40 tick 封存锁","交易中可取物或破坏会造成复制、回滚或隐藏库存。","午夜前打开箱子并连接漏斗。",["跨过午夜。","封存期间尝试玩家取放、漏斗抽入抽出、破坏、爆炸和活塞推动。","40 tick 后再次操作。"],"开始时关闭 GUI；40 tick 内玩家和漏斗锁定，不能破坏、爆炸摧毁或活塞推动；结束后恢复正常。"],
+  ["只处理标签内物品","错误标签可能回收普通物品或再次回收已经产出的材料。","放入知识、传承、三档饰品、遗物，以及铁金钻石等产物和普通杂物。",["触发回收。","逐格核对输入和输出。"],"只处理六个 recycler 标签认可的输入；普通杂物和已生成材料原样保留。"],
+  ["合集按内部张数处理","把整本合集算一次会严重低估收益；数量错误也可能复制。","准备包含多个 ID 和重复数量的合集。",["记录内部总张数。","单独触发一批。","与相同数量独立碎片的多次统计比较。"],"合集按内部每张碎片逐张抽普通池；合集本体消耗一次但收益次数等于总张数。"],
+  ["遗物等级边界 1、30 与非法值","等级公式或组件损坏可能产生负次数、极高概率或崩溃。","准备等级 1、5、30 的遗物，以及调试制造的 0、31、非整数异常数据。",["分别单独回收并多次统计。","观察非法数据处理与日志。"],"1 至 30 按 2+floor(L/5) 普通池及对应概率；非法等级被安全拒绝或归一，不崩溃、不产生无限收益。"],
+  ["三档输出池与数量","权重或附魔瓶数量错误会破坏经济。","大量对应档位输入。",["统计普通池、稀有池、超级稀有池产物。","特别检查附魔之瓶数量和超级稀有物。"],"池内只出现设计物；附魔之瓶命中为 3 个；其他为 1 个；无空物品、错误命名空间或重复结算。"],
+  ["最长安全前缀与原子提交","空间不足时若部分塞入某一单位产出，会造成物品或收益不守恒。","把箱子填到只剩少量空间，前几项可容纳、下一项不可完整容纳。",["按从左到右、从上到下摆放输入。","触发回收。","核对每一格和产物。"],"只处理最长可安全放入的前缀；不可完整容纳的那个单位完全不消耗，后续停止；已处理前缀原子提交。"],
+  ["一个单位都放不下","失败反馈若仍消耗输入或把产物丢地会造成损失。","箱子塞满，使第一个有效输入产物无法放入。",["触发回收。","观察箱盖、声音、烟雾。","下次打开箱子。"],"不消耗任何有效输入、不丢地；仅轻微失败反馈；下次打开收到空间不足提示。"],
+  ["处理顺序与不可回收物夹杂","扫描若跳过阻塞输入的语义不一致，玩家难以预测。","按槽序放入可回收 A、普通石头、可回收 B。",["制造只能容纳 A 产物的空间。","触发回收。","检查 B 和石头。"],"按固定槽序处理可回收单位，普通物品原样保留；空间边界行为与设计的安全前缀一致且不吞 B。"],
+  ["最高产出档反馈","批次混合产物时可能播放多个反馈或错误档位。","分别准备只出普通、含稀有、含超级稀有的可控或多次样本。",["触发并观察粒子声音。","混合多个档位。"],"每批只按最高实际产出档位显示一次对应反馈，不刷聊天，不叠加三套效果。"],
+  ["管理员 trigger 不占午夜资格","手动测试命令若消耗自然资格会让当天正式交易缺失。","午夜前箱中有两批输入。",["看向 8 格内箱子执行 recycler trigger。","补入第二批并自然跨午夜。","在无箱子或超 8 格时执行。"],"手动触发按正式规则处理但不占自然午夜资格；自然批仍发生；无目标时给出明确失败。"],
+  ["管理员 effect 预览","反馈预览命令不应实际处理物品或改变箱子数据。","看向回收箱。",["依次执行 effect normal、rare、super、failure。","检查箱内物品和午夜状态。"],"四种反馈分别正确播放；不消耗、增加或移动任何物品，不改变午夜资格。"],
+  ["多人同时打开与触发","并发菜单和封存可能让一个客户端继续看到可取物品。","两名玩家同时打开同一箱子。",["第三方命令触发或跨午夜。","两人同时尝试取出同一格。","交易完成后重新打开。"],"两边界面都关闭或同步锁定；同一物品不重复取得；完成后库存一致。"],
+  ["交易中崩溃或强制关服恢复","结果先写入方块实体再替换，需验证不会回滚复制。","准备可回收物并备份世界。",["在封存 40 tick 内强制停止服务器。","重启并打开箱子。","重复在不同 tick 停服。"],"恢复后要么完整保留原输入，要么完整提交已计算结果，不出现输入与产物同时存在、全部消失或重复补做。"]
+]);
+
+addRows("P0 召唤器 GUI、燃料与物品交互", "P0", [
+  ["空召唤器打开 GUI","未装遗物时若拒绝打开，玩家无法理解槽位与燃料。","获得一个全新召唤器。",["主手普通右键。","检查遗物槽、燃料槽、饰品槽、玩家物品栏和未激活区域。","关闭并再次打开。"],"GUI 可打开；五个技能位置为空；角色、名称、属性和控制区域明确显示未录入或未激活；无空指针异常。"],
+  ["打开实例槽位锁定","GUI 开启时移动或丢弃正在管理的召唤器会造成远程写入错误物品。","召唤器位于快捷栏或主物品栏。",["打开 GUI。","尝试空鼠标拿起、Shift 移动、数字键交换、Q 丢弃和拖拽该槽。","操作其他槽位。"],"打开实例的槽位始终锁定；其他槽正常；关闭 GUI 后锁定解除。"],
+  ["异常移除打开实例","命令、死亡或其他异常使召唤器消失时，菜单必须立即失效。","打开召唤器 GUI，准备管理员或第二玩家。",["在服务端移除或替换正在打开的召唤器实例。","继续点击按钮与槽位。"],"客户端界面自动关闭或拒绝后续操作；不会把数据写入空气、其他物品或副本。"],
+  ["直接左键装入遗物","收纳袋式快捷交互若处理数量错误会吞掉物品。","鼠标拿起五种遗物之一，物品栏中有空召唤器。",["左键召唤器格。","检查鼠标堆、召唤器名称和内部遗物槽。","重复对已有遗物的召唤器操作。"],"空槽时只放入一件并立即更新动态名称；已有遗物时失败且鼠标物品不变。"],
+  ["直接左键装入燃料","燃料必须先进入内部输入槽，而不是瞬间增加数值。","鼠标拿起腐肉、灵魂沙和灵魂土。",["分别左键召唤器格。","立即打开 GUI 检查输入槽。","等待逐个转换。"],"燃料进入输入槽并按每 5 tick 至多一件转换；腐肉 +20，灵魂沙和灵魂土各 +50；不瞬间整叠折算。"],
+  ["直接左键装入饰品","兼容空槽选择与同名限制容易出现覆盖或乱序。","准备多个不同饰品及两个同名饰品。",["依次左键装入六件不同饰品。","尝试第七件。","尝试第二件同名饰品。"],"总是进入首个兼容空槽；六槽满或同名重复时拒绝且鼠标物品不变；不覆盖已有饰品。"],
+  ["GUI 开启时对锁定槽快捷投放","锁定与快捷投放规则冲突可能导致槽既不能管理也错误移动召唤器。","打开 GUI，鼠标拿起燃料、遗物或饰品。",["左键界面内被锁定的召唤器物品槽。","分别测试有效、冲突和无效物品。"],"有效物品进入对应内部槽；召唤器本体不移动；冲突或无效物品完全不变。"],
+  ["快捷投放视觉反馈","失败也播放反馈会让玩家误以为物品已成功放入。","准备有效与无效物品。",["成功装入三种燃料并观察粒子。","成功装入遗物与饰品并观察白光。","让槽位冲突后重复。"],"燃料粒子颜色正确并先外爆再聚回；遗物/饰品白光只覆盖图标非透明像素；失败无反馈。"],
+  ["主副手转换不触发下沉","服务端逐个修改组件可能反复触发手持物品切换动画。","主手或副手持有正在转化燃料的召唤器。",["装入一整叠燃料。","持续观察手部直到转换结束。","真正换槽或换另一只召唤器。"],"转换期间手不反复下沉；真正切换物品仍有正常换手动画。"],
+  ["燃料容量边界","不足一个单位容量时错误消耗会造成资源损失。","把燃料调到 979、950、999 等边界。",["在 979 放入腐肉。","在 951 放入灵魂沙。","在 1000 放入任意燃料。"],"只有完整容纳对应增量时才消耗；不能容纳则输入保留；数值不会超过 1000。"],
+  ["燃料条与悬浮同步","客户端预测与服务端值不同会显示错误成本。","准备不同燃料量并让英灵回血。",["观察 54×3 燃料条。","悬浮读取数值。","在转换、召唤和回血消耗同时发生时观察。"],"条宽与真实服务端值一致，遮罩不越界，悬浮信息及时更新，无负数或回跳。"],
+  ["无遗物召唤拒绝","按钮禁用原因不清会让测试员误以为点击失效。","空召唤器有足够燃料。",["打开 GUI 悬浮召唤按钮。","点击按钮。","潜行右键快速召唤。"],"GUI 按钮禁用并说明未装入遗物；潜行右键也不消耗燃料、不生成实体，并给出清楚反馈。"],
+  ["燃料不足拒绝","召唤失败后部分扣费或生成半成品实体属于严重经济与存档问题。","装入遗物，燃料低于实际成本。",["记录燃料。","点击 GUI 召唤。","潜行右键召唤。"],"两种方式都拒绝；显示缺少燃料或需要量；燃料不变、无实体生成、GUI 保持打开。"],
+  ["安全位置失败不扣费","狭小空间中生成失败若扣燃料会惩罚玩家。","把玩家完全封闭在没有合法实体空间的区域。",["记录燃料。","GUI 召唤与潜行右键各尝试一次。","离开到开阔地再次召唤。"],"封闭时明确提示找不到安全位置且不扣燃料；开阔地可正常召唤。"],
+  ["GUI 召唤后保持开启","成功后关闭界面会打断连续配置，失败后关闭则丢失原因。","装遗物并准备足够燃料。",["点击召唤。","观察按钮粒子、实体和 GUI 数据。","再点击收回。"],"召唤与收回后 GUI 都保持开启并即时刷新状态、生命、燃料和按钮文字；反馈局限于按钮周围。"],
+  ["潜行右键召唤与召回语义","“召回到身边”和“收回离场”混淆可能导致重复扣费。","英灵未在场。",["潜行右键首次召唤并记录燃料。","走远后再次潜行右键。","打开 GUI 点击收回，再次潜行右键。"],"首次召唤扣费；第二次只把仍在场英灵召回附近且不扣费；GUI 收回使其离场；之后重新召唤再次扣费。"],
+  ["取出遗物即时遣散","实体继续存在但召唤器已无遗物会形成失控英灵。","已召唤英灵并打开 GUI。",["取出遗物。","观察实体、顶部名称、属性、技能和按钮。","把遗物重新装回。"],"旧英灵立即遣散；所有相关显示清空为未激活；重新装回只载入数据，不自动召唤。"],
+  ["替换遗物的原子性","A 英灵与 B 遗物短暂并存可能导致 UUID 重分配或复制实体。","召唤器中 A 遗物已召唤。",["用允许的操作把 B 遗物替换进同一召唤器。","观察旧实体与新 GUI。","点击召唤。"],"A 在新状态提交前消失；召唤器 UUID 不变；随后只生成一个 B 英灵，无连续重复 UUID 警告。"],
+  ["铁砧自定义名称优先","动态名称刷新可能覆盖玩家自定义名称。","用铁砧命名一个空召唤器。",["装入不同遗物。","取出遗物。","退出重进并复制显示。"],"物品栏始终保留铁砧名称；GUI 顶部仍显示英灵名称；长名称正确省略且悬浮可看完整。"],
+  ["Shift 图标切换","GUI 图标上下文判断错误会让所有召唤器同时显示同一遗物。","物品栏放置空召唤器和装有五种遗物的多个召唤器。",["按住 Shift 观察每个图标。","松开 Shift。","在创造栏、掉落状态和手持状态观察。"],"仅装遗物的 GUI 图标临时显示各自遗物；空召唤器不变；松开立即恢复统一灰色单帧图标。"],
+  ["生命值实时同步","伤害与治疗时 GUI 若落后一段时间会误导技能判断。","英灵已召唤并保持 GUI 开启。",["让英灵受伤。","脱战自然恢复。","通过升级或饰品改变最大生命。"],"当前/最大生命实时同步；离场后显示最大生命并明确未召唤；无死亡冷却占位。"],
+  ["六个饰品槽同步与快速操作","快速 Shift 点击或多人菜单可能造成槽位重复、覆盖或幽灵物品。","准备六件饰品和多种快速操作。",["用普通点击、Shift 点击、数字键和快捷投放填满与取空。","快速连续操作并关闭重开 GUI。"],"服务端库存与客户端一致；同一物品不复制或丢失；非法移动被拒绝后正确回滚。"],
+  ["模式按钮与技能按钮区分控制权","第三方调整普通设置不应偷走英灵控制权。","两名玩家可访问同一召唤器，英灵由玩家 A 控制。",["玩家 B 切换警戒和技能。","玩家 B 切换等待或闲逛。","最后玩家 B 点击跟随。"],"警戒、技能、等待和闲逛不转移控制者；只有点击跟随后按设计转移控制权并安全重建。"]
+]);
+
+addRows("P1 遗物、天赋与成长", "P1", [
+  ["遗物首次鉴定时机","创造栏展示品若预先固定天赋，复制取出会得到完全相同构筑。","打开创造模式遗物列表。",["仅悬浮创造栏中的遗物。","取出两件同种遗物到玩家物品栏。","比较天赋并退出重进。"],"创造栏展示保持未鉴定；真正进入玩家库存时各实例独立生成并保存 2 至 4 个天赋；之后不重复重掷。"],
+  ["/give 初始化一次","命令来源与创造栏路径不同，可能绕过鉴定或每次同步都重掷。","允许作弊。",["用 /give 获取五种遗物。","检查天赋。","换槽、丢弃拾取、重登后复查。"],"每件只初始化一次，后续操作保持完全相同的天赋与亲和类别。"],
+  ["天赋数量概率与无重复","重复天赋或错误数量会破坏面板与平衡。","批量生成至少 200 件遗物。",["统计 2、3、4 天赋数量。","检查同一件是否重复。","检查 GUI 从右向左最多四格。"],"长期接近 60%、30%、10%；每件 2 至 4 个且无重复；显示顺序固定而非抽取顺序。"],
+  ["互斥天赋组合","苗条与健壮或同轴杀手同时出现会违反生成规则。","批量生成大量遗物。",["搜索亡灵/节肢/灾厄杀手组合。","搜索下界/末地/异界收割者组合。","搜索苗条与健壮。"],"每组三选一或二选一互斥严格成立；生物杀手与维度收割者两个不同轴可同时出现。"],
+  ["复制遗物保留完整状态","复制若只复制物品类型而丢组件，会重置成长、技能和充能。","培养一件遗物并修改技能、模式、充能与冷却。",["用创造中键或命令复制该物品组件。","分别装入召唤器检查。","保存并重载。"],"副本保留天赋、等级经验、模式、技能、充能和冷却快照；不会擅自重掷。"],
+  ["等级 1 到 30 曲线","升级阈值、终值和中间插值错误会造成面板与实体不一致。","准备管理员经验命令或大量敌人。",["记录 1 级属性。","逐级升级并抽查中间等级。","达到 30 级后继续获得经验。"],"终值与各英雄规格一致，例如罗马 60 生命、12 攻击；30 级后不越级或溢出；GUI 与实体属性一致。"],
+  ["共同战斗经验不抢经验球","成长系统若吞掉原版经验，会影响玩家修补与等级。","玩家与英灵共同击杀带经验生物。",["分别让玩家单杀、英灵单杀、共同参与。","记录世界经验球、玩家经验与遗物成长经验。"],"成长按归属规则增加，但原版经验球仍正常生成和拾取；无重复经验或完全消失。"],
+  ["英灵离场时技能世界时间推进","充能和冷却若依赖实体 tick，放入箱中或离场会永久冻结。","消耗一个有充能或冷却的技能。",["遣散英灵并把召唤器放入物品栏、箱子和卸载区块。","在服务器运行时等待。","重新召唤。"],"按设计以世界时间恢复或推进；离场与容器中仍正确；服务器关闭期间不推进。"],
+  ["暴脾气刷新不叠层","多次受击叠乘会造成异常高伤害。","遗物带暴脾气。",["让英灵受到可归因生物伤害。","5 秒内连续受击。","比较攻击伤害和持续时间。"],"获得 15% 伤害，重复受击只刷新 5 秒不叠层；环境伤害不触发。"],
+  ["懒惰燃料小数累计","15% 降耗取整若每 tick 截断，长期会免费治疗或多扣燃料。","遗物带懒惰。",["分别测试召唤成本与多次小额自然恢复。","记录至少 100 次小额消耗。"],"按 15% 比例准确累计小数；长期总消耗符合比例，不因逐次取整偏向 0 或额外扣费。"],
+  ["环境与时间天赋边界","时间 13000/23000、满血与 50 生命阈值容易出现等号错误。","准备夜猫子、完美主义者、巨人杀手等遗物。",["在 12999、13000、22999、23000 测夜猫子。","满血与少 0.5/1 点血测完美主义者。","最大生命 50 与 50 以上测巨人杀手。"],"严格按设计边界生效：夜猫子仅 13000 至 23000 窗口，完美主义者严格满血，巨人杀手严格大于 50。"],
+  ["生物群系亲和分类优先级","地下、寒地、水域等重叠时分类错误会双重生效。","准备六种亲和天赋。",["在洞穴寒地、水下荒地等重叠环境测试。","进入下界和末地。"],"主世界按地下→寒地→水域→荒地→林地→原野兜底只命中一类；其他维度不错误触发。"],
+  ["主人支援 32 格与跨维度","无限修饰器若未清理会永久留在玩家身上。","准备口才、睿智、导师、幸运或渔获。",["在 31.9、32、32.1 格测试。","主人死亡、旁观、下线和跨维度。","重新靠近。"],"仅英灵已召唤、同维度且不超过 32 格时生效；离开条件立即或按设计清理；回来可恢复且不叠加。"],
+  ["口才双支付项与会话快照","交易界面中动态刷新可能永久修改村民报价或降到 0。","遗物带口才，准备普通村民的单项与双项交易。",["打开交易界面记录价格。","远离英灵但保持界面，完成交易。","关闭重开并移除天赋来源。"],"以打开时快照把两项支付都降低 15%、向下取整、最低 1；产出和村民永久报价不变；新会话重新计算。"],
+  ["幸运与精准采集优先","临时时运可能残留到其他玩家或覆盖精准采集。","遗物带幸运，准备时运 III、IV、V 和精准采集工具。",["分别挖掘可测矿物。","让另一玩家同时挖掘。","移除来源后复测。"],"只在本玩家方块战利品计算期间临时时运 +1，最高按 IV；已有高于 IV 不降低；精准采集仍优先；不污染其他玩家。"],
+  ["渔获边界","临时海之眷顾与等待时间缩短可能永久写入鱼竿或叠加多个来源。","遗物带渔获并准备多名同来源英灵。",["多次钓鱼记录等待时间与战利品。","离开 32 格和移除来源后继续。"],"临时海之眷顾 +1 最高 IV，等待阶段缩短约 20%；同名来源不叠加；移除后恢复原版。"]
+]);
+
+const accessorySpecs=[
+  ["罗马环片坠","护甲 +2"],
+  ["锁帷重带","护甲 +4，移动速度 -15%"],
+  ["黑曜荆棘符","护甲 +1，反伤近战攻击者"],
+  ["百战砺符","攻击力 +2"],
+  ["负山根付","攻击力 +4，移动速度 -20%"],
+  ["裂曜晶坠","攻击力 +4，护甲 -6"],
+  ["双鱼玉徽","攻击力 +1，护甲 +2"],
+  ["盲剑目隐","攻击力 +3，索敌视野 -75%"],
+  ["裂响祭祀石","30% 概率造成 200% 暴击伤害"],
+  ["凯旋桂冠","击杀生物回复 10% 最大生命值"],
+  ["血契河马牙","直接攻击造成伤害时 30% 概率回复 4 点生命"],
+  ["阿努比斯护符","攻击力 +2，击杀时 0.5% 概率获得随机传承"],
+  ["身代木偶","10% 概率完全闪避伤害"],
+  ["玉蝉","最大生命值 +6"],
+  ["盛宴胸针","最大生命值 +12，移动速度 -15%"],
+  ["玉璧","最大生命值 +20，攻击力 -4"],
+  ["托纳蒂乌花冠","白天获得生命恢复 I"],
+  ["孔苏月露瓶","夜晚获得生命恢复 I"],
+  ["尼罗河红鱼符","水中移动速度 +50%"],
+  ["猫纹玉","压制 6 格内苦力怕爆炸；主动出击时可锁定苦力怕"],
+  ["鹰纹宝石","英灵击杀产生的经验球 +50%"],
+  ["墨西加鹰首唇饰","英灵成长经验 +50%，主人不获得这部分经验"],
+  ["鹰纹远目镜","索敌视野 +50%，最高 32 格"],
+  ["风神羽饰","移动速度 +10%"],
+  ["尼罗鹮骨","移动速度 +20%，最大生命值 -8"]
+];
+accessorySpecs.forEach(function(spec,index){
+  add("P1 25 件英灵饰品","P1","饰品 "+String(index+1).padStart(2,"0")+"："+spec[0],
+    "该饰品的配方、唯一装备限制、面板数值与实际行为任一不一致都会误导构筑选择。",
+    "JEI 已安装；准备空召唤器、同等级同英雄的基线遗物、两件同名饰品和测试目标。",
+    ["在 JEI 查看并按配方合成 "+spec[0]+"。","记录未安装时的相关面板与实际行为。","装入 "+spec[0]+" 后重开 GUI，并通过至少 10 次可测行为验证效果。","尝试装入第二件同名饰品，再退出重进并重新召唤。"],
+    "配方和物品说明正确；同名不可重复；安装后准确产生“"+spec[1]+"”，面板与实际结算一致；重登、离场和重召唤后不丢失、不重复叠加。");
+});
+addRows("P1 25 件英灵饰品", "P1", [
+  ["六饰品组合的加减顺序","多个正负属性同时存在时重复加成、乘法顺序或最低值错误会产生异常面板。","选择包含攻击、护甲、生命和移速正负项的六件饰品。",["逐件安装并记录每一步面板。","全部装满后实际测量伤害、受伤、生命和移动。","按逆序取下。"],"每件只结算一次；加减结果与说明一致；取下后精确恢复，不遗留永久属性修饰器。"],
+  ["概率饰品的独立判定与无递归","暴击、吸血、闪避、反伤同时存在时可能互相触发形成递归。","安装裂响祭祀石、血契河马牙、身代木偶、黑曜荆棘符。",["让英灵与近战敌人互相攻击至少 200 次。","记录暴击、回血、闪避、反伤。","检查日志与生命。"],"各概率接近设计值且相互独立；反伤不再次触发吸血或无限反伤；没有递归、负伤害或卡死。"],
+  ["昼夜饰品切换边界","日夜变化或 set time 可能让两个恢复效果同时存在。","同时安装托纳蒂乌花冠和孔苏月露瓶。",["跨过日出、日落边界。","反复设置时间并重登。","观察状态效果。"],"白天只由花冠提供恢复，夜晚只由月露瓶提供恢复；边界平滑切换，不同时残留、不闪烁叠加。"],
+  ["索敌视野上下限组合","盲剑目隐与鹰纹远目镜组合可能得到负范围或突破 32 格。","分别单装和同时安装两件饰品。",["在不同距离放置敌人。","切换主动与被动警戒。","记录最远获取距离。"],"各自倍率正确；组合仍为有效非负范围；鹰眼上限不超过 32 格；已锁定目标的释放规则正常。"],
+  ["成长经验饰品的归属","鹰纹宝石和训练类饰品同时使用可能把玩家经验与英灵经验重复放大。","同时安装鹰纹宝石和墨西加鹰首唇饰。",["让英灵单独击杀同种生物多次。","让玩家共同参与。","记录世界经验球、玩家经验和成长经验。"],"经验球 +50% 与成长经验 +50% 各作用一次；说明中“主人不获得这部分经验”准确；没有重复生成或负经验。"]
+]);
+
+addRows("P0 常驻绑定、模式与通用 AI", "P0", [
+  ["跟随英灵在控制者退出后常驻","错误的离线清理会让辛苦培养的英灵无提示消失。","召唤一名跟随英灵。",["控制者退出服务器。","让第二玩家观察英灵至少 2 分钟。","控制者重新进入。"],"英灵留在原地并可自卫，不因离线自动遣散；控制者回来后绑定仍正确。"],
+  ["控制者死亡与旁观","死亡或旁观状态切换可能触发错误传送、攻击主人或永久停机。","跟随英灵在场。",["控制者死亡并在远处重生。","切换旁观模式后移动到另一维度。","恢复生存模式。"],"控制者不可用时英灵安全留存；不攻击主人、不无限传送；恢复后可通过召回或模式操作继续控制。"],
+  ["跟随跨下界与末地","跨维度若复制旧实体或保留未结算攻击，会产生重复伤害和幽灵箭。","五种英灵分别处于跟随模式。",["控制者进入下界。","在英灵动作或投射物飞行中切维度。","再进入末地并返回主世界。"],"每次只安全重建一个新代实体；生命与有限自强化按设计保留；旧实体、箭矢和临时动作不再结算。"],
+  ["等待与闲逛不跨维度","非跟随英灵若被强行搬走会破坏玩家布置和活动锚点。","英灵分别切到等待与闲逛。",["控制者跨维度并等待。","返回原维度。"],"等待和闲逛英灵留在原维度且不强加载区块；返回后锚点与状态正确。"],
+  ["召唤器放入普通容器","召唤器离开玩家库存不应自动遣散，但仍需保持权威数据。","英灵在场。",["把召唤器依次放入箱子、潜影盒、收纳袋和未加载区块。","让英灵战斗并获得经验。","取回召唤器。"],"英灵不因存放而遣散；经验、生命、冷却等写入权威绑定；取回后镜像同步且不回滚。"],
+  ["召唤器实体被销毁","物品永久消失后英灵若继续存在会成为无法管理的孤儿。","英灵在场，把召唤器作为掉落物。",["分别让其自然消失、掉虚空、被火/岩浆/爆炸销毁。","测试装在原版嵌套容器内随容器销毁。"],"权威系统确认不可恢复后终止绑定并安全移除英灵；不误杀仍存在于可访问容器中的召唤器绑定。"],
+  ["同 UUID 副本处理","NBT 或组件复制会让两个物品同时控制同一实体或复制库存。","复制一个已有绑定的召唤器，使两件 UUID 相同。",["让原件先进入可见库存，再放入副本。","交换先后顺序重试。","分别打开 GUI 和召回。"],"先登记原件保留活跃绑定；后出现副本保留内部物品但获得新 UUID，不能控制或复制原英灵。"],
+  ["第三者修改与控制权转交","多人共享物品时任何按钮都转移控制会造成抢夺。","A 控制英灵，B 持有同一权威召唤器。",["B 修改燃料、饰品、遗物、警戒和技能。","B 切等待和闲逛。","B 最后切跟随。"],"普通配置与非跟随模式不转移控制；只有跟随操作按规则转交，并在 B 附近安全重建，旧动作完全取消。"],
+  ["离场后重新召唤满血与扣费","死亡、遣散、取遗物三条路径可能使用不同扣费和生命逻辑。","英灵受伤且遗物上存在技能冷却。",["分别手动遣散、让英灵死亡、取下遗物。","每次重新召唤并记录燃料、生命和技能状态。"],"每次作为新召唤正常扣费并满血；遗物充能和冷却不因离场重置。"],
+  ["默认第 9 名性能提示","软提示若每次刷屏或错误当成硬限制会影响多人测试。","默认配置，准备九个以上召唤器。",["连续召唤 1 至 10 名。","一小时内继续召唤。","重新登录后观察提示冷却。"],"默认可超过 8 名；第 9 名成功后只提示一次性能风险；现实一小时内不重复刷屏。"],
+  ["配置硬上限","硬上限必须同时覆盖新召唤与跟随接管，且不能误遣散已有实体。","设置 maxLivingEchoesPerController 为较小值。",["达到上限。","尝试新召唤。","尝试把第三者英灵切为跟随接管。","降低与提高配置后复测。"],"超限操作由服务端拒绝并明确说明；已有合法英灵不被无故删除；调整配置后判定更新。"],
+  ["并发过期菜单","两个菜单同时写同一状态时，后到请求不能覆盖前一个新值。","两名玩家同时打开同一绑定的不同镜像。",["同时修改燃料、遗物、模式与技能。","制造网络延迟并快速交替点击。"],"过期菜单显示状态已变化并重新同步；不会覆盖另一方刚完成的修改，不复制或丢失物品。"],
+  ["绑定诊断命令","管理员修复若移动等待英灵或错误终止其他 UUID 会扩大事故。","准备活跃跟随、等待和闲逛三种绑定。",["执行 binding list 与 status。","对指定 UUID 执行 dismiss。","制造可修复异常后执行 repair。"],"list/status 信息准确；dismiss 只终止指定绑定；repair 仅保守重建在线控制者的活跃跟随，不移动等待或闲逛。"],
+  ["跟随超距传送安全","传送到墙内、岩浆或空中会造成连续死亡与循环传送。","在洞穴、悬崖、岩浆湖和狭窄建筑中拉开距离。",["让英灵触发超距传送。","在主人周围故意制造少量危险落点。"],"选择主人附近安全可站立位置；不窒息、不落空、不进危险方块；找不到时不反复每 tick 传送。"],
+  ["等待模式 2 格边界","被击退后如果锚点约束立即打断自卫，会形成僵硬或无法反击。","英灵切等待并记录锚点。",["从 2 格内外推离。","在边界外让敌人直接攻击。","战斗结束后观察归位。"],"平时约束在 2 格；合法自卫可完成；战后完整寻路返回；不会瞬移抖动或无限重设锚点。"],
+  ["闲逛 16 格硬边界","随机目标和归位并发可能每走一步就取消路径。","英灵切闲逛，周围有坡地与障碍。",["观察至少 5 分钟。","把英灵推到 16 格外。","在战斗后继续观察。"],"通常停留 2 至 5 秒后连续走约 4 至 8 格；接近软边界偏向锚点；越界或战后归位；路径不被低优先级行为反复取消。"],
+  ["水下浮水与跟随脱困","水下屋顶或封闭水坑可能让英灵永久卡住或在技能中瞬移。","五种英灵分别测试普通河流、深水、水下屋顶。",["观察浮水和溺水。","跟随模式完全没入并卡住超过 2 秒、5 秒。","在专用位移动作期间重复。"],"所有英灵免疫溺水并主动上浮；跟随卡住约 2 秒暂停战斗并游向主人，约 5 秒安全传送；等待/闲逛不强制回主人；专用位移不被中途打断。"],
+  ["友军与玩家保护","范围攻击、投射物和反伤最容易绕过统一友军检查。","主人、同主人英灵、驯服生物、同队实体、创造与旁观玩家站在目标旁。",["用五位英灵的普通、范围、技能、投射物和反伤覆盖这些单位。"],"所有受保护对象不受伤、不被错误锁定或击退；真实敌人仍正常受击。"]
+]);
+
+addRows("P1 罗马军团兵", "P1", [
+  ["1 级与满级基线属性","平衡修订后旧属性缓存可能使实体与 GUI 不一致。","准备 1 级与 30 级罗马遗物，无饰品和天赋影响。",["召唤并记录生命、护甲、攻击、移速、击退抗性和攻击间隔。","重登后复查。"],"1 级为 30 生命、8 护甲、6 攻击、0.28 移速、30% 击退抗性、20 tick 间隔；满级生命 60、攻击 12；GUI 与实体一致。"],
+  ["条件二连击命中时间","命中窗口重复或过早会导致一刀多伤、动画与伤害脱节。","基础攻速，无饰品天赋，使用高生命目标。",["录制 60 FPS 视频或用日志观察。","让目标保持 2 格内且可见。","统计第 6、11、16 tick 附近的事件。"],"首击约第 6 tick 一次；第 11 tick 决定分支；追击第二伤害约第 16 tick，一阶段只结算一次。"],
+  ["首击击杀后的收势","原目标死亡后仍打第二刀可能伤到旁边单位或出现幽灵动作。","准备低生命主目标和旁边高生命敌人。",["让首击恰好击杀主目标。","观察后续动画和旁边敌人。"],"只造成一次伤害并自然接 attack_recover；不空挥追击、不转移目标、不残留持刀姿势。"],
+  ["追击只锁定同一 UUID","旁边目标接棒会把单体技能变成隐性范围攻击。","主目标与其他敌人重叠站位。",["首击后让主目标离开或死亡。","让旁边敌人保持在 3.1 格内。"],"不把第二击转给其他 UUID；原目标非法时直接收势或已提交后挥空。"],
+  ["第一击无击退与第二击有击退","第一击普通击退会把目标推出追击范围，第二击无击退则手感异常。","使用标准近战目标。",["分别记录两次命中后的位移。","在高低击退抗性目标上重复。"],"第一击不产生原版近战击退；第二击正常按目标抗性击退。"],
+  ["追击范围与视线边界","2.75 与 3.10 格两个阶段若混用会穿墙或隔空伤害。","准备可移动目标与一格墙。",["首击后把目标移到 2.74、2.76 格。","进入追击后在命中前移到 3.09、3.11 格或隔墙。"],"分支确认严格使用约 2.75 格与视线；第二命中使用约 3.10 格且仍需合法；超界或隔墙不伤害。"],
+  ["两段追步安全边界","追步可能吸附穿墙、越过岩浆或跨出等待边界。","在墙体、液体、火焰、岩浆、细雪和一格以上落差旁测试。",["让目标在前摇中后退。","分别触发第一段与第二段追步。"],"第一段最多 1.5 格、第二段最多 0.75 格；停在最后安全位置；腿部同步停但上半身动作继续；不穿墙、不越险。"],
+  ["攻速快慢缩放与冷却快照","当前动作中途变速会造成命中跳帧或绕过冷却。","使用苗条、完美主义者等改变攻速。",["分别在高速、基础、低速下录像。","攻击中途改变生命或装备。","动作结束后测下次起手。"],"动作、腿部步频、追步速度与命中时机等比缩放；当前动作使用起手快照不中途变速；结束后才开始相应冷却。"],
+  ["动作取消后的幽灵伤害","技能、遣散或取遗物停止动画后仍结算命中属于严重同步问题。","二连击前摇中准备取消。",["在首击前、两击之间和第二击前分别触发举盾冲锋、军团永存、召回、遣散、取遗物。"],"所有未结算伤害取消；动画停止后无幽灵第一击或第二击；重新装回遗物不能绕过已开始冷却。"],
+  ["士兵阵列武器状态","无限效果刷新方式错误会造成图标闪烁或永久攻击修饰器。","技能开启，主人未持盾。",["让主人、自身和同主人英灵进入 8 格。","短暂跨过 8 格，再持续超过 8.75 格 10 tick。","禁用来源并重登。"],"进入立即获得“举起武器！”与不叠加 +2 攻击；短暂越界不闪；满足退出条件或来源失效后彻底清理。"],
+  ["士兵阵列盾状态","盾判定若只看主手或攻击叠加，会与说明不符。","主人分别主手、副手持盾。",["进入 8 格并切换手位。","受到标准伤害。","放下盾牌。"],"任一手持盾都切到“举起盾牌！”；攻击仍只 +2；主人和军团兵各获得 15% 最终减伤；放下后原子切回武器状态。"],
+  ["多阵列来源原子降级","多个无限光环同时刷新可能叠加攻击或永久残留两个图标。","同一受益者附近放置多个普通和盾阵列来源。",["逐个移入移出范围。","先移除最强盾来源。","重登。"],"只保留最强来源且攻击不叠加；最强离开后原子降级；不出现一帧双效果或孤立修饰器。"],
+  ["军团壁垒前后半区","使用头部朝向而非身体朝向会在注视目标时错误改变防护。","技能开启，固定军团兵身体朝向。",["从正前、前 45 度、边界内外和正后进行相同近战攻击。","只改变头部和瞳孔朝向后重复。"],"身体前方 180 度内直接攻击在护甲后再减 50%；边界外和背后不减；头眼转动不改变半区。"],
+  ["军团壁垒投射物与环境排除","来源方向回退与伤害类型过滤错误可能把爆炸、火和持续伤害也减半。","准备箭、弩箭、三叉戟、爆炸、火、岩浆、摔落、中毒和流血。",["分别从前后命中。","让箭已进入碰撞箱时测试。"],"正面直接投射物减半、背面不减；已入碰撞箱仍按来向稳定；环境与持续伤害完全不触发。"],
+  ["军团壁垒叠加边界","壁垒、阵列、军团永存与饰品重复调用可能造成负伤害或递归。","开启全部防御并安装减伤/护甲饰品。",["使用固定伤害源逐层比较。","测试高伤害与低伤害。"],"护甲和各最终减伤按设计各结算一次；无负伤害、无限递归、完全无敌或反馈重复。"],
+  ["举盾冲锋高速投射物","离散位置检测会漏掉一 tick 穿过盾面的高速箭。","主人后方站位，使用普通与高速投射物。",["让投射物从盾前掠过并预计一秒内命中主人。","测试近距离高速射击。"],"使用前后 tick 连续相对轨迹即时格挡，不等待 6 tick；威胁主人的高速投射物不会穿盾。"],
+  ["举盾冲锋反弹目标回退","原射手失效后空目标处理错误会让投射物继续追主人。","分别保留、杀死、卸载原射手，并布置可见替代敌人。",["触发拦截。","检查投射物所有者、速度、伤害与方向。","使用潜影弹重复。"],"优先原射手，其次 16 格最近可见敌人，否则远离主人；速度伤害保留、归属改为军团兵且不二次拦截；潜影弹不再追主人。"],
+  ["举盾冲锋苦力怕边界","玩家主动攻击的苦力怕被拦截会破坏玩家意图；强制点燃又不能被错误取消。","准备自然蓄爆、玩家近期攻击和打火石点燃三类苦力怕。",["让其靠近主人并触发技能。","记录伤害、击退、目标与引信。"],"玩家近期主动攻击者被排除；自然蓄爆受 200% 当前攻击伤害并击退约 5 至 7 格、40 tick 失去目标且引信退回；强制点燃标记保留。"],
+  ["举盾冲锋路径、速度与冷却","阻塞时继续滑行或结束前恢复充能会造成连续冲撞。","准备开阔地与墙体。",["触发成功、阻塞和超时三种冲锋。","记录速度曲线、沿途伤害和结束后惯性。","立刻用同一目标再次触发。"],"约一秒内平稳起步、中段加速、末段收势；阻塞取消；沿途仅轻推不伤害；结束后快速衰减；0.5 秒内置冷却从结束开始且同目标 2 秒内不再触发。"],
+  ["军团永存触发与同主人互斥","多个军团兵同时爆发会叠加嘲讽和伤害返还。","同主人至少两名罗马，6 格内两个敌人。",["分别让主人近期受击、英灵低于 60%。","同时满足两名罗马触发条件。"],"触发条件准确；同主人同时只有一名进入技能；20 秒冷却按世界时间推进。"],
+  ["军团永存累计伤害来源","环境伤害和技能返还若计入会形成循环或无限爆发。","技能蓄力中施加敌对直接伤害、环境、友军和返还伤害。",["记录减免前原始伤害。","等待 5 秒释放。"],"只累计可追溯敌对实体的减免前伤害；环境、友军和技能返还不计；每个 6 格敌人承受完整累计值且仍经过自身减伤。"],
+  ["军团永存姿态与释放反馈","定身期间头部扭曲、提前收盾或错误爆炸声会破坏演出。","触发技能并多角度录像。",["观察 5 秒蓄力的移动、攻击、护甲、击退抗性、头眼和粒子。","观察释放与收盾。"],"全程不能移动攻击，+12 护甲、100% 击退抗性；头部正直、瞳孔可观察；头顶零星生气粒子；完成后才收盾，使用风弹爆发声。"]
+]);
+
+addRows("P1 阿兹特克勇士", "P1", [
+  ["基础属性与五技能开关","模型数据或旧遗物布局可能缺技能或数值错误。","1 级无饰品天赋的阿兹特克遗物。",["召唤并记录属性。","逐一开关五个技能。","重登后复查开关。"],"34 生命、4 护甲、8 攻击、0.30 移速、20% 击退抗性、29 tick 间隔；五技能齐全且独立持久化。"],
+  ["羽蛇神诅咒的直接伤害来源","环境伤害触发诅咒会错误惩罚无攻击者场景。","技能开启。",["分别让英灵或主人承受生物直接伤害、投射物、火、摔落、中毒。","大量统计触发。"],"仅可归因直接伤害检定约 60%；触发后 75% 虚弱 I 5 秒、25% 虚弱 II 3 秒；环境与持续伤害不触发。"],
+  ["虚弱等级不降级","新的虚弱 I 若覆盖剩余虚弱 II 会削弱技能。","目标已有虚弱 II。",["反复触发可能的虚弱 I。","观察等级与持续时间。"],"虚弱 II 不被较低等级降级；刷新行为符合原版高等级效果规则。"],
+  ["日光祝福独立判定","主人和英灵不在同一光照条件时，错误共享会导致穿墙或跨维度增益。","技能开启，主人和英灵可分别置于室内外。",["白天让英灵在阳光、主人室内。","交换位置。","测试雨雪、雷暴、夜晚与跨维度。"],"谁在白天直视天空谁单独获得 +15% 近战攻击和每 4 秒 1 点恢复；天气不取消；夜晚或失去天空立即移除；不消耗燃料。"],
+  ["日光祝福永久残留审计","无限状态效果或攻击修饰器孤立后会永久强化玩家。","主人已有祝福。",["禁用技能、换遗物、杀死或遣散英灵、破坏绑定、重登。","用命令制造孤立效果或修饰器。"],"所有正常失效立即清理；孤立状态最多约 10 tick 被清除；多个来源不叠加攻击与治疗。"],
+  ["环境额外加成","生物群系列表与维度判断错误可能在任意地方常驻。","阿兹特克处于不同生态群系。",["测试丛林、沼泽、红树林沼泽、森林、林地和其他生物群系。","进入下界。"],"仅列出的主世界环境提供额外 +10% 攻击和 +10% 移速；其他环境不误触发。"],
+  ["黑曜石创口主目标与范围概率","范围目标若共享一次随机数，会全中或全不中。","准备大量目标和足够攻击次数。",["普通攻击主目标统计。","马夸威特溅射与追猎落地每目标统计。","重复命中同一目标。"],"主目标约 30%，范围每个目标独立约 15%；持续 6 秒、每秒 1 点、可致死；不叠加但刷新。"],
+  ["创口与普通无敌帧","持续伤害若被近战无敌帧吞掉或反过来吞近战，会少伤害。","让目标同时受普通攻击与创口。",["逐 tick 记录生命。","使用高攻速与多个来源。"],"创口绕过受击冷却，不与普通近战争抢；仍遵守其他有效无敌与防护规则。"],
+  ["马夸威特扇区与友军","160 度范围的背后、隔墙和友军边界容易误伤。","主目标旁布置不同角度敌人、墙后敌人和友军。",["进行普通攻击。","测 2.49、2.51 格与 159、161 度。"],"前方约 160 度、2.5 格内合法可见敌人才受 50% 溅射；主目标 100%；友军和墙后不受伤。"],
+  ["追猎触发距离与高度","边界不严会近距离浪费充能或跳向高墙和深坑。","技能两层充能满。",["目标放在水平 3.9、4、10、10.1 格，高差 +4、+4.1、-6、-6.1。","观察是否起手与扣层。"],"只在水平约 4 至 10 格、高差 +4 至 -6、已锁定且安全路径时尝试；非法边界不扣层。"],
+  ["追猎安全路径与落点","路径中有墙、岩浆、低顶或悬崖时错误起跳会穿模或死亡。","构造多种危险路径。",["逐一诱发追猎。","在起跳后动态放置障碍。"],"确认整条无障碍路径和安全落点后才消耗；不穿墙、不落入危险；中途变化时安全结束。"],
+  ["追猎免伤类型","18 tick 免疫若挡住绝对伤害会产生错误无敌。","追猎动作中准备普通和 BYPASSES_INVULNERABILITY 伤害。",["在不同 tick 命中。","观察动作与生命。"],"起跳至落地前普通伤害免疫；绕过无敌标签的绝对伤害仍生效；受伤不切换全身 hurt。"],
+  ["追猎充能顺序恢复","两层若并行恢复会比设计快一倍。","连续消耗两层。",["记录第 1 层和第 2 层恢复时间。","技能关闭后等待并重新开启。"],"每层 6 秒顺序恢复；两次施放至少间隔 2 秒；关闭不清空已有充能，恢复逻辑持续。"],
+  ["追猎强势期","落地增益持续和横扫扩展若提前或残留会改变普通战斗。","成功落地。",["3 秒内测移速、减伤、击退抗性和横扫。","边界结束后立即再测。"],"强势期 +25% 移速、20% 减伤、+50 个百分点击退抗性；横扫 180 度、3 格、75% 溅射；3 秒后完整恢复。"],
+  ["攻击与追猎动作不被受伤动画打断","全身 hurt 抢占会让武器瞬移并取消合法命中。","普通 29 tick 攻击和 24 tick 追猎中持续受击。",["从不同 tick 施加伤害和击退。","观察伤害结算、疼痛眨眼与注视。"],"完整攻击与追猎动作不被全身 hurt 替换；实际伤害、减益、击退、疼痛表情和伤害来源注视仍正常，因此位移可让攻击自然挥空。"],
+  ["视觉生命感与模型映射","复用罗马逻辑时错误骨骼名会导致眼睛、头部或武器飞离。","非战斗和战斗场景。",["测试互相对视、主人发现偷看、眨眼、歪头、瞳孔、苦力怕警觉、受击注视和行走前视。","执行 F3+T 和重召唤。"],"全部视觉行为自然且优先级正确；阿兹特克骨骼映射无错位、T-pose、武器乱飞或贴图回退。"]
+]);
+
+addRows("P1 埃及弓箭手", "P1", [
+  ["基础属性与射程","远程实体属性或 24 格球形判定错误会造成无法索敌或跨地图锁定。","1 级与 30 级无饰品天赋遗物。",["记录生命、护甲、攻击、移速、击退抗性和警戒范围。","把目标放在 23.9、24、24.1 格及不同高度。"],"1 级 28 生命、0 护甲、5 远程攻击、0.30 移速、15% 击退抗性；满级 56 生命、10 攻击；基础警戒与射击为真实 24 格球形。"],
+  ["取箭至放箭四阶段时序","阶段预算或切片边界错误会导致箭提前出现、满弓停顿或动作跳帧。","基础攻速，固定静止目标。",["录像观察 NOCK、DRAW、AIM、SHOOT。","记录箭生成相对松弦的位置。","使用苗条与最低攻击周期重复。"],"基础 42 tick 约为 23+8+6+5；最快不低于 24 tick；箭在释放阶段中部生成，不早于模型箭矢消失；只改变播放倍率不改变语义顺序。"],
+  ["连续射击 20 次的拔箭连续性","第二轮起若闪回第一次 DRAWBOW 会出现明显抽搐和武器瞬移。","一个高生命可见目标，保持 10 至 20 格。",["连续录像至少 20 次射击。","逐轮观察左手、右手、弓和手持箭。"],"首轮后左手保持举弓；第二轮起右手独立从箭袋取箭并直接进入满弓；箭始终贴合右手，无过冲放大、脱手、单帧待机或双手放下。"],
+  ["最后目标在连续 NOCK 中死亡","取箭途中取消并倒放错误会造成手部抽动或幽灵箭。","让上一支飞行箭在下一轮 NOCK 中击杀最后目标。",["观察本轮取箭。","等待收箭归袋和收弓。","途中生成新目标。"],"自然完成取箭，随后固定 12 tick 收箭归袋，再 10 tick 收弓；新目标也不能中途反转动作；不生成无目标箭。"],
+  ["AIM 视线暂停与重新计时","遮挡时继续倒计时会穿墙放箭；换目标沿用旧稳定时间会瞬发。","目标在 24 格内，可临时遮挡或替换。",["AIM 中短暂遮挡后恢复。","换成严格更高威胁目标。","让普通同级目标轻微交换距离。"],"同目标短暂遮挡只暂停；新高威胁目标重新完成 AIM；同级目标保持粘滞，不每 2 tick 来回转头。"],
+  ["SHOOT 提交后的遮挡与死亡","提交阶段若普通转火取消箭会动作中断；目标死亡又不应射空箭。","进入 SHOOT。",["箭生成前放置掩体。","另一次在箭生成前杀死目标。","再让近身敌人进入实际近战范围。"],"新遮挡不取消已提交释放，投射物由实际碰撞处理；目标死亡则完成姿态但不生成空箭；只有箭生成前的即时近战可打断。"],
+  ["10 至 20 格站立射击","残留导航输入会造成左右小步与腿部闪烁。","目标 10 至 20 格、视线通畅。",["观察至少 30 次射击。","让目标轻微移动但保持区间。"],"停止导航、残留输入和本系统撤退速度，以原地站立射击为主；不周期性左右挪动或闪烁腿部动画。"],
+  ["8 至 10 格风筝迟滞","单一阈值会在边界频繁切换，造成抖动。","开启战车与齐射之魂。",["敌人从 11 格进入 7.9 格。","保持在 8 至 10 格来回。","退出 10 格。"],"进入 8 格后持续沿世界坐标远离，直到最近威胁退出 10 格才解除；身体头部仍面向主要目标，无固定周期换向。"],
+  ["风筝的一格台阶与危险路径","后退逻辑按朝向左右平移或穿过危险方块会导致掉落死亡。","后方布置一格台阶、二格墙、悬崖、火、熔岩和细雪。",["分别诱发风筝。","观察跳跃、斜后和侧向选择。"],"一格安全台阶立即普通后退跳并保持水平撤退；二格墙和危险落点阻挡；只有直后方不安全时稳定选择斜后或侧方。"],
+  ["贴身备用近战抢占","宽碰撞箱蜘蛛中心点较远时可能漏判，导致弓箭手站着挨打。","普通敌人与蜘蛛分别在 DRAW、AIM、SHOOT 前半段贴身。",["让敌人直接命中弓箭手。","观察同一服务端 tick 的状态切换。"],"按碰撞箱净间距约 2.6 格判断；立即取消未完成远程与 hurt 并进入 20 tick 近战；保持面向并继续求生撤退。"],
+  ["备用近战伤害帧目标失效","动画中无限转移目标会一刀命中多个单位。","原目标旁放另一合法贴身敌人。",["在伤害帧前杀死原目标。","另一次在伤害帧后杀死。"],"伤害帧前允许不重播、不延时地仅转移一次；伤害帧后不得转移；合法起手后的击退容差约 4 格但仍需视线。"],
+  ["等待与闲逛锚点外自卫","活动边界若清空自卫目标，会出现 selected 有值但 resolved 为空。","弓箭手切等待或闲逛，敌人在锚点外贴身攻击。",["让其经历近战、后撤步和落地重瞄。","敌人留在 10 格内、失去视线、再退出 10 格。"],"同一自卫目标贯穿动作；允许反击、后退和原地瞄准但不向锚点外追击；退出 10 格后释放并返回活动区。"],
+  ["贴身求生撤退不依赖战车技能","关闭移动射击不应关闭最后的生存后退。","关闭战车与齐射之魂。",["让多个近身威胁进入 8 格。","其中一名实际命中。","观察到最近威胁达到 4 格。"],"仍以基础移速 85% 按反距离加权远离全部威胁，实际攻击者权重更高；达到 4 格后结束贴身撤退。"],
+  ["后撤步安全搜索与充能","无安全路径仍扣层会惩罚玩家，途中穿墙会造成严重位置错误。","后撤步两层充能满，构造开放、墙体、危险落点和动态障碍。",["敌人进入 4 格触发。","记录起跳朝向、路径和层数。","第 11 tick 改变环境。"],"任意角度选择最远安全侧；完整碰撞箱路径安全才扣层；起跳后固定朝向；中途危险停在最后安全点；无路径不移动不扣层。"],
+  ["后撤步齐射重新扫描","原目标死亡或躲入掩体后仍发幽灵箭会穿墙或打空气。","12 格内多个敌人。",["在第 11 tick 前让原目标死亡或遮挡。","保留其他可见目标或让全部失效。"],"第 11 tick 重新扫描至多 6 个可见敌人；自然改射其他目标；无目标则不生成箭但完整播完动作。"],
+  ["特殊箭循环按钮与持久化","循环状态、服务端冷却或新遗物默认值错误会导致客户端自改。","装入埃及遗物。",["按关闭→叶形→锥锋→关闭快速点击。","尝试 10 tick 内连续切换。","重登、复制遗物与换新遗物。"],"顺序固定，服务端 10 tick 冷却有效；选择保存在该遗物；新遗物默认关闭；客户端不能绕过。"],
+  ["叶形箭、锥锋箭与亡灵联动","流血错误享受亡灵增伤或穿透超过一个目标会放大伤害。","准备普通和亡灵目标、两名纵向敌人。",["测试叶形箭伤害、4 秒流血和 2 秒减速。","测试锥锋忽略 35% 护甲与 25% 贯穿。","检查尾迹与拾取。"],"直接攻击对亡灵 +20%，流血不增伤；流血不叠加只刷新；锥锋最多额外命中一个；叶形黄尾、锥锋黑尾、普通无尾；专用箭不可拾取并短时消散。"],
+  ["战车齐射概率与单次上限","额外敌人数计算或循环生成可能一次射出多支追加箭。","16 格内放置 2 至多名可见敌人。",["大量统计追加箭。","逐步增加额外敌人数。","观察粒子。"],"概率为 15%+8%×额外敌人数，最高 55%；每次主射击最多追加一箭且目标不同；成功时一次 14 颗金黄色粒子。"],
+  ["苦力怕猫神边界与隐藏联动","苦力怕一进范围就逃、技能关闭仍受保护或非主动模式持续锁定都不符合设计。","赞美猫神开启，切换三种警戒。",["让苦力怕进入 30 格但不点燃。","让其尝试点燃或受直接实体伤害。","主动模式射击后关闭技能或切模式。"],"普通进入不逃；点燃或直接实体伤害触发约 5 秒慌乱并取消点燃；技能关闭立即失去新保护，已开始慌乱自然结束；仅主动模式隐藏联动允许继续锁定。"],
+  ["末影龙与幻翼目标","部件实体与球形射程处理错误会长期仰头或箭不伤本体。","主动警戒，末地与夜间开放区域。",["攻击末影龙部件后观察锁定和箭伤。","让幻翼在 24 格外、遮挡和俯冲进入范围。"],"龙仇恨归一本体并瞄准 24 格内最近可见部件，命中转发到本体；幻翼只在真实 24 格且有视线时锁定，离开后释放，回来可重获。"],
+  ["战斗与战后注视稳定","多轴父骨骼交接可能造成头部抬高、侧看和单帧抽动。","连续射击 20 次并在轮次边界转火、击杀。",["观察身体、头、双眼和眉毛。","击杀最后目标后继续观察 3 秒。","如异常保存相关日志行。"],"战斗目标逐 tick 接管注视，不被社交或受伤抢走；战后静止保持最后方向，只有真实移动才接行进方向，约 1.5 秒后平滑恢复自然观察，无抽动。"]
+]);
+
+addRows("P1 中国关刀战士", "P1", [
+  ["基础属性与技能布局","高护甲角色若加载旧属性或缺技能会直接改变定位。","1 级与 30 级无饰品天赋遗物。",["记录面板和实体属性。","逐一开关四项技能并重登。"],"1 级 30 生命、12 护甲、7 攻击、0.26 移速、30% 击退抗性、34 tick 间隔；满级 60 生命、14 攻击；技能状态持久化。"],
+  ["甲胄傍身的投射物减伤与击退","基础击退抗性再次相乘会比目标 95% 减免更强或更弱。","技能开启与关闭各测试。",["用相同箭矢命中并记录伤害与最终位移。","测试近战和爆炸。"],"开启时投射物伤害 -50%，最终投射物击退 -95%，不再与基础 30% 重复相乘；关闭从下一次伤害起失效；其他伤害不受该被动影响。"],
+  ["越战越勇层数与刷新","范围命中多人若每人加一层会瞬间满层。","技能开启，单目标与多目标扇区。",["每次实际伤害后记录层数。","一挥命中多人。","连招四段命中。","等待 8 秒。"],"每次有效挥击只加一层，每层 +6% 攻击，最多五层；连招四段可各加一层；任何有效挥击刷新全部 8 秒。"],
+  ["越战越勇低血减伤排除","环境和绕过效果伤害不应享受濒死 30% 减伤。","把生命调到多个比例。",["分别施加直接攻击、火、窒息/卡墙和绕过效果或抗性伤害。","关闭技能。"],"合法伤害的最终减伤随缺失生命线性至 30%；排除类型不减；关闭立即清层并移除攻击与减伤。"],
+  ["五层火焰视觉","最高层变蓝或粒子过密会与当前美术规格冲突。","逐层叠到五层。",["观察刀刃粒子密度与颜色。","保持五层至少 30 tick。"],"始终红橙火焰，随层增密；五层约每 6 tick 一次红金火星脉冲，不出现蓝色灵魂火。"],
+  ["偃月刀扇区一次结算","逐帧碰撞会让同一挥击对同一目标造成多次伤害。","技能开启，前方多角度多目标。",["测试 220 度、3.25 格边界、视线和友军。","录像检查一次挥击生命变化。"],"动画约第 9 tick 仅一次服务端判定；扇区内合法可见敌人各受完整伤害一次；墙后、背后和友军不受伤。"],
+  ["关闭偃月刀的单体攻击","关闭后若仍范围伤害或动画变化会让开关无意义。","关闭偃月刀。",["主目标旁放多个敌人。","执行普通攻击。"],"保留相同动画，但只对起手锁定主目标造成一次基础伤害；其他目标不受伤。"],
+  ["连招起手条件","弱小单目标或不安全地形起手会浪费长动作。","技能冷却完成。",["测试目标 4.5 格内外、有无视线。","分别放一个低血目标、两个敌人、高生命目标。","在悬崖和墙边测试。"],"只有安全且满足至少两个有效敌人或目标生命高于约两次普通攻击时起手；非法情况不提交。"],
+  ["连招四段窗口与倍率","容差窗口可能重复命中，同一目标一段受伤两次。","高生命无抗性目标。",["记录第 23、43、58、77 tick 前后。","核对 70%、100%、70%、180% 四段。"],"每段在 ±1 tick 容差内只结算一次，同一阶段同目标不重复；倍率和扇区分别正确。"],
+  ["连招死亡取消","实体死亡或濒死后继续补出后续挥击属于幽灵伤害。","连招进行中可精确击杀关刀。",["分别在四段前击杀或移除。","观察后续声音、命中和状态。"],"伤害结算当刻取消动作控制器、连招状态和后续命中窗口；倒下后无后续伤害或最后一击。"],
+  ["连招冷却受击缩短","缩减累计无上限但只能让下一次在当前动作结束后起手。","冷却 12 秒开始。",["连续受到近战与投射物伤害。","连招中继续受击。","关闭技能后观察冷却。"],"每次实际受击缩短 10 tick；当前连招仍完整，足够受击可在结束后立即再次起手；关闭仅阻止新起手，不重置冷却。"],
+  ["第一段前追踪与安全位移","追踪吸附穿墙或把群体覆盖置于主目标前会造成错位。","主目标在第一段边缘并后退。",["观察起手至第一击最多 0.75 格追踪。","在墙、落差和危险方块前重复。"],"只为最初主目标做小幅安全修正；墙体或超过一格落差停止追踪但连招继续；不穿墙或瞬移。"],
+  ["四段推进与一格高差","总推进超过 3 格或墙体取消整个连招会改变命中布局。","开放地与台阶、墙、悬崖。",["记录 0.6、0.8、0.6、1.0 格推进。","在各段前放置阻挡。"],"原始推进总计约 3 格并可跨一格高差；阻挡只停止当前推进段，完整连招继续。"],
+  ["第一段短浮空","与原版击退叠加会把目标打飞并错过第二段。","不同击退抗性目标。",["命中第一段并记录水平、垂直速度。"],"覆盖原版击退而非叠加，约 0.04 水平和 0.22 向上并按抗性衰减，形成近乎原地短浮空。"],
+  ["第二段弹开投射物","不应改变主人或速度，也不能变成主动反射攻击。","敌对主人发射接近中的箭。",["在第二段约 10 tick 窗口从正面射入。","检查弹开方向、速度和所有者。"],"只把正面 180 度、3.5 格内正在接近的投射物向侧前弹开；保留原速度和原主人，不主动反击射手。"],
+  ["后方近战反击转身","反击若在身体未对准前起手，扇区会向旧方向挥空。","无已承诺动作，敌人从后方 3.25 格内命中。",["观察反击目标排队、转身速度和起手角度。","攻击前让原目标死亡。"],"立即锁定并每 tick 最多约 30 度转身；误差 25 度内才提交并精确锁方向；目标前摇中死亡时自然挥空但不转新目标。"],
+  ["攻击与连招结束无旧步行/T-pose","GeckoLib 动作层停止边界错误会暴露旧 locomotion 或走长角度路径。","让关刀在行走中起攻并在连招末尾继续移动。",["录像攻击和连招结束前后 5 tick。","开启诊断命令复查异常。"],"动作期间下层稳定待机，结束以零 tick 动作层明确停止；无旧步行、T-pose、单帧跳变或 ±180 度长路径旋转。"]
+]);
+
+addRows("P1 日本武士", "P1", [
+  ["基础属性与普通周期","普通攻速缩放边界错误会让刺和冲刺也被意外变速。","1 级与 30 级无饰品天赋遗物。",["记录属性和普通攻击周期。","施加攻速正负变化。","观察刺与两种冲刺。"],"1 级 28 生命、6 护甲、6 攻击、0.32 移速、20% 击退抗性；满级 56 生命、12 攻击；普通周期在 24 至 80 tick 缩放，刺和冲刺保持原速。"],
+  ["残心缺血概率边界","概率公式或攻击后加成叠加会超过 80% 或永久残留。","残心开启。",["在满血、半血和 1 点生命大量受击。","每次完成伤害段后 20 tick 内重复。","连续命中刷新。"],"基础从满血 20% 平滑到 1 点生命 60%；攻击后 +20 个百分点持续 20 tick，只刷新不叠加，总上限 80%。"],
+  ["残心可闪避与不可闪避来源","环境或已有持续状态被闪避会清除本应生效的风险。","准备近战、投射物、爆炸、范围、火、中毒、流血、摔落。",["大量触发并记录。","先施加持续状态再成功闪避其他攻击。"],"近战、投射物、爆炸和范围可整次闪避；持续状态与环境不能触发，已有燃烧/中毒/流血不因后续闪避清除。"],
+  ["闪避生成踏込充能","失败闪避或同次多段伤害重复加层会突破三层。","踏込未满。",["让攻击未闪避、成功闪避和同 tick 多段攻击。","检查充能。"],"每次实际成功闪避只获得一层，最多三层；未闪避不加；显示与遗物数据一致。"],
+  ["空闲闪避真实后撤安全","墙体和悬崖边仍强制后撤会把武士塞墙或掉落。","武士处于闲置、行走或普通追敌。",["从不同方向攻击，分别在开放地、墙、危险落点和高差旁。"],"播放 dash_backward 并沿远离来源安全后撤约 2 格、14 tick；危险会缩短或阻止，不穿墙、不越过一格高差。"],
+  ["忙碌动作闪避不移动本体","普通攻击或技能中真实位移会改变命中集合和穿透墙体。","武士正处普通攻击、踏込、刺或 hurt 完整动作。",["触发成功闪避。","观察实体位置、当前动作与残影。"],"不中断当前动作且不移动本体，只生成反向或侧向残影；本次伤害完整闪避。"],
+  ["踏込充能恢复与离场","恢复若并行或关服推进会显著提高机动性。","消耗三层后记录世界时间。",["英灵在场、遣散、召唤器入容器时等待。","关闭服务器一段时间再开启。"],"每 100 tick 按世界时间顺序恢复一层；充能与进度保存在遗物；关服期间不推进。"],
+  ["踏込触发距离边界","目标已经进近战仍消耗层或超过 8 格冲刺会浪费资源。","充能满，目标有视线。",["分别放在近战内、刚出近战、7.9、8、8.1 格。"],"仅普通范围外且不超过 8 格时尝试；近战内保留充能；超界不起手。"],
+  ["踏込整条路径安全","低顶、二格墙、悬崖或动态障碍可能造成飞行、悬空或穿墙。","构造一格高低差、二格障碍、低顶、危险地面和动态阻挡。",["分别触发冲刺。","途中改变环境。"],"贴地保留重力，可平滑过一格高低差；不跨墙、二格障碍、低顶或危险落点；中途变化停在最后安全位置，不悬空。"],
+  ["踏込只在接上攻击后扣层","仅接近成功但没攻击就扣层会让 AI 因目标消失浪费充能。","目标可在冲刺末尾死亡或失效。",["分别成功到达并同 tick 提交攻击、途中失去目标、受阻。","记录层数与 10 tick 冷却。"],"只有成功抵达并提交普通攻击才扣一层；失败不扣；无论成功失败都有 10 tick 内置冷却。"],
+  ["斩的第一刀范围与关闭状态","关闭后仍溅射或开启时第一刀击退过大都会破坏第二刀。","斩开启/关闭各测试，多目标扇区。",["测 90 度、2.25 格与友军视线。","观察主目标和其他目标伤害、击退。"],"开启：主目标 100%、其他 50%，第一刀仅 0.08 极轻水平击退；关闭：只锁定主目标一次，移除范围与第二刀，但保留动画追随。"],
+  ["斩的第二刀分支快照","分支后新进入目标若受伤会让命中集合随 tick 膨胀。","第一刀后在 160 度、2.75 格边界移动多个敌人。",["在分支确认前后分别让敌人进入。","让背后或墙后敌人靠近。"],"分支确认时记录合法集合；只有该集合受第二刀；确认后新目标、背后和墙后不追加。"],
+  ["两段追随的角度与安全边界","追随累计转向或位移无上限会绕着目标转圈并穿越危险。","目标在攻击中横移，附近有墙和落差。",["记录第一段 1.5 格、第二段 0.75 格上限。","让目标转出 ±45 度或失去视线。"],"每 tick 最多修正 15 度且相对段起始不超 ±45 度；超界、失效或不安全时停止追随但攻击继续；不提供无敌。"],
+  ["刺两段伤害与无敌帧","4 tick 间隔若被原版受伤冷却吞掉会只结算一段。","刺冷却完成，多个紧密排列目标。",["记录第 16 与 20 tick。","核对 150% 和 300% 伤害、停身、击退。"],"胶囊内合法目标第一段 150% 无击退并停身约 3 至 4 tick；第二段仅第一段命中集合承受 300% 与轻击退；两段都受护甲但绕过普通受伤冷却。"],
+  ["刺第一段后目标死亡","第二段不能继续对死亡实体伤害，但血液演出应保留在命中位置。","让目标在第一段后死亡。",["观察第 20 tick 伤害与粒子。"],"不再对死亡目标结算第二段伤害；保存的命中位置仍播放红色水尘演出；无异常实体引用。"],
+  ["动作优先级","多个技能同时可用时顺序错误会浪费踏込或让刺永远不用。","踏込有层、刺冷却完成、目标从远到近。",["目标在普通范围外但 8 格内。","进入近战后重复。","刺冷却中重复。"],"范围外优先踏込；近战内刺优先普通攻击；刺不可用时走普通两刀分支。"],
+  ["残影位置与深度","客户端插值若让残影跑到本体前方或透墙，会严重影响视觉判断。","开启默认 2A，触发后撤、忙碌闪避和踏込。",["录像每道残影生成位置。","隔墙观察。","改变视角和帧率。"],"残影只采样本体已经过的上一服务端位置，不跑到前方；冻结骨骼姿态，无实体/碰撞/阴影；正常深度测试不透墙。"],
+  ["2A 溶解与回退","着色器异常或白色描边覆盖主体会出现实心白影。","默认 2A。",["观察保持约 2 tick 后的噪声溶解。","使用调试命令切换 neutral 与 advanced。","尝试 outline on。"],"原始贴图按年龄平滑溶解，早生成先消失；可选附色保留明暗；outline on 被拒绝并说明；运行异常自动回退基础快照并周期尝试恢复。"],
+  ["残影数量软硬上限","多人战斗中无上限残影会耗尽显存或严重掉帧。","大量武士同时连续触发残影。",["观察单体、全局 48、64、96 附近行为和 FPS。"],"单武士最多 8 道；48 至 63 降低新密度；64 起只保留粒子回退；总硬上限 96；不崩溃或无限增长。"],
+  ["关闭残心、踏込、斩、刺的在途语义","开关瞬间清状态或中断已提交动作会造成不同步。","四技能分别处于准备或已起手状态。",["关闭残心并检查临时闪避。","踏込/刺已起手时关闭。","斩两刀中途关闭。"],"残心立即清临时加成并停止新判定；踏込和刺已起手可完成，充能冷却保留；关闭只阻止后续新动作；已提交攻击不产生客户端与服务端分歧。"]
+]);
+
+addRows("P0 多人、存档、性能与最终回归", "P0", [
+  ["两名玩家各自多召唤器隔离","UUID、燃料和成长串绑是多人最严重的数据问题之一。","两名玩家各准备三只不同召唤器。",["同时装入不同遗物、燃料和饰品。","交叉召唤、战斗、召回、重登。","交换其中一只召唤器。"],"每只召唤器的 UUID、英灵、燃料、经验、技能、冷却和控制者独立；交换后只按明确控制权规则变化。"],
+  ["专用服务器客户端权限","客户端若能单方面修改燃料、伤害或充能，可能被延迟和恶意包利用。","使用专用服务器与两个客户端。",["制造延迟后快速点击技能和召唤。","尝试客户端断线时操作。","比较服务端日志与两边显示。"],"所有关键结果由服务端裁定；非法或过期请求拒绝并回滚；两个客户端最终一致。"],
+  ["区块卸载中的英灵与投射物","卸载边界可能留下重复实体、延迟伤害或失去绑定。","让英灵在区块边界战斗。",["控制者快速离开使区块卸载。","跨维度后返回。","重启服务器。"],"实体保存加载一次；投射物不在重载后重复命中；绑定、生命、模式和锚点正确。"],
+  ["服务器重启全状态恢复","仅单项保存正确不代表多个系统组合后仍可恢复。","准备五位英灵，混合跟随/等待/闲逛、不同生命、技能冷却、饰品与清场状态。",["正常停止服务器。","重启并让两名玩家进入。","逐项核对。"],"所有权威状态恢复；跟随按规则重建，等待/闲逛留原地；冷却停机期间不推进；无重复实体或永久效果。"],
+  ["异常断电式停止","未正常保存时至少不能产生明显复制或存档无法打开。","先备份，制造活跃写入状态。",["在召唤、回收封存、考古完成或跨维度重建时强制终止进程。","重启并检查世界。"],"存档可打开；状态落在某个完整提交点；不出现输入和产物同时存在、双英灵、负燃料或损坏 SavedData。"],
+  ["死亡掉落与 keepInventory 开关","召唤器掉落、保留或被其他玩家捡起时绑定语义可能冲突。","分别关闭与开启 keepInventory。",["控制者死亡。","让他人捡起召唤器或等待原主取回。","测试死亡点掉落物被销毁。"],"物品遵循原版规则；绑定不因普通掉落立即终止；拾取不自动偷控制权；真正销毁后按权威规则结束。"],
+  ["语言热切换","运行中切语言可能使缓存文本、教程宽度或动态名称保持旧语言。","世界内从中文切英语再切回。",["检查所有物品名、GUI、技能、知识、教程、命令反馈。"],"文本即时切换；动态名称和悬浮不缓存旧语言；英文自适应布局，中文恢复默认字号。"],
+  ["不同 GUI 缩放与分辨率","小窗口和高缩放最容易暴露点击坐标与绘制坐标不一致。","使用至少三种 GUI 缩放和 1280×720、小窗口、超宽屏。",["打开所有四类 GUI。","点击边缘按钮、槽位和图标。"],"关键界面完整可用；命中框与图形一致；无越界、遮挡、鼠标偏移或关闭按钮不可达。"],
+  ["高延迟与丢包体感","网络抖动下重复点击可能产生双召唤、双扣费或技能状态回弹。","使用网络模拟或远程专用服务器。",["在 150 至 300 ms 延迟下快速召唤、收回、切技能、换模式和装物品。"],"每个请求至多提交一次；无双实体、双扣费、物品复制；客户端最终与服务端一致并给出失败原因。"],
+  ["20 名英灵混战性能","AI、粒子、注视和网络同步叠加可能造成持续低 TPS 或日志爆炸。","性能允许的测试世界，逐步召唤 5、10、20 名混合英灵。",["让其对大量敌人战斗 10 分钟。","记录 FPS、TPS、内存和 latest.log 增长。","战斗结束后继续观察 5 分钟。"],"性能随数量可预期下降但无持续冻结、内存无界增长、每 tick 日志刷屏或战后 AI 仍高负载。"],
+  ["大量罗盘与遗迹索引性能","每只罗盘逐 tick 扫描方块或加载区块会严重拖慢服务器。","多名玩家各携带多只罗盘，远处有多处遗迹。",["持续移动与跨边界 10 分钟。","观察区块加载、TPS 和日志。"],"约每 2 秒查询持久化索引，不扫描方块、不主动加载目标区块；多实例声音合并；性能稳定。"],
+  ["回收箱批量午夜性能","大量已加载箱子同 tick 处理会造成服务器长卡。","放置大量回收箱并填入可回收物。",["跨过午夜。","记录 0 至 20 tick 分散处理、TPS 和结果。"],"箱子按坐标分散到后续 tick；无单 tick 长时间冻结；每箱只处理一次且结果正确。"],
+  ["资源泄漏与长时间待机","GUI、粒子、残影或缓存关闭后未释放会逐步增长内存。","反复执行完整循环。",["连续 50 次打开关闭各 GUI。","连续召唤遣散五位英灵并切换世界。","观察内存与客户端线程。"],"关闭后对象可释放；内存有回落或稳定平台；无越来越慢、重复监听器或叠加声音。"],
+  ["核心流程整体验收","各子系统单独通过仍可能在真实顺序中出现断链。","新生存世界，可使用 JEI 查配方但不使用管理员直接给最终产物。",["获得或制作回声罗盘。","找到并完成遗迹考古，获得遗物与知识。","制作召唤器、准备燃料并召唤英灵。","战斗、升级、安装饰品并使用回收箱。"],"探索→定位→考古→遗物→召唤→战斗→成长→继续探索全链可完成；任何一步都有清楚反馈，无阻断、丢失或必须依赖未说明命令。"],
+  ["最终自由游玩 60 分钟","脚本化用例可能遗漏自然组合、手感与偶发错误。","完成 P0 后使用一个新或复制世界。",["按正常玩家方式自由探索和战斗至少 60 分钟。","期间至少使用两位英灵、教程、知识、饰品、罗盘和回收箱。","结束后检查 latest.log。"],"无崩溃、严重卡顿、物品或英灵消失、存档异常、持续报错；所有主观问题记录具体场景与建议。"],
+  ["结果包完整性","测试员填写的数据和截图若导出丢失，整轮测试将无法复盘。","至少填写通过、失败、阻塞各一项并附多张图片。",["点击导出独立结果 HTML。","在另一台电脑或无网络环境打开。","再导出 JSON，并在干净浏览器导入。"],"结果 HTML 独立显示全部用例、环境、状态、文字和截图；JSON 可恢复继续编辑；不依赖原目录、网络或本机缓存。"]
+]);
+
+// TEST_CASE_DATA
+
+testCases.forEach(function(tc,index){tc.id="EW-"+String(index+1).padStart(3,"0");});
+const statusLabels={untested:"未测试",pass:"通过",fail:"失败",blocked:"阻塞",skip:"跳过"};
+const severityLabels={"":"未填写",S1:"S1 阻断",S2:"S2 严重",S3:"S3 一般",S4:"S4 建议"};
+let state={schema:SCHEMA,version:VERSION,meta:{date:new Date().toISOString().slice(0,10)},results:{}};
+let db=null,saveTimer=0,activeAttachmentCaseId="";
+function openDb(){
+  return new Promise(function(resolve,reject){
+    const req=indexedDB.open("echo-warrior-test-cases",1);
+    req.onupgradeneeded=function(){if(!req.result.objectStoreNames.contains("kv"))req.result.createObjectStore("kv");};
+    req.onsuccess=function(){resolve(req.result);};req.onerror=function(){reject(req.error);};
+  });
+}
+function dbGet(key){return new Promise(function(resolve,reject){const r=db.transaction("kv","readonly").objectStore("kv").get(key);r.onsuccess=function(){resolve(r.result);};r.onerror=function(){reject(r.error);};});}
+function dbPut(key,value){return new Promise(function(resolve,reject){const r=db.transaction("kv","readwrite").objectStore("kv").put(value,key);r.onsuccess=function(){resolve();};r.onerror=function(){reject(r.error);};});}
+async function loadState(){
+  try{db=await openDb();const saved=await dbGet("state");if(saved&&saved.schema===SCHEMA)state=saved;}catch(error){console.warn(error);const raw=localStorage.getItem(SCHEMA);if(raw)state=JSON.parse(raw);}
+  if(!state.meta)state.meta={};if(!state.results)state.results={};if(!state.meta.date)state.meta.date=new Date().toISOString().slice(0,10);
+}
+function scheduleSave(){
+  clearTimeout(saveTimer);saveTimer=setTimeout(async function(){
+    try{if(db)await dbPut("state",state);else localStorage.setItem(SCHEMA,JSON.stringify(state));}
+    catch(error){console.warn(error);toast("自动保存失败：图片可能过大，请先导出 JSON 备份。");}
+  },350);
+}
+function resultFor(id){
+  if(!state.results[id])state.results[id]={status:"untested",severity:"",actual:"",issue:"",attachments:[]};
+  return state.results[id];
+}
+function esc(value){
+  return String(value==null?"":value).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});
+}
+function sectionIcon(section){
+  if(section.indexOf("教程")>=0)return mcIcons.manual;
+  if(section.indexOf("知识")>=0||section.indexOf("考古")>=0||section.indexOf("罗盘")>=0)return mcIcons.knowledge;
+  if(section.indexOf("饰品")>=0||section.indexOf("天赋")>=0)return mcIcons.accessory;
+  if(section.indexOf("罗马")>=0)return mcIcons.roman;
+  if(section.indexOf("阿兹特克")>=0)return mcIcons.aztec;
+  if(section.indexOf("埃及")>=0)return mcIcons.egyptian;
+  if(section.indexOf("关刀")>=0)return mcIcons.guandao;
+  if(section.indexOf("武士")>=0)return mcIcons.samurai;
+  return mcIcons.summoner;
+}
+function statusOptions(selected){
+  return Object.keys(statusLabels).map(function(key){return '<option value="'+key+'"'+(key===selected?" selected":"")+'>'+statusLabels[key]+'</option>';}).join("");
+}
+function severityOptions(selected){
+  return Object.keys(severityLabels).map(function(key){return '<option value="'+key+'"'+(key===selected?" selected":"")+'>'+severityLabels[key]+'</option>';}).join("");
+}
+function render(){
+  const query=document.getElementById("search").value.trim().toLowerCase();
+  const section=document.getElementById("sectionFilter").value;
+  const priority=document.getElementById("priorityFilter").value;
+  const status=document.getElementById("statusFilter").value;
+  const visible=testCases.filter(function(tc){
+    const r=resultFor(tc.id);
+    const hay=[tc.id,tc.title,tc.risk,tc.preconditions,tc.expected].concat(tc.steps).join(" ").toLowerCase();
+    return (!query||hay.indexOf(query)>=0)&&(!section||tc.section===section)&&(!priority||tc.priority===priority)&&(!status||r.status===status);
+  });
+  const grouped={};visible.forEach(function(tc){(grouped[tc.section]||(grouped[tc.section]=[])).push(tc);});
+  const root=document.getElementById("content");root.innerHTML="";
+  Object.keys(grouped).forEach(function(sectionName){
+    const block=document.createElement("section");block.className="section-block";
+    block.innerHTML='<div class="section-title"><img alt="" src="'+sectionIcon(sectionName)+'"><h2>'+esc(sectionName)+'</h2><small>'+grouped[sectionName].length+' 项</small></div><div class="cases"></div>';
+    const holder=block.querySelector(".cases");
+    grouped[sectionName].forEach(function(tc){holder.appendChild(renderCase(tc));});
+    root.appendChild(block);
+  });
+  if(!visible.length)root.innerHTML='<div class="empty">'+icon("search",28)+'<p>没有符合当前筛选条件的测试用例。</p></div>';
+  updateSummary();
+}
+function renderCase(tc){
+  const r=resultFor(tc.id),card=document.createElement("article");card.className="case";card.dataset.id=tc.id;card.dataset.status=r.status;
+  card.innerHTML=
+    '<button class="case-head" type="button"><span class="chev">'+icon("chevron",18)+'</span><span class="case-id">'+tc.id+'</span><span class="priority '+tc.priority+'">'+tc.priority+'</span><span class="case-name">'+esc(tc.title)+'</span><span class="case-brief">'+esc(tc.expected)+'</span><select class="head-status" aria-label="测试状态">'+statusOptions(r.status)+'</select></button>'+
+    '<div class="case-shell"><div class="case-inner"><div class="case-body">'+
+      '<div class="box risk"><h3>'+icon("alert",16)+'风险与问题描述</h3><p>'+esc(tc.risk)+'</p></div>'+
+      '<div class="box"><h3>'+icon("info",16)+'前置条件</h3><p>'+esc(tc.preconditions)+'</p></div>'+
+      '<div class="box full"><h3>'+icon("steps",16)+'操作步骤</h3><ol>'+tc.steps.map(function(step){return "<li>"+esc(step)+"</li>";}).join("")+'</ol></div>'+
+      '<div class="box full expected"><h3>'+icon("target",16)+'预期结果</h3><p>'+esc(tc.expected)+'</p></div>'+
+      '<div class="box full"><h3>'+icon("clipboard",16)+'测试结果</h3>'+
+        '<div class="result-grid"><label>状态<select class="result-status">'+statusOptions(r.status)+'</select></label><label>失败严重程度<select class="severity">'+severityOptions(r.severity)+'</select></label><label>复现频率<input class="frequency" value="'+esc(r.frequency||"")+'" placeholder="例如 5/5、偶发、仅重登后"></label></div>'+
+        '<label>实际结果<textarea class="actual" placeholder="写下实际观察到的行为、数值、提示或日志关键词">'+esc(r.actual)+'</textarea></label>'+
+        '<label>问题描述与最短复现步骤<textarea class="issue" placeholder="失败时填写：从什么状态开始，做了什么，发生了什么；通过时可留空">'+esc(r.issue)+'</textarea></label>'+
+      '</div>'+
+      '<div class="box full attachment-box" tabindex="0"><h3>'+icon("paperclip",16)+'截图证据</h3><div class="attachment-bar"><label class="file-btn">'+icon("image",16)+'添加图片<input class="attach" type="file" accept="image/*" multiple></label><small>先点击本用例，再按 <kbd>Ctrl</kbd> + <kbd>V</kbd> 粘贴截图；也可以把图片拖到这里。每项最多 4 张。</small></div><div class="previews"></div></div>'+
+    '</div></div></div>';
+  const head=card.querySelector(".case-head"),headStatus=card.querySelector(".head-status");
+  head.addEventListener("click",function(event){if(event.target.closest("select"))return;card.classList.toggle("open");});
+  headStatus.addEventListener("change",function(){setStatus(card,tc.id,this.value);card.querySelector(".result-status").value=this.value;});
+  card.querySelector(".result-status").addEventListener("change",function(){setStatus(card,tc.id,this.value);headStatus.value=this.value;});
+  card.querySelector(".severity").addEventListener("change",function(){resultFor(tc.id).severity=this.value;scheduleSave();});
+  card.querySelector(".frequency").addEventListener("input",function(){resultFor(tc.id).frequency=this.value;scheduleSave();});
+  card.querySelector(".actual").addEventListener("input",function(){resultFor(tc.id).actual=this.value;scheduleSave();});
+  card.querySelector(".issue").addEventListener("input",function(){resultFor(tc.id).issue=this.value;scheduleSave();});
+  card.querySelector(".attach").addEventListener("change",async function(){await addAttachments(tc.id,Array.from(this.files));this.value="";renderPreviews(card,tc.id);});
+  card.addEventListener("pointerdown",function(){setActiveAttachmentCase(card);});
+  const attachmentBox=card.querySelector(".attachment-box");
+  ["dragenter","dragover"].forEach(function(type){attachmentBox.addEventListener(type,function(event){event.preventDefault();event.dataTransfer.dropEffect="copy";attachmentBox.classList.add("drag-over");setActiveAttachmentCase(card);});});
+  attachmentBox.addEventListener("dragleave",function(event){if(!attachmentBox.contains(event.relatedTarget))attachmentBox.classList.remove("drag-over");});
+  attachmentBox.addEventListener("drop",async function(event){
+    event.preventDefault();attachmentBox.classList.remove("drag-over");setActiveAttachmentCase(card);
+    const files=Array.from(event.dataTransfer.files||[]).filter(function(file){return file.type.startsWith("image/");});
+    if(!files.length){toast("拖入的内容中没有可用图片。");return;}
+    const added=await addAttachments(tc.id,files);renderPreviews(card,tc.id);if(added)toast("已添加 "+added+" 张图片到 "+tc.id+"。");
+  });
+  if(activeAttachmentCaseId===tc.id)card.classList.add("paste-target");
+  renderPreviews(card,tc.id);return card;
+}
+function setActiveAttachmentCase(card){
+  document.querySelectorAll(".case.paste-target").forEach(function(item){item.classList.remove("paste-target");});
+  activeAttachmentCaseId=card.dataset.id;card.classList.add("paste-target");
+}
+function setStatus(card,id,value){resultFor(id).status=value;card.dataset.status=value;scheduleSave();updateSummary();}
+function renderPreviews(card,id){
+  const holder=card.querySelector(".previews"),items=resultFor(id).attachments||[];holder.innerHTML="";
+  items.forEach(function(item,index){
+    const wrap=document.createElement("div");wrap.className="shot";
+    wrap.innerHTML='<img alt="'+esc(item.name||"测试截图")+'" src="'+item.data+'"><button title="移除图片">'+icon("x",15)+'</button>';
+    wrap.querySelector("img").onclick=function(){openLightbox(item.data);};
+    wrap.querySelector("button").onclick=function(){resultFor(id).attachments.splice(index,1);scheduleSave();renderPreviews(card,id);};
+    holder.appendChild(wrap);
+  });
+}
+async function addAttachments(id,files){
+  const result=resultFor(id);if(!result.attachments)result.attachments=[];let added=0;
+  for(const file of files){
+    if(result.attachments.length>=4){toast("每个用例最多添加 4 张图片。");break;}
+    if(!file.type.startsWith("image/"))continue;
+    try{result.attachments.push({name:file.name||("粘贴截图-"+new Date().toISOString().replace(/[:.]/g,"-")+".png"),data:await compressImage(file)});added++;}catch(error){console.warn(error);toast("有一张图片无法读取。");}
+  }
+  scheduleSave();return added;
+}
+function compressImage(file){
+  return new Promise(function(resolve,reject){
+    const reader=new FileReader();
+    reader.onerror=reject;reader.onload=function(){
+      const img=new Image();img.onerror=reject;img.onload=function(){
+        const max=1600,scale=Math.min(1,max/Math.max(img.width,img.height));
+        const canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+        const ctx=canvas.getContext("2d");ctx.imageSmoothingEnabled=false;ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL("image/webp",0.86));
+      };img.src=reader.result;
+    };reader.readAsDataURL(file);
+  });
+}
+function updateSummary(){
+  const counts={untested:0,pass:0,fail:0,blocked:0,skip:0};
+  testCases.forEach(function(tc){counts[resultFor(tc.id).status]=(counts[resultFor(tc.id).status]||0)+1;});
+  const handled=testCases.length-counts.untested,percent=testCases.length?Math.round(handled*100/testCases.length):0;
+  document.getElementById("summary").textContent="已处理 "+handled+" / "+testCases.length+" 项（"+percent+"%）";
+  document.getElementById("progressBar").style.width=percent+"%";
+  document.getElementById("statusCounts").innerHTML='<span class="count pass">通过 '+counts.pass+'</span><span class="count fail">失败 '+counts.fail+'</span><span class="count blocked">阻塞 '+counts.blocked+'</span><span class="count">未测试 '+counts.untested+'</span>';
+}
+function toast(message){const el=document.getElementById("toast");el.textContent=message;el.classList.add("show");clearTimeout(el._timer);el._timer=setTimeout(function(){el.classList.remove("show");},2600);}
+function download(name,content,type){const blob=new Blob([content],{type:type}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},1000);}
+function exportPayload(){return {schema:SCHEMA,version:VERSION,exportedAt:new Date().toISOString(),meta:state.meta,results:state.results,cases:testCases};}
+function reportHtml(){
+  const payload=exportPayload(),rows=testCases.map(function(tc){
+    const r=resultFor(tc.id),shots=(r.attachments||[]).map(function(a){return '<figure><img src="'+a.data+'" alt="'+esc(a.name)+'"><figcaption>'+esc(a.name)+'</figcaption></figure>';}).join("");
+    return '<article class="case '+r.status+'"><header><b>'+tc.id+' · '+esc(tc.title)+'</b><span>'+tc.priority+' · '+statusLabels[r.status]+'</span></header><p class="section">'+esc(tc.section)+'</p><h3>风险与问题描述</h3><p>'+esc(tc.risk)+'</p><h3>前置条件</h3><p>'+esc(tc.preconditions)+'</p><h3>步骤</h3><ol>'+tc.steps.map(function(s){return "<li>"+esc(s)+"</li>";}).join("")+'</ol><h3>预期结果</h3><p>'+esc(tc.expected)+'</p><h3>实际结果</h3><p>'+esc(r.actual||"未填写")+'</p><h3>问题与复现</h3><p>'+esc(r.issue||"未填写")+'</p><p class="minor">严重程度：'+esc(severityLabels[r.severity||""])+'；复现频率：'+esc(r.frequency||"未填写")+'</p><div class="shots">'+shots+'</div></article>';
+  }).join("");
+  return '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Echo Warrior 测试结果</title><style>body{margin:0;background:#121016;color:#eee8df;font:15px/1.6 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1050px;margin:auto;padding:30px 18px}h1{color:#e4c980}.meta,.case{border:1px solid #4b4352;border-radius:10px;background:#211d27;padding:16px;margin:12px 0}.case header{display:flex;gap:12px;justify-content:space-between}.case header span,.minor,.section{color:#aaa2af}.case.pass{border-left:4px solid #79c68d}.case.fail{border-left:4px solid #e17777}.case.blocked{border-left:4px solid #e3a15f}h3{font-size:13px;color:#dbc48d;margin:12px 0 3px}p{white-space:pre-wrap;margin:3px 0}ol{margin-top:4px}.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}figure{margin:0}figure img{width:100%;max-height:440px;object-fit:contain;background:#0b0a0d;border:1px solid #4d4554}figcaption{font-size:12px;color:#aaa2af} @media print{body{background:#fff;color:#111}.meta,.case{background:#fff;border-color:#bbb;break-inside:avoid}}</style></head><body><main><h1>Echo Warrior 测试结果</h1><div class="meta"><p>版本：'+VERSION+'</p><p>导出时间：'+esc(payload.exportedAt)+'</p><p>测试员：'+esc(state.meta.tester||"未填写")+'</p><p>环境：'+esc([state.meta.os,state.meta.java,state.meta.gpu,state.meta.mode,state.meta.mods].filter(Boolean).join("；")||"未填写")+'</p></div>'+rows+'</main></body></html>';
+}
+function openLightbox(src){document.getElementById("lightboxImage").src=src;document.getElementById("lightbox").classList.add("open");}
+document.getElementById("closeLightbox").onclick=function(){document.getElementById("lightbox").classList.remove("open");};
+document.getElementById("lightbox").addEventListener("click",function(e){if(e.target===this)this.classList.remove("open");});
+document.addEventListener("paste",async function(event){
+  const items=event.clipboardData?Array.from(event.clipboardData.items||[]):[];
+  const files=items.filter(function(item){return item.kind==="file"&&item.type.startsWith("image/");}).map(function(item){return item.getAsFile();}).filter(Boolean);
+  if(!files.length)return;
+  const eventCard=event.target&&event.target.closest?event.target.closest(".case"):null;
+  const card=eventCard||(activeAttachmentCaseId?document.querySelector('.case[data-id="'+activeAttachmentCaseId+'"]'):null);
+  if(!card){toast("请先点击要添加截图的测试用例，再按 Ctrl + V。");return;}
+  event.preventDefault();card.classList.add("open");setActiveAttachmentCase(card);
+  const added=await addAttachments(card.dataset.id,files);renderPreviews(card,card.dataset.id);if(added)toast("已粘贴 "+added+" 张截图到 "+card.dataset.id+"。");
+});
+document.querySelectorAll("[data-meta]").forEach(function(input){input.addEventListener("input",function(){state.meta[this.dataset.meta]=this.value;scheduleSave();});});
+["search","sectionFilter","priorityFilter","statusFilter"].forEach(function(id){document.getElementById(id).addEventListener(id==="search"?"input":"change",render);});
+document.getElementById("expandVisible").onclick=function(){document.querySelectorAll(".case").forEach(function(c){c.classList.add("open");});};
+document.getElementById("collapseAll").onclick=function(){document.querySelectorAll(".case").forEach(function(c){c.classList.remove("open");});};
+document.getElementById("exportJson").onclick=function(){download("Echo-Warrior-测试结果-"+(state.meta.tester||"tester")+"-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify(exportPayload(),null,2),"application/json");};
+document.getElementById("exportHtml").onclick=function(){download("Echo-Warrior-测试结果-"+(state.meta.tester||"tester")+"-"+new Date().toISOString().slice(0,10)+".html",reportHtml(),"text/html;charset=utf-8");};
+document.getElementById("importJson").onchange=async function(){
+  try{const data=JSON.parse(await this.files[0].text());if(data.schema!==SCHEMA)throw new Error("schema");state.meta=data.meta||{};state.results=data.results||{};scheduleSave();bindMeta();render();toast("测试结果已导入。");}catch(error){toast("无法导入：不是本测试用例导出的 JSON。");}this.value="";
+};
+document.getElementById("reset").onclick=function(){if(confirm("确定清空所有状态、文字和截图吗？此操作无法撤销。")){state={schema:SCHEMA,version:VERSION,meta:{date:new Date().toISOString().slice(0,10)},results:{}};scheduleSave();bindMeta();render();toast("已清空全部结果。");}};
+function bindMeta(){document.querySelectorAll("[data-meta]").forEach(function(input){input.value=state.meta[input.dataset.meta]||"";});}
+async function init(){
+  await loadState();bindMeta();
+  const sections=Array.from(new Set(testCases.map(function(tc){return tc.section;})));
+  const select=document.getElementById("sectionFilter");sections.forEach(function(s){const o=document.createElement("option");o.value=s;o.textContent=s;select.appendChild(o);});
+  render();
+}
+init();
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
@@ -19,11 +20,11 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Server-authoritative attention and facial presentation for the Guandao warrior.
+ * Shared server-authoritative attention and facial presentation for echo warriors.
  * The timings and priorities mirror the established Roman/Aztec visual contract,
- * while the model-specific bone axes remain entirely in the client renderer.
+ * while model-specific bone axes remain entirely in each client renderer.
  */
-final class GuandaoVisualBehavior {
+final class GuandaoVisualBehavior<T extends PathfinderMob & GuandaoVisualBehavior.Host> {
 	private static final double HEAD_GAZE_RADIUS = 0.35;
 	private static final double VISUAL_HEAD_CENTER_HEIGHT = 27.5 / 16.0;
 	private static final double INVISIBLE_GAZE_RANGE = 4.0;
@@ -43,7 +44,7 @@ final class GuandaoVisualBehavior {
 	private static final float CAUGHT_EXIT_MIN_OWNER_ANGLE = 70.0F;
 	private static final float CAUGHT_EXIT_MAX_WALK_ANGLE = 130.0F;
 
-	private final GuandaoWarriorEchoEntity entity;
+	private final T entity;
 	private final RandomSource random = RandomSource.create();
 	private final Map<UUID, PlayerGazeProgress> playerGazeProgress = new HashMap<>();
 
@@ -100,7 +101,7 @@ final class GuandaoVisualBehavior {
 	private long caughtExitOwnerAvoidUntil = -1L;
 	private Vec3 caughtExitOwnerAvoidPoint = Vec3.ZERO;
 
-	GuandaoVisualBehavior(GuandaoWarriorEchoEntity entity) {
+	GuandaoVisualBehavior(T entity) {
 		this.entity = entity;
 	}
 
@@ -118,8 +119,8 @@ final class GuandaoVisualBehavior {
 		long now = level.getGameTime();
 		tickBlinkClock(now);
 		if (this.entity.getVisualReactionUntil() <= now
-				&& this.entity.getVisualReaction() != GuandaoWarriorEchoEntity.VISUAL_NORMAL) {
-			this.entity.setVisualReaction(GuandaoWarriorEchoEntity.VISUAL_NORMAL, now);
+				&& this.entity.getVisualReaction() != Host.VISUAL_NORMAL) {
+			this.entity.setVisualReaction(Host.VISUAL_NORMAL, now);
 			this.entity.setVisualCuriousTilt((byte)0);
 		}
 
@@ -164,7 +165,7 @@ final class GuandaoVisualBehavior {
 				? attacker.getEyePosition()
 				: this.entity.position().add(this.entity.getLookAngle().reverse());
 		applyAttention(new AttentionCandidate(attacker, point, 1100,
-				GuandaoWarriorEchoEntity.VISUAL_HURT, 16, false, AttentionKind.DAMAGE_SOURCE), now);
+				Host.VISUAL_HURT, 16, false, AttentionKind.DAMAGE_SOURCE), now);
 	}
 
 	boolean ownsMovement() {
@@ -252,7 +253,7 @@ final class GuandaoVisualBehavior {
 		this.caughtReactionScheduledAt = caughtEligible ? now + chooseCaughtReactionDelay() : -1L;
 		this.playerGazeProgress.clear();
 		applyAttention(new AttentionCandidate(player, player.getEyePosition(), MUTUAL_GAZE_PRIORITY,
-				GuandaoWarriorEchoEntity.VISUAL_MUTUAL_GAZE, 20 * 60, false, AttentionKind.MUTUAL_GAZE), now);
+				Host.VISUAL_MUTUAL_GAZE, 20 * 60, false, AttentionKind.MUTUAL_GAZE), now);
 		this.entity.getNavigation().stop();
 	}
 
@@ -293,7 +294,7 @@ final class GuandaoVisualBehavior {
 		if (this.mutualGazeDistractionStartedAt >= 0L) {
 			this.mutualGazeDistractionStartedAt = -1L;
 			applyAttention(new AttentionCandidate(player, this.mutualGazeLastSeenPoint, MUTUAL_GAZE_PRIORITY,
-					GuandaoWarriorEchoEntity.VISUAL_MUTUAL_GAZE, 20 * 60, false, AttentionKind.MUTUAL_GAZE), now);
+					Host.VISUAL_MUTUAL_GAZE, 20 * 60, false, AttentionKind.MUTUAL_GAZE), now);
 		} else {
 			setMutualGazePoints();
 		}
@@ -335,7 +336,7 @@ final class GuandaoVisualBehavior {
 		if (!isCaughtReactionActive()) return false;
 		long elapsed = now - this.caughtReactionStartedAt;
 		this.entity.getNavigation().stop();
-		this.entity.setVisualReaction(GuandaoWarriorEchoEntity.VISUAL_CAUGHT, now + 10);
+		this.entity.setVisualReaction(Host.VISUAL_CAUGHT, now + 10);
 		this.entity.setVisualCuriousTilt((byte)0);
 		if (elapsed < 10) {
 			this.entity.setVisualEyeAttentionPoint(owner.getEyePosition());
@@ -375,7 +376,7 @@ final class GuandaoVisualBehavior {
 		this.caughtReactionAwayPoint = createAwayPoint(owner, 35.0F, 55.0F, 6.0, 9.0);
 		this.entity.setVisualCaughtReactionStart(now);
 		this.entity.setVisualBlink(now + 3, (byte)2);
-		this.entity.setVisualReaction(GuandaoWarriorEchoEntity.VISUAL_CAUGHT, now + 60);
+		this.entity.setVisualReaction(Host.VISUAL_CAUGHT, now + 60);
 		this.entity.setVisualCuriousTilt((byte)0);
 		this.entity.bumpVisualSequence();
 	}
@@ -504,7 +505,7 @@ final class GuandaoVisualBehavior {
 			this.caughtExitOwnerAvoidUntil = now + 80 + this.random.nextInt(61);
 			this.caughtExitOwnerAvoidPoint = finalFocus;
 			applyAttention(new AttentionCandidate(null, finalFocus, 235,
-					GuandaoWarriorEchoEntity.VISUAL_NORMAL, 35 + this.random.nextInt(36), false, AttentionKind.NORMAL), now);
+					Host.VISUAL_NORMAL, 35 + this.random.nextInt(36), false, AttentionKind.NORMAL), now);
 		}
 	}
 
@@ -516,25 +517,25 @@ final class GuandaoVisualBehavior {
 		boolean locomotion = shouldUseLocomotionAttention();
 		AttentionCandidate best = isVisible(combatTarget)
 				? new AttentionCandidate(combatTarget, combatTarget.getEyePosition(), 800,
-						GuandaoWarriorEchoEntity.VISUAL_ALERT, 30, false, AttentionKind.COMBAT_TARGET)
+						Host.VISUAL_ALERT, 30, false, AttentionKind.COMBAT_TARGET)
 				: now < this.caughtExitOwnerAvoidUntil
 						? new AttentionCandidate(null, this.caughtExitOwnerAvoidPoint, 220,
-								GuandaoWarriorEchoEntity.VISUAL_NORMAL, 35 + this.random.nextInt(36), false, AttentionKind.NORMAL)
+								Host.VISUAL_NORMAL, 35 + this.random.nextInt(36), false, AttentionKind.NORMAL)
 						: locomotion
 								? new AttentionCandidate(null, createLocomotionAttentionPoint(), LOCOMOTION_ATTENTION_PRIORITY,
-										GuandaoWarriorEchoEntity.VISUAL_LOCOMOTION, LOCOMOTION_ATTENTION_TICKS, false, AttentionKind.LOCOMOTION)
+										Host.VISUAL_LOCOMOTION, LOCOMOTION_ATTENTION_TICKS, false, AttentionKind.LOCOMOTION)
 								: new AttentionCandidate(owner, owner.getEyePosition(), 220,
-										GuandaoWarriorEchoEntity.VISUAL_NORMAL, 35 + this.random.nextInt(36), false, AttentionKind.NORMAL);
+										Host.VISUAL_NORMAL, 35 + this.random.nextInt(36), false, AttentionKind.NORMAL);
 
 		LivingEntity attacker = this.entity.getLastHurtByMob();
 		if (isRecentWithin(this.entity, this.entity.getLastHurtByMobTimestamp(), 20) && isVisible(attacker)) {
 			best = new AttentionCandidate(attacker, attacker.getEyePosition(), 1100,
-					GuandaoWarriorEchoEntity.VISUAL_HURT, 16, false, AttentionKind.DAMAGE_SOURCE);
+					Host.VISUAL_HURT, 16, false, AttentionKind.DAMAGE_SOURCE);
 		}
 		LivingEntity ownerAttacker = owner.getLastHurtByMob();
 		if (isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), 20) && isVisible(ownerAttacker) && best.priority() < 1050) {
 			best = new AttentionCandidate(ownerAttacker, ownerAttacker.getEyePosition(), 1050,
-					GuandaoWarriorEchoEntity.VISUAL_ALERT, 24, false, AttentionKind.DAMAGE_SOURCE);
+					Host.VISUAL_ALERT, 24, false, AttentionKind.DAMAGE_SOURCE);
 		}
 
 		List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class,
@@ -549,18 +550,18 @@ final class GuandaoVisualBehavior {
 				AttentionKind kind = primed ? AttentionKind.PRIMED_CREEPER
 						: distanceSqr <= 64.0 ? AttentionKind.CLOSE_CREEPER : AttentionKind.NORMAL;
 				byte reaction = primed || distanceSqr <= 64.0
-						? GuandaoWarriorEchoEntity.VISUAL_STARTLED : GuandaoWarriorEchoEntity.VISUAL_ALERT;
+						? Host.VISUAL_STARTLED : Host.VISUAL_ALERT;
 				if (score > best.priority()) best = new AttentionCandidate(living, living.getEyePosition(), score,
 						reaction, primed ? 30 : 22, false, kind);
 				continue;
 			}
 			double closingSpeed = approachingSpeed(living);
 			int score;
-			byte reaction = GuandaoWarriorEchoEntity.VISUAL_NORMAL;
+			byte reaction = Host.VISUAL_NORMAL;
 			int duration = 30 + this.random.nextInt(51);
 			if (distanceSqr <= 100.0 && closingSpeed > 0.22) {
 				score = 620 + (int)(closingSpeed * 250.0);
-				reaction = GuandaoWarriorEchoEntity.VISUAL_STARTLED;
+				reaction = Host.VISUAL_STARTLED;
 				duration = 18;
 			} else if (living == owner) score = 220;
 			else if (living instanceof Player) score = 170;
@@ -568,11 +569,11 @@ final class GuandaoVisualBehavior {
 			score -= (int)(Math.sqrt(distanceSqr) * 4.0);
 			score += this.random.nextInt(35);
 			if (score > best.priority()) {
-				boolean curious = reaction == GuandaoWarriorEchoEntity.VISUAL_NORMAL
+				boolean curious = reaction == Host.VISUAL_NORMAL
 						&& isInSafeIdleState() && this.random.nextFloat() < 0.1F;
 				best = new AttentionCandidate(living, living.getEyePosition(), score,
-						curious ? GuandaoWarriorEchoEntity.VISUAL_CURIOUS : reaction, duration, curious,
-						reaction == GuandaoWarriorEchoEntity.VISUAL_STARTLED ? AttentionKind.APPROACHING : AttentionKind.NORMAL);
+						curious ? Host.VISUAL_CURIOUS : reaction, duration, curious,
+						reaction == Host.VISUAL_STARTLED ? AttentionKind.APPROACHING : AttentionKind.NORMAL);
 			}
 		}
 		if (now >= this.caughtExitOwnerAvoidUntil && best.priority() <= 220 && this.random.nextFloat() < 0.3F) {
@@ -582,7 +583,7 @@ final class GuandaoVisualBehavior {
 					.add(0.0, this.random.nextDouble() * 3.0 - 1.0, 0.0);
 			boolean curious = isInSafeIdleState() && this.random.nextFloat() < 0.1F;
 			return new AttentionCandidate(null, point, 230,
-					curious ? GuandaoWarriorEchoEntity.VISUAL_CURIOUS : GuandaoWarriorEchoEntity.VISUAL_NORMAL,
+					curious ? Host.VISUAL_CURIOUS : Host.VISUAL_NORMAL,
 					30 + this.random.nextInt(51), curious, AttentionKind.NORMAL);
 		}
 		return best;
@@ -715,9 +716,9 @@ final class GuandaoVisualBehavior {
 	private void tickBlinkClock(long now) {
 		if (this.nextBlinkAt == 0L) this.nextBlinkAt = now + 50 + this.random.nextInt(71);
 		byte reaction = this.entity.getVisualReaction();
-		if (now < this.nextBlinkAt || reaction == GuandaoWarriorEchoEntity.VISUAL_STARTLED
-				|| reaction == GuandaoWarriorEchoEntity.VISUAL_HURT
-				|| reaction == GuandaoWarriorEchoEntity.VISUAL_CAUGHT) return;
+		if (now < this.nextBlinkAt || reaction == Host.VISUAL_STARTLED
+				|| reaction == Host.VISUAL_HURT
+				|| reaction == Host.VISUAL_CAUGHT) return;
 		this.entity.setVisualBlink(now, this.random.nextFloat() < 0.1F ? (byte)2 : (byte)1);
 		this.nextBlinkAt = now + 50 + this.random.nextInt(71);
 	}
@@ -742,7 +743,7 @@ final class GuandaoVisualBehavior {
 		float yaw = this.entity.visualBodyYaw() + (this.random.nextBoolean() ? offset : -offset);
 		Vec3 point = this.entity.getEyePosition().add(directionFromYaw(yaw).scale(4.0 + this.random.nextDouble() * 3.0))
 				.add(0.0, this.random.nextDouble() * 1.5 - 0.5, 0.0);
-		applyAttention(new AttentionCandidate(null, point, 235, GuandaoWarriorEchoEntity.VISUAL_NORMAL,
+		applyAttention(new AttentionCandidate(null, point, 235, Host.VISUAL_NORMAL,
 				(int)(this.mutualGazeCooldownUntil - now), false, AttentionKind.NORMAL), now);
 	}
 
@@ -772,9 +773,9 @@ final class GuandaoVisualBehavior {
 		this.eyeAttentionPriority = 0;
 		this.eyeAttentionExpiresAt = now;
 		this.eyeAttentionKind = AttentionKind.NORMAL;
-		if (this.entity.getVisualReaction() == GuandaoWarriorEchoEntity.VISUAL_MUTUAL_GAZE
-				|| this.entity.getVisualReaction() == GuandaoWarriorEchoEntity.VISUAL_CAUGHT) {
-			this.entity.setVisualReaction(GuandaoWarriorEchoEntity.VISUAL_NORMAL, now);
+		if (this.entity.getVisualReaction() == Host.VISUAL_MUTUAL_GAZE
+				|| this.entity.getVisualReaction() == Host.VISUAL_CAUGHT) {
+			this.entity.setVisualReaction(Host.VISUAL_NORMAL, now);
 			this.entity.setVisualCuriousTilt((byte)0);
 		}
 	}
@@ -832,7 +833,32 @@ final class GuandaoVisualBehavior {
 		this.entity.setVisualAttentionStartedAt(now);
 		this.entity.setVisualEyeAttentionPoint(this.caughtExitFocusPoint);
 		this.entity.setVisualAttentionPoint(this.caughtExitFocusPoint);
-		this.entity.setVisualReaction(GuandaoWarriorEchoEntity.VISUAL_NORMAL, this.caughtExitEndsAt + 20);
+		this.entity.setVisualReaction(Host.VISUAL_NORMAL, this.caughtExitEndsAt + 20);
+	}
+
+	interface Host {
+		byte VISUAL_NORMAL = 0;
+		byte VISUAL_ALERT = 1;
+		byte VISUAL_STARTLED = 2;
+		byte VISUAL_HURT = 3;
+		byte VISUAL_CURIOUS = 4;
+		byte VISUAL_MUTUAL_GAZE = 5;
+		byte VISUAL_CAUGHT = 6;
+		byte VISUAL_LOCOMOTION = 7;
+
+		byte getVisualReaction();
+		long getVisualReactionUntil();
+		void setVisualAttentionPoint(Vec3 point);
+		void setVisualEyeAttentionPoint(Vec3 point);
+		void setVisualReaction(byte reaction, long until);
+		void setVisualBlink(long start, byte count);
+		void setVisualCuriousTilt(byte tilt);
+		void bumpVisualSequence();
+		void setVisualAttentionStartedAt(long startedAt);
+		void setVisualCaughtReactionStart(long startedAt);
+		float visualBodyYaw();
+		void turnVisualBodyToward(Vec3 point, float maxDegrees);
+		boolean isVisualCombatActive(long now);
 	}
 
 	private Vec3 directionPoint(float yaw) {

@@ -14,6 +14,7 @@ import com.yuriscat.echowarrior.ModItems;
 import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
+import com.yuriscat.echowarrior.entity.behavior.EchoSafeTeleport;
 import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoRelicState;
 import com.yuriscat.echowarrior.item.EchoTalentSystem;
@@ -2806,14 +2807,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			}
 			endCaughtExit(now, true);
 		}
-		Vec3 side = player.getLookAngle().cross(new Vec3(0, 1, 0)).normalize().scale(1.5);
-		double targetX = player.getX() + side.x;
-		double targetZ = player.getZ() + side.z;
-		float facingYaw = yawToward(targetX, targetZ, player.getX(), player.getZ());
-		this.snapTo(targetX, player.getY(), targetZ, facingYaw, 0.0F);
-		this.setYBodyRot(facingYaw);
-		this.setYHeadRot(facingYaw);
-		this.getNavigation().stop();
+		if (!EchoSafeTeleport.teleportBesideOwner(this, player)) return;
 		if (this.level() instanceof ServerLevel serverLevel) {
 			serverLevel.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 12, 0.25, 0.5, 0.25, 0.01);
 			serverLevel.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.45F, 1.45F);

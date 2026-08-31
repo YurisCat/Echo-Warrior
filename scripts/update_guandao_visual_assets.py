@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Normalize the Guandao Warrior Blockbench source and export GeckoLib assets."""
+"""Normalize the Chinese Guandao Warrior Blockbench source and export GeckoLib assets."""
 
 from __future__ import annotations
 

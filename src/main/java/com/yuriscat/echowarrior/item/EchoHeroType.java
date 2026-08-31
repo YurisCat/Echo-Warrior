@@ -41,8 +41,8 @@ public enum EchoHeroType {
 	),
 	GUANDAO_WARRIOR(
 			"guandao_warrior",
-			"关刀甲胄战士",
-			"Guandao Warrior",
+			"中国关刀战士",
+			"Chinese Guandao Warrior",
 			30.0,
 			7.0,
 			12.0,

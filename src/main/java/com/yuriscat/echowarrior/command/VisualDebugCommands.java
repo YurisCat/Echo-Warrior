@@ -372,7 +372,7 @@ public final class VisualDebugCommands {
 
 		GuandaoWarriorEchoEntity echo = findNearestOwnedGuandao(player);
 		if (echo == null) {
-			source.sendFailure(Component.literal("32 格内没有属于你的关刀甲胄战士。"));
+			source.sendFailure(Component.literal("32 格内没有属于你的中国关刀战士。"));
 			return 0;
 		}
 

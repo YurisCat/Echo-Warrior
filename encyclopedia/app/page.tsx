@@ -56,6 +56,8 @@ type ArticleSection = {
 type AtlasNode = {
   id: string;
   categoryId: string;
+  nodeType?: "hero" | "skill";
+  parentId?: string;
   title: string;
   subtitle: string;
   status: Status;
@@ -87,11 +89,40 @@ type AtlasData = {
 
 type MapView = { x: number; y: number; scale: number };
 
+type PersistedViewState = {
+  selectedNodeId?: string;
+  activeCategoryId?: string;
+  splitPercent?: number;
+  views?: Record<string, MapView>;
+  articleScroll?: Record<string, number>;
+  windowScrollY?: number;
+};
+
+type HeroGrowthProfile = {
+  name: string;
+  baseHealth: number;
+  baseAttack: number;
+  attackLabel: string;
+};
+
 const atlas = atlasSource as AtlasData;
-const WORLD_WIDTH = 880;
-const WORLD_HEIGHT = 620;
-const MIN_SCALE = 0.55;
+const DEFAULT_WORLD_WIDTH = 880;
+const DEFAULT_WORLD_HEIGHT = 620;
+const MIN_SCALE = 0.38;
 const MAX_SCALE = 1.65;
+const VIEW_STATE_KEY = "echo-archive:view-state:v3";
+const INITIAL_VIEW: MapView = { x: -90, y: -58, scale: 0.82 };
+
+const isInitialView = (view: MapView) =>
+  view.x === INITIAL_VIEW.x && view.y === INITIAL_VIEW.y && view.scale === INITIAL_VIEW.scale;
+
+const heroGrowthProfiles: Record<string, HeroGrowthProfile> = {
+  roman_legionary: { name: "罗马军团兵", baseHealth: 30, baseAttack: 6, attackLabel: "攻击力" },
+  aztec_warrior: { name: "阿兹特克勇士", baseHealth: 34, baseAttack: 8, attackLabel: "攻击力" },
+  egyptian_archer: { name: "埃及弓箭手", baseHealth: 28, baseAttack: 5, attackLabel: "远程攻击" },
+  guandao_warrior: { name: "中国关刀战士", baseHealth: 30, baseAttack: 7, attackLabel: "攻击力" },
+  japanese_samurai: { name: "日本武士", baseHealth: 28, baseAttack: 6, attackLabel: "攻击力" },
+};
 
 const statusCopy: Record<Status, string> = {
   implemented: "已实装",
@@ -102,10 +133,14 @@ const statusCopy: Record<Status, string> = {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-function HeroLevelLab() {
+const formatGrowthValue = (value: number) =>
+  Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+
+function HeroLevelLab({ profile }: { profile: HeroGrowthProfile }) {
   const [level, setLevel] = useState(1);
-  const health = 30 + Math.min(level - 1, 28) + (level === 30 ? 2 : 0);
-  const attack = 6 + Math.floor(level / 5);
+  const multiplier = 1 + (level - 1) / 29;
+  const health = profile.baseHealth * multiplier;
+  const attack = profile.baseAttack * multiplier;
   const totalExperience = (level - 1) * (level + 15);
   const nextExperience = level === 30 ? 0 : 15 + 2 * level;
 
@@ -114,7 +149,7 @@ function HeroLevelLab() {
       <div className="lab-heading">
         <div>
           <p className="section-kicker">INTERACTIVE RECORD</p>
-          <h2 id="level-lab-title">军团兵成长推演</h2>
+          <h2 id="level-lab-title">{profile.name}成长推演</h2>
         </div>
         <strong>Lv. {level}</strong>
       </div>
@@ -130,8 +165,8 @@ function HeroLevelLab() {
         />
       </label>
       <div className="lab-metrics">
-        <div><span>最大生命</span><strong>{health}</strong></div>
-        <div><span>攻击力</span><strong>{attack}</strong></div>
+        <div><span>最大生命</span><strong>{formatGrowthValue(health)}</strong></div>
+        <div><span>{profile.attackLabel}</span><strong>{formatGrowthValue(attack)}</strong></div>
         <div><span>累计经验</span><strong>{totalExperience}</strong></div>
         <div><span>下一级</span><strong>{level === 30 ? "满级" : nextExperience}</strong></div>
       </div>
@@ -299,9 +334,10 @@ export default function Home() {
   const [activeCategoryId, setActiveCategoryId] = useState(atlas.categories[0].id);
   const [selectedNodeId, setSelectedNodeId] = useState("archive_overview");
   const [search, setSearch] = useState("");
-  const [splitPercent, setSplitPercent] = useState(37);
+  const [splitPercent, setSplitPercent] = useState(43);
+  const [viewStateReady, setViewStateReady] = useState(false);
   const [views, setViews] = useState<Record<string, MapView>>(() =>
-    Object.fromEntries(atlas.categories.map((category) => [category.id, { x: -90, y: -58, scale: 0.82 }])),
+    Object.fromEntries(atlas.categories.map((category) => [category.id, { ...INITIAL_VIEW }])),
   );
 
   const shellRef = useRef<HTMLElement>(null);
@@ -309,12 +345,18 @@ export default function Home() {
   const articleRef = useRef<HTMLElement>(null);
   const dragRef = useRef<{ pointerId: number; startX: number; startY: number; view: MapView } | null>(null);
   const articleScrollRef = useRef<Record<string, number>>({});
+  const windowScrollRef = useRef(0);
+  const persistTimerRef = useRef<number | null>(null);
   const initializedCategories = useRef(new Set<string>());
 
   const activeCategory = atlas.categories.find((category) => category.id === activeCategoryId)!;
   const selectedNode = nodeById.get(selectedNodeId) ?? atlas.nodes[0];
   const categoryNodes = atlas.nodes.filter((node) => node.categoryId === activeCategoryId);
   const currentView = views[activeCategoryId];
+  const worldSize = useMemo(() => ({
+    width: Math.max(DEFAULT_WORLD_WIDTH, ...categoryNodes.map((node) => node.x + 150)),
+    height: Math.max(DEFAULT_WORLD_HEIGHT, ...categoryNodes.map((node) => node.y + 150)),
+  }), [categoryNodes]);
 
   const searchResults = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("zh-CN");
@@ -348,6 +390,34 @@ export default function Home() {
   const updateView = useCallback((categoryId: string, view: MapView) => {
     setViews((current) => ({ ...current, [categoryId]: view }));
   }, []);
+
+  const persistViewState = useCallback(() => {
+    if (!viewStateReady) return;
+    const initializedViews = Object.fromEntries(
+      [...initializedCategories.current]
+        .map((categoryId) => [categoryId, views[categoryId]] as const)
+        .filter((entry): entry is readonly [string, MapView] => Boolean(entry[1]) && !isInitialView(entry[1])),
+    );
+    const state: PersistedViewState = {
+      selectedNodeId,
+      activeCategoryId,
+      splitPercent,
+      views: initializedViews,
+      articleScroll: articleScrollRef.current,
+      windowScrollY: windowScrollRef.current,
+    };
+    try {
+      window.localStorage.setItem(VIEW_STATE_KEY, JSON.stringify(state));
+    } catch {
+      // 浏览器禁用本地存储时，百科仍可正常使用，只是不保留位置。
+    }
+  }, [activeCategoryId, selectedNodeId, splitPercent, viewStateReady, views]);
+
+  const schedulePersist = useCallback(() => {
+    if (!viewStateReady) return;
+    if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = window.setTimeout(persistViewState, 120);
+  }, [persistViewState, viewStateReady]);
 
   const fitCategory = useCallback((categoryId = activeCategoryId) => {
     const viewport = mapRef.current;
@@ -383,7 +453,9 @@ export default function Home() {
   const chooseNode = (nodeId: string, locate = false) => {
     const nextNode = nodeById.get(nodeId);
     if (!nextNode) return;
-    if (articleRef.current) {
+    if (window.matchMedia("(max-width: 900px)").matches) {
+      articleScrollRef.current[selectedNodeId] = window.scrollY;
+    } else if (articleRef.current) {
       articleScrollRef.current[selectedNodeId] = articleRef.current.scrollTop;
     }
     setSelectedNodeId(nodeId);
@@ -394,21 +466,107 @@ export default function Home() {
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
+      try {
+        const raw = window.localStorage.getItem(VIEW_STATE_KEY);
+        if (raw) {
+          const restored = JSON.parse(raw) as PersistedViewState;
+          const restoredNode = restored.selectedNodeId ? nodeById.get(restored.selectedNodeId) : undefined;
+          if (restoredNode) {
+            setSelectedNodeId(restoredNode.id);
+          }
+          if (restored.activeCategoryId && atlas.categories.some((category) => category.id === restored.activeCategoryId)) {
+            setActiveCategoryId(restored.activeCategoryId);
+          } else if (restoredNode) {
+            setActiveCategoryId(restoredNode.categoryId);
+          }
+          if (typeof restored.splitPercent === "number") {
+            setSplitPercent(clamp(restored.splitPercent, 29, 48));
+          }
+          if (restored.views) {
+            setViews((current) => {
+              const next = { ...current };
+              for (const category of atlas.categories) {
+                const view = restored.views?.[category.id];
+                if (!view || !Number.isFinite(view.x) || !Number.isFinite(view.y) || !Number.isFinite(view.scale)) continue;
+                const safeView = { ...view, scale: clamp(view.scale, MIN_SCALE, MAX_SCALE) };
+                if (isInitialView(safeView)) continue;
+                next[category.id] = safeView;
+                initializedCategories.current.add(category.id);
+              }
+              return next;
+            });
+          }
+          if (restored.articleScroll) articleScrollRef.current = restored.articleScroll;
+          if (typeof restored.windowScrollY === "number" && Number.isFinite(restored.windowScrollY)) {
+            windowScrollRef.current = Math.max(0, restored.windowScrollY);
+          }
+        }
+      } catch {
+        // 损坏或旧版状态会被安全忽略，并在下一次交互时覆盖。
+      }
+      setViewStateReady(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [nodeById]);
+
+  useEffect(() => {
+    if (!viewStateReady) return;
+    const frame = requestAnimationFrame(() => {
+      const restoredScroll = articleScrollRef.current[selectedNodeId] ?? 0;
       if (articleRef.current) {
-        articleRef.current.scrollTop = articleScrollRef.current[selectedNodeId] ?? 0;
+        articleRef.current.scrollTop = restoredScroll;
+      }
+      if (window.matchMedia("(max-width: 900px)").matches) {
+        window.scrollTo({ top: restoredScroll || windowScrollRef.current });
       }
     });
     return () => cancelAnimationFrame(frame);
-  }, [selectedNodeId]);
+  }, [selectedNodeId, viewStateReady]);
 
   useEffect(() => {
+    if (!viewStateReady) return;
     if (initializedCategories.current.has(activeCategoryId)) return;
     const frame = requestAnimationFrame(() => {
       fitCategory(activeCategoryId);
       initializedCategories.current.add(activeCategoryId);
     });
     return () => cancelAnimationFrame(frame);
-  }, [activeCategoryId, fitCategory]);
+  }, [activeCategoryId, fitCategory, viewStateReady]);
+
+  useEffect(() => {
+    schedulePersist();
+  }, [schedulePersist]);
+
+  useEffect(() => {
+    const onWindowScroll = () => {
+      windowScrollRef.current = window.scrollY;
+      if (window.matchMedia("(max-width: 900px)").matches) {
+        articleScrollRef.current[selectedNodeId] = window.scrollY;
+      }
+      schedulePersist();
+    };
+    const onPageHide = () => persistViewState();
+    window.addEventListener("scroll", onWindowScroll, { passive: true });
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      window.removeEventListener("scroll", onWindowScroll);
+      window.removeEventListener("pagehide", onPageHide);
+      if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
+    };
+  }, [persistViewState, schedulePersist, selectedNodeId]);
+
+  const connectionPath = (from: AtlasNode, to: AtlasNode) => {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      const direction = Math.sign(dx) || 1;
+      const bend = Math.max(42, Math.abs(dx) * 0.38);
+      return `M ${from.x} ${from.y} C ${from.x + direction * bend} ${from.y}, ${to.x - direction * bend} ${to.y}, ${to.x} ${to.y}`;
+    }
+    const direction = Math.sign(dy) || 1;
+    const bend = Math.max(42, Math.abs(dy) * 0.38);
+    return `M ${from.x} ${from.y} C ${from.x} ${from.y + direction * bend}, ${to.x} ${to.y - direction * bend}, ${to.x} ${to.y}`;
+  };
 
   const onMapPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest("button, input")) return;
@@ -546,17 +704,15 @@ export default function Home() {
             <div
               className="map-world"
               style={{
-                width: WORLD_WIDTH,
-                height: WORLD_HEIGHT,
+                width: worldSize.width,
+                height: worldSize.height,
                 transform: `translate3d(${currentView.x}px, ${currentView.y}px, 0) scale(${currentView.scale})`,
               }}
             >
-              <svg className="connection-layer" viewBox={`0 0 ${WORLD_WIDTH} ${WORLD_HEIGHT}`} aria-hidden="true">
+              <svg className="connection-layer" viewBox={`0 0 ${worldSize.width} ${worldSize.height}`} aria-hidden="true">
                 {visibleEdges.map(({ from, to, kind, key }) => {
-                  const bend = Math.max(42, Math.abs(to.x - from.x) * 0.32);
-                  const path = `M ${from.x} ${from.y} C ${from.x + bend} ${from.y}, ${to.x - bend} ${to.y}, ${to.x} ${to.y}`;
                   const active = from.id === selectedNodeId || to.id === selectedNodeId;
-                  return <path key={key} d={path} className={`${kind} ${active ? "active" : ""}`} />;
+                  return <path key={key} d={connectionPath(from, to)} className={`${kind} ${active ? "active" : ""}`} />;
                 })}
               </svg>
 
@@ -564,7 +720,7 @@ export default function Home() {
                 <button
                   type="button"
                   key={node.id}
-                  className={`atlas-node ${node.status} ${node.id === selectedNodeId ? "selected" : ""}`}
+                  className={`atlas-node ${node.nodeType ? `kind-${node.nodeType}` : ""} ${node.status} ${node.id === selectedNodeId ? "selected" : ""}`}
                   style={{ left: node.x, top: node.y }}
                   onClick={() => chooseNode(node.id)}
                   onDoubleClick={() => centerNode(node)}
@@ -608,6 +764,7 @@ export default function Home() {
         ref={articleRef}
         onScroll={(event) => {
           articleScrollRef.current[selectedNodeId] = event.currentTarget.scrollTop;
+          schedulePersist();
         }}
       >
         <header className="article-hero">
@@ -636,7 +793,7 @@ export default function Home() {
         </header>
 
         <div className="article-content">
-          {selectedNode.id === "roman_legionary" && <HeroLevelLab />}
+          {heroGrowthProfiles[selectedNode.id] && <HeroLevelLab profile={heroGrowthProfiles[selectedNode.id]} />}
           {(selectedNode.id === "fuel" || selectedNode.id === "summoner") && <FuelLab />}
           {selectedNode.article.sections.map((section, index) => (
             <Section key={`${section.title}-${index}`} section={section} />

@@ -19,6 +19,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.LivingEntity;
@@ -42,6 +43,23 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	private static final int[] MODULE_SLOT_X = {8, 37, 66, 94, 123, 152};
 	private static final int[] ATTRIBUTE_ICON_X = {61, 134, 61, 116, 61, 116, 61, 116};
 	private static final int[] ATTRIBUTE_ICON_Y = {19, 19, 32, 32, 45, 45, 58, 58};
+	private static final String[] HERO_NAME_TRANSLATION_KEYS = {
+			"gui.echo_warrior.summoner.hero.roman",
+			"gui.echo_warrior.summoner.hero.aztec",
+			"gui.echo_warrior.summoner.hero.egyptian",
+			"gui.echo_warrior.summoner.hero.guandao",
+			"gui.echo_warrior.summoner.hero.samurai"
+	};
+	private static final String[] ACTIVITY_MODE_TRANSLATION_KEYS = {
+			"gui.echo_warrior.summoner.activity.follow",
+			"gui.echo_warrior.summoner.activity.wait",
+			"gui.echo_warrior.summoner.activity.wander"
+	};
+	private static final String[] ALERT_MODE_TRANSLATION_KEYS = {
+			"gui.echo_warrior.summoner.alert.aggressive",
+			"gui.echo_warrior.summoner.alert.defensive",
+			"gui.echo_warrior.summoner.alert.peaceful"
+	};
 
 	private static final Identifier BACKGROUND = EchoWarrior.id("textures/gui/summoner/summoner_screen.png");
 	private static final Identifier[] ATTRIBUTE_ICONS = {
@@ -256,15 +274,10 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	@Override
 	protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		boolean relicLoaded = hasRelicLoaded();
-		String fullName = relicLoaded
-				? EchoHeroType.values()[Math.clamp(this.menu.heroType(), 0, EchoHeroType.values().length - 1)].chineseName()
-				: "未载入英灵";
-		String visibleName = fitText(fullName, 115);
-		graphics.text(this.font, visibleName, rx(Element.TITLE, 8), ry(Element.TITLE, 7), PRIMARY_TEXT_COLOR, true);
-		if (isInside(mouseX, mouseY, x(Element.TITLE, 7), y(Element.TITLE, 6), 116, 11)
-				&& !visibleName.equals(fullName)) {
-			graphics.setTooltipForNextFrame(this.font, Component.literal(fullName), mouseX, mouseY);
-		}
+		Component heroName = relicLoaded
+				? Component.translatable(HERO_NAME_TRANSLATION_KEYS[Math.clamp(this.menu.heroType(), 0, HERO_NAME_TRANSLATION_KEYS.length - 1)])
+				: Component.translatable("gui.echo_warrior.summoner.hero.none");
+		drawFittedText(graphics, heroName, rx(Element.TITLE, 8), ry(Element.TITLE, 7), 115, PRIMARY_TEXT_COLOR, true);
 		if (relicLoaded) {
 			graphics.text(
 					this.font,
@@ -286,22 +299,19 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			graphics.text(this.font, this.menu.summonCostPercent() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);
 		}
 
-		graphics.text(this.font, "行动模式", rx(Element.ACTIVITY, 179), ry(Element.ACTIVITY, 78), PRIMARY_TEXT_COLOR, true);
-		graphics.text(this.font, "警戒状态", rx(Element.ALERT, 179), ry(Element.ALERT, 111), PRIMARY_TEXT_COLOR, true);
-		graphics.centeredText(
-				this.font,
-				summonButtonText(relicLoaded),
-				rx(Element.SUMMON_BUTTON, 206),
-				ry(Element.SUMMON_BUTTON, 148),
-				HEADER_TEXT_COLOR
-		);
+		drawFittedText(graphics, Component.translatable("gui.echo_warrior.summoner.section.activity"),
+				rx(Element.ACTIVITY, 179), ry(Element.ACTIVITY, 78), 55, PRIMARY_TEXT_COLOR, true);
+		drawFittedText(graphics, Component.translatable("gui.echo_warrior.summoner.section.alert"),
+				rx(Element.ALERT, 179), ry(Element.ALERT, 111), 55, PRIMARY_TEXT_COLOR, true);
+		drawCenteredFittedText(graphics, summonButtonText(relicLoaded),
+				rx(Element.SUMMON_BUTTON, 206), ry(Element.SUMMON_BUTTON, 148), SUMMON_BUTTON_WIDTH - 8, HEADER_TEXT_COLOR);
 		renderAttributeTooltips(graphics, mouseX, mouseY, relicLoaded);
 		renderInteractiveTooltips(graphics, mouseX, mouseY, relicLoaded);
 		renderFeedbackToast(graphics);
 	}
 
 	private void renderFeedbackToast(GuiGraphicsExtractor graphics) {
-		String message = feedbackText();
+		Component message = feedbackText();
 		if (message == null) return;
 		int left = 178;
 		int top = 4;
@@ -311,7 +321,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				|| this.feedbackCode == SummonerMenu.ACTION_CREATE_FAILED
 				|| this.feedbackCode == SummonerMenu.ACTION_NOT_ENOUGH_FUEL
 				|| this.feedbackCode == SummonerMenu.ACTION_NO_SAFE_POSITION;
-		List<net.minecraft.util.FormattedCharSequence> lines = this.font.split(Component.literal(message), width - 12);
+		List<FormattedCharSequence> lines = this.font.split(message, width - 12);
 		int visibleLines = Math.min(lines.size(), 6);
 		int height = 8 + visibleLines * 10;
 		graphics.fill(left, top, left + width, top + height, error ? 0xDD3B2025 : 0xDD26382D);
@@ -685,21 +695,24 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				{61, 45, 53, 11}, {116, 45, 53, 11},
 				{61, 58, 53, 11}, {116, 58, 53, 11}
 		};
-		String[] descriptions = {
-				"生命值：" + decimal(this.menu.spiritHealth()) + "/" + decimal(this.menu.spiritMaximumHealth())
-						+ (this.menu.isSpiritPresent() ? "" : "（未召唤）"),
-				"等级：" + this.menu.relicLevel() + "/30",
-				"攻击力：" + decimal(this.menu.spiritAttackDamage()),
-				"攻击速度：" + this.menu.spiritAttackSpeed() + "%",
-				"护甲：" + decimal(this.menu.spiritArmor()),
-				"移动速度：" + this.menu.spiritMovement() + "%",
-				"警戒范围：16格",
-				"召唤与生命恢复燃料消耗：" + this.menu.summonCostPercent() + "%"
+		Component[] descriptions = {
+				Component.translatable(this.menu.isSpiritPresent()
+						? "gui.echo_warrior.summoner.attribute.health"
+						: "gui.echo_warrior.summoner.attribute.health_absent",
+						decimal(this.menu.spiritHealth()), decimal(this.menu.spiritMaximumHealth())),
+				Component.translatable("gui.echo_warrior.summoner.attribute.level", this.menu.relicLevel()),
+				Component.translatable("gui.echo_warrior.summoner.attribute.attack", decimal(this.menu.spiritAttackDamage())),
+				Component.translatable("gui.echo_warrior.summoner.attribute.attack_speed", this.menu.spiritAttackSpeed() + "%"),
+				Component.translatable("gui.echo_warrior.summoner.attribute.armor", decimal(this.menu.spiritArmor())),
+				Component.translatable("gui.echo_warrior.summoner.attribute.movement", this.menu.spiritMovement() + "%"),
+				Component.translatable("gui.echo_warrior.summoner.attribute.alert_range",
+						this.menu.heroType() == EchoHeroType.EGYPTIAN_ARCHER.ordinal() ? 24 : 16),
+				Component.translatable("gui.echo_warrior.summoner.attribute.fuel_cost", this.menu.summonCostPercent() + "%")
 		};
 		for (int index = 0; index < boxes.length; index++) {
 			int[] box = boxes[index];
 			if (isInside(mouseX, mouseY, x(Element.BASIC_INFO, box[0]), y(Element.BASIC_INFO, box[1]), box[2], box[3])) {
-				graphics.setTooltipForNextFrame(this.font, Component.literal(descriptions[index]), mouseX, mouseY);
+				graphics.setTooltipForNextFrame(this.font, descriptions[index], mouseX, mouseY);
 				return;
 			}
 		}
@@ -773,44 +786,42 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			}
 		}
 
-		String[] activityNames = {"跟随", "等待", "闲逛"};
-		String[] activityDescriptions = {
-				"跟随主人行动；距离过远时传送到主人附近。",
-				"停留在当前位置附近，不跟随也不会远距离传送。",
-				"以当前位置为中心自由活动，不跟随主人。"
-		};
-		String[] alertNames = {"主动出击", "被动防御", "和平模式"};
-		String[] alertDescriptions = {
-				"主动攻击范围内的敌对生物，并响应主人攻击的目标。",
-				"只反击伤害主人、自身或被主人攻击的生物。",
-				"不主动攻击；自身受到直接攻击时仍可自卫。"
-		};
 		for (int index = 0; index < 3; index++) {
 			if (isInside(mouseX, mouseY, x(Element.ACTIVITY, 178 + index * 19), y(Element.ACTIVITY, 90), 18, 18)) {
-				showTooltip(graphics, mouseX, mouseY, activityNames[index], activityDescriptions[index],
-						active ? (index == this.menu.activityMode() ? "当前已选择" : "点击切换") : "需要先装入英灵遗物");
+				String key = ACTIVITY_MODE_TRANSLATION_KEYS[index];
+				showTooltip(graphics, mouseX, mouseY,
+						Component.translatable(key + ".name"),
+						Component.translatable(key + ".description"),
+						modeStateText(active, index == this.menu.activityMode()));
 				return;
 			}
 			if (isInside(mouseX, mouseY, x(Element.ALERT, 178 + index * 19), y(Element.ALERT, 123), 18, 18)) {
-				showTooltip(graphics, mouseX, mouseY, alertNames[index], alertDescriptions[index],
-						active ? (index == this.menu.alertMode() ? "当前已选择" : "点击切换") : "需要先装入英灵遗物");
+				String key = ALERT_MODE_TRANSLATION_KEYS[index];
+				showTooltip(graphics, mouseX, mouseY,
+						Component.translatable(key + ".name"),
+						Component.translatable(key + ".description"),
+						modeStateText(active, index == this.menu.alertMode()));
 				return;
 			}
 		}
 
 		if (isInside(mouseX, mouseY, x(Element.EXPERIENCE, 7), y(Element.EXPERIENCE, 113), 162, 4)) {
 			if (!active) {
-				showTooltip(graphics, mouseX, mouseY, "英灵经验", "装入遗物后显示经验进度");
+				showTooltip(graphics, mouseX, mouseY,
+						Component.translatable("gui.echo_warrior.summoner.experience.title"),
+						Component.translatable("gui.echo_warrior.summoner.experience.no_relic"));
 			} else if (this.menu.relicLevel() >= 30) {
-				showTooltip(graphics, mouseX, mouseY, "英灵经验", "等级30 · 已达到最高等级");
+				showTooltip(graphics, mouseX, mouseY,
+						Component.translatable("gui.echo_warrior.summoner.experience.title"),
+						Component.translatable("gui.echo_warrior.summoner.experience.max"));
 			} else {
 				showTooltip(
 						graphics,
 						mouseX,
 						mouseY,
-						"英灵经验",
-						"等级" + this.menu.relicLevel() + " · 经验"
-								+ this.menu.relicExperience() + "/" + this.menu.relicExperienceNeeded()
+						Component.translatable("gui.echo_warrior.summoner.experience.title"),
+						Component.translatable("gui.echo_warrior.summoner.experience.progress",
+								this.menu.relicLevel(), this.menu.relicExperience(), this.menu.relicExperienceNeeded())
 				);
 			}
 			return;
@@ -823,25 +834,31 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		if (isInside(mouseX, mouseY, x(Element.FUEL_BAR, 179), y(Element.FUEL_BAR, 165), 54, 3)) {
 			int summonCost = (int)Math.ceil(SummonerFuel.BASE_SUMMON_COST * this.menu.summonCostPercent() / 100.0);
 			double healCost = SummonerFuel.BASE_HEAL_COST * this.menu.summonCostPercent() / 100.0;
-			showTooltip(graphics, mouseX, mouseY, "英灵燃料",
-					this.menu.fuelAmount() + "/" + SummonerFuel.CAPACITY,
-					"召唤消耗：" + summonCost,
-					"自然恢复每点生命：" + String.format(java.util.Locale.ROOT, "%.1f", healCost),
-					"当前可召唤：" + this.menu.fuelAmount() / summonCost + "次");
+			showTooltip(graphics, mouseX, mouseY,
+					Component.translatable("gui.echo_warrior.summoner.fuel.title"),
+					Component.literal(this.menu.fuelAmount() + "/" + SummonerFuel.CAPACITY),
+					Component.translatable("gui.echo_warrior.summoner.fuel.summon_cost", summonCost),
+					Component.translatable("gui.echo_warrior.summoner.fuel.heal_cost",
+							String.format(java.util.Locale.ROOT, "%.1f", healCost)),
+					Component.translatable("gui.echo_warrior.summoner.fuel.summons", this.menu.fuelAmount() / summonCost));
 			return;
 		}
 		if (this.menu.summonerContainer().getItem(SummonerMenu.FUEL_SLOT).isEmpty()
 				&& isInside(mouseX, mouseY, x(Element.FUEL_SLOT, 179), y(Element.FUEL_SLOT, 172), 16, 16)) {
-			showTooltip(graphics, mouseX, mouseY, "燃料输入槽", "腐肉：+20燃料", "灵魂沙/灵魂土：+50燃料", "容量不足时不会消耗物品");
+			showTooltip(graphics, mouseX, mouseY,
+					Component.translatable("gui.echo_warrior.summoner.fuel_input.title"),
+					Component.translatable("gui.echo_warrior.summoner.fuel_input.rotten_flesh"),
+					Component.translatable("gui.echo_warrior.summoner.fuel_input.soul"),
+					Component.translatable("gui.echo_warrior.summoner.fuel_input.full"));
 			return;
 		}
 		for (int index = 0; index < SummonerMenu.MODULE_SLOT_COUNT; index++) {
 			if (this.menu.summonerContainer().getItem(index).isEmpty()
 					&& isInside(mouseX, mouseY, x(Element.MODULES, MODULE_SLOT_X[index]), y(Element.MODULES, 94), 16, 16)) {
 				showTooltip(graphics, mouseX, mouseY,
-						"饰品槽",
-						"在此安装英灵饰品",
-						"同名饰品不能重复安装");
+						Component.translatable("gui.echo_warrior.summoner.accessory.title"),
+						Component.translatable("gui.echo_warrior.summoner.accessory.install"),
+						Component.translatable("gui.echo_warrior.summoner.accessory.unique"));
 				return;
 			}
 		}
@@ -851,15 +868,6 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		return tenths % 10 == 0
 				? Integer.toString(tenths / 10)
 				: String.format(java.util.Locale.ROOT, "%.1f", tenths / 10.0);
-	}
-
-	private void showTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, String title, String... descriptions) {
-		List<Component> lines = new java.util.ArrayList<>();
-		lines.add(Component.literal(title).withStyle(ChatFormatting.GOLD));
-		for (String description : descriptions) {
-			lines.add(Component.literal(description).withStyle(ChatFormatting.GRAY));
-		}
-		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
 	}
 
 	private void showTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
@@ -945,61 +953,61 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
 	}
 
-	private void showTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, String[] tooltip) {
+	private void showTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, Component[] tooltip) {
 		if (tooltip.length == 0) {
 			return;
 		}
 		List<Component> lines = new java.util.ArrayList<>();
-		lines.add(Component.literal(tooltip[0]).withStyle(ChatFormatting.GOLD));
+		lines.add(tooltip[0].copy().withStyle(ChatFormatting.GOLD));
 		for (int index = 1; index < tooltip.length; index++) {
-			lines.add(Component.literal(tooltip[index]).withStyle(ChatFormatting.GRAY));
+			lines.add(tooltip[index].copy().withStyle(ChatFormatting.GRAY));
 		}
 		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
 	}
 
-	private String summonButtonText(boolean relicLoaded) {
+	private Component summonButtonText(boolean relicLoaded) {
 		if (!relicLoaded) {
-			return "需要遗物";
+			return Component.translatable("gui.echo_warrior.summoner.button.no_relic");
 		}
 		if (this.menu.isSpiritPresent()) {
-			return "收回英灵";
+			return Component.translatable("gui.echo_warrior.summoner.button.dismiss");
 		}
-		return "召唤英灵";
+		return Component.translatable("gui.echo_warrior.summoner.button.summon");
 	}
 
-	private String[] summonButtonTooltip(boolean relicLoaded) {
-		String feedback = feedbackText();
+	private Component[] summonButtonTooltip(boolean relicLoaded) {
+		Component feedback = feedbackText();
 		if (!relicLoaded) {
 			return feedback == null
-					? new String[] {"召唤英灵", "需要先在右下角装入英灵遗物。"}
-					: new String[] {"召唤英灵", "需要先在右下角装入英灵遗物。", feedback};
+					? new Component[] {Component.translatable("gui.echo_warrior.summoner.button.summon"), Component.translatable("gui.echo_warrior.summoner.button.summon.tooltip.missing")}
+					: new Component[] {Component.translatable("gui.echo_warrior.summoner.button.summon"), Component.translatable("gui.echo_warrior.summoner.button.summon.tooltip.missing"), feedback};
 		}
 		if (this.menu.isSpiritPresent()) {
 			return feedback == null
-					? new String[] {"收回英灵", "点击后立即将当前英灵收回并遣散。"}
-					: new String[] {"收回英灵", "点击后立即将当前英灵收回并遣散。", feedback};
+					? new Component[] {Component.translatable("gui.echo_warrior.summoner.button.dismiss"), Component.translatable("gui.echo_warrior.summoner.button.dismiss.tooltip")}
+					: new Component[] {Component.translatable("gui.echo_warrior.summoner.button.dismiss"), Component.translatable("gui.echo_warrior.summoner.button.dismiss.tooltip"), feedback};
 		}
 		return feedback == null
-				? new String[] {"召唤英灵", "将英灵召唤到玩家前方，界面保持开启。"}
-				: new String[] {"召唤英灵", "将英灵召唤到玩家前方，界面保持开启。", feedback};
+				? new Component[] {Component.translatable("gui.echo_warrior.summoner.button.summon"), Component.translatable("gui.echo_warrior.summoner.button.summon.tooltip")}
+				: new Component[] {Component.translatable("gui.echo_warrior.summoner.button.summon"), Component.translatable("gui.echo_warrior.summoner.button.summon.tooltip"), feedback};
 	}
 
-	private String feedbackText() {
+	private Component feedbackText() {
 		if (this.feedbackTicks <= 0) {
 			return null;
 		}
 		return switch (this.feedbackCode) {
-			case SummonerMenu.ACTION_SUMMONED -> "召唤成功。";
-			case SummonerMenu.ACTION_DISMISSED -> "英灵已收回。";
-			case SummonerMenu.ACTION_NO_RELIC -> "召唤失败：没有装入英灵遗物。";
-			case SummonerMenu.ACTION_INVALID_SUMMONER -> "操作失败：召唤器实例已经失效。";
-			case SummonerMenu.ACTION_CREATE_FAILED -> "召唤失败：无法在当前位置生成英灵。";
-			case SummonerMenu.ACTION_NOT_ENOUGH_FUEL -> "召唤失败：燃料不足。";
-			case SummonerMenu.ACTION_NO_SAFE_POSITION -> "召唤失败：附近没有安全位置。";
-			case SummonerMenu.ACTION_MODE_CHANGED -> "英灵模式已更新。";
-			case SummonerMenu.ACTION_SKILL_CHANGED -> "技能启用状态已更新。";
-			case SummonerMenu.ACTION_LIMIT_REACHED -> "操作失败：你已达到配置中的存活英灵上限。";
-			case SummonerMenu.ACTION_STALE_STATE -> "状态已由另一处更新，本次操作已取消并刷新。";
+			case SummonerMenu.ACTION_SUMMONED -> Component.translatable("gui.echo_warrior.summoner.feedback.summoned");
+			case SummonerMenu.ACTION_DISMISSED -> Component.translatable("gui.echo_warrior.summoner.feedback.dismissed");
+			case SummonerMenu.ACTION_NO_RELIC -> Component.translatable("gui.echo_warrior.summoner.feedback.no_relic");
+			case SummonerMenu.ACTION_INVALID_SUMMONER -> Component.translatable("gui.echo_warrior.summoner.feedback.invalid_summoner");
+			case SummonerMenu.ACTION_CREATE_FAILED -> Component.translatable("gui.echo_warrior.summoner.feedback.create_failed");
+			case SummonerMenu.ACTION_NOT_ENOUGH_FUEL -> Component.translatable("gui.echo_warrior.summoner.feedback.not_enough_fuel");
+			case SummonerMenu.ACTION_NO_SAFE_POSITION -> Component.translatable("gui.echo_warrior.summoner.feedback.no_safe_position");
+			case SummonerMenu.ACTION_MODE_CHANGED -> Component.translatable("gui.echo_warrior.summoner.feedback.mode_changed");
+			case SummonerMenu.ACTION_SKILL_CHANGED -> Component.translatable("gui.echo_warrior.summoner.feedback.skill_changed");
+			case SummonerMenu.ACTION_LIMIT_REACHED -> Component.translatable("gui.echo_warrior.summoner.feedback.limit_reached");
+			case SummonerMenu.ACTION_STALE_STATE -> Component.translatable("gui.echo_warrior.summoner.feedback.stale_state");
 			default -> null;
 		};
 	}
@@ -1079,23 +1087,42 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		}
 	}
 
-	private String fitText(String value, int maxWidth) {
-		if (this.font.width(value) <= maxWidth) {
-			return value;
+	private Component modeStateText(boolean active, boolean selected) {
+		if (!active) {
+			return Component.translatable("gui.echo_warrior.summoner.state.no_relic");
 		}
-		String suffix = "…";
-		int suffixWidth = this.font.width(suffix);
-		StringBuilder result = new StringBuilder();
-		for (int offset = 0; offset < value.length();) {
-			int codePoint = value.codePointAt(offset);
-			String candidate = result.toString() + new String(Character.toChars(codePoint));
-			if (this.font.width(candidate) + suffixWidth > maxWidth) {
-				break;
-			}
-			result.appendCodePoint(codePoint);
-			offset += Character.charCount(codePoint);
+		return Component.translatable(selected
+				? "gui.echo_warrior.summoner.state.selected"
+				: "gui.echo_warrior.summoner.state.switch");
+	}
+
+	private void drawFittedText(GuiGraphicsExtractor graphics, Component text, int x, int y,
+			int maximumWidth, int color, boolean shadow) {
+		FormattedCharSequence sequence = text.getVisualOrderText();
+		int width = this.font.width(sequence);
+		if (width <= maximumWidth) {
+			graphics.text(this.font, sequence, x, y, color, shadow);
+			return;
 		}
-		return result + suffix;
+		float scale = maximumWidth / (float)width;
+		graphics.pose().pushMatrix();
+		graphics.pose().translate(x, y + (9.0F - 9.0F * scale) / 2.0F);
+		graphics.pose().scale(scale, scale);
+		graphics.text(this.font, sequence, 0, 0, color, shadow);
+		graphics.pose().popMatrix();
+	}
+
+	private void drawCenteredFittedText(GuiGraphicsExtractor graphics, Component text, int centerX, int y,
+			int maximumWidth, int color) {
+		FormattedCharSequence sequence = text.getVisualOrderText();
+		int textWidth = this.font.width(sequence);
+		float scale = Math.min(1.0F, maximumWidth / (float)Math.max(1, textWidth));
+		float drawnWidth = textWidth * scale;
+		graphics.pose().pushMatrix();
+		graphics.pose().translate(centerX - drawnWidth / 2.0F, y + (9.0F - 9.0F * scale) / 2.0F);
+		graphics.pose().scale(scale, scale);
+		graphics.text(this.font, sequence, 0, 0, color, false);
+		graphics.pose().popMatrix();
 	}
 
 	private static void drawBorder(GuiGraphicsExtractor graphics, int left, int top, int right, int bottom, int color) {

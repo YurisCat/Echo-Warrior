@@ -49,7 +49,7 @@ input:focus-visible,
 }
 
 .archive-shell {
-  --map-size: 37%;
+  --map-size: 43%;
   display: grid;
   grid-template-columns: var(--map-size) 7px minmax(0, 1fr);
   width: 100%;
@@ -495,7 +495,7 @@ input:focus-visible,
 
 .node-orbit {
   position: absolute;
-  top: 21px;
+  top: 29px;
   left: 50%;
   z-index: 1;
   width: 74px;
@@ -504,6 +504,77 @@ input:focus-visible,
   border: 1px solid transparent;
   border-radius: 50%;
   transform: translate(-50%, -50%);
+}
+
+.atlas-node.kind-hero {
+  width: 148px;
+}
+
+.atlas-node.kind-hero .node-core {
+  width: 72px;
+  height: 72px;
+  border-width: 2px;
+  box-shadow:
+    inset 0 0 0 5px rgba(202, 173, 104, 0.08),
+    inset 0 0 22px rgba(0, 0, 0, 0.78),
+    0 8px 28px rgba(0, 0, 0, 0.42);
+}
+
+.atlas-node.kind-hero .node-core img {
+  width: 44px;
+  height: 44px;
+}
+
+.atlas-node.kind-hero .node-orbit {
+  top: 36px;
+  width: 92px;
+  height: 92px;
+  border-color: color-mix(in srgb, var(--category-accent) 28%, transparent);
+}
+
+.atlas-node.kind-hero > strong {
+  max-width: 148px;
+  margin-top: 16px;
+  font-size: 16px;
+}
+
+.atlas-node.kind-skill {
+  width: 136px;
+}
+
+.atlas-node.kind-skill .node-core {
+  width: 48px;
+  height: 48px;
+  background:
+    radial-gradient(circle at 45% 35%, rgba(255, 255, 255, 0.07), transparent 32%),
+    #0a1512;
+}
+
+.atlas-node.kind-skill .node-core img {
+  width: 28px;
+  height: 28px;
+}
+
+.atlas-node.kind-skill .node-orbit {
+  top: 24px;
+  width: 62px;
+  height: 62px;
+}
+
+.atlas-node.kind-skill > strong {
+  max-width: 136px;
+  min-height: 32px;
+  margin-top: 9px;
+  overflow: visible;
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.atlas-node.kind-skill > small {
+  margin-top: 1px;
+  font-size: 8px;
 }
 
 .atlas-node > strong {

@@ -16,6 +16,7 @@
     "LivingEntityAccessoryMixin",
 	"MerchantMixin",
     "PlayerMixin",
+	"ServerGamePacketListenerMixin",
     "ShulkerBulletAccessor"
   ],
   "client": [

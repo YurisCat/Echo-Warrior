@@ -15,6 +15,7 @@ import com.yuriscat.echowarrior.ModTags;
 import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
+import com.yuriscat.echowarrior.entity.behavior.EchoSafeTeleport;
 import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoAccessorySystem;
@@ -2153,14 +2154,7 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 
 	@Override
 	public void recallTo(Player player) {
-		Vec3 side = player.getLookAngle().cross(new Vec3(0, 1, 0)).normalize().scale(1.5);
-		double x = player.getX() + side.x;
-		double z = player.getZ() + side.z;
-		float yaw = yawToward(x, z, player.getX(), player.getZ());
-		this.snapTo(x, player.getY(), z, yaw, 0.0F);
-		this.setYBodyRot(yaw);
-		this.setYHeadRot(yaw);
-		this.getNavigation().stop();
+		if (!EchoSafeTeleport.teleportBesideOwner(this, player)) return;
 		if (this.level() instanceof ServerLevel level) {
 			level.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 12, 0.25, 0.5, 0.25, 0.01);
 			level.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.45F, 1.45F);

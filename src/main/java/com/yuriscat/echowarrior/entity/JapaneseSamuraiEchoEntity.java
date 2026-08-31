@@ -14,6 +14,7 @@ import com.yuriscat.echowarrior.ModItems;
 import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
+import com.yuriscat.echowarrior.entity.behavior.EchoSafeTeleport;
 import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoAccessorySystem;
@@ -80,7 +81,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * dodges, Fumikomi charges, a branchable two-slash normal attack and Stab.
  */
 public final class JapaneseSamuraiEchoEntity extends PathfinderMob
-		implements EchoWarriorEntity, SmartBrainOwner<JapaneseSamuraiEchoEntity>, GeoEntity {
+		implements EchoWarriorEntity, SmartBrainOwner<JapaneseSamuraiEchoEntity>, GeoEntity,
+		GuandaoVisualBehavior.Host {
+	public static final byte VISUAL_NORMAL = 0;
+	public static final byte VISUAL_ALERT = 1;
+	public static final byte VISUAL_STARTLED = 2;
+	public static final byte VISUAL_HURT = 3;
+	public static final byte VISUAL_CURIOUS = 4;
+	public static final byte VISUAL_MUTUAL_GAZE = 5;
+	public static final byte VISUAL_CAUGHT = 6;
+	public static final byte VISUAL_LOCOMOTION = 7;
+
 	public static final int SKILL_ZANSHIN = 0;
 	public static final int SKILL_FUMIKOMI = 1;
 	public static final int SKILL_ZAN = 2;
@@ -125,6 +136,34 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> AFTERIMAGE_YAW = SynchedEntityData.defineId(
 			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> ATTENTION_X = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> ATTENTION_Y = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> ATTENTION_Z = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_X = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_Y = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_Z = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Byte> VISUAL_REACTION = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Long> VISUAL_REACTION_UNTIL = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Long> BLINK_START = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Byte> BLINK_COUNT = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Byte> CURIOUS_TILT = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Integer> VISUAL_SEQUENCE = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Long> ATTENTION_STARTED_AT = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Long> CAUGHT_REACTION_START = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity.class, EntityDataSerializers.LONG);
 
 	public static final byte AFTERIMAGE_ZANSHIN_REAL = 1;
 	public static final byte AFTERIMAGE_ZANSHIN_PHANTOM = 2;
@@ -196,6 +235,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	private static final Map<UUID, Vec3> PINNED_CENTERS = new ConcurrentHashMap<>();
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
+	private final GuandaoVisualBehavior<JapaneseSamuraiEchoEntity> visualBehavior = new GuandaoVisualBehavior<>(this);
 	private final EchoTargetVisibilityMemory targetVisibility = new EchoTargetVisibilityMemory();
 	private final EchoCreeperTargeting creeperTargeting = new EchoCreeperTargeting();
 	private final List<UUID> secondSlashTargets = new ArrayList<>();
@@ -260,6 +300,20 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		builder.define(AFTERIMAGE_DIRECTION_X, 0.0F);
 		builder.define(AFTERIMAGE_DIRECTION_Z, 0.0F);
 		builder.define(AFTERIMAGE_YAW, 0.0F);
+		builder.define(ATTENTION_X, 0.0F);
+		builder.define(ATTENTION_Y, 0.0F);
+		builder.define(ATTENTION_Z, 0.0F);
+		builder.define(EYE_ATTENTION_X, 0.0F);
+		builder.define(EYE_ATTENTION_Y, 0.0F);
+		builder.define(EYE_ATTENTION_Z, 0.0F);
+		builder.define(VISUAL_REACTION, VISUAL_NORMAL);
+		builder.define(VISUAL_REACTION_UNTIL, 0L);
+		builder.define(BLINK_START, -100L);
+		builder.define(BLINK_COUNT, (byte)0);
+		builder.define(CURIOUS_TILT, (byte)0);
+		builder.define(VISUAL_SEQUENCE, 0);
+		builder.define(ATTENTION_STARTED_AT, 0L);
+		builder.define(CAUGHT_REACTION_START, -100L);
 	}
 
 	@Override
@@ -336,9 +390,21 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		boolean actionOwned = action() != ACTION_NONE;
 		if (actionOwned) stopMovementIntent();
 		EchoActivityMovement.tick(level, this, this.activityMode, this.activityAnchor,
-				this.getTarget() != null || actionOwned);
+				this.getTarget() != null || actionOwned || this.visualBehavior.ownsMovement());
+		if (controllerAvailable) this.visualBehavior.tick(level, owner);
 		EchoWaterSafety.tick(level, this, owner,
-				controllerAvailable && this.activityMode == EchoRelicState.ActivityMode.FOLLOW && !actionOwned);
+				controllerAvailable && this.activityMode == EchoRelicState.ActivityMode.FOLLOW
+						&& !actionOwned && !this.visualBehavior.ownsMovement());
+	}
+
+	@Override
+	public void tick() {
+		super.tick();
+		if (!this.level().isClientSide()) {
+			// Apply presentation-owned body turns after vanilla rotation control. Combat
+			// and committed samurai actions suppress the shared social gaze first.
+			this.visualBehavior.tickBodyFacing(this.level().getGameTime());
+		}
 	}
 
 	private void tryStartCombatAction(ServerLevel level, ItemStack relic, long now) {
@@ -734,13 +800,15 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		boolean wasIdle = action() == ACTION_NONE;
 		boolean hurt = super.hurtServer(level, source, damage);
 		if (hurt && this.getHealth() < previousHealth) {
+			LivingEntity livingAttacker = attacker instanceof LivingEntity living ? living : null;
 			if (wasIdle) {
 				setAction(ACTION_HURT, now, HURT_TICKS, Long.MAX_VALUE, 1.0F, HURT_TRIGGER);
 			}
-			if (attacker instanceof LivingEntity living && canProtectAgainst(living)) {
-				this.creeperTargeting.authorizeReactive(this, living, now);
-				BrainUtil.setTargetOfEntity(this, living);
+			if (livingAttacker != null && canProtectAgainst(livingAttacker)) {
+				this.creeperTargeting.authorizeReactive(this, livingAttacker, now);
+				BrainUtil.setTargetOfEntity(this, livingAttacker);
 			}
+			this.visualBehavior.onHurt(now, livingAttacker);
 		}
 		this.reflectModuleMeleeDamage(level, source, previousHealth);
 		return hurt;
@@ -1237,6 +1305,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		this.ownerReference = EntityReference.of(owner);
 		this.summonerUuid = summonerUuid;
 		this.activityAnchor = this.position();
+		this.visualBehavior.bindTo(owner);
 	}
 
 	@Override
@@ -1305,6 +1374,53 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	public Vec3 afterimageDirection() { return new Vec3(
 			this.entityData.get(AFTERIMAGE_DIRECTION_X), 0.0, this.entityData.get(AFTERIMAGE_DIRECTION_Z)); }
 	public float afterimageYaw() { return this.entityData.get(AFTERIMAGE_YAW); }
+	public Vec3 getSyncedAttentionPoint() {
+		return new Vec3(this.entityData.get(ATTENTION_X), this.entityData.get(ATTENTION_Y), this.entityData.get(ATTENTION_Z));
+	}
+	public Vec3 getSyncedEyeAttentionPoint() {
+		return new Vec3(this.entityData.get(EYE_ATTENTION_X), this.entityData.get(EYE_ATTENTION_Y), this.entityData.get(EYE_ATTENTION_Z));
+	}
+	@Override public byte getVisualReaction() { return this.entityData.get(VISUAL_REACTION); }
+	@Override public long getVisualReactionUntil() { return this.entityData.get(VISUAL_REACTION_UNTIL); }
+	public long getBlinkStart() { return this.entityData.get(BLINK_START); }
+	public byte getBlinkCount() { return this.entityData.get(BLINK_COUNT); }
+	public byte getCuriousTilt() { return this.entityData.get(CURIOUS_TILT); }
+	public int getVisualSequence() { return this.entityData.get(VISUAL_SEQUENCE); }
+	public long getAttentionStartedAt() { return this.entityData.get(ATTENTION_STARTED_AT); }
+	public long getCaughtReactionStart() { return this.entityData.get(CAUGHT_REACTION_START); }
+	@Override public void setVisualAttentionPoint(Vec3 point) {
+		this.entityData.set(ATTENTION_X, (float)point.x);
+		this.entityData.set(ATTENTION_Y, (float)point.y);
+		this.entityData.set(ATTENTION_Z, (float)point.z);
+	}
+	@Override public void setVisualEyeAttentionPoint(Vec3 point) {
+		this.entityData.set(EYE_ATTENTION_X, (float)point.x);
+		this.entityData.set(EYE_ATTENTION_Y, (float)point.y);
+		this.entityData.set(EYE_ATTENTION_Z, (float)point.z);
+	}
+	@Override public void setVisualReaction(byte reaction, long until) {
+		this.entityData.set(VISUAL_REACTION, reaction);
+		this.entityData.set(VISUAL_REACTION_UNTIL, until);
+	}
+	@Override public void setVisualBlink(long start, byte count) {
+		this.entityData.set(BLINK_START, start);
+		this.entityData.set(BLINK_COUNT, count);
+	}
+	@Override public void setVisualCuriousTilt(byte tilt) { this.entityData.set(CURIOUS_TILT, tilt); }
+	@Override public void bumpVisualSequence() { this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1); }
+	@Override public void setVisualAttentionStartedAt(long startedAt) { this.entityData.set(ATTENTION_STARTED_AT, startedAt); }
+	@Override public void setVisualCaughtReactionStart(long startedAt) { this.entityData.set(CAUGHT_REACTION_START, startedAt); }
+	@Override public float visualBodyYaw() { return this.yBodyRot; }
+	@Override public void turnVisualBodyToward(Vec3 point, float maxDegrees) {
+		float desiredYaw = yawToward(this.getX(), this.getZ(), point.x, point.z);
+		float delta = Mth.wrapDegrees(desiredYaw - this.yBodyRot);
+		this.yBodyRot += Mth.clamp(delta, -maxDegrees, maxDegrees);
+		this.setYRot(this.yBodyRot);
+	}
+	@Override public boolean isVisualCombatActive(long now) {
+		LivingEntity target = this.getTarget();
+		return action() != ACTION_NONE || target != null && target.isAlive();
+	}
 	public void setAfterimageNeutral(boolean neutral) { this.entityData.set(AFTERIMAGE_NEUTRAL, neutral); }
 	public void setAfterimageAdvanced(boolean advanced) {
 		this.entityData.set(AFTERIMAGE_ADVANCED, advanced);
@@ -1317,7 +1433,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	@Override public LivingEntity livingEntity() { return this; }
 	@Override public EchoHeroType heroType() { return EchoHeroType.JAPANESE_SAMURAI; }
 	@Override public boolean shouldFollowOwner() { return this.activityMode == EchoRelicState.ActivityMode.FOLLOW && action() == ACTION_NONE; }
-	@Override public boolean isFollowMovementSuppressed() { return action() != ACTION_NONE; }
+	@Override public boolean isFollowMovementSuppressed() { return action() != ACTION_NONE || this.visualBehavior.ownsMovement(); }
 	@Override public @Nullable UUID getOwnerUuid() {
 		if (this.level() instanceof ServerLevel level && this.summonerUuid != null) {
 			return EchoBindingSystem.controllerId(level, this.summonerUuid);
@@ -1333,14 +1449,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	@Override
 	public void recallTo(Player player) {
 		finishAction(this.level().getGameTime());
-		Vec3 side = player.getLookAngle().cross(new Vec3(0, 1, 0)).normalize().scale(1.5);
-		double x = player.getX() + side.x;
-		double z = player.getZ() + side.z;
-		float yaw = yawToward(x, z, player.getX(), player.getZ());
-		this.snapTo(x, player.getY(), z, yaw, 0.0F);
-		this.setYBodyRot(yaw);
-		this.setYHeadRot(yaw);
-		this.getNavigation().stop();
+		if (!EchoSafeTeleport.teleportBesideOwner(this, player)) return;
 		if (this.level() instanceof ServerLevel level) {
 			level.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 12, 0.25, 0.5, 0.25, 0.01);
 			level.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.45F, 1.45F);

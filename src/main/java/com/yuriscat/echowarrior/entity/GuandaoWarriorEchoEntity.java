@@ -13,6 +13,7 @@ import com.yuriscat.echowarrior.ModItems;
 import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
+import com.yuriscat.echowarrior.entity.behavior.EchoSafeTeleport;
 import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoAccessorySystem;
@@ -74,7 +75,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class GuandaoWarriorEchoEntity extends PathfinderMob
-		implements EchoWarriorEntity, SmartBrainOwner<GuandaoWarriorEchoEntity>, GeoEntity {
+		implements EchoWarriorEntity, SmartBrainOwner<GuandaoWarriorEchoEntity>, GeoEntity,
+		GuandaoVisualBehavior.Host {
 	public static final byte VISUAL_NORMAL = 0;
 	public static final byte VISUAL_ALERT = 1;
 	public static final byte VISUAL_STARTLED = 2;
@@ -175,7 +177,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 			COMBO_STEP_ID, 0.45, AttributeModifier.Operation.ADD_VALUE);
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
-	private final GuandaoVisualBehavior visualBehavior = new GuandaoVisualBehavior(this);
+	private final GuandaoVisualBehavior<GuandaoWarriorEchoEntity> visualBehavior = new GuandaoVisualBehavior<>(this);
 	private final EchoTargetVisibilityMemory targetVisibility = new EchoTargetVisibilityMemory();
 	private final EchoCreeperTargeting creeperTargeting = new EchoCreeperTargeting();
 	private final Set<UUID> comboPhaseHits = new HashSet<>();
@@ -1125,7 +1127,8 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 		BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.WALK_TARGET);
 	}
 
-	boolean isVisualCombatActive(long now) {
+	@Override
+	public boolean isVisualCombatActive(long now) {
 		LivingEntity target = this.getTarget();
 		return isComboActive() || now < this.attackAnimationUntil || target != null && target.isAlive();
 	}
@@ -1147,35 +1150,40 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	public long getAttentionStartedAt() { return this.entityData.get(ATTENTION_STARTED_AT); }
 	public long getCaughtReactionStart() { return this.entityData.get(CAUGHT_REACTION_START); }
 
-	void setVisualAttentionPoint(Vec3 point) {
+	@Override
+	public void setVisualAttentionPoint(Vec3 point) {
 		this.entityData.set(ATTENTION_X, (float)point.x);
 		this.entityData.set(ATTENTION_Y, (float)point.y);
 		this.entityData.set(ATTENTION_Z, (float)point.z);
 	}
 
-	void setVisualEyeAttentionPoint(Vec3 point) {
+	@Override
+	public void setVisualEyeAttentionPoint(Vec3 point) {
 		this.entityData.set(EYE_ATTENTION_X, (float)point.x);
 		this.entityData.set(EYE_ATTENTION_Y, (float)point.y);
 		this.entityData.set(EYE_ATTENTION_Z, (float)point.z);
 	}
 
-	void setVisualReaction(byte reaction, long until) {
+	@Override
+	public void setVisualReaction(byte reaction, long until) {
 		this.entityData.set(VISUAL_REACTION, reaction);
 		this.entityData.set(VISUAL_REACTION_UNTIL, until);
 	}
 
-	void setVisualBlink(long start, byte count) {
+	@Override
+	public void setVisualBlink(long start, byte count) {
 		this.entityData.set(BLINK_START, start);
 		this.entityData.set(BLINK_COUNT, count);
 	}
 
-	void setVisualCuriousTilt(byte tilt) { this.entityData.set(CURIOUS_TILT, tilt); }
-	void bumpVisualSequence() { this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1); }
-	void setVisualAttentionStartedAt(long startedAt) { this.entityData.set(ATTENTION_STARTED_AT, startedAt); }
-	void setVisualCaughtReactionStart(long startedAt) { this.entityData.set(CAUGHT_REACTION_START, startedAt); }
-	float visualBodyYaw() { return this.yBodyRot; }
+	@Override public void setVisualCuriousTilt(byte tilt) { this.entityData.set(CURIOUS_TILT, tilt); }
+	@Override public void bumpVisualSequence() { this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1); }
+	@Override public void setVisualAttentionStartedAt(long startedAt) { this.entityData.set(ATTENTION_STARTED_AT, startedAt); }
+	@Override public void setVisualCaughtReactionStart(long startedAt) { this.entityData.set(CAUGHT_REACTION_START, startedAt); }
+	@Override public float visualBodyYaw() { return this.yBodyRot; }
 
-	void turnVisualBodyToward(Vec3 point, float maxDegrees) {
+	@Override
+	public void turnVisualBodyToward(Vec3 point, float maxDegrees) {
 		float desiredYaw = yawToward(this.getX(), this.getZ(), point.x, point.z);
 		float delta = Mth.wrapDegrees(desiredYaw - this.yBodyRot);
 		this.yBodyRot += Mth.clamp(delta, -maxDegrees, maxDegrees);
@@ -1330,14 +1338,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	@Override
 	public void recallTo(Player player) {
 		finishCombo();
-		Vec3 side = player.getLookAngle().cross(new Vec3(0, 1, 0)).normalize().scale(1.5);
-		double x = player.getX() + side.x;
-		double z = player.getZ() + side.z;
-		float yaw = yawToward(x, z, player.getX(), player.getZ());
-		this.snapTo(x, player.getY(), z, yaw, 0.0F);
-		this.setYBodyRot(yaw);
-		this.setYHeadRot(yaw);
-		this.getNavigation().stop();
+		if (!EchoSafeTeleport.teleportBesideOwner(this, player)) return;
 		if (this.level() instanceof ServerLevel level) {
 			level.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 12, 0.25, 0.5, 0.25, 0.01);
 			level.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.45F, 1.45F);

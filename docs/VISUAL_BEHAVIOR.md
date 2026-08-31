@@ -27,14 +27,23 @@ The Egyptian archer uses the same runtime bone names as the Aztec model:
 - `Eyes_Right`
 - `Eyebrow`
 
-The Guandao warrior also uses those runtime face-bone names:
+The Chinese Guandao warrior also uses those runtime face-bone names:
 
 - `Head`
 - `Eyes_Left`
 - `Eyes_Right`
 - `Eyebrow`
 
-The renderers compensate each model's real ancestry independently: Roman `root`/torso, Aztec and Guandao `Main` → `Body` → `Upper_Body2`, and Egyptian `Main` → `Upper_Body` → `Upper_Body2`. Model-specific axis signs and ancestor compensation belong in each renderer; gameplay attention rules remain consistent across entities.
+The Japanese samurai uses the same runtime face-bone names:
+
+- `Head`
+- `Eyes_Left`
+- `Eyes_Right`
+- `Eyebrow`
+
+The renderers compensate each model's real ancestry independently: Roman `root`/torso, Aztec and Guandao `Main` → `Body` → `Upper_Body2`, Egyptian `Main` → `Upper_Body` → `Upper_Body2`, and Japanese `Main` → `Body` → `Upper_Body` → `Upper_Body2`. Model-specific axis signs and ancestor compensation belong in each renderer; gameplay attention rules remain consistent across entities.
+
+The Japanese model is an approved exception to the general face-keyframe reservation during committed combat clips. Its authored attack, stab, dash, and hurt actions may control `Head`, and its hurt clip may control `Eyebrow`. While any such action is active, the Japanese renderer leaves those authored face bones untouched and eases the procedural gaze state toward neutral in the background; normal gaze resumes after the action. Social gaze acquisition, mutual-gaze body turning, and the caught-watching exit are suppressed by combat targets and committed actions. Frozen afterimages capture the already-composed live pose once and do not run the procedural face layer during replay.
 
 Animation files must not introduce new face keyframes that fight the runtime layer unless the project owner explicitly approves a future exception. The authoritative Blockbench sources are:
 
@@ -43,6 +52,7 @@ assets-source/blockbench/roman_legionary.bbmodel
 assets-source/blockbench/aztec_warrior_echo.bbmodel
 assets-source/blockbench/egyptian_archer_echo.bbmodel
 assets-source/blockbench/guandao_warrior_echo.bbmodel
+assets-source/blockbench/japanese_samurai_echo.bbmodel
 ```
 
 Model artists must continue from the latest matching source file rather than an older local branch.
