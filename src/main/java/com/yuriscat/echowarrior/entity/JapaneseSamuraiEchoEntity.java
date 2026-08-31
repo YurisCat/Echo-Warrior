@@ -11,6 +11,7 @@ import com.geckolib.util.GeckoLibUtil;
 import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.ModDamageTypes;
 import com.yuriscat.echowarrior.ModItems;
+import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
 import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
@@ -28,6 +29,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -200,7 +202,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	private final Map<UUID, Vec3> stabTargets = new LinkedHashMap<>();
 	private @Nullable EntityReference<LivingEntity> ownerReference;
 	private @Nullable UUID summonerUuid;
-	private int missingSummonerTicks;
+	private long bindingGeneration;
 	private EchoRelicState.ActivityMode activityMode = EchoRelicState.ActivityMode.FOLLOW;
 	private EchoRelicState.AlertMode alertMode = EchoRelicState.AlertMode.DEFENSIVE;
 	private int enabledSkills = EchoHeroType.JAPANESE_SAMURAI.allSkillsEnabledMask();
@@ -292,20 +294,19 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 
 	@Override
 	public void aiStep() {
-		super.aiStep();
-		if (!(this.level() instanceof ServerLevel level)) return;
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || !owner.isAlive() || owner.level() != this.level()) {
-			dismiss();
+		if (this.level() instanceof ServerLevel bindingLevel
+				&& !EchoBindingSystem.validateAndSnapshot(this, bindingLevel)) {
+			this.discard();
 			return;
 		}
-
-		boolean hasSummoner = this.summonerUuid != null
-				&& player.getInventory().contains(stack -> TestEchoSummonerItem.hasSummoner(stack, this.summonerUuid));
-		this.missingSummonerTicks = hasSummoner ? 0 : this.missingSummonerTicks + 1;
-		if (this.missingSummonerTicks > RomanLegionaryEchoEntity.SUMMONER_GRACE_TICKS) {
-			dismiss();
-			return;
+		super.aiStep();
+		if (!(this.level() instanceof ServerLevel level)) return;
+		LivingEntity resolvedOwner = this.getOwner();
+		boolean controllerAvailable = resolvedOwner instanceof Player player && player.isAlive()
+				&& !player.isSpectator() && player.level() == this.level();
+		LivingEntity owner = controllerAvailable ? resolvedOwner : this;
+		if (!controllerAvailable && this.activityMode == EchoRelicState.ActivityMode.FOLLOW) {
+			this.getNavigation().stop();
 		}
 
 		long now = level.getGameTime();
@@ -337,7 +338,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		EchoActivityMovement.tick(level, this, this.activityMode, this.activityAnchor,
 				this.getTarget() != null || actionOwned);
 		EchoWaterSafety.tick(level, this, owner,
-				this.activityMode == EchoRelicState.ActivityMode.FOLLOW && !actionOwned);
+				controllerAvailable && this.activityMode == EchoRelicState.ActivityMode.FOLLOW && !actionOwned);
 	}
 
 	private void tryStartCombatAction(ServerLevel level, ItemStack relic, long now) {
@@ -1224,10 +1225,8 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		long now = level.getGameTime();
 		if (this.getHealth() >= this.getMaxHealth() || this.getTarget() != null || action() != ACTION_NONE
 				|| this.tickCount - this.getLastHurtByMobTimestamp() < 100 || now - this.lastNaturalHealAt < 40L) return;
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || this.summonerUuid == null) return;
-		ItemStack summoner = TestEchoSummonerItem.findSummonerStack(player, this.summonerUuid);
-		if (summoner.isEmpty() || !SummonerFuel.consumeFractional(summoner, SummonerFuel.healCost(relic))) return;
+		if (this.summonerUuid == null
+				|| !EchoBindingSystem.consumeFractionalFuel(level, this.summonerUuid, SummonerFuel.healCost(relic))) return;
 		this.heal(1.0F);
 		this.lastNaturalHealAt = now;
 		level.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 2, 0.15, 0.3, 0.15, 0.0);
@@ -1237,7 +1236,6 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	public void bindTo(Player owner, UUID summonerUuid) {
 		this.ownerReference = EntityReference.of(owner);
 		this.summonerUuid = summonerUuid;
-		this.missingSummonerTicks = 0;
 		this.activityAnchor = this.position();
 	}
 
@@ -1270,17 +1268,27 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		if (this.getHealth() > this.getMaxHealth()) this.setHealth(this.getMaxHealth());
 	}
 
+	@Override
+	public void writeMigrationState(CompoundTag tag) {
+		tag.putLong("SamuraiLastNaturalHealAt", this.lastNaturalHealAt);
+		tag.putLong("SamuraiZanshinBonusUntil", this.zanshinBonusUntil);
+	}
+
+	@Override
+	public void readMigrationState(CompoundTag tag) {
+		this.lastNaturalHealAt = tag.getLongOr("SamuraiLastNaturalHealAt", 0L);
+		this.zanshinBonusUntil = tag.getLongOr("SamuraiZanshinBonusUntil", 0L);
+	}
+
 	private ItemStack currentRelic() {
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || this.summonerUuid == null) return ItemStack.EMPTY;
-		return TestEchoSummonerItem.relicStack(TestEchoSummonerItem.findSummonerStack(player, this.summonerUuid));
+		if (!(this.level() instanceof ServerLevel level) || this.summonerUuid == null) return ItemStack.EMPTY;
+		return EchoBindingSystem.relic(level, this.summonerUuid);
 	}
 
 	private void persistCurrentRelic(ItemStack relic) {
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || this.summonerUuid == null) return;
-		ItemStack summoner = TestEchoSummonerItem.findSummonerStack(player, this.summonerUuid);
-		if (!summoner.isEmpty()) TestEchoSummonerItem.setRelicStack(summoner, relic);
+		if (this.level() instanceof ServerLevel level && this.summonerUuid != null) {
+			EchoBindingSystem.persistRelic(level, this.summonerUuid, relic);
+		}
 	}
 
 	public byte action() { return this.entityData.get(ACTION); }
@@ -1310,8 +1318,16 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	@Override public EchoHeroType heroType() { return EchoHeroType.JAPANESE_SAMURAI; }
 	@Override public boolean shouldFollowOwner() { return this.activityMode == EchoRelicState.ActivityMode.FOLLOW && action() == ACTION_NONE; }
 	@Override public boolean isFollowMovementSuppressed() { return action() != ACTION_NONE; }
-	@Override public @Nullable UUID getOwnerUuid() { LivingEntity owner = getOwner(); return owner == null ? null : owner.getUUID(); }
+	@Override public @Nullable UUID getOwnerUuid() {
+		if (this.level() instanceof ServerLevel level && this.summonerUuid != null) {
+			return EchoBindingSystem.controllerId(level, this.summonerUuid);
+		}
+		LivingEntity owner = getOwner();
+		return owner == null ? null : owner.getUUID();
+	}
 	@Override public @Nullable UUID getSummonerUuid() { return this.summonerUuid; }
+	@Override public long getBindingGeneration() { return this.bindingGeneration; }
+	@Override public void setBindingGeneration(long generation) { this.bindingGeneration = Math.max(0L, generation); }
 	@Override public @Nullable EntityReference<LivingEntity> getOwnerReference() { return this.ownerReference; }
 
 	@Override
@@ -1354,6 +1370,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		super.addAdditionalSaveData(output);
 		EntityReference.store(this.ownerReference, output, "EchoOwner");
 		if (this.summonerUuid != null) output.putString("SummonerUuid", this.summonerUuid.toString());
+		output.putLong("BindingGeneration", this.bindingGeneration);
 		output.putInt("ActivityMode", this.activityMode.ordinal());
 		output.putInt("AlertMode", this.alertMode.ordinal());
 		output.putInt("EnabledSkills", this.enabledSkills);
@@ -1361,6 +1378,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		output.putDouble("ActivityAnchorY", this.activityAnchor.y);
 		output.putDouble("ActivityAnchorZ", this.activityAnchor.z);
 		output.putLong("ZanshinBonusUntil", this.zanshinBonusUntil);
+		output.putLong("LastNaturalHealAt", this.lastNaturalHealAt);
 	}
 
 	@Override
@@ -1369,12 +1387,14 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		this.ownerReference = EntityReference.readWithOldOwnerConversion(input, "EchoOwner", this.level());
 		try { this.summonerUuid = UUID.fromString(input.getStringOr("SummonerUuid", "")); }
 		catch (IllegalArgumentException ignored) { this.summonerUuid = null; }
+		this.bindingGeneration = input.getLongOr("BindingGeneration", 0L);
 		this.activityMode = EchoRelicState.ActivityMode.byOrdinal(input.getIntOr("ActivityMode", 0));
 		this.alertMode = EchoRelicState.AlertMode.byOrdinal(input.getIntOr("AlertMode", 1));
 		this.enabledSkills = input.getIntOr("EnabledSkills", EchoHeroType.JAPANESE_SAMURAI.allSkillsEnabledMask());
 		this.activityAnchor = new Vec3(input.getDoubleOr("ActivityAnchorX", this.getX()),
 				input.getDoubleOr("ActivityAnchorY", this.getY()), input.getDoubleOr("ActivityAnchorZ", this.getZ()));
 		this.zanshinBonusUntil = input.getLongOr("ZanshinBonusUntil", 0L);
+		this.lastNaturalHealAt = input.getLongOr("LastNaturalHealAt", 0L);
 	}
 
 	@Override protected boolean shouldDropLoot(ServerLevel level) { return false; }

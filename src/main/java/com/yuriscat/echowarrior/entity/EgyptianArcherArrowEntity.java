@@ -2,6 +2,7 @@ package com.yuriscat.echowarrior.entity;
 
 import com.yuriscat.echowarrior.ModDamageTypes;
 import com.yuriscat.echowarrior.ModEffects;
+import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.item.EchoRelicState;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -40,6 +41,8 @@ public final class EgyptianArcherArrowEntity extends Arrow {
 			EgyptianArcherArrowEntity.class, EntityDataSerializers.BOOLEAN);
 
 	private final Set<UUID> hitEntities = new HashSet<>();
+	private UUID summonerUuid;
+	private long bindingGeneration;
 
 	public EgyptianArcherArrowEntity(EntityType<? extends EgyptianArcherArrowEntity> type, Level level) {
 		super(type, level);
@@ -48,6 +51,10 @@ public final class EgyptianArcherArrowEntity extends Arrow {
 
 	public void configure(LivingEntity owner, EchoRelicState.EgyptianArrowMode mode, float damage, boolean pierceOnHit) {
 		this.setOwner(owner);
+		if (owner instanceof EchoWarriorEntity echo) {
+			this.summonerUuid = echo.getSummonerUuid();
+			this.bindingGeneration = echo.getBindingGeneration();
+		}
 		this.entityData.set(ARROW_MODE, mode.ordinal());
 		this.entityData.set(RAW_DAMAGE, damage);
 		this.entityData.set(PIERCE_ON_HIT, pierceOnHit);
@@ -68,6 +75,12 @@ public final class EgyptianArcherArrowEntity extends Arrow {
 
 	@Override
 	public void tick() {
+		if (this.level() instanceof ServerLevel level && (this.summonerUuid == null
+				|| !EchoBindingSystem.isActive(level, this.summonerUuid)
+				|| EchoBindingSystem.generation(level, this.summonerUuid) != this.bindingGeneration)) {
+			this.discard();
+			return;
+		}
 		super.tick();
 		if (this.level().isClientSide()) {
 			int color = switch (arrowMode()) {
@@ -152,6 +165,8 @@ public final class EgyptianArcherArrowEntity extends Arrow {
 		output.putInt("ArrowMode", this.entityData.get(ARROW_MODE));
 		output.putFloat("RawDamage", this.entityData.get(RAW_DAMAGE));
 		output.putBoolean("PierceOnHit", this.entityData.get(PIERCE_ON_HIT));
+		if (this.summonerUuid != null) output.putString("SummonerUuid", this.summonerUuid.toString());
+		output.putLong("BindingGeneration", this.bindingGeneration);
 	}
 
 	@Override
@@ -160,6 +175,9 @@ public final class EgyptianArcherArrowEntity extends Arrow {
 		this.entityData.set(ARROW_MODE, input.getIntOr("ArrowMode", 0));
 		this.entityData.set(RAW_DAMAGE, input.getFloatOr("RawDamage", 5.0F));
 		this.entityData.set(PIERCE_ON_HIT, input.getBooleanOr("PierceOnHit", false));
+		try { this.summonerUuid = UUID.fromString(input.getStringOr("SummonerUuid", "")); }
+		catch (IllegalArgumentException ignored) { this.summonerUuid = null; }
+		this.bindingGeneration = input.getLongOr("BindingGeneration", 0L);
 		this.pickup = Pickup.DISALLOWED;
 	}
 }

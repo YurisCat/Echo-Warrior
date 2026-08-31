@@ -1,6 +1,8 @@
 package com.yuriscat.echowarrior.menu;
 
 import com.yuriscat.echowarrior.ModMenus;
+import com.yuriscat.echowarrior.binding.EchoBindingSavedData;
+import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.item.EchoRelicItem;
 import com.yuriscat.echowarrior.item.EchoRelicProgress;
 import com.yuriscat.echowarrior.item.EchoRelicState;
@@ -17,6 +19,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
@@ -46,6 +49,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	public static final int ACTION_RELIC_CHANGED = 10;
 	public static final int ACTION_FUEL_ROTTEN_FLESH = 11;
 	public static final int ACTION_FUEL_SOUL_SAND = 12;
+	public static final int ACTION_LIMIT_REACHED = 13;
+	public static final int ACTION_STALE_STATE = 14;
 	private static final int PLAYER_SLOT_START = CUSTOM_SLOT_COUNT;
 	private static final int PLAYER_SLOT_END = PLAYER_SLOT_START + Inventory.INVENTORY_SIZE;
 
@@ -91,6 +96,7 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	private boolean loadingContents;
 	private String previousRelicId;
 	private int actionSequence;
+	private long observedStateRevision = -1L;
 
 	public SummonerMenu(int containerId, Inventory playerInventory, Integer sourceInventorySlot) {
 		this(containerId, playerInventory, sourceInventorySlot, stackAt(playerInventory, sourceInventorySlot));
@@ -106,6 +112,11 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		this.owner = playerInventory.player;
 		this.sourceInventorySlot = sourceInventorySlot;
 		this.summonerId = TestEchoSummonerItem.getSummonerId(summonerStack).orElse(null);
+		if (this.owner instanceof ServerPlayer serverPlayer && this.summonerId != null) {
+			EchoBindingSavedData.Binding binding = EchoBindingSystem.registerOrSynchronize(serverPlayer.level(), summonerStack);
+			this.observedStateRevision = binding.stateRevision();
+			summonerStack = binding.summonerState();
+		}
 		this.summonerContainer = new SimpleContainer(CUSTOM_SLOT_COUNT) {
 			@Override
 			public void setChanged() {
@@ -236,14 +247,23 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		if (this.owner instanceof ServerPlayer serverPlayer) {
 			EchoRelicState.ensureInitialized(relic, serverPlayer.getRandom(), serverPlayer.level().getGameTime());
 		}
+		String currentRelicId = relicIdentity(relic);
+		boolean relicChanged = !this.previousRelicId.isEmpty() && !this.previousRelicId.equals(currentRelicId);
+		if (relicChanged && this.owner instanceof ServerPlayer serverPlayer && this.summonerId != null) {
+			// The menu UUID is the binding that owned the old relic. End it before
+			// committing the replacement so an ItemStack mirror change can never leave
+			// the old Echo alive under an orphaned binding.
+			EchoBindingSystem.dismiss(serverPlayer.level().getServer(), this.summonerId, "relic_removed_or_replaced");
+		}
 		currentSummoner.set(
 				DataComponents.CONTAINER,
 				ItemContainerContents.fromItems(this.summonerContainer.getItems())
 		);
-		String currentRelicId = relicIdentity(relic);
-		if (!this.previousRelicId.isEmpty() && !this.previousRelicId.equals(currentRelicId)
-				&& this.owner instanceof ServerPlayer serverPlayer) {
-			TestEchoSummonerItem.dismissBoundSpirit(serverPlayer, currentSummoner);
+		if (this.owner instanceof ServerPlayer serverPlayer) {
+			EchoBindingSystem.commitPhysicalStack(serverPlayer.level(), currentSummoner);
+			this.observedStateRevision = EchoBindingSystem.stateRevision(serverPlayer.level(), this.summonerId);
+		}
+		if (relicChanged) {
 			reportAction(ACTION_RELIC_CHANGED);
 		}
 		this.previousRelicId = currentRelicId;
@@ -265,9 +285,12 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	}
 
 	private void refreshServerData(ServerPlayer serverPlayer) {
+		reloadAuthoritativeStateIfChanged(serverPlayer, false);
 		ItemStack summoner = currentSummonerStack();
 		var spirit = summoner.isEmpty() ? null : TestEchoSummonerItem.findBoundSpirit(serverPlayer.level(), summoner);
-		this.spiritPresent.set(spirit != null ? 1 : 0);
+		EchoBindingSavedData.Binding binding = this.summonerId == null ? null
+				: EchoBindingSystem.binding(serverPlayer.level(), this.summonerId);
+		this.spiritPresent.set(binding != null && binding.active() ? 1 : 0);
 		ItemStack relic = this.summonerContainer.getItem(RELIC_SLOT);
 		if (relic.getItem() instanceof EchoRelicItem) {
 			EchoRelicState.ensureInitialized(relic, serverPlayer.getRandom(), serverPlayer.level().getGameTime());
@@ -280,7 +303,10 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			this.spiritMaximumHealth.set(maximumHealth);
 			this.spiritAttackDamage.set((int)Math.round(Math.max(0.0, EchoRelicState.attackDamage(relic)
 					+ EchoAccessorySystem.attackBonus(this.summonerContainer)) * 10.0));
-			this.spiritHealth.set(spirit == null ? maximumHealth : Math.round(spirit.livingEntity().getHealth() * 10.0F));
+			this.spiritHealth.set(spirit != null ? Math.round(spirit.livingEntity().getHealth() * 10.0F)
+					: binding != null && binding.active() && binding.snapshot().health() > 0.0F
+							? Math.round(Math.min(maximumHealth / 10.0F, binding.snapshot().health()) * 10.0F)
+							: maximumHealth);
 			this.spiritAttackSpeed.set(EchoRelicState.attackSpeedPercent(relic));
 			this.spiritArmor.set((int)Math.round(Math.max(0.0, EchoRelicState.armor(relic)
 					+ EchoAccessorySystem.armorBonus(this.summonerContainer)) * 10.0));
@@ -366,6 +392,7 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		if (!(player instanceof ServerPlayer serverPlayer) || player != this.owner) {
 			return false;
 		}
+		if (!reloadAuthoritativeStateIfChanged(serverPlayer, true)) return true;
 
 		ItemStack summoner = currentSummonerStack();
 		if (summoner.isEmpty()) {
@@ -378,10 +405,27 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			return true;
 		}
 		if (buttonId >= BUTTON_ACTIVITY_START && buttonId < BUTTON_ACTIVITY_START + 3) {
-			EchoRelicState.setActivityMode(relic, EchoRelicState.ActivityMode.byOrdinal(buttonId - BUTTON_ACTIVITY_START));
+			EchoRelicState.ActivityMode requested = EchoRelicState.ActivityMode.byOrdinal(buttonId - BUTTON_ACTIVITY_START);
+			if (requested == EchoRelicState.ActivityMode.FOLLOW
+					&& EchoBindingSystem.isActive(serverPlayer.level(), this.summonerId)) {
+				UUID controllerId = EchoBindingSystem.controllerId(serverPlayer.level(), this.summonerId);
+				if (!serverPlayer.getUUID().equals(controllerId)
+						&& !EchoBindingSystem.canAddControllerEcho(serverPlayer.level().getServer(),
+						serverPlayer.getUUID(), this.summonerId)) {
+					reportAction(ACTION_LIMIT_REACHED);
+					return true;
+				}
+			}
+			EchoRelicState.setActivityMode(relic, requested);
+			this.summonerContainer.setChanged();
+			if (requested == EchoRelicState.ActivityMode.FOLLOW
+					&& EchoBindingSystem.isActive(serverPlayer.level(), this.summonerId)
+					&& !serverPlayer.getUUID().equals(EchoBindingSystem.controllerId(serverPlayer.level(), this.summonerId))) {
+				EchoBindingSystem.transferToFollowing(serverPlayer, this.summonerId);
+				this.observedStateRevision = EchoBindingSystem.stateRevision(serverPlayer.level(), this.summonerId);
+			}
 			var spirit = TestEchoSummonerItem.findBoundSpirit(serverPlayer.level(), summoner);
 			if (spirit != null) spirit.applyRelicState(relic, true);
-			this.summonerContainer.setChanged();
 			reportAction(ACTION_MODE_CHANGED);
 			return true;
 		}
@@ -432,6 +476,7 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			case NO_RELIC -> reportAction(ACTION_NO_RELIC);
 			case NOT_ENOUGH_FUEL -> reportAction(ACTION_NOT_ENOUGH_FUEL);
 			case NO_SAFE_POSITION -> reportAction(ACTION_NO_SAFE_POSITION);
+			case LIMIT_REACHED -> reportAction(ACTION_LIMIT_REACHED);
 		}
 		return true;
 	}
@@ -451,6 +496,34 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		}
 		ItemStack current = stackAt(this.owner.getInventory(), this.sourceInventorySlot);
 		return TestEchoSummonerItem.hasSummoner(current, this.summonerId) ? current : ItemStack.EMPTY;
+	}
+
+	private boolean reloadAuthoritativeStateIfChanged(ServerPlayer player, boolean reportStale) {
+		if (this.summonerId == null) return false;
+		long currentRevision = EchoBindingSystem.stateRevision(player.level(), this.summonerId);
+		if (currentRevision == this.observedStateRevision) return true;
+		ItemStack authoritative = EchoBindingSystem.authoritativeSummoner(player.level(), this.summonerId);
+		if (authoritative.isEmpty()) return false;
+		this.loadingContents = true;
+		for (int slot = 0; slot < this.summonerContainer.getContainerSize(); slot++) {
+			this.summonerContainer.setItem(slot, ItemStack.EMPTY);
+		}
+		authoritative.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY)
+				.copyInto(this.summonerContainer.getItems());
+		this.loadingContents = false;
+		this.previousRelicId = relicIdentity(this.summonerContainer.getItem(RELIC_SLOT));
+		this.observedStateRevision = currentRevision;
+		if (reportStale) reportAction(ACTION_STALE_STATE);
+		return !reportStale;
+	}
+
+	@Override
+	public void clicked(int slotId, int button, ContainerInput clickType, Player player) {
+		if (player instanceof ServerPlayer serverPlayer && !reloadAuthoritativeStateIfChanged(serverPlayer, true)) {
+			broadcastChanges();
+			return;
+		}
+		super.clicked(slotId, button, clickType, player);
 	}
 
 	@Override

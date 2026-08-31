@@ -1,7 +1,9 @@
 package com.yuriscat.echowarrior;
 
 import com.yuriscat.echowarrior.command.VisualDebugCommands;
+import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.entity.EchoCombatEvents;
+import com.yuriscat.echowarrior.entity.EchoAuraAuditSystem;
 import com.yuriscat.echowarrior.entity.CatGodCreeperSystem;
 import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
 import com.yuriscat.echowarrior.world.BattlefieldSystem;
@@ -41,6 +43,8 @@ public final class EchoWarrior implements ModInitializer {
 		BattlefieldSystem.initialize();
 		EchoCompassSystem.initialize();
 		EchoExperienceSystem.initialize();
+		EchoBindingSystem.initialize();
+		EchoAuraAuditSystem.initialize();
 		EchoCombatEvents.initialize();
 		EchoAccessorySystem.initialize();
 		EchoTalentSystem.initialize();

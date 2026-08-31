@@ -13,7 +13,7 @@ public enum EchoHeroType {
 			0.28,
 			0.30,
 			20,
-			3
+			4
 	),
 	AZTEC_WARRIOR(
 			"aztec_warrior",

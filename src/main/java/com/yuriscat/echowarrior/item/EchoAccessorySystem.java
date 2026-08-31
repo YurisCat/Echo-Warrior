@@ -1,5 +1,6 @@
 package com.yuriscat.echowarrior.item;
 
+import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.ModDamageTypes;
 import com.yuriscat.echowarrior.ModItems;
@@ -194,10 +195,9 @@ public final class EchoAccessorySystem {
 	}
 
 	public static List<ItemStack> installedAccessories(EchoWarriorEntity echo) {
-		LivingEntity owner = echo.getOwner();
-		if (!(owner instanceof Player player) || echo.getSummonerUuid() == null) return List.of();
-		return TestEchoSummonerItem.accessoryStacks(
-				TestEchoSummonerItem.findSummonerStack(player, echo.getSummonerUuid()));
+		LivingEntity living = echo.livingEntity();
+		if (!(living.level() instanceof ServerLevel level) || echo.getSummonerUuid() == null) return List.of();
+		return EchoBindingSystem.accessories(level, echo.getSummonerUuid());
 	}
 
 	public static double attackBonus(SimpleContainer contents) { return attackBonus(contents.getItems()); }

@@ -19,6 +19,7 @@ public final class ModCreativeTabs {
 					.title(Component.translatable("itemGroup.echo_warrior.echo_warrior"))
 					.icon(() -> new ItemStack(ModItems.TEST_ECHO_SUMMONER))
 					.displayItems((parameters, output) -> {
+						output.accept(ModItems.TUTORIAL_MANUAL);
 						output.accept(ModItems.ECHO_COMPASS);
 						output.accept(ModItems.TEST_ECHO_SUMMONER);
 						output.accept(ModBlocks.ECHO_RECYCLER);

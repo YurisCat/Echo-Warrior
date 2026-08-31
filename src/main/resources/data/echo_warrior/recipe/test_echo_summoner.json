@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "IGI",
+    "IEI",
+    "ICI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "G": "minecraft:glass_pane",
+    "E": "minecraft:ender_pearl",
+    "C": "minecraft:chest"
+  },
+  "result": {
+    "id": "echo_warrior:test_echo_summoner"
+  }
+}

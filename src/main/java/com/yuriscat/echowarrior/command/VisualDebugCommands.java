@@ -102,6 +102,7 @@ public final class VisualDebugCommands {
 										.executes(context -> setGuandaoAnimationDebug(context.getSource(), false)))))
 				.then(Commands.literal("relic")
 						.then(Commands.literal("reroll_traits").executes(context -> rerollTraits(context.getSource()))))
+				.then(EchoBindingCommands.command())
 				.then(battlefieldCommands)
 				.then(recyclerCommands));
 	}

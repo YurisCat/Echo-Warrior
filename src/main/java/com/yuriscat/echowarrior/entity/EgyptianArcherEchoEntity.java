@@ -11,6 +11,7 @@ import com.geckolib.util.GeckoLibUtil;
 import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.ModEntities;
 import com.yuriscat.echowarrior.ModItems;
+import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
 import com.yuriscat.echowarrior.item.EchoHeroType;
@@ -27,6 +28,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -236,7 +238,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
 	private @Nullable EntityReference<LivingEntity> ownerReference;
 	private @Nullable UUID summonerUuid;
-	private int missingSummonerTicks;
+	private long bindingGeneration;
 	private @Nullable LivingEntity attentionTarget;
 	private Vec3 attentionPoint = Vec3.ZERO;
 	private int attentionPriority;
@@ -410,19 +412,19 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 
 	@Override
 	public void aiStep() {
-		super.aiStep();
-		if (!(this.level() instanceof ServerLevel level)) return;
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || !owner.isAlive() || owner.level() != this.level()) {
-			dismiss();
+		if (this.level() instanceof ServerLevel bindingLevel
+				&& !EchoBindingSystem.validateAndSnapshot(this, bindingLevel)) {
+			this.discard();
 			return;
 		}
-		boolean hasSummoner = this.summonerUuid != null
-				&& player.getInventory().contains(stack -> TestEchoSummonerItem.hasSummoner(stack, this.summonerUuid));
-		this.missingSummonerTicks = hasSummoner ? 0 : this.missingSummonerTicks + 1;
-		if (this.missingSummonerTicks > RomanLegionaryEchoEntity.SUMMONER_GRACE_TICKS) {
-			dismiss();
-			return;
+		super.aiStep();
+		if (!(this.level() instanceof ServerLevel level)) return;
+		LivingEntity resolvedOwner = this.getOwner();
+		boolean controllerAvailable = resolvedOwner instanceof Player player && player.isAlive()
+				&& !player.isSpectator() && player.level() == this.level();
+		LivingEntity owner = controllerAvailable ? resolvedOwner : this;
+		if (!controllerAvailable && this.activityMode == EchoRelicState.ActivityMode.FOLLOW) {
+			this.getNavigation().stop();
 		}
 
 		ItemStack relic = currentRelic();
@@ -459,8 +461,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		tickMovement(level, owner);
 		EchoActivityMovement.tick(level, this, this.activityMode, this.activityAnchor,
 				this.getTarget() != null || action() != ACTION_IDLE || isVisualInteractionMovementOwned());
-		tickVisualAwareness(level, owner);
-		EchoWaterSafety.tick(level, this, owner, this.activityMode == EchoRelicState.ActivityMode.FOLLOW
+		if (controllerAvailable) tickVisualAwareness(level, owner);
+		EchoWaterSafety.tick(level, this, owner, controllerAvailable && this.activityMode == EchoRelicState.ActivityMode.FOLLOW
 				&& action() != ACTION_BACKSTEP && !isVisualInteractionMovementOwned());
 		LivingEntity facingTarget = (action() == ACTION_MELEE || action() == ACTION_BACKSTEP)
 				&& canDefendAgainst(this.actionTarget) || action() == ACTION_SHOOT
@@ -3660,10 +3662,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		long now = level.getGameTime();
 		if (this.getHealth() >= this.getMaxHealth() || this.getTarget() != null
 				|| this.tickCount - this.getLastHurtByMobTimestamp() < 100 || now - this.lastNaturalHealAt < 40L) return;
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || this.summonerUuid == null) return;
-		ItemStack summoner = TestEchoSummonerItem.findSummonerStack(player, this.summonerUuid);
-		if (summoner.isEmpty() || !SummonerFuel.consumeFractional(summoner, SummonerFuel.healCost(relic))) return;
+		if (this.summonerUuid == null
+				|| !EchoBindingSystem.consumeFractionalFuel(level, this.summonerUuid, SummonerFuel.healCost(relic))) return;
 		this.heal(1.0F);
 		this.lastNaturalHealAt = now;
 		level.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 2, 0.15, 0.3, 0.15, 0.0);
@@ -3718,7 +3718,6 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	public void bindTo(Player owner, UUID summonerUuid) {
 		this.ownerReference = EntityReference.of(owner);
 		this.summonerUuid = summonerUuid;
-		this.missingSummonerTicks = 0;
 		this.activityAnchor = this.position();
 	}
 
@@ -3753,17 +3752,25 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (this.getHealth() > this.getMaxHealth()) this.setHealth(this.getMaxHealth());
 	}
 
+	@Override
+	public void writeMigrationState(CompoundTag tag) {
+		tag.putLong("EgyptianLastNaturalHealAt", this.lastNaturalHealAt);
+	}
+
+	@Override
+	public void readMigrationState(CompoundTag tag) {
+		this.lastNaturalHealAt = tag.getLongOr("EgyptianLastNaturalHealAt", 0L);
+	}
+
 	private ItemStack currentRelic() {
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || this.summonerUuid == null) return ItemStack.EMPTY;
-		return TestEchoSummonerItem.relicStack(TestEchoSummonerItem.findSummonerStack(player, this.summonerUuid));
+		if (!(this.level() instanceof ServerLevel level) || this.summonerUuid == null) return ItemStack.EMPTY;
+		return EchoBindingSystem.relic(level, this.summonerUuid);
 	}
 
 	private void persistCurrentRelic(ItemStack relic) {
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || this.summonerUuid == null) return;
-		ItemStack summoner = TestEchoSummonerItem.findSummonerStack(player, this.summonerUuid);
-		if (!summoner.isEmpty()) TestEchoSummonerItem.setRelicStack(summoner, relic);
+		if (this.level() instanceof ServerLevel level && this.summonerUuid != null) {
+			EchoBindingSystem.persistRelic(level, this.summonerUuid, relic);
+		}
 	}
 
 	@Override public LivingEntity livingEntity() { return this; }
@@ -3775,8 +3782,16 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	@Override public boolean isFollowMovementSuppressed() {
 		return action() == ACTION_BACKSTEP || isVisualInteractionMovementOwned();
 	}
-	@Override public @Nullable UUID getOwnerUuid() { LivingEntity owner = getOwner(); return owner == null ? null : owner.getUUID(); }
+	@Override public @Nullable UUID getOwnerUuid() {
+		if (this.level() instanceof ServerLevel level && this.summonerUuid != null) {
+			return EchoBindingSystem.controllerId(level, this.summonerUuid);
+		}
+		LivingEntity owner = getOwner();
+		return owner == null ? null : owner.getUUID();
+	}
 	@Override public @Nullable UUID getSummonerUuid() { return this.summonerUuid; }
+	@Override public long getBindingGeneration() { return this.bindingGeneration; }
+	@Override public void setBindingGeneration(long generation) { this.bindingGeneration = Math.max(0L, generation); }
 	@Override public @Nullable EntityReference<LivingEntity> getOwnerReference() { return this.ownerReference; }
 
 	public boolean isCatGodActive() { return skillEnabled(SKILL_CAT_GOD); }
@@ -3800,6 +3815,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	@Override
 	public void dismiss() {
 		if (this.isRemoved()) return;
+		this.setNoGravity(false);
+		finishAction();
 		if (this.level() instanceof ServerLevel level) {
 			level.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 24, 0.35, 0.7, 0.35, 0.02);
 			level.playSound(null, this.blockPosition(), SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 0.7F, 0.75F);
@@ -3815,12 +3832,14 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		super.addAdditionalSaveData(output);
 		EntityReference.store(this.ownerReference, output, "EchoOwner");
 		if (this.summonerUuid != null) output.putString("SummonerUuid", this.summonerUuid.toString());
+		output.putLong("BindingGeneration", this.bindingGeneration);
 		output.putInt("ActivityMode", this.activityMode.ordinal());
 		output.putInt("AlertMode", this.alertMode.ordinal());
 		output.putInt("EnabledSkills", this.enabledSkills);
 		output.putDouble("ActivityAnchorX", this.activityAnchor.x);
 		output.putDouble("ActivityAnchorY", this.activityAnchor.y);
 		output.putDouble("ActivityAnchorZ", this.activityAnchor.z);
+		output.putLong("LastNaturalHealAt", this.lastNaturalHealAt);
 	}
 
 	@Override
@@ -3829,11 +3848,15 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.ownerReference = EntityReference.readWithOldOwnerConversion(input, "EchoOwner", this.level());
 		try { this.summonerUuid = UUID.fromString(input.getStringOr("SummonerUuid", "")); }
 		catch (IllegalArgumentException ignored) { this.summonerUuid = null; }
+		this.bindingGeneration = input.getLongOr("BindingGeneration", 0L);
+		this.setNoGravity(false);
+		this.entityData.set(ACTION, ACTION_IDLE);
 		this.activityMode = EchoRelicState.ActivityMode.byOrdinal(input.getIntOr("ActivityMode", 0));
 		this.alertMode = EchoRelicState.AlertMode.byOrdinal(input.getIntOr("AlertMode", 1));
 		this.enabledSkills = input.getIntOr("EnabledSkills", EchoHeroType.EGYPTIAN_ARCHER.defaultEnabledSkillsMask());
 		this.activityAnchor = new Vec3(input.getDoubleOr("ActivityAnchorX", this.getX()),
 				input.getDoubleOr("ActivityAnchorY", this.getY()), input.getDoubleOr("ActivityAnchorZ", this.getZ()));
+		this.lastNaturalHealAt = input.getLongOr("LastNaturalHealAt", 0L);
 	}
 
 	@Override

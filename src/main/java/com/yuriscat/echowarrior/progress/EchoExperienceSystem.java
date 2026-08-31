@@ -1,21 +1,18 @@
 package com.yuriscat.echowarrior.progress;
 
 import com.yuriscat.echowarrior.ModItems;
+import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.entity.EchoWarriorEntity;
 import com.yuriscat.echowarrior.item.EchoAccessorySystem;
 import com.yuriscat.echowarrior.item.EchoRelicItem;
 import com.yuriscat.echowarrior.item.EchoRelicProgress;
 import com.yuriscat.echowarrior.item.EchoRelicState;
-import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
-import com.yuriscat.echowarrior.menu.SummonerMenu;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
@@ -23,7 +20,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.entity.item.ItemEntity;
 
 import java.util.Map;
@@ -71,15 +67,14 @@ public final class EchoExperienceSystem {
 			credit = participationFor(direct);
 		}
 		if (credit == null || level.getGameTime() - credit.lastParticipationTick() > CREDIT_WINDOW_TICKS) return;
-		Entity active = level.getEntity(credit.echoUuid());
-		if (!(active instanceof EchoWarriorEntity echo) || !echo.livingEntity().isAlive()) return;
+		EchoWarriorEntity echo = EchoBindingSystem.findLoadedSpirit(level.getServer(), credit.summonerUuid());
 
-		if (EchoAccessorySystem.has(echo, ModItems.VICTORS_LAUREL_ACCESSORY)) {
+		if (echo != null && EchoAccessorySystem.has(echo, ModItems.VICTORS_LAUREL_ACCESSORY)) {
 			echo.livingEntity().heal(echo.livingEntity().getMaxHealth() * 0.10F);
 		}
-		if (EchoAccessorySystem.has(echo, ModItems.MEMORY_RITUAL_KNIFE_ACCESSORY)
-				&& echo.livingEntity().getRandom().nextFloat() < 0.005F) {
-			ItemStack legacy = new ItemStack(switch (echo.livingEntity().getRandom().nextInt(5)) {
+		if (hasAccessory(level, credit.summonerUuid(), ModItems.MEMORY_RITUAL_KNIFE_ACCESSORY)
+				&& victim.getRandom().nextFloat() < 0.005F) {
+			ItemStack legacy = new ItemStack(switch (victim.getRandom().nextInt(5)) {
 				case 0 -> ModItems.COURAGE_LEGACY;
 				case 1 -> ModItems.FORTITUDE_LEGACY;
 				case 2 -> ModItems.PURITY_LEGACY;
@@ -89,18 +84,22 @@ public final class EchoExperienceSystem {
 			level.addFreshEntity(new ItemEntity(level, victim.getX(), victim.getY() + 0.35, victim.getZ(), legacy));
 		}
 
-		int reward = victim.getExperienceReward(level, echo.livingEntity());
+		int reward = victim.getExperienceReward(level, echo == null ? null : echo.livingEntity());
 		if (reward <= 0) return;
 		int worldReward = scaledReward(reward,
-				EchoAccessorySystem.has(echo, ModItems.LIGHT_GATHERING_MAGNET_ACCESSORY));
+				hasAccessory(level, credit.summonerUuid(), ModItems.LIGHT_GATHERING_MAGNET_ACCESSORY));
 		int growthReward = scaledReward(reward,
-				EchoAccessorySystem.has(echo, ModItems.TRAINING_NOTES_ACCESSORY));
+				hasAccessory(level, credit.summonerUuid(), ModItems.TRAINING_NOTES_ACCESSORY));
 		ExperienceOrb.award(level, victim.position(), worldReward);
 		awardExperience(level, credit, growthReward);
 	}
 
 	private static int scaledReward(int base, boolean boosted) {
 		return Math.max(1, boosted ? Math.round(base * 1.5F) : base);
+	}
+
+	private static boolean hasAccessory(ServerLevel level, UUID summonerUuid, net.minecraft.world.item.Item item) {
+		return EchoBindingSystem.accessories(level, summonerUuid).stream().anyMatch(stack -> stack.is(item));
 	}
 
 	public static void markParticipation(EchoWarriorEntity echo, LivingEntity target) {
@@ -122,47 +121,25 @@ public final class EchoExperienceSystem {
 	}
 
 	private static void awardExperience(ServerLevel level, Participation participation, int amount) {
-		ServerPlayer owner = level.getServer().getPlayerList().getPlayer(participation.ownerUuid());
-		if (owner == null) {
-			return;
-		}
-		ItemStack summoner = TestEchoSummonerItem.findSummonerStack(owner, participation.summonerUuid());
-		if (summoner.isEmpty()) {
-			return;
-		}
-
-		ItemStack relic;
-		SummonerMenu openMenu = owner.containerMenu instanceof SummonerMenu menu && menu.matchesSummoner(participation.summonerUuid())
-				? menu
-				: null;
-		SimpleContainer storedContents = null;
-		if (openMenu != null) {
-			relic = openMenu.relicStackForProgress();
-		} else {
-			storedContents = new SimpleContainer(SummonerMenu.CUSTOM_SLOT_COUNT);
-			summoner.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY)
-					.copyInto(storedContents.getItems());
-			relic = storedContents.getItem(SummonerMenu.RELIC_SLOT);
-		}
+		ItemStack relic = EchoBindingSystem.relic(level, participation.summonerUuid());
 		if (!(relic.getItem() instanceof EchoRelicItem)) {
 			return;
 		}
 		amount = EchoRelicState.addWiseGrowthExperience(relic, amount);
 
 		EchoRelicProgress.ProgressResult result = EchoRelicProgress.addExperience(relic, amount);
-		if (openMenu != null) {
-			openMenu.markRelicProgressChanged();
-		} else if (storedContents != null) {
-			summoner.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(storedContents.getItems()));
-		}
+		EchoBindingSystem.persistRelic(level, participation.summonerUuid(), relic);
 
 		if (result.levelsGained() <= 0) {
 			return;
 		}
-		Entity active = level.getEntity(participation.echoUuid());
-		if (active instanceof EchoWarriorEntity echo && echo.livingEntity().isAlive()) {
+		EchoWarriorEntity echo = EchoBindingSystem.findLoadedSpirit(level.getServer(), participation.summonerUuid());
+		if (echo != null && echo.livingEntity().isAlive()) {
 			applyRelicProgress(echo, relic, true);
 		}
+		UUID controllerId = EchoBindingSystem.controllerId(level, participation.summonerUuid());
+		ServerPlayer owner = controllerId == null ? null : level.getServer().getPlayerList().getPlayer(controllerId);
+		if (owner == null) return;
 		owner.sendOverlayMessage(Component.literal(com.yuriscat.echowarrior.item.EchoHeroType.fromRelic(relic).chineseName()
 				+ "升至 " + result.newLevel() + " 级"));
 		level.playSound(

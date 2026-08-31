@@ -12,6 +12,7 @@ import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.ModEffects;
 import com.yuriscat.echowarrior.ModItems;
 import com.yuriscat.echowarrior.ModTags;
+import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
 import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
@@ -29,6 +30,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -80,7 +82,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
 public final class AztecWarriorEchoEntity extends PathfinderMob
 		implements EchoWarriorEntity, SmartBrainOwner<AztecWarriorEchoEntity>, GeoEntity {
@@ -159,14 +160,13 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 			PURSUIT_SPEED_ID, 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	private static final AttributeModifier PURSUIT_KNOCKBACK = new AttributeModifier(
 			PURSUIT_KNOCKBACK_ID, 0.50, AttributeModifier.Operation.ADD_VALUE);
-	private static final Map<LivingEntity, Long> OWNER_SUN_HEAL_TIMES = new WeakHashMap<>();
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
 	private final EchoTargetVisibilityMemory targetVisibility = new EchoTargetVisibilityMemory();
 	private final EchoCreeperTargeting creeperTargeting = new EchoCreeperTargeting();
 	private @Nullable EntityReference<LivingEntity> ownerReference;
 	private @Nullable UUID summonerUuid;
-	private int missingSummonerTicks;
+	private long bindingGeneration;
 	private @Nullable LivingEntity attentionTarget;
 	private Vec3 attentionPoint = Vec3.ZERO;
 	private int attentionPriority;
@@ -319,19 +319,19 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 
 	@Override
 	public void aiStep() {
-		super.aiStep();
-		if (!(this.level() instanceof ServerLevel level)) return;
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || !owner.isAlive() || owner.level() != this.level()) {
-			dismiss();
+		if (this.level() instanceof ServerLevel bindingLevel
+				&& !EchoBindingSystem.validateAndSnapshot(this, bindingLevel)) {
+			this.discard();
 			return;
 		}
-		boolean hasSummoner = this.summonerUuid != null
-				&& player.getInventory().contains(stack -> TestEchoSummonerItem.hasSummoner(stack, this.summonerUuid));
-		this.missingSummonerTicks = hasSummoner ? 0 : this.missingSummonerTicks + 1;
-		if (this.missingSummonerTicks > RomanLegionaryEchoEntity.SUMMONER_GRACE_TICKS) {
-			dismiss();
-			return;
+		super.aiStep();
+		if (!(this.level() instanceof ServerLevel level)) return;
+		LivingEntity resolvedOwner = this.getOwner();
+		boolean controllerAvailable = resolvedOwner instanceof Player player && player.isAlive()
+				&& !player.isSpectator() && player.level() == this.level();
+		LivingEntity owner = controllerAvailable ? resolvedOwner : this;
+		if (!controllerAvailable && this.activityMode == EchoRelicState.ActivityMode.FOLLOW) {
+			this.getNavigation().stop();
 		}
 
 		ItemStack relic = currentRelic();
@@ -340,7 +340,7 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 			persistCurrentRelic(relic);
 			if (isPursuing()) tickPursuit(level, relic);
 			else tryStartPursuit(level, relic);
-			if (this.tickCount % 10 == 0) tickBlessing(level, owner, relic);
+			if (this.tickCount % 10 == 0) tickBlessing(level, controllerAvailable ? owner : null, relic);
 			if (this.tickCount % 20 == 0) {
 				applyRelicState(relic, false);
 				tickNaturalHealing(level, relic);
@@ -358,9 +358,9 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 				this.getTarget() != null || isPursuing() || level.getGameTime() < this.attackAnimationUntil
 						|| isVisualInteractionMovementOwned());
 		tickPursuitBuffVisuals(level);
-		tickVisualAwareness(level, owner);
+		if (controllerAvailable) tickVisualAwareness(level, owner);
 		EchoWaterSafety.tick(level, this, owner,
-				this.activityMode == EchoRelicState.ActivityMode.FOLLOW && !isPursuing());
+				controllerAvailable && this.activityMode == EchoRelicState.ActivityMode.FOLLOW && !isPursuing());
 	}
 
 	private void tryStartPursuit(ServerLevel level, ItemStack relic) {
@@ -465,36 +465,9 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 		return true;
 	}
 
-	private void tickBlessing(ServerLevel level, LivingEntity owner, ItemStack relic) {
+	private void tickBlessing(ServerLevel level, @Nullable LivingEntity owner, ItemStack relic) {
 		boolean enabled = EchoRelicState.skillEnabled(relic, SKILL_BLESSING);
 		updateFavoredBiomeModifiers(enabled && level.getBiome(this.blockPosition()).is(ModTags.AZTEC_FAVORED_BIOMES));
-		updateSunBlessing(level, this, false, enabled);
-		updateSunBlessing(level, owner, true, enabled);
-	}
-
-	private void updateSunBlessing(ServerLevel level, LivingEntity beneficiary, boolean owner, boolean enabled) {
-		long timeOfDay = Math.floorMod(level.getOverworldClockTime(), 24_000L);
-		boolean eligible = enabled && level.dimensionType().hasSkyLight() && timeOfDay < 12_000L
-				&& level.canSeeSky(beneficiary.blockPosition());
-		boolean active = beneficiary.hasEffect(ModEffects.HUITZILOPOCHTLI_BLESSING);
-		if (!eligible) {
-			if (active) beneficiary.removeEffect(ModEffects.HUITZILOPOCHTLI_BLESSING);
-			return;
-		}
-		if (!active) {
-			beneficiary.addEffect(new MobEffectInstance(ModEffects.HUITZILOPOCHTLI_BLESSING,
-					MobEffectInstance.INFINITE_DURATION, 0, false, false, true));
-		}
-		long now = level.getGameTime();
-		if (owner) {
-			long last = OWNER_SUN_HEAL_TIMES.getOrDefault(beneficiary, Long.MIN_VALUE / 2);
-			if (now - last >= 80L && beneficiary.getHealth() < beneficiary.getMaxHealth()) {
-				beneficiary.heal(1.0F);
-				OWNER_SUN_HEAL_TIMES.put(beneficiary, now);
-			}
-		} else if (this.tickCount % 80 == 0 && this.getHealth() < this.getMaxHealth()) {
-			this.heal(1.0F);
-		}
 	}
 
 	public boolean providesSunBlessingTo(LivingEntity beneficiary) {
@@ -2086,10 +2059,8 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 		long now = level.getGameTime();
 		if (this.getHealth() >= this.getMaxHealth() || this.getTarget() != null
 				|| this.tickCount - this.getLastHurtByMobTimestamp() < 100 || now - this.lastNaturalHealAt < 40L) return;
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || this.summonerUuid == null) return;
-		ItemStack summoner = TestEchoSummonerItem.findSummonerStack(player, this.summonerUuid);
-		if (summoner.isEmpty() || !SummonerFuel.consumeFractional(summoner, SummonerFuel.healCost(relic))) return;
+		if (this.summonerUuid == null
+				|| !EchoBindingSystem.consumeFractionalFuel(level, this.summonerUuid, SummonerFuel.healCost(relic))) return;
 		this.heal(1.0F);
 		this.lastNaturalHealAt = now;
 		level.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 2, 0.15, 0.3, 0.15, 0.0);
@@ -2099,7 +2070,6 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 	public void bindTo(Player owner, UUID summonerUuid) {
 		this.ownerReference = EntityReference.of(owner);
 		this.summonerUuid = summonerUuid;
-		this.missingSummonerTicks = 0;
 		this.activityAnchor = this.position();
 	}
 
@@ -2130,10 +2100,20 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 		if (this.getHealth() > this.getMaxHealth()) this.setHealth(this.getMaxHealth());
 		if (!EchoRelicState.skillEnabled(relic, SKILL_BLESSING)) {
 			updateFavoredBiomeModifiers(false);
-			this.removeEffect(ModEffects.HUITZILOPOCHTLI_BLESSING);
-			LivingEntity owner = this.getOwner();
-			if (owner != null) owner.removeEffect(ModEffects.HUITZILOPOCHTLI_BLESSING);
 		}
+	}
+
+	@Override
+	public void writeMigrationState(CompoundTag tag) {
+		tag.putLong("AztecLastNaturalHealAt", this.lastNaturalHealAt);
+		tag.putLong("AztecPursuitBuffUntil", this.pursuitBuffUntil);
+	}
+
+	@Override
+	public void readMigrationState(CompoundTag tag) {
+		this.lastNaturalHealAt = tag.getLongOr("AztecLastNaturalHealAt", 0L);
+		this.pursuitBuffUntil = tag.getLongOr("AztecPursuitBuffUntil", 0L);
+		updatePursuitModifiers();
 	}
 
 	private int meleeAttackInterval() {
@@ -2142,23 +2122,29 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 	}
 
 	private ItemStack currentRelic() {
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || this.summonerUuid == null) return ItemStack.EMPTY;
-		return TestEchoSummonerItem.relicStack(TestEchoSummonerItem.findSummonerStack(player, this.summonerUuid));
+		if (!(this.level() instanceof ServerLevel level) || this.summonerUuid == null) return ItemStack.EMPTY;
+		return EchoBindingSystem.relic(level, this.summonerUuid);
 	}
 
 	private void persistCurrentRelic(ItemStack relic) {
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || this.summonerUuid == null) return;
-		ItemStack summoner = TestEchoSummonerItem.findSummonerStack(player, this.summonerUuid);
-		if (!summoner.isEmpty()) TestEchoSummonerItem.setRelicStack(summoner, relic);
+		if (this.level() instanceof ServerLevel level && this.summonerUuid != null) {
+			EchoBindingSystem.persistRelic(level, this.summonerUuid, relic);
+		}
 	}
 
 	@Override public LivingEntity livingEntity() { return this; }
 	@Override public EchoHeroType heroType() { return EchoHeroType.AZTEC_WARRIOR; }
 	@Override public boolean shouldFollowOwner() { return this.activityMode == EchoRelicState.ActivityMode.FOLLOW && !isPursuing(); }
-	@Override public @Nullable UUID getOwnerUuid() { LivingEntity owner = getOwner(); return owner == null ? null : owner.getUUID(); }
+	@Override public @Nullable UUID getOwnerUuid() {
+		if (this.level() instanceof ServerLevel level && this.summonerUuid != null) {
+			return EchoBindingSystem.controllerId(level, this.summonerUuid);
+		}
+		LivingEntity owner = getOwner();
+		return owner == null ? null : owner.getUUID();
+	}
 	@Override public @Nullable UUID getSummonerUuid() { return this.summonerUuid; }
+	@Override public long getBindingGeneration() { return this.bindingGeneration; }
+	@Override public void setBindingGeneration(long generation) { this.bindingGeneration = Math.max(0L, generation); }
 	@Override public @Nullable EntityReference<LivingEntity> getOwnerReference() { return this.ownerReference; }
 
 	public boolean isPursuing() {
@@ -2193,10 +2179,9 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 
 	@Override
 	public void onRemoval(Entity.RemovalReason reason) {
+		this.entityData.set(PURSUIT_ACTIVE, false);
+		this.setNoGravity(false);
 		updateFavoredBiomeModifiers(false);
-		this.removeEffect(ModEffects.HUITZILOPOCHTLI_BLESSING);
-		LivingEntity owner = this.getOwner();
-		if (owner != null) owner.removeEffect(ModEffects.HUITZILOPOCHTLI_BLESSING);
 		this.pursuitBuffUntil = 0L;
 		updatePursuitModifiers();
 		super.onRemoval(reason);
@@ -2207,12 +2192,15 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 		super.addAdditionalSaveData(output);
 		EntityReference.store(this.ownerReference, output, "EchoOwner");
 		if (this.summonerUuid != null) output.putString("SummonerUuid", this.summonerUuid.toString());
+		output.putLong("BindingGeneration", this.bindingGeneration);
 		output.putInt("ActivityMode", this.activityMode.ordinal());
 		output.putInt("AlertMode", this.alertMode.ordinal());
 		output.putInt("EnabledSkills", this.enabledSkills);
 		output.putDouble("ActivityAnchorX", this.activityAnchor.x);
 		output.putDouble("ActivityAnchorY", this.activityAnchor.y);
 		output.putDouble("ActivityAnchorZ", this.activityAnchor.z);
+		output.putLong("LastNaturalHealAt", this.lastNaturalHealAt);
+		output.putLong("PursuitBuffUntil", this.pursuitBuffUntil);
 	}
 
 	@Override
@@ -2221,11 +2209,17 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 		this.ownerReference = EntityReference.readWithOldOwnerConversion(input, "EchoOwner", this.level());
 		try { this.summonerUuid = UUID.fromString(input.getStringOr("SummonerUuid", "")); }
 		catch (IllegalArgumentException ignored) { this.summonerUuid = null; }
+		this.bindingGeneration = input.getLongOr("BindingGeneration", 0L);
+		this.entityData.set(PURSUIT_ACTIVE, false);
+		this.setNoGravity(false);
 		this.activityMode = EchoRelicState.ActivityMode.byOrdinal(input.getIntOr("ActivityMode", 0));
 		this.alertMode = EchoRelicState.AlertMode.byOrdinal(input.getIntOr("AlertMode", 1));
 		this.enabledSkills = input.getIntOr("EnabledSkills", EchoHeroType.AZTEC_WARRIOR.allSkillsEnabledMask());
 		this.activityAnchor = new Vec3(input.getDoubleOr("ActivityAnchorX", this.getX()),
 				input.getDoubleOr("ActivityAnchorY", this.getY()), input.getDoubleOr("ActivityAnchorZ", this.getZ()));
+		this.lastNaturalHealAt = input.getLongOr("LastNaturalHealAt", 0L);
+		this.pursuitBuffUntil = input.getLongOr("PursuitBuffUntil", 0L);
+		updatePursuitModifiers();
 	}
 
 	@Override protected boolean shouldDropLoot(ServerLevel level) { return false; }

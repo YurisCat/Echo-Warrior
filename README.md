@@ -1,16 +1,17 @@
 # Echo Warrior
 
-Fabric mod prototype for Minecraft 26.1.2. The first playable slice adds an animated test summoner and a Roman legionary echo that follows and protects its owner.
+Echo Warrior is a Fabric mod for Minecraft 26.1.2 about recovering relics from ancient battlefields and summoning warrior echoes from the past.
 
-> **Temporary collaborator preview:** The current Roman legionary, test summoner, balance values, animations, and test scene are development placeholders shared for rapid review with the model artist. They are not final submission content or final art direction.
+The current development build includes the Echo Compass and battlefield archaeology loop, a portable fuelled summoner, five playable Echo Warriors, relic growth and talents, 25 accessories, 40 collectible knowledge pages, the Echo Recycler, an in-game tutorial manual, and a web-first interactive encyclopedia. The final public name and submission artwork are still undecided; the stable technical mod ID remains `echo_warrior`.
 
 ## Development
 
 - Java 25 is stored locally in `.toolchains/jdk-25`.
 - Build with `gradlew.bat build`.
-- From Command Prompt or by double-clicking, start the development client with `scripts\\run-test-client.bat`.
-- For the current local playtest scene, use `scripts\\playtest-now.bat`; it compiles, launches Minecraft, and quick-plays into `CATTEST`.
-- From PowerShell, either launcher works: `./scripts/run-test-client.ps1` or `./scripts/run-test-client.bat`.
+- From Command Prompt or by double-clicking, start the development client with `scripts\\run-test-client.bat`; it compiles and quick-plays into `CATTEST` when that world exists.
+- `scripts\\playtest-now.bat` requires the existing `CATTEST` world and is the shortest local playtest entry point.
+- From PowerShell, use `./scripts/run-test-client.ps1` or `./scripts/playtest-now.ps1`.
+- The interactive encyclopedia lives in `encyclopedia/`; run it with `启动本地百科.bat`.
 - Runtime worlds under `run/` are intentionally not tracked by Git.
 
 ## Tester handoff

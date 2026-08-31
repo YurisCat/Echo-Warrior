@@ -101,6 +101,12 @@ public final class EchoAccessoryItem extends Item implements EchoSummonerAccesso
 		public String id() { return this.id; }
 
 		public Rarity rarity() { return this.rarity; }
+
+		public int effectCount() { return this.effects.size(); }
+
+		public boolean effectIsPositive(int index) {
+			return index >= 0 && index < this.effects.size() && this.effects.get(index) == EffectPolarity.POSITIVE;
+		}
 	}
 
 	private enum EffectPolarity {

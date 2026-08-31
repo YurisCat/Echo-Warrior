@@ -3,6 +3,7 @@ package com.yuriscat.echowarrior;
 import com.yuriscat.echowarrior.menu.SummonerMenu;
 import com.yuriscat.echowarrior.menu.KnowledgeReaderMenu;
 import com.yuriscat.echowarrior.menu.RecyclerMenu;
+import com.yuriscat.echowarrior.menu.TutorialManualMenu;
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,6 +21,11 @@ public final class ModMenus {
 			BuiltInRegistries.MENU,
 			EchoWarrior.id("knowledge_reader"),
 			new ExtendedMenuType<>(KnowledgeReaderMenu::new, ByteBufCodecs.VAR_INT)
+	);
+	public static final ExtendedMenuType<TutorialManualMenu, Integer> TUTORIAL_MANUAL = Registry.register(
+			BuiltInRegistries.MENU,
+			EchoWarrior.id("tutorial_manual"),
+			new ExtendedMenuType<>(TutorialManualMenu::new, ByteBufCodecs.VAR_INT)
 	);
 	public static final MenuType<RecyclerMenu> RECYCLER = Registry.register(
 			BuiltInRegistries.MENU,

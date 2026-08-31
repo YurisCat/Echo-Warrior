@@ -1,9 +1,10 @@
 package com.yuriscat.echowarrior.item;
 
 import com.yuriscat.echowarrior.ModEntities;
+import com.yuriscat.echowarrior.binding.EchoBindingSavedData;
+import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.menu.SummonerMenu;
 import com.yuriscat.echowarrior.entity.EchoWarriorEntity;
-import com.yuriscat.echowarrior.entity.EchoCombatEvents;
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.BlockPos;
@@ -56,9 +57,11 @@ public final class TestEchoSummonerItem extends Item {
 
 	@Override
 	public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {
-		if (!(entity instanceof ServerPlayer player) || player.containerMenu instanceof SummonerMenu menu && menu.matchesSummoner(getSummonerId(stack).orElse(null))) {
+		if (!(entity instanceof ServerPlayer player)) {
 			return;
 		}
+		EchoBindingSystem.registerOrSynchronize(level, stack);
+		if (player.containerMenu instanceof SummonerMenu menu && menu.matchesSummoner(getSummonerId(stack).orElse(null))) return;
 		if (player.tickCount % 5 != 0) {
 			return;
 		}
@@ -72,6 +75,7 @@ public final class TestEchoSummonerItem extends Item {
 		input.shrink(1);
 		SummonerFuel.setAmount(stack, SummonerFuel.amount(stack) + value);
 		stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(contents.getItems()));
+		EchoBindingSystem.commitPhysicalStack(level, stack);
 	}
 
 	@Override
@@ -85,8 +89,10 @@ public final class TestEchoSummonerItem extends Item {
 			return openMenu(player, hand, stack);
 		}
 
+		EchoBindingSystem.registerOrSynchronize(serverLevel, stack);
 		EchoWarriorEntity current = findBoundSpirit(serverLevel, stack);
-		if (current != null && player.getUUID().equals(current.getOwnerUuid())) {
+		if (current != null && current.livingEntity().level() == player.level()
+				&& player.getUUID().equals(current.getOwnerUuid())) {
 			current.recallTo(player);
 			return InteractionResult.SUCCESS;
 		}
@@ -115,6 +121,11 @@ public final class TestEchoSummonerItem extends Item {
 			return true;
 		}
 		getOrCreateSummonerId(self);
+		if (openMenu == null && player.level() instanceof ServerLevel serverLevel) {
+			// A summoner just removed from an unloaded container may carry a stale mirror.
+			// Pull authority before applying a direct insertion so it cannot overwrite live state.
+			EchoBindingSystem.registerOrSynchronize(serverLevel, self);
+		}
 		boolean insertedFuel = SummonerFuel.isFuel(other);
 		ItemStack fuelForFeedback = insertedFuel ? other.copyWithCount(1) : ItemStack.EMPTY;
 		boolean insertedAccessory = EchoSummonerAccessory.isAccessory(other);
@@ -130,8 +141,11 @@ public final class TestEchoSummonerItem extends Item {
 			}
 		}
 		if (inserted && insertedAccessory && openMenu == null && player.level() instanceof ServerLevel serverLevel) {
+			EchoBindingSystem.commitPhysicalStack(serverLevel, self);
 			EchoWarriorEntity spirit = findBoundSpirit(serverLevel, self);
 			if (spirit != null) spirit.applyModuleState();
+		} else if (inserted && openMenu == null && player.level() instanceof ServerLevel serverLevel) {
+			EchoBindingSystem.commitPhysicalStack(serverLevel, self);
 		}
 		playInsertionSound(player, inserted);
 		if (player.containerMenu != null) player.containerMenu.broadcastChanges();
@@ -180,6 +194,7 @@ public final class TestEchoSummonerItem extends Item {
 	private static InteractionResult openMenu(Player player, InteractionHand hand, ItemStack stack) {
 		if (!(player instanceof ServerPlayer serverPlayer)) return InteractionResult.FAIL;
 		getOrCreateSummonerId(stack);
+		EchoBindingSystem.registerOrSynchronize(serverPlayer.level(), stack);
 		int sourceSlot = hand == InteractionHand.MAIN_HAND
 				? player.getInventory().getSelectedSlot()
 				: Inventory.SLOT_OFFHAND;
@@ -210,9 +225,13 @@ public final class TestEchoSummonerItem extends Item {
 		if (!(stack.getItem() instanceof TestEchoSummonerItem)) {
 			return SummonResult.INVALID_SUMMONER;
 		}
-		EchoWarriorEntity current = findBoundSpirit(level, stack);
-		if (current != null) {
+		EchoBindingSavedData.Binding binding = EchoBindingSystem.registerOrSynchronize(level, stack);
+		if (binding.active()) {
 			return SummonResult.ALREADY_PRESENT;
+		}
+		if (!(player instanceof ServerPlayer serverPlayer)
+				|| !EchoBindingSystem.canAddControllerEcho(level.getServer(), player.getUUID(), binding.summonerId())) {
+			return SummonResult.LIMIT_REACHED;
 		}
 		ItemStack relic = relicStack(stack);
 		if (!(relic.getItem() instanceof EchoRelicItem)) {
@@ -225,13 +244,7 @@ public final class TestEchoSummonerItem extends Item {
 		}
 
 		UUID summonerId = getOrCreateSummonerId(stack);
-		EchoWarriorEntity spirit = switch (EchoHeroType.fromRelic(relic)) {
-			case ROMAN_LEGIONARY -> ModEntities.ROMAN_LEGIONARY_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
-			case AZTEC_WARRIOR -> ModEntities.AZTEC_WARRIOR_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
-			case EGYPTIAN_ARCHER -> ModEntities.EGYPTIAN_ARCHER_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
-			case GUANDAO_WARRIOR -> ModEntities.GUANDAO_WARRIOR_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
-			case JAPANESE_SAMURAI -> ModEntities.JAPANESE_SAMURAI_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
-		};
+		EchoWarriorEntity spirit = createSpirit(level, relic);
 		if (spirit == null) {
 			return SummonResult.CREATE_FAILED;
 		}
@@ -248,20 +261,37 @@ public final class TestEchoSummonerItem extends Item {
 		spiritEntity.setYBodyRot(facingYaw);
 		spiritEntity.setYHeadRot(facingYaw);
 		spirit.bindTo(player, summonerId);
+		long generation = EchoBindingSystem.activate(level, stack, serverPlayer, spiritEntity);
+		spirit.setBindingGeneration(generation);
 		spirit.applyRelicState(relic, true);
 		spiritEntity.setHealth(spiritEntity.getMaxHealth());
 		if (!level.addFreshEntity(spiritEntity)) {
+			EchoBindingSystem.dismiss(level.getServer(), summonerId, "spawn_failed");
 			return SummonResult.CREATE_FAILED;
 		}
-		SummonerFuel.consume(stack, summonCost);
+		if (!EchoBindingSystem.consumeFuel(level, summonerId, summonCost)) {
+			EchoBindingSystem.dismiss(level.getServer(), summonerId, "fuel_commit_failed");
+			return SummonResult.NOT_ENOUGH_FUEL;
+		}
 		setSpiritId(stack, spiritEntity.getUUID());
-		EchoCombatEvents.clearStaleAztecBlessing(player);
+		EchoBindingSystem.noteNewSummon(serverPlayer);
 		level.sendParticles(ParticleTypes.SOUL, spiritEntity.getX(), spiritEntity.getY() + 1.0, spiritEntity.getZ(), 24, 0.35, 0.7, 0.35, 0.02);
 		level.playSound(null, spiritEntity.blockPosition(), SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 0.8F, 1.15F);
 		return SummonResult.SUMMONED;
 	}
 
-	private static Vec3 findSafeSummonPosition(ServerLevel level, Player player, EchoWarriorEntity spirit) {
+	public static EchoWarriorEntity createSpirit(ServerLevel level, ItemStack relic) {
+		if (!(relic.getItem() instanceof EchoRelicItem)) return null;
+		return switch (EchoHeroType.fromRelic(relic)) {
+			case ROMAN_LEGIONARY -> ModEntities.ROMAN_LEGIONARY_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
+			case AZTEC_WARRIOR -> ModEntities.AZTEC_WARRIOR_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
+			case EGYPTIAN_ARCHER -> ModEntities.EGYPTIAN_ARCHER_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
+			case GUANDAO_WARRIOR -> ModEntities.GUANDAO_WARRIOR_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
+			case JAPANESE_SAMURAI -> ModEntities.JAPANESE_SAMURAI_ECHO.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
+		};
+	}
+
+	public static Vec3 findSafeSummonPosition(ServerLevel level, Player player, EchoWarriorEntity spirit) {
 		LivingEntity spiritEntity = spirit.livingEntity();
 		Vec3 forward = player.getLookAngle().multiply(2.0, 0.0, 2.0);
 		List<Vec3> candidates = new java.util.ArrayList<>();
@@ -293,18 +323,15 @@ public final class TestEchoSummonerItem extends Item {
 	}
 
 	public static boolean dismissBoundSpirit(ServerPlayer player, ItemStack stack) {
-		EchoWarriorEntity spirit = findBoundSpirit(player.level(), stack);
-		if (spirit == null || !player.getUUID().equals(spirit.getOwnerUuid())) {
-			clearSpiritId(stack);
-			return false;
-		}
-		spirit.dismiss();
+		UUID summonerId = getSummonerId(stack).orElse(null);
+		if (summonerId == null || !EchoBindingSystem.dismiss(player.level().getServer(), summonerId, "manual")) return false;
 		clearSpiritId(stack);
 		return true;
 	}
 
 	public static boolean hasBoundSpirit(ServerLevel level, ItemStack stack) {
-		return findBoundSpirit(level, stack) != null;
+		UUID summonerId = getSummonerId(stack).orElse(null);
+		return summonerId != null && EchoBindingSystem.isActive(level, summonerId);
 	}
 
 	public static UUID getOrCreateSummonerId(ItemStack stack) {
@@ -319,8 +346,17 @@ public final class TestEchoSummonerItem extends Item {
 		}
 	}
 
+	public static UUID replaceSummonerIdForDuplicate(ItemStack stack) {
+		UUID id = UUID.randomUUID();
+		CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> {
+			tag.putString(SUMMONER_ID, id.toString());
+			tag.remove(SPIRIT_ID);
+		});
+		return id;
+	}
+
 	public static boolean hasSummoner(ItemStack stack, UUID summonerId) {
-		if (!(stack.getItem() instanceof TestEchoSummonerItem)) {
+		if (stack.isEmpty() || !(stack.getItem() instanceof TestEchoSummonerItem)) {
 			return false;
 		}
 		String value = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getStringOr(SUMMONER_ID, "");
@@ -381,13 +417,39 @@ public final class TestEchoSummonerItem extends Item {
 	}
 
 	public static EchoWarriorEntity findBoundSpirit(ServerLevel level, ItemStack stack) {
-		String value = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getStringOr(SPIRIT_ID, "");
-		try {
-			Entity entity = level.getEntity(UUID.fromString(value));
-			return entity instanceof EchoWarriorEntity spirit && spirit.livingEntity().isAlive() ? spirit : null;
-		} catch (IllegalArgumentException ignored) {
-			return null;
-		}
+		UUID summonerId = getSummonerId(stack).orElse(null);
+		return summonerId == null ? null : EchoBindingSystem.findLoadedSpirit(level.getServer(), summonerId);
+	}
+
+	public static boolean reconstructFromBinding(ServerPlayer controller, EchoBindingSavedData.Binding binding) {
+		if (!binding.active() || !controller.getUUID().equals(binding.controllerId())) return false;
+		ServerLevel level = controller.level();
+		ItemStack relic = relicStack(binding.summonerState());
+		EchoWarriorEntity spirit = createSpirit(level, relic);
+		if (spirit == null) return false;
+		Vec3 position = findSafeSummonPosition(level, controller, spirit);
+		if (position == null) return false;
+		LivingEntity entity = spirit.livingEntity();
+		float yaw = yawToward(position.x, position.z, controller.getX(), controller.getZ());
+		entity.snapTo(position.x, position.y, position.z, yaw, 0.0F);
+		entity.setYBodyRot(yaw);
+		entity.setYHeadRot(yaw);
+		spirit.bindTo(controller, binding.summonerId());
+		spirit.setBindingGeneration(binding.generation());
+		spirit.readMigrationState(binding.snapshot().migrationState());
+		spirit.applyRelicState(relic, true);
+		EchoBindingSavedData.Snapshot snapshot = binding.snapshot();
+		entity.setHealth(snapshot.health() > 0.0F
+				? Math.min(entity.getMaxHealth(), snapshot.health()) : entity.getMaxHealth());
+		entity.setAbsorptionAmount(Math.max(0.0F, snapshot.absorption()));
+		entity.setRemainingFireTicks(Math.max(0, snapshot.remainingFireTicks()));
+		entity.setTicksFrozen(Math.max(0, snapshot.ticksFrozen()));
+		entity.setAirSupply(snapshot.airSupply());
+		if (!level.addFreshEntity(entity)) return false;
+		EchoBindingSystem.attachReconstructedEntity(controller, binding, entity);
+		level.sendParticles(ParticleTypes.SOUL, entity.getX(), entity.getY() + 1.0, entity.getZ(),
+				16, 0.3, 0.6, 0.3, 0.01);
+		return true;
 	}
 
 	private static void setSpiritId(ItemStack stack, UUID spiritId) {
@@ -409,6 +471,7 @@ public final class TestEchoSummonerItem extends Item {
 		CREATE_FAILED,
 		NO_RELIC,
 		NOT_ENOUGH_FUEL,
-		NO_SAFE_POSITION
+		NO_SAFE_POSITION,
+		LIMIT_REACHED
 	}
 }

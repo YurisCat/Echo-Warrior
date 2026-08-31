@@ -38,9 +38,13 @@ public final class KnowledgeReaderScreen extends AbstractContainerScreen<Knowled
 	private static final int CULTURE_Y = 24;
 	private static final int TITLE_Y = 38;
 	private static final int BODY_Y = 55;
+	private static final int BODY_LINE_HEIGHT = 9;
 	private static final int COUNT_X = 31;
 	private static final int COUNT_Y = 24;
 	private static final int ILLUSTRATION_Y = 154;
+	private static final int BODY_BOTTOM_WITH_ILLUSTRATION = ILLUSTRATION_Y - 5;
+	private static final int BODY_BOTTOM_WITHOUT_ILLUSTRATION = 174;
+	private static final int MINIMUM_ENGLISH_BODY_SCALE_PERCENT = 65;
 
 	private static final Identifier COLLECTION_BACKGROUND = EchoWarrior.id("textures/gui/knowledge/knowledge_collection.png");
 	private static final Identifier FRAGMENT_BACKGROUND = EchoWarrior.id("textures/gui/knowledge/knowledge_fragment.png");
@@ -129,17 +133,14 @@ public final class KnowledgeReaderScreen extends AbstractContainerScreen<Knowled
 	protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		KnowledgeCatalog.entry(this.selectedKnowledgeId).ifPresent(entry -> {
 			PageGeometry page = pageGeometry();
-			drawCenteredTextWithoutShadow(
+			drawCenteredFittedEnglish(
 					graphics,
 					Component.translatable(KnowledgeCatalog.cultureTranslationKey(entry.culture())),
 					CULTURE_Y,
 					MUTED_INK
 			);
-			drawCenteredTextWithoutShadow(graphics, Component.translatable(entry.titleKey()), TITLE_Y, INK);
-			List<FormattedCharSequence> lines = this.font.split(Component.translatable(entry.bodyKey()), CONTENT_WIDTH);
-			for (int index = 0; index < lines.size(); index++) {
-				graphics.text(this.font, lines.get(index), CONTENT_LEFT, BODY_Y + index * 9, INK, false);
-			}
+			drawCenteredFittedEnglish(graphics, Component.translatable(entry.titleKey()), TITLE_Y, INK);
+			renderBody(graphics, entry);
 
 			int count = this.menu.pageCount(this.selectedKnowledgeId);
 			if (count > 1) {
@@ -148,6 +149,51 @@ public final class KnowledgeReaderScreen extends AbstractContainerScreen<Knowled
 			renderIllustrations(graphics, entry, page, mouseX, mouseY);
 			renderControls(graphics, page, mouseX, mouseY);
 		});
+	}
+
+	private void renderBody(GuiGraphicsExtractor graphics, KnowledgeCatalog.Entry entry) {
+		Component body = Component.translatable(entry.bodyKey());
+		List<FormattedCharSequence> lines = this.font.split(body, CONTENT_WIDTH);
+		int bodyBottom = entry.illustrations().isEmpty()
+				? BODY_BOTTOM_WITHOUT_ILLUSTRATION
+				: BODY_BOTTOM_WITH_ILLUSTRATION;
+		int availableHeight = bodyBottom - BODY_Y;
+		if (!isEnglishLanguage() || lines.size() * BODY_LINE_HEIGHT <= availableHeight) {
+			renderBodyLines(graphics, lines, 1.0F);
+			return;
+		}
+
+		float scale = MINIMUM_ENGLISH_BODY_SCALE_PERCENT / 100.0F;
+		lines = this.font.split(body, (int)Math.floor(CONTENT_WIDTH / scale));
+		for (int percent = 99; percent >= MINIMUM_ENGLISH_BODY_SCALE_PERCENT; percent--) {
+			float candidate = percent / 100.0F;
+			List<FormattedCharSequence> candidateLines = this.font.split(
+					body,
+					(int)Math.floor(CONTENT_WIDTH / candidate)
+			);
+			if (candidateLines.size() * BODY_LINE_HEIGHT * candidate <= availableHeight) {
+				scale = candidate;
+				lines = candidateLines;
+				break;
+			}
+		}
+		renderBodyLines(graphics, lines, scale);
+	}
+
+	private void renderBodyLines(GuiGraphicsExtractor graphics, List<FormattedCharSequence> lines, float scale) {
+		if (scale == 1.0F) {
+			for (int index = 0; index < lines.size(); index++) {
+				graphics.text(this.font, lines.get(index), CONTENT_LEFT, BODY_Y + index * BODY_LINE_HEIGHT, INK, false);
+			}
+			return;
+		}
+		graphics.pose().pushMatrix();
+		graphics.pose().translate(CONTENT_LEFT, BODY_Y);
+		graphics.pose().scale(scale, scale);
+		for (int index = 0; index < lines.size(); index++) {
+			graphics.text(this.font, lines.get(index), 0, index * BODY_LINE_HEIGHT, INK, false);
+		}
+		graphics.pose().popMatrix();
 	}
 
 	private void renderControls(GuiGraphicsExtractor graphics, PageGeometry page, int mouseX, int mouseY) {
@@ -228,9 +274,23 @@ public final class KnowledgeReaderScreen extends AbstractContainerScreen<Knowled
 		graphics.fill(x + size, y, x + size + 1, y + size, ILLUSTRATION_HIGHLIGHT);
 	}
 
-	private void drawCenteredTextWithoutShadow(GuiGraphicsExtractor graphics, Component text, int y, int color) {
+	private void drawCenteredFittedEnglish(GuiGraphicsExtractor graphics, Component text, int y, int color) {
 		FormattedCharSequence sequence = text.getVisualOrderText();
-		graphics.text(this.font, sequence, PAGE_CENTER_X - this.font.width(sequence) / 2, y, color, false);
+		int width = this.font.width(sequence);
+		if (!isEnglishLanguage() || width <= CONTENT_WIDTH) {
+			graphics.text(this.font, sequence, PAGE_CENTER_X - width / 2, y, color, false);
+			return;
+		}
+		float scale = CONTENT_WIDTH / (float)width;
+		graphics.pose().pushMatrix();
+		graphics.pose().translate(PAGE_CENTER_X - width * scale / 2.0F, y + (9.0F - 9.0F * scale) / 2.0F);
+		graphics.pose().scale(scale, scale);
+		graphics.text(this.font, sequence, 0, 0, color, false);
+		graphics.pose().popMatrix();
+	}
+
+	private boolean isEnglishLanguage() {
+		return this.minecraft != null && this.minecraft.getLanguageManager().getSelected().startsWith("en_");
 	}
 
 	private static Identifier processedIllustrationTexture(Identifier item) {

@@ -11,6 +11,7 @@ import com.geckolib.util.GeckoLibUtil;
 import com.yuriscat.echowarrior.ModDamageTypes;
 import com.yuriscat.echowarrior.ModEffects;
 import com.yuriscat.echowarrior.ModItems;
+import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.entity.behavior.EchoActivityMovement;
 import com.yuriscat.echowarrior.entity.behavior.EchoFollowOwner;
 import com.yuriscat.echowarrior.entity.behavior.EchoWaterSafety;
@@ -20,6 +21,7 @@ import com.yuriscat.echowarrior.item.EchoAccessorySystem;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
+import com.yuriscat.echowarrior.mixin.ShulkerBulletAccessor;
 import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -27,10 +29,12 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -47,6 +51,7 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.ShulkerBullet;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.ItemStack;
@@ -111,8 +116,11 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final byte MELEE_ACTION_FIRST = 1;
 	private static final byte MELEE_ACTION_RECOVER = 2;
 	private static final byte MELEE_ACTION_FOLLOW = 3;
+	private static final int SKILL_FORMATION = 0;
+	private static final int SKILL_LEGIONARY_BULWARK = 1;
+	private static final int SKILL_SHIELD_CHARGE = 2;
+	private static final int SKILL_LEGION_ENDURES = 3;
 
-	public static final int MAX_LIFETIME_TICKS = 20 * 120;
 	public static final int SUMMONER_GRACE_TICKS = 20 * 5;
 	private static final double HEAD_GAZE_RADIUS = 0.35;
 	private static final double VISUAL_HEAD_CENTER_HEIGHT = 27.5 / 16.0;
@@ -153,7 +161,12 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final int BASE_RECOVER_TICKS = 5;
 	private static final int BASE_FOLLOW_TICKS = 10;
 	private static final int BASE_FOLLOW_HIT_TICKS = 5;
-	private static final float FOLLOW_DAMAGE_MULTIPLIER = 0.5F;
+	private static final float FOLLOW_DAMAGE_MULTIPLIER = 0.75F;
+	private static final float LEGIONARY_BULWARK_DAMAGE_MULTIPLIER = 0.50F;
+	private static final double SHIELD_PROJECTILE_INTERCEPT_RADIUS = 1.5;
+	private static final double SHIELD_PROJECTILE_RETURN_TARGET_RADIUS = 16.0;
+	private static final float SHIELD_CREEPER_DAMAGE_MULTIPLIER = 2.0F;
+	private static final long SHIELD_CREEPER_DISORIENT_TICKS = 40L;
 	private static final double FIRST_STRIKE_RANGE = 2.25;
 	private static final double FOLLOW_COMMIT_RANGE = 2.75;
 	private static final double FOLLOW_STRIKE_RANGE = 3.10;
@@ -179,8 +192,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private int shieldLowerAnimationUntil = Integer.MIN_VALUE;
 	private @Nullable EntityReference<LivingEntity> ownerReference;
 	private @Nullable UUID summonerUuid;
-	private int remainingLifetime = MAX_LIFETIME_TICKS;
-	private int missingSummonerTicks;
+	private long bindingGeneration;
 	private @Nullable LivingEntity attentionTarget;
 	private Vec3 attentionPoint = Vec3.ZERO;
 	private int attentionPriority;
@@ -671,28 +683,33 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		return entity instanceof LivingEntity living ? living : null;
 	}
 
+	private static Vec3 facing(float yaw) {
+		double radians = Math.toRadians(yaw);
+		return new Vec3(-Math.sin(radians), 0.0, Math.cos(radians));
+	}
+
 	@Override
 	public void aiStep() {
+		if (this.level() instanceof ServerLevel bindingLevel
+				&& !EchoBindingSystem.validateAndSnapshot(this, bindingLevel)) {
+			this.discard();
+			return;
+		}
 		super.aiStep();
 		if (!(this.level() instanceof ServerLevel serverLevel)) {
 			return;
 		}
 
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || !owner.isAlive() || owner.level() != this.level()) {
-			dismiss();
-			return;
-		}
-
-		boolean hasSummoner = player.getInventory().contains(stack -> TestEchoSummonerItem.hasSummoner(stack, this.summonerUuid));
-		this.missingSummonerTicks = hasSummoner ? 0 : this.missingSummonerTicks + 1;
-		if (this.missingSummonerTicks > SUMMONER_GRACE_TICKS) {
-			dismiss();
-			return;
+		LivingEntity resolvedOwner = this.getOwner();
+		boolean controllerAvailable = resolvedOwner instanceof Player player && player.isAlive()
+				&& !player.isSpectator() && player.level() == this.level();
+		LivingEntity owner = controllerAvailable ? resolvedOwner : this;
+		if (!controllerAvailable && this.activityMode == EchoRelicState.ActivityMode.FOLLOW) {
+			this.getNavigation().stop();
 		}
 		long now = serverLevel.getGameTime();
 		tickAttackPreview(now);
-		tickCombatSkills(serverLevel, owner);
+		tickCombatSkills(serverLevel, owner, controllerAvailable);
 		ItemStack relic = currentRelic();
 		if (meleeAction() != MELEE_ACTION_NONE) {
 			if (relic.isEmpty()) finishMeleeAction(now, true);
@@ -724,13 +741,13 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		EchoActivityMovement.tick(serverLevel, this, this.activityMode, this.activityAnchor,
 				this.getTarget() != null || this.shieldChargeTarget != null || isLegionEnduresActive()
 						|| actionOwned || isVisualInteractionMovementOwned());
-		tickVisualAwareness(serverLevel, owner);
+		if (controllerAvailable) tickVisualAwareness(serverLevel, owner);
 		EchoWaterSafety.tick(serverLevel, this, owner,
-				this.activityMode == EchoRelicState.ActivityMode.FOLLOW
+				controllerAvailable && this.activityMode == EchoRelicState.ActivityMode.FOLLOW
 						&& this.shieldChargeTarget == null && !isLegionEnduresActive() && !actionOwned);
 	}
 
-	private void tickCombatSkills(ServerLevel level, LivingEntity owner) {
+	private void tickCombatSkills(ServerLevel level, LivingEntity owner, boolean controllerAvailable) {
 		ItemStack relic = currentRelic();
 		if (relic.isEmpty()) return;
 		long now = level.getGameTime();
@@ -741,9 +758,12 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		if (this.legionEnduresUntil != 0L && now >= this.legionEnduresUntil) {
 			finishLegionEndures(level);
 		}
-		if (this.shieldChargeTarget != null) {
+		if (!controllerAvailable && this.shieldChargeTarget != null) {
+			stopShieldCharge();
+		} else if (this.shieldChargeTarget != null) {
 			tickShieldCharge(level, owner, now);
-		} else if (EchoRelicState.skillEnabled(relic, 1) && now >= this.shieldInternalCooldownUntil) {
+		} else if (controllerAvailable && EchoRelicState.skillEnabled(relic, SKILL_SHIELD_CHARGE)
+				&& now >= this.shieldInternalCooldownUntil) {
 			Entity target = findShieldChargeTarget(level, owner);
 			if (target != null && EchoRelicState.consumeShieldCharge(relic, now)) {
 				persistCurrentRelic(relic);
@@ -754,7 +774,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 				this.getNavigation().stop();
 			}
 		}
-		if (EchoRelicState.skillEnabled(relic, 2) && canStartLegionEndures(level, owner, relic, now)) {
+		if (EchoRelicState.skillEnabled(relic, SKILL_LEGION_ENDURES) && canStartLegionEndures(level, owner, relic, now)) {
 			startLegionEndures(level, owner, relic, now);
 		}
 	}
@@ -793,7 +813,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		long elapsed = Math.max(0L, now - this.shieldChargeStartedAt);
 		double progress = Math.clamp(elapsed / 20.0, 0.0, 1.0);
 		double chargeSpeed = 0.32 + Math.sin(progress * Math.PI) * 0.34;
-		Vec3 direction = target.position().subtract(this.position());
+		Vec3 direction = shieldChargeDestination(target, owner).subtract(this.position());
 		if (direction.lengthSqr() > 0.01) {
 			Vec3 velocity = direction.normalize().scale(chargeSpeed);
 			this.setDeltaMovement(velocity.x, Math.max(this.getDeltaMovement().y, velocity.y), velocity.z);
@@ -806,19 +826,17 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			level.playSound(null, this.blockPosition(), SoundEvents.WIND_CHARGE_THROW, SoundSource.PLAYERS, 0.28F,
 					1.25F + this.getRandom().nextFloat() * 0.15F);
 		}
-		if (this.distanceToSqr(target) > 3.0 || now - this.shieldChargeStartedAt < 6L) return;
 		boolean impacted = false;
 		if (target instanceof Projectile projectile) {
-			Vec3 normal = owner.getLookAngle().normalize();
-			Vec3 incoming = projectile.getDeltaMovement();
-			Vec3 reflected = incoming.subtract(normal.scale(2.0 * incoming.dot(normal)));
-			if (reflected.dot(incoming) > 0.0) reflected = incoming.reverse();
-			projectile.setDeltaMovement(reflected);
-			projectile.setOwner(this);
-			this.reflectedProjectiles.add(projectile.getUUID());
-			level.sendParticles(ParticleTypes.CRIT, projectile.getX(), projectile.getY(), projectile.getZ(), 7, 0.15, 0.15, 0.15, 0.05);
-			impacted = true;
+			if (!shieldInterceptsProjectile(projectile)) return;
+			impacted = redirectShieldChargeProjectile(level, owner, projectile);
 		} else if (target instanceof Creeper creeper) {
+			if (this.distanceToSqr(target) > 3.0 || elapsed < 6L) return;
+			float damage = (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE) * SHIELD_CREEPER_DAMAGE_MULTIPLIER;
+			if (creeper.hurtServer(level, level.damageSources().mobAttack(this), damage)) {
+				this.setLastHurtMob(creeper);
+			}
+			CatGodCreeperSystem.disorientFromShieldCharge(level, creeper, SHIELD_CREEPER_DISORIENT_TICKS);
 			Vec3 away = creeper.position().subtract(owner.position()).multiply(1.0, 0.0, 1.0).normalize();
 			Vec3 charge = creeper.position().subtract(this.position()).multiply(1.0, 0.0, 1.0).normalize();
 			Vec3 combined = away.scale(0.7).add(charge.scale(0.3)).normalize();
@@ -833,6 +851,82 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			level.playSound(null, this.blockPosition(), SoundEvents.SHIELD_BLOCK.value(), SoundSource.PLAYERS, 0.9F, 0.9F);
 		}
 		stopShieldCharge();
+	}
+
+	private Vec3 shieldChargeDestination(Entity target, LivingEntity owner) {
+		if (!(target instanceof Projectile projectile)) return target.position();
+		Vec3 velocity = projectile.getDeltaMovement();
+		double speedSqr = velocity.lengthSqr();
+		if (speedSqr < 1.0E-5) return projectile.position();
+		double time = Math.clamp(owner.getEyePosition().subtract(projectile.position()).dot(velocity) / speedSqr,
+				0.0, 20.0);
+		return projectile.position().add(velocity.scale(time));
+	}
+
+	private boolean shieldInterceptsProjectile(Projectile projectile) {
+		double shieldHeight = this.getBbHeight() * 0.55;
+		Vec3 shieldOld = this.oldPosition().add(0.0, shieldHeight, 0.0);
+		Vec3 shieldNow = this.position().add(0.0, shieldHeight, 0.0);
+		Vec3 projectileOld = projectile.oldPosition();
+		Vec3 projectileNow = projectile.position();
+		double previousSweep = movingSegmentsDistanceToSqr(projectileOld, projectileNow, shieldOld, shieldNow);
+		Vec3 projectileNext = projectileNow.add(projectile.getDeltaMovement());
+		Vec3 shieldNext = shieldNow.add(this.getDeltaMovement());
+		double projectedSweep = movingSegmentsDistanceToSqr(projectileNow, projectileNext, shieldNow, shieldNext);
+		double radiusSqr = SHIELD_PROJECTILE_INTERCEPT_RADIUS * SHIELD_PROJECTILE_INTERCEPT_RADIUS;
+		return Math.min(previousSweep, projectedSweep) <= radiusSqr;
+	}
+
+	private boolean redirectShieldChargeProjectile(ServerLevel level, LivingEntity owner, Projectile projectile) {
+		Vec3 incoming = projectile.getDeltaMovement();
+		double speed = incoming.length();
+		if (speed < 0.01) return false;
+		LivingEntity returnTarget = shieldChargeProjectileReturnTarget(level, projectile);
+		Vec3 redirected = returnTarget == null
+				? projectile.position().subtract(owner.getEyePosition())
+				: returnTarget.getEyePosition().subtract(projectile.position());
+		if (redirected.lengthSqr() < 1.0E-5) redirected = incoming.reverse();
+		projectile.setDeltaMovement(redirected.normalize().scale(speed));
+		projectile.needsSync = true;
+		projectile.setOwner(this);
+		if (projectile instanceof ShulkerBullet bullet) {
+			EntityReference<Entity> targetReference = returnTarget == null
+					? null
+					: EntityReference.of((Entity)returnTarget);
+			ShulkerBulletAccessor accessor = (ShulkerBulletAccessor)(Object)bullet;
+			accessor.echoWarrior$setFinalTarget(targetReference);
+			if (returnTarget != null) accessor.echoWarrior$selectNextMoveDirection(null, returnTarget);
+		}
+		this.reflectedProjectiles.add(projectile.getUUID());
+		level.sendParticles(ParticleTypes.CRIT, projectile.getX(), projectile.getY(), projectile.getZ(),
+				7, 0.15, 0.15, 0.15, 0.05);
+		return true;
+	}
+
+	private @Nullable LivingEntity shieldChargeProjectileReturnTarget(ServerLevel level, Projectile projectile) {
+		Entity shooter = projectile.getOwner();
+		if (shooter instanceof LivingEntity living && living.isAlive() && living.level() == level && this.canAttack(living)) {
+			return living;
+		}
+		return level.getEntitiesOfClass(Monster.class,
+				projectile.getBoundingBox().inflate(SHIELD_PROJECTILE_RETURN_TARGET_RADIUS),
+				monster -> monster.isAlive() && this.canAttack(monster) && this.hasLineOfSight(monster))
+				.stream().min(java.util.Comparator.comparingDouble(projectile::distanceToSqr)).orElse(null);
+	}
+
+	private static double movingSegmentsDistanceToSqr(
+			Vec3 firstStart,
+			Vec3 firstEnd,
+			Vec3 secondStart,
+			Vec3 secondEnd
+	) {
+		Vec3 relativeStart = firstStart.subtract(secondStart);
+		Vec3 relativeEnd = firstEnd.subtract(secondEnd);
+		Vec3 segment = relativeEnd.subtract(relativeStart);
+		double lengthSqr = segment.lengthSqr();
+		if (lengthSqr < 1.0E-8) return relativeStart.lengthSqr();
+		double time = Math.clamp(-relativeStart.dot(segment) / lengthSqr, 0.0, 1.0);
+		return relativeStart.add(segment.scale(time)).lengthSqr();
 	}
 
 	private boolean isRecentlyChargedTarget(Entity target, long now) {
@@ -934,6 +1028,14 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.legionAccumulatedDamage = 0.0F;
 	}
 
+	private void cancelLegionEndures() {
+		this.legionEnduresUntil = 0L;
+		this.legionAccumulatedDamage = 0.0F;
+		this.getAttribute(Attributes.ARMOR).removeModifier(LEGION_ARMOR_ID);
+		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).removeModifier(LEGION_KNOCKBACK_ID);
+		lowerShield();
+	}
+
 	private void enforceActivityBoundary(LivingEntity owner) {
 		LivingEntity target = this.getTarget();
 		Vec3 center = this.activityMode == EchoRelicState.ActivityMode.FOLLOW ? owner.position() : this.activityAnchor;
@@ -947,16 +1049,9 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	}
 
 	private void tickFormation(ServerLevel level, LivingEntity owner, ItemStack relic) {
-		this.formationActive = EchoRelicState.skillEnabled(relic, 0);
+		this.formationActive = EchoRelicState.skillEnabled(relic, SKILL_FORMATION);
 		this.shieldBondActive = this.formationActive && owner.distanceToSqr(this) <= 64.0 && owner instanceof Player player
 				&& (player.getMainHandItem().getItem() instanceof ShieldItem || player.getOffhandItem().getItem() instanceof ShieldItem);
-
-		updateFormationEffect(this, formationAmplifier(level, owner, this));
-		updateFormationEffect(owner, formationAmplifier(level, owner, owner));
-		for (RomanLegionaryEchoEntity echo : level.getEntitiesOfClass(RomanLegionaryEchoEntity.class,
-				owner.getBoundingBox().inflate(24.0), candidate -> candidate.getOwner() == owner)) {
-			updateFormationEffect(echo, formationAmplifier(level, owner, echo));
-		}
 	}
 
 	private static int formationAmplifier(ServerLevel level, LivingEntity owner, LivingEntity beneficiary) {
@@ -994,10 +1089,8 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 				|| this.tickCount - this.getLastHurtByMobTimestamp() < 100 || now - this.lastNaturalHealAt < 40L) {
 			return;
 		}
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || this.summonerUuid == null) return;
-		ItemStack summoner = TestEchoSummonerItem.findSummonerStack(player, this.summonerUuid);
-		if (summoner.isEmpty() || !SummonerFuel.consumeFractional(summoner, SummonerFuel.healCost(relic))) return;
+		if (this.summonerUuid == null
+				|| !EchoBindingSystem.consumeFractionalFuel(level, this.summonerUuid, SummonerFuel.healCost(relic))) return;
 		this.heal(1.0F);
 		this.lastNaturalHealAt = now;
 		level.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 2, 0.15, 0.3, 0.15, 0.0);
@@ -2498,6 +2591,37 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	}
 
 	@Override
+	protected float getDamageAfterMagicAbsorb(DamageSource source, float damage) {
+		float adjusted = super.getDamageAfterMagicAbsorb(source, damage);
+		return isLegionaryBulwarkProtection(source)
+				? adjusted * LEGIONARY_BULWARK_DAMAGE_MULTIPLIER
+				: adjusted;
+	}
+
+	private boolean isLegionaryBulwarkProtection(DamageSource source) {
+		if (!skillEnabled(SKILL_LEGIONARY_BULWARK) || source.is(DamageTypeTags.IS_EXPLOSION)) return false;
+		boolean projectileDamage = source.is(DamageTypeTags.IS_PROJECTILE)
+				|| source.getDirectEntity() instanceof Projectile;
+		boolean directAttack = source.getDirectEntity() instanceof LivingEntity
+				&& source.getDirectEntity() == source.getEntity();
+		if (!projectileDamage && !directAttack) return false;
+
+		Vec3 sourcePosition = source.getSourcePosition();
+		Vec3 towardSource = sourcePosition == null
+				? Vec3.ZERO
+				: sourcePosition.subtract(this.position()).multiply(1.0, 0.0, 1.0);
+		if (towardSource.horizontalDistanceSqr() < 1.0E-5 && source.getDirectEntity() instanceof Projectile projectile) {
+			towardSource = projectile.getDeltaMovement().reverse().multiply(1.0, 0.0, 1.0);
+		}
+		return towardSource.horizontalDistanceSqr() >= 1.0E-5
+				&& facing(this.yBodyRot).dot(towardSource.normalize()) >= 0.0;
+	}
+
+	private boolean skillEnabled(int skill) {
+		return (this.enabledSkills & 1 << skill) != 0;
+	}
+
+	@Override
 	public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
 		Entity attacker = source.getEntity();
 		if (attacker == this.getOwner() || attacker instanceof EchoWarriorEntity echo && echo.getOwner() == this.getOwner()) {
@@ -2506,9 +2630,15 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		if (isLegionEnduresActive() && attacker instanceof LivingEntity living && this.canAttack(living)) {
 			this.legionAccumulatedDamage += Math.max(0.0F, damage);
 		}
+		boolean bulwarkProtected = isLegionaryBulwarkProtection(source);
 		float previousHealth = this.getHealth();
 		boolean hurt = super.hurtServer(level, source, damage);
 		if (hurt) {
+			if (bulwarkProtected && this.getHealth() < previousHealth) {
+				Vec3 front = this.position().add(facing(this.yBodyRot).scale(this.getBbWidth() * 0.6)).add(0.0, 1.0, 0.0);
+				level.sendParticles(ParticleTypes.CRIT, front.x, front.y, front.z, 5, 0.18, 0.35, 0.18, 0.01);
+				level.playSound(null, this.blockPosition(), SoundEvents.SHIELD_BLOCK.value(), SoundSource.PLAYERS, 0.4F, 1.15F);
+			}
 			Entity attackerEntity = source.getEntity();
 			long now = level.getGameTime();
 			endCaughtExit(now, true);
@@ -2546,8 +2676,6 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	public void bindTo(Player owner, UUID summonerUuid) {
 		this.ownerReference = EntityReference.of(owner);
 		this.summonerUuid = summonerUuid;
-		this.remainingLifetime = MAX_LIFETIME_TICKS;
-		this.missingSummonerTicks = 0;
 		this.activityAnchor = this.position();
 		setEyeAttentionPoint(owner.getEyePosition());
 		setAttentionPoint(owner.getEyePosition());
@@ -2562,6 +2690,8 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.activityMode = EchoRelicState.activityMode(relic);
 		this.alertMode = EchoRelicState.alertMode(relic);
 		this.enabledSkills = EchoRelicState.enabledSkills(relic);
+		this.formationActive = EchoRelicState.skillEnabled(relic, SKILL_FORMATION);
+		if (!this.formationActive) this.shieldBondActive = false;
 		if (previousAlert != this.alertMode || previousActivity != this.activityMode || resetAnchor) {
 			this.setTarget(null);
 			this.targetVisibility.clear();
@@ -2570,9 +2700,9 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		if (previousActivity != this.activityMode || resetAnchor) {
 			EchoActivityMovement.reset(this);
 		}
-		if ((this.enabledSkills & 1 << 1) == 0 && this.shieldChargeTarget != null) stopShieldCharge();
-		if ((this.enabledSkills & 1 << 2) == 0 && isLegionEnduresActive() && this.level() instanceof ServerLevel serverLevel) {
-			finishLegionEndures(serverLevel);
+		if (!skillEnabled(SKILL_SHIELD_CHARGE) && this.shieldChargeTarget != null) stopShieldCharge();
+		if (!skillEnabled(SKILL_LEGION_ENDURES) && isLegionEnduresActive()) {
+			cancelLegionEndures();
 		}
 		if (resetAnchor || this.activityAnchor == Vec3.ZERO) {
 			this.activityAnchor = this.position();
@@ -2587,6 +2717,16 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		if (this.getHealth() > this.getMaxHealth()) {
 			this.setHealth(this.getMaxHealth());
 		}
+	}
+
+	@Override
+	public void writeMigrationState(CompoundTag tag) {
+		tag.putLong("RomanLastNaturalHealAt", this.lastNaturalHealAt);
+	}
+
+	@Override
+	public void readMigrationState(CompoundTag tag) {
+		this.lastNaturalHealAt = tag.getLongOr("RomanLastNaturalHealAt", 0L);
 	}
 
 	public boolean shouldFollowOwner() {
@@ -2627,22 +2767,20 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	}
 
 	private ItemStack currentRelic() {
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || this.summonerUuid == null) {
-			return ItemStack.EMPTY;
-		}
-		ItemStack summoner = TestEchoSummonerItem.findSummonerStack(player, this.summonerUuid);
-		return TestEchoSummonerItem.relicStack(summoner);
+		if (!(this.level() instanceof ServerLevel level) || this.summonerUuid == null) return ItemStack.EMPTY;
+		return EchoBindingSystem.relic(level, this.summonerUuid);
 	}
 
 	private void persistCurrentRelic(ItemStack relic) {
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player player) || this.summonerUuid == null) return;
-		ItemStack summoner = TestEchoSummonerItem.findSummonerStack(player, this.summonerUuid);
-		if (!summoner.isEmpty()) TestEchoSummonerItem.setRelicStack(summoner, relic);
+		if (this.level() instanceof ServerLevel level && this.summonerUuid != null) {
+			EchoBindingSystem.persistRelic(level, this.summonerUuid, relic);
+		}
 	}
 
 	public @Nullable UUID getOwnerUuid() {
+		if (this.level() instanceof ServerLevel level && this.summonerUuid != null) {
+			return EchoBindingSystem.controllerId(level, this.summonerUuid);
+		}
 		LivingEntity owner = getOwner();
 		return owner == null ? null : owner.getUUID();
 	}
@@ -2650,6 +2788,9 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	public @Nullable UUID getSummonerUuid() {
 		return this.summonerUuid;
 	}
+
+	@Override public long getBindingGeneration() { return this.bindingGeneration; }
+	@Override public void setBindingGeneration(long generation) { this.bindingGeneration = Math.max(0L, generation); }
 
 	@Override
 	public @Nullable EntityReference<LivingEntity> getOwnerReference() {
@@ -2689,6 +2830,8 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		}
 		if (this.level() instanceof ServerLevel serverLevel) {
 			finishMeleeAction(serverLevel.getGameTime(), false);
+			stopShieldCharge();
+			cancelLegionEndures();
 			serverLevel.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 24, 0.35, 0.7, 0.35, 0.02);
 			serverLevel.playSound(null, this.blockPosition(), SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 0.7F, 0.75F);
 		}
@@ -2702,17 +2845,17 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	}
 
 	private void cleanupTransientSkillEffects() {
+		if (this.level() instanceof ServerLevel level) {
+			for (UUID projectileId : this.reflectedProjectiles) {
+				Entity entity = level.getEntity(projectileId);
+				if (entity instanceof Projectile projectile) projectile.discard();
+			}
+		}
+		this.reflectedProjectiles.clear();
 		this.formationActive = false;
-		updateFormationEffect(this, -1);
+		this.shieldBondActive = false;
 		this.getAttribute(Attributes.ARMOR).removeModifier(LEGION_ARMOR_ID);
 		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).removeModifier(LEGION_KNOCKBACK_ID);
-		LivingEntity owner = this.getOwner();
-		if (!(owner instanceof Player) || !(this.level() instanceof ServerLevel level)) return;
-		updateFormationEffect(owner, formationAmplifier(level, owner, owner));
-		for (RomanLegionaryEchoEntity echo : level.getEntitiesOfClass(RomanLegionaryEchoEntity.class,
-				owner.getBoundingBox().inflate(24.0), candidate -> candidate != this && candidate.getOwner() == owner)) {
-			updateFormationEffect(echo, formationAmplifier(level, owner, echo));
-		}
 	}
 
 	@Override
@@ -2722,14 +2865,14 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		if (this.summonerUuid != null) {
 			output.putString("SummonerUuid", this.summonerUuid.toString());
 		}
-		output.putInt("RemainingLifetime", this.remainingLifetime);
-		output.putInt("MissingSummonerTicks", this.missingSummonerTicks);
+		output.putLong("BindingGeneration", this.bindingGeneration);
 		output.putInt("ActivityMode", this.activityMode.ordinal());
 		output.putInt("AlertMode", this.alertMode.ordinal());
 		output.putInt("EnabledSkills", this.enabledSkills);
 		output.putDouble("ActivityAnchorX", this.activityAnchor.x);
 		output.putDouble("ActivityAnchorY", this.activityAnchor.y);
 		output.putDouble("ActivityAnchorZ", this.activityAnchor.z);
+		output.putLong("LastNaturalHealAt", this.lastNaturalHealAt);
 	}
 
 	@Override
@@ -2741,13 +2884,13 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		} catch (IllegalArgumentException ignored) {
 			this.summonerUuid = null;
 		}
-		this.remainingLifetime = input.getIntOr("RemainingLifetime", MAX_LIFETIME_TICKS);
-		this.missingSummonerTicks = input.getIntOr("MissingSummonerTicks", 0);
+		this.bindingGeneration = input.getLongOr("BindingGeneration", 0L);
 		this.activityMode = EchoRelicState.ActivityMode.byOrdinal(input.getIntOr("ActivityMode", 0));
 		this.alertMode = EchoRelicState.AlertMode.byOrdinal(input.getIntOr("AlertMode", 1));
 		this.enabledSkills = input.getIntOr("EnabledSkills", EchoHeroType.ROMAN_LEGIONARY.allSkillsEnabledMask());
 		this.activityAnchor = new Vec3(input.getDoubleOr("ActivityAnchorX", this.getX()),
 				input.getDoubleOr("ActivityAnchorY", this.getY()), input.getDoubleOr("ActivityAnchorZ", this.getZ()));
+		this.lastNaturalHealAt = input.getLongOr("LastNaturalHealAt", 0L);
 	}
 
 	@Override

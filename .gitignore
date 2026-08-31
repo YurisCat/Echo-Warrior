@@ -9,6 +9,7 @@ out/
 
 # Minecraft development runtime
 run/
+run-server/
 logs/
 crash-reports/
 saves/

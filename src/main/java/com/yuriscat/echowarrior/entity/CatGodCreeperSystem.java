@@ -18,6 +18,7 @@ public final class CatGodCreeperSystem {
 	private static final double AURA_RADIUS = 30.0;
 	private static final long PANIC_TICKS = 100L;
 	private static final Map<UUID, PanicState> PANICKING = new HashMap<>();
+	private static final Map<UUID, Long> DISORIENTED_UNTIL = new HashMap<>();
 
 	private CatGodCreeperSystem() {
 	}
@@ -75,6 +76,13 @@ public final class CatGodCreeperSystem {
 		return PANICKING.containsKey(creeper.getUUID());
 	}
 
+	public static void disorientFromShieldCharge(ServerLevel level, Creeper creeper, long durationTicks) {
+		long until = level.getGameTime() + Math.max(1L, durationTicks);
+		DISORIENTED_UNTIL.merge(creeper.getUUID(), until, Math::max);
+		creeper.setTarget(null);
+		creeper.setSwellDir(-1);
+	}
+
 	private static EgyptianArcherEchoEntity nearestProtector(ServerLevel level, Creeper creeper) {
 		EgyptianArcherEchoEntity best = null;
 		double bestDistance = AURA_RADIUS * AURA_RADIUS;
@@ -112,6 +120,21 @@ public final class CatGodCreeperSystem {
 			if (creeper.tickCount % 10 == 0 || creeper.getNavigation().isDone()) {
 				moveAway(creeper, entry.getValue().source());
 			}
+		}
+		tickDisorientedCreepers(level, now);
+	}
+
+	private static void tickDisorientedCreepers(ServerLevel level, long now) {
+		Iterator<Map.Entry<UUID, Long>> iterator = DISORIENTED_UNTIL.entrySet().iterator();
+		while (iterator.hasNext()) {
+			Map.Entry<UUID, Long> entry = iterator.next();
+			Entity found = level.getEntityInAnyDimension(entry.getKey());
+			if (!(found instanceof Creeper creeper) || !creeper.isAlive() || now >= entry.getValue()) {
+				if (found != null || now >= entry.getValue()) iterator.remove();
+				continue;
+			}
+			creeper.setTarget(null);
+			creeper.setSwellDir(-1);
 		}
 	}
 

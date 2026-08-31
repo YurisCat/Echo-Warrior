@@ -16,7 +16,7 @@
 - Use the repository Gradle Wrapper (`gradlew.bat`) instead of a globally installed Gradle.
 - The target development JDK is Java 25; do not build the 26.1 project with the machine's current Java 17 runtime.
 - When the user asks to test or launch Minecraft, use `scripts/run-test-client.ps1` once it exists.
-- The test launcher should compile, launch the development client, and quick-play into `CFMJ-Test-World`.
+- The test launcher should compile, launch the development client, and quick-play into `CATTEST`.
 - Avoid launching a second development client when one is already running.
 - Inspect `run/logs/latest.log` and crash reports after failures.
 - Prefer automated checks and GameTests for deterministic behavior; reserve manual testing for visuals, sound, controls, and game feel.

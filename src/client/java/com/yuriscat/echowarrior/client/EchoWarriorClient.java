@@ -87,6 +87,7 @@ public final class EchoWarriorClient implements ClientModInitializer {
 		BlockEntityRenderers.register(ModBlockEntities.RECYCLER_CHEST, RecyclerChestRenderer::new);
 		MenuScreens.register(ModMenus.SUMMONER, SummonerPreviewScreen::new);
 		MenuScreens.register(ModMenus.KNOWLEDGE_READER, KnowledgeReaderScreen::new);
+		MenuScreens.register(ModMenus.TUTORIAL_MANUAL, TutorialManualScreen::new);
 		MenuScreens.register(ModMenus.RECYCLER, RecyclerScreen::new);
 	}
 }

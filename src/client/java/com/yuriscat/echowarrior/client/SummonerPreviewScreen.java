@@ -57,6 +57,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	private static final Identifier[][] SKILL_ICONS = {
 			{
 					icon("skills/roman_legionary/soldier_formation.png"),
+					icon("skills/roman_legionary/legionary_bulwark.png"),
 					icon("skills/roman_legionary/shield_charge.png"),
 					icon("skills/roman_legionary/legion_endures.png")
 			},
@@ -88,6 +89,13 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	};
 	private static final Identifier EGYPTIAN_LEAF_ARROW_ICON = icon("skills/egyptian_archer/leaf_arrow.png");
 	private static final Identifier EGYPTIAN_CONE_ARROW_ICON = icon("skills/egyptian_archer/cone_arrow.png");
+	private static final String[] ROMAN_SKILL_TRANSLATION_KEYS = {
+			"gui.echo_warrior.summoner.skill.roman.formation",
+			"gui.echo_warrior.summoner.skill.roman.bulwark",
+			"gui.echo_warrior.summoner.skill.roman.charge",
+			"gui.echo_warrior.summoner.skill.roman.endures"
+	};
+	private static final int[] ROMAN_SKILL_DESCRIPTION_LINES = {2, 1, 2, 2};
 	private static final String[] AZTEC_SKILL_TRANSLATION_KEYS = {
 			"gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse",
 			"gui.echo_warrior.summoner.skill.aztec.huitzilopochtlis_blessing",
@@ -370,7 +378,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			EchoHeroType heroType = EchoHeroType.values()[Math.clamp(
 					this.menu.heroType(), 0, EchoHeroType.values().length - 1)];
 			boolean activeChargeSkill = switch (heroType) {
-				case ROMAN_LEGIONARY -> index == 1;
+				case ROMAN_LEGIONARY -> index == 2;
 				case AZTEC_WARRIOR, EGYPTIAN_ARCHER -> index == 3;
 				case GUANDAO_WARRIOR -> false;
 				case JAPANESE_SAMURAI -> index == 1;
@@ -386,7 +394,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					|| (activeCooldownSkill && this.menu.shieldChargeProgress() < 1000)) {
 				renderRadialCooldown(graphics, iconX, iconY, this.menu.shieldChargeProgress() / 1000.0F);
 			}
-			if (heroType == EchoHeroType.ROMAN_LEGIONARY && index == 2 && this.menu.legionCooldownTicks() > 0) {
+			if (heroType == EchoHeroType.ROMAN_LEGIONARY && index == 3 && this.menu.legionCooldownTicks() > 0) {
 				renderRadialCooldown(graphics, iconX, iconY, 1.0F - this.menu.legionCooldownTicks() / 400.0F);
 			}
 			if (heroType == EchoHeroType.JAPANESE_SAMURAI && index == 3 && this.menu.legionCooldownTicks() > 0) {
@@ -398,7 +406,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					graphics.fill(iconX + pixel, iconY + pixel, iconX + pixel + 1, iconY + pixel + 1, 0xFFE05050);
 				}
 			}
-			if (index == 2 && this.menu.legionActive()) {
+			if (heroType == EchoHeroType.ROMAN_LEGIONARY && index == 3 && this.menu.legionActive()) {
 				drawBorder(graphics, iconX - 1, iconY - 1, iconX + 17, iconY + 17, 0xFFD8B55A);
 			}
 			if (activeChargeSkill) {
@@ -718,11 +726,20 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				displayed++;
 			}
 
+			boolean roman = this.menu.heroType() == EchoHeroType.ROMAN_LEGIONARY.ordinal();
 			boolean aztec = this.menu.heroType() == EchoHeroType.AZTEC_WARRIOR.ordinal();
 			boolean egyptian = this.menu.heroType() == EchoHeroType.EGYPTIAN_ARCHER.ordinal();
 			boolean guandao = this.menu.heroType() == EchoHeroType.GUANDAO_WARRIOR.ordinal();
 			boolean samurai = this.menu.heroType() == EchoHeroType.JAPANESE_SAMURAI.ordinal();
-			if (aztec) {
+			if (roman) {
+				for (int index = 0; index < Math.min(this.menu.skillCount(), ROMAN_SKILL_TRANSLATION_KEYS.length); index++) {
+					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
+						showRomanSkillTooltip(graphics, mouseX, mouseY, index,
+								(this.menu.enabledSkills() & 1 << index) != 0);
+						return;
+					}
+				}
+			} else if (aztec) {
 				for (int index = 0; index < Math.min(this.menu.skillCount(), AZTEC_SKILL_TRANSLATION_KEYS.length); index++) {
 					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
 						showAztecSkillTooltip(graphics, mouseX, mouseY, index, (this.menu.enabledSkills() & 1 << index) != 0);
@@ -750,27 +767,6 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
 						showSamuraiSkillTooltip(graphics, mouseX, mouseY, index,
 								(this.menu.enabledSkills() & 1 << index) != 0);
-						return;
-					}
-				}
-			} else {
-				String[] skillNames = {"士兵阵列！", "举盾冲锋！", "军团永存！"};
-				String[][] skillDescriptions = {
-							{"开启后常驻，为自身和友军提供力量。", "离开光环立即失效；附近有持盾玩家时额外减伤。"},
-							{"冲向威胁主人的投射物或即将爆炸的苦力怕。", "弹开投射物；每5秒恢复1次充能，最多3次。"},
-							{"举盾防御并嘲讽周围敌人。", "5秒后返还减免前所受伤害并击退敌人。"}
-				};
-				for (int index = 0; index < Math.min(this.menu.skillCount(), skillNames.length); index++) {
-					if (isInside(mouseX, mouseY, x(Element.SKILLS, 61 + index * 22), y(Element.SKILLS, 71), 20, 20)) {
-						showTooltip(
-								graphics,
-								mouseX,
-								mouseY,
-								skillNames[index],
-								skillDescriptions[index][0],
-								skillDescriptions[index][1],
-								(this.menu.enabledSkills() & 1 << index) != 0 ? "当前：已启用（点击禁用）" : "当前：已禁用（点击启用）"
-						);
 						return;
 					}
 				}
@@ -889,23 +885,33 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
 	}
 
+	private void showRomanSkillTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int skill, boolean enabled) {
+		String key = ROMAN_SKILL_TRANSLATION_KEYS[skill];
+		List<Component> lines = new java.util.ArrayList<>();
+		lines.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
+		for (int line = 1; line <= ROMAN_SKILL_DESCRIPTION_LINES[skill]; line++) {
+			lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
+		}
+		lines.add(Component.translatable(enabled
+				? "gui.echo_warrior.summoner.skill.enabled"
+				: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
+		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
+	}
+
 	private void showEgyptianSkillTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int skill, boolean enabled) {
-		String key = skill == 1 && this.menu.egyptianArrowMode() == 2
-				? "gui.echo_warrior.summoner.skill.egyptian.cone_arrow"
+		String key = skill == 1
+				? switch (this.menu.egyptianArrowMode()) {
+					case 1 -> "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow";
+					case 2 -> "gui.echo_warrior.summoner.skill.egyptian.cone_arrow";
+					default -> "gui.echo_warrior.summoner.skill.egyptian.normal_arrow";
+				}
 				: EGYPTIAN_SKILL_TRANSLATION_KEYS[skill];
 		List<Component> lines = new java.util.ArrayList<>();
 		lines.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
 		for (int line = 1; line <= EGYPTIAN_SKILL_DESCRIPTION_LINES[skill]; line++) {
 			lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
 		}
-		if (skill == 1) {
-			String stateKey = switch (this.menu.egyptianArrowMode()) {
-				case 1 -> "gui.echo_warrior.summoner.skill.egyptian.arrow_mode.leaf";
-				case 2 -> "gui.echo_warrior.summoner.skill.egyptian.arrow_mode.cone";
-				default -> "gui.echo_warrior.summoner.skill.egyptian.arrow_mode.off";
-			};
-			lines.add(Component.translatable(stateKey).withStyle(ChatFormatting.GRAY));
-		} else {
+		if (skill != 1) {
 			lines.add(Component.translatable(enabled
 					? "gui.echo_warrior.summoner.skill.enabled"
 					: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
@@ -992,6 +998,8 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			case SummonerMenu.ACTION_NO_SAFE_POSITION -> "召唤失败：附近没有安全位置。";
 			case SummonerMenu.ACTION_MODE_CHANGED -> "英灵模式已更新。";
 			case SummonerMenu.ACTION_SKILL_CHANGED -> "技能启用状态已更新。";
+			case SummonerMenu.ACTION_LIMIT_REACHED -> "操作失败：你已达到配置中的存活英灵上限。";
+			case SummonerMenu.ACTION_STALE_STATE -> "状态已由另一处更新，本次操作已取消并刷新。";
 			default -> null;
 		};
 	}

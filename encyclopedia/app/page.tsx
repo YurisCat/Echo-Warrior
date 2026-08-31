@@ -4,6 +4,7 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
   type WheelEvent as ReactWheelEvent,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -344,11 +345,11 @@ export default function Home() {
     return edges;
   }, [activeCategoryId, categoryNodes, nodeById]);
 
-  const updateView = (categoryId: string, view: MapView) => {
+  const updateView = useCallback((categoryId: string, view: MapView) => {
     setViews((current) => ({ ...current, [categoryId]: view }));
-  };
+  }, []);
 
-  const fitCategory = (categoryId = activeCategoryId) => {
+  const fitCategory = useCallback((categoryId = activeCategoryId) => {
     const viewport = mapRef.current;
     const nodes = atlas.nodes.filter((node) => node.categoryId === categoryId);
     if (!viewport || nodes.length === 0) return;
@@ -366,7 +367,7 @@ export default function Home() {
       x: viewport.clientWidth / 2 - ((minX + maxX) / 2) * scale,
       y: viewport.clientHeight / 2 - ((minY + maxY) / 2) * scale,
     });
-  };
+  }, [activeCategoryId, updateView]);
 
   const centerNode = (node: AtlasNode) => {
     const viewport = mapRef.current;
@@ -407,7 +408,7 @@ export default function Home() {
       initializedCategories.current.add(activeCategoryId);
     });
     return () => cancelAnimationFrame(frame);
-  }, [activeCategoryId]);
+  }, [activeCategoryId, fitCategory]);
 
   const onMapPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest("button, input")) return;

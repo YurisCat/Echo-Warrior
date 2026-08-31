@@ -7,12 +7,16 @@
 	"BlockMixin",
     "BlockBehaviourMixin",
     "CreeperMixin",
+	"EntityItemTerminalMixin",
 	"ExperienceOrbMixin",
 	"FishingHookMixin",
+	"ItemEntityLifecycleMixin",
+	"ItemStackDestructionMixin",
     "LivingEntityMixin",
     "LivingEntityAccessoryMixin",
 	"MerchantMixin",
-    "PlayerMixin"
+    "PlayerMixin",
+    "ShulkerBulletAccessor"
   ],
   "client": [
     "AbstractContainerScreenMixin",

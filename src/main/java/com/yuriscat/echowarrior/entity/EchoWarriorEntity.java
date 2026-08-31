@@ -1,8 +1,9 @@
 package com.yuriscat.echowarrior.entity;
 
+import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoAccessorySystem;
-import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,15 +23,27 @@ public interface EchoWarriorEntity extends OwnableEntity {
 
 	@Nullable UUID getSummonerUuid();
 
+	long getBindingGeneration();
+
+	void setBindingGeneration(long generation);
+
+	/** Saves short-lived, already-earned state that should survive FOLLOW migration. */
+	default void writeMigrationState(CompoundTag tag) {
+	}
+
+	/** Restores migration state onto a newly reconstructed entity. */
+	default void readMigrationState(CompoundTag tag) {
+	}
+
 	void bindTo(Player owner, UUID summonerUuid);
 
 	void applyRelicState(ItemStack relic, boolean resetAnchor);
 
 	default ItemStack activeRelic() {
-		LivingEntity owner = this.getOwner();
 		UUID summonerUuid = this.getSummonerUuid();
-		if (!(owner instanceof Player player) || summonerUuid == null) return ItemStack.EMPTY;
-		return TestEchoSummonerItem.relicStack(TestEchoSummonerItem.findSummonerStack(player, summonerUuid));
+		LivingEntity living = livingEntity();
+		if (!(living.level() instanceof ServerLevel level) || summonerUuid == null) return ItemStack.EMPTY;
+		return EchoBindingSystem.relic(level, summonerUuid);
 	}
 
 	default void applyModuleState() {

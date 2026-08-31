@@ -8,6 +8,7 @@ import com.yuriscat.echowarrior.item.LegacyItem;
 import com.yuriscat.echowarrior.item.KnowledgeFragmentCollectionItem;
 import com.yuriscat.echowarrior.item.KnowledgeFragmentItem;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
+import com.yuriscat.echowarrior.item.TutorialManualItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -24,6 +25,8 @@ public final class ModItems {
 			"knowledge_fragment", properties -> new KnowledgeFragmentItem(properties.stacksTo(64)));
 	public static final KnowledgeFragmentCollectionItem KNOWLEDGE_FRAGMENT_COLLECTION = register(
 			"knowledge_fragment_collection", properties -> new KnowledgeFragmentCollectionItem(properties.stacksTo(1)));
+	public static final TutorialManualItem TUTORIAL_MANUAL = register(
+			"tutorial_manual", properties -> new TutorialManualItem(properties.stacksTo(1)));
 	public static final LegacyItem COURAGE_LEGACY = legacy("courage_legacy", LegacyItem.LegacyType.COURAGE);
 	public static final LegacyItem FORTITUDE_LEGACY = legacy("fortitude_legacy", LegacyItem.LegacyType.FORTITUDE);
 	public static final LegacyItem PURITY_LEGACY = legacy("purity_legacy", LegacyItem.LegacyType.PURITY);

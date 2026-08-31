@@ -59,6 +59,16 @@ public final class SummonerFuel {
 		return true;
 	}
 
+	public static void copyState(ItemStack source, ItemStack target) {
+		int fuel = amount(source);
+		double fraction = source.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY)
+				.copyTag().getDoubleOr(FRACTION_KEY, 0.0);
+		CustomData.update(DataComponents.CUSTOM_DATA, target, tag -> {
+			tag.putInt(FUEL_KEY, fuel);
+			tag.putDouble(FRACTION_KEY, fraction);
+		});
+	}
+
 	public static boolean isFuel(ItemStack stack) {
 		return stack.is(Items.ROTTEN_FLESH) || stack.is(Items.SOUL_SAND) || stack.is(Items.SOUL_SOIL);
 	}

@@ -18,6 +18,7 @@ public final class EchoRelicState {
 	private static final String ACTIVITY_MODE_KEY = "EchoWarriorActivityMode";
 	private static final String ALERT_MODE_KEY = "EchoWarriorAlertMode";
 	private static final String ENABLED_SKILLS_KEY = "EchoWarriorEnabledSkills";
+	private static final String SKILL_LAYOUT_VERSION_KEY = "EchoWarriorSkillLayoutVersion";
 	private static final String SHIELD_CHARGES_KEY = "EchoWarriorShieldCharges";
 	private static final String SHIELD_CHARGE_TIME_KEY = "EchoWarriorShieldChargeTime";
 	private static final String LEGION_COOLDOWN_END_KEY = "EchoWarriorLegionCooldownEnd";
@@ -35,6 +36,9 @@ public final class EchoRelicState {
 
 	public static final int SKILL_COUNT = 5;
 	public static final int ALL_SKILLS_ENABLED = (1 << SKILL_COUNT) - 1;
+	private static final int CURRENT_SKILL_LAYOUT_VERSION = 2;
+	private static final int ROMAN_BULWARK_ADDED_LAYOUT_VERSION = 1;
+	private static final int ROMAN_BULWARK_SECOND_LAYOUT_VERSION = 2;
 	public static final int MAX_SHIELD_CHARGES = 3;
 	public static final long SHIELD_CHARGE_TICKS = 100L;
 	public static final int MAX_PURSUIT_CHARGES = 2;
@@ -56,6 +60,7 @@ public final class EchoRelicState {
 		}
 		CustomData data = relic.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
 		if (data.copyTag().getBooleanOr(INITIALIZED_KEY, false)) {
+			migrateSkillLayout(relic);
 			return false;
 		}
 
@@ -69,6 +74,7 @@ public final class EchoRelicState {
 			tag.putInt(ACTIVITY_MODE_KEY, ActivityMode.FOLLOW.ordinal());
 			tag.putInt(ALERT_MODE_KEY, AlertMode.DEFENSIVE.ordinal());
 			tag.putInt(ENABLED_SKILLS_KEY, heroType.defaultEnabledSkillsMask());
+			tag.putInt(SKILL_LAYOUT_VERSION_KEY, CURRENT_SKILL_LAYOUT_VERSION);
 			tag.putInt(SHIELD_CHARGES_KEY, MAX_SHIELD_CHARGES);
 			tag.putLong(SHIELD_CHARGE_TIME_KEY, gameTime);
 			tag.putLong(LEGION_COOLDOWN_END_KEY, 0L);
@@ -156,7 +162,19 @@ public final class EchoRelicState {
 	public static int enabledSkills(ItemStack relic) {
 		EchoHeroType heroType = EchoHeroType.fromRelic(relic);
 		int allowed = heroType.allSkillsEnabledMask();
-		return intValue(relic, ENABLED_SKILLS_KEY, heroType.defaultEnabledSkillsMask()) & allowed;
+		int enabled = intValue(relic, ENABLED_SKILLS_KEY, heroType.defaultEnabledSkillsMask());
+		int layoutVersion = intValue(relic, SKILL_LAYOUT_VERSION_KEY, 0);
+		if (heroType == EchoHeroType.ROMAN_LEGIONARY) {
+			if (layoutVersion < ROMAN_BULWARK_ADDED_LAYOUT_VERSION) enabled |= 1 << 3;
+			if (layoutVersion < ROMAN_BULWARK_SECOND_LAYOUT_VERSION) {
+				int previous = enabled;
+				enabled = previous & 1
+						| (previous & 1 << 3) >> 2
+						| (previous & 1 << 1) << 1
+						| (previous & 1 << 2) << 1;
+			}
+		}
+		return enabled & allowed;
 	}
 
 	public static boolean skillEnabled(ItemStack relic, int skill) {
@@ -165,11 +183,24 @@ public final class EchoRelicState {
 	}
 
 	public static void toggleSkill(ItemStack relic, int skill) {
-		if (skill < 0 || skill >= EchoHeroType.fromRelic(relic).skillCount()) {
+		EchoHeroType heroType = EchoHeroType.fromRelic(relic);
+		if (skill < 0 || skill >= heroType.skillCount()) {
 			return;
 		}
 		int updated = enabledSkills(relic) ^ 1 << skill;
-		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> tag.putInt(ENABLED_SKILLS_KEY, updated));
+		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> {
+			tag.putInt(ENABLED_SKILLS_KEY, updated);
+			tag.putInt(SKILL_LAYOUT_VERSION_KEY, CURRENT_SKILL_LAYOUT_VERSION);
+		});
+	}
+
+	private static void migrateSkillLayout(ItemStack relic) {
+		if (intValue(relic, SKILL_LAYOUT_VERSION_KEY, 0) >= CURRENT_SKILL_LAYOUT_VERSION) return;
+		int enabled = enabledSkills(relic);
+		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> {
+			tag.putInt(ENABLED_SKILLS_KEY, enabled);
+			tag.putInt(SKILL_LAYOUT_VERSION_KEY, CURRENT_SKILL_LAYOUT_VERSION);
+		});
 	}
 
 	public static EgyptianArrowMode egyptianArrowMode(ItemStack relic) {

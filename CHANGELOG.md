@@ -10,6 +10,10 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Added
 
+- Added server-authoritative persistent Echo bindings, including container-safe summoner state, controller transfer, follow-mode cross-dimension reconstruction, duplicate UUID handling, configurable population limits, and operator diagnostics.
+- Added the 44-page in-game tutorial manual "Echoes, Warriors, and You" with chapter tabs, recipes, skill and accessory references, persistent reading position, credits, and source attribution.
+- Added the Roman Legionary's Legionary Bulwark passive, reducing direct attack and projectile damage from the front hemisphere by 50% after armor.
+- Added terminal item-destruction hooks and nested vanilla-container inspection so confirmed summoner destruction terminates its binding without treating ordinary storage as destruction.
 - Added the first complete Echo Compass and battlefield-archaeology gameplay loop: toggleable audio navigation, persistent renewable battlefield sites, guaranteed relic targets, biome-matched suspicious blocks, and exact weighted archaeology rewards.
 - Added placeholder Small Knowledge and five Legacy materials, plus functional Plate Armor, Full Chainmail, and Spiked Armor Echo modules with live stat updates, duplicate-name limits, summoner display integration, recipes, localization, and encyclopedia documentation.
 - Added a guaranteed journeyman-cartographer Echo Compass trade and the compass recipe using one compass, four amethyst shards, and four copper ingots.
@@ -37,6 +41,9 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Fixed
 
+- Fixed long-lived aura effects and permanent attribute modifiers surviving without a valid source; periodic server audits now remove stale state, restore missing modifiers, and avoid multi-source stacking.
+- Fixed fast projectiles crossing the Legionary's shield-charge interception path between ticks; interception now uses continuous relative trajectories and updates homing projectile targets after reflection.
+- Fixed active Echo growth and summoner state depending on the physical item being loaded in a player's inventory; binding SavedData now remains authoritative while the item is stored or unloaded.
 - Fixed the Guandao Warrior committing a normal attack against a newly selected rear target before its body had turned, causing the animation and sector damage to continue along the previous forward direction. Rear retaliation now queues across committed actions, turns at up to 30 degrees per tick, waits for a 25-degree alignment threshold, and locks one target yaw for the full swing.
 - Fixed lethal damage leaving the Guandao Warrior's committed attack or combo windows active long enough to produce a post-death strike.
 - Fixed the Guandao combo opener stacking its custom launch on top of vanilla hurt knockback and pushing targets out of the second strike; it now replaces the result with a restrained, resistance-scaled short float.
@@ -49,6 +56,10 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Changed
 
+- Echo Warriors no longer expire because of a lifetime timer or disappear when their controller logs out or dies; explicit dismissal, death, relic removal, confirmed summoner destruction, or operator action now ends the binding.
+- Follow-mode Echoes can reconstruct near their controller across dimensions, while wait and wander modes remain in their original dimension without force-loading chunks.
+- Raised the Roman Legionary conditional combo's second hit from 50% to 75% damage and expanded shield charge to redirect projectiles and punish primed creepers without granting ongoing Creeper pursuit.
+- English knowledge and tutorial pages now scale text only when needed to remain inside their safe layout bounds, while Chinese pages retain the default size.
 - Growing Valor now keeps red-orange weapon flames at every stack. Five stacks are marked by denser flame and a periodic red-gold spark pulse instead of blue soul fire.
 - Reduced suspicious grass and dirt markings to low-contrast dark-only details; removed bright highlights and color shifting so untouched pixels remain identical to the vanilla terrain texture.
 - Echo Compass right-click now mutes only that individual compass's exterior reminder; it never disables navigation or inner-site echoes, and multiple enabled compasses resolve to one sound emitter by inventory priority.

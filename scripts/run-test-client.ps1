@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$TestWorldName = 'CFMJ-Test-World',
+    [string]$TestWorldName = 'CATTEST',
     [switch]$RequireExistingWorld
 )
 
