@@ -1,0 +1,127 @@
+name: Publish CurseForge
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: CurseForge release channel
+        required: true
+        default: release
+        type: choice
+        options:
+          - release
+          - beta
+          - alpha
+      manual_release:
+        description: Hold the approved file for a later manual release
+        required: true
+        default: false
+        type: boolean
+      publish:
+        description: Actually upload to CurseForge (leave off for a dry run)
+        required: true
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: curseforge-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    name: Build and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: gradle
+
+      - name: Build release JAR
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean build --no-daemon --stacktrace
+
+      - name: Prepare and validate CurseForge metadata
+        id: release
+        env:
+          RELEASE_TYPE: ${{ github.event_name == 'workflow_dispatch' && inputs.release_type || 'release' }}
+          MANUAL_RELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.manual_release || false }}
+          EXPECTED_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: |
+          python3 scripts/prepare-curseforge-release.py \
+            --release-type "$RELEASE_TYPE" \
+            --manual-release "$MANUAL_RELEASE" \
+            --expected-tag "$EXPECTED_TAG" \
+            --require-jar \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Keep the verified JAR as a GitHub artifact
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ steps.release.outputs.jar_path }}
+          archive: false
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload to CurseForge
+        id: curseforge
+        if: github.event_name == 'push' || inputs.publish
+        env:
+          CURSEFORGE_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
+          CURSEFORGE_PROJECT_ID: "1677436"
+          JAR_PATH: ${{ steps.release.outputs.jar_path }}
+          METADATA_PATH: ${{ steps.release.outputs.metadata_path }}
+        run: |
+          if [ -z "${CURSEFORGE_API_TOKEN:-}" ]; then
+            echo "::error::Missing repository secret CURSEFORGE_API_TOKEN."
+            exit 1
+          fi
+
+          metadata_json="$(python3 -c 'import json,sys; print(json.dumps(json.load(open(sys.argv[1], encoding="utf-8")), ensure_ascii=False, separators=(",", ":")))' "$METADATA_PATH")"
+          response_file="$(mktemp)"
+          http_status="$(curl --silent --show-error \
+            --output "$response_file" \
+            --write-out "%{http_code}" \
+            --request POST \
+            --header "X-Api-Token: $CURSEFORGE_API_TOKEN" \
+            --form-string "metadata=$metadata_json" \
+            --form "file=@$JAR_PATH;type=application/java-archive" \
+            "https://minecraft.curseforge.com/api/projects/$CURSEFORGE_PROJECT_ID/upload-file")"
+
+          if [ "$http_status" -lt 200 ] || [ "$http_status" -ge 300 ]; then
+            echo "::error::CurseForge upload failed with HTTP $http_status."
+            cat "$response_file"
+            exit 1
+          fi
+
+          file_id="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["id"])' "$response_file")"
+          echo "file_id=$file_id" >> "$GITHUB_OUTPUT"
+          echo "Uploaded CurseForge file ID $file_id."
+
+      - name: Write release summary
+        env:
+          DISPLAY_NAME: ${{ steps.release.outputs.display_name }}
+          JAR_NAME: ${{ steps.release.outputs.jar_name }}
+          FILE_ID: ${{ steps.curseforge.outputs.file_id }}
+        run: |
+          echo "## $DISPLAY_NAME" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Verified JAR: \`$JAR_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "${FILE_ID:-}" ]; then
+            echo "- CurseForge upload succeeded: file ID \`$FILE_ID\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Dry run only: nothing was uploaded to CurseForge." >> "$GITHUB_STEP_SUMMARY"
+          fi

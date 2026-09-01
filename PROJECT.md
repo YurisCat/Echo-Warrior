@@ -491,6 +491,7 @@ mod-project/
 ## 7. 正式发布与许可
 
 - 第一个公开正式版本固定为 `0.1.0`，正式展示名称为 `Echo Warrior`；技术标识继续使用 `echo_warrior`，Java 根包继续使用 `com.yuriscat.echowarrior`。
+- CurseForge 项目 ID 固定为 `1677436`。仓库通过 `.github/workflows/publish-curseforge.yml` 使用 CurseForge 官方上传接口发布：手动运行默认只做 Java 25 干净构建与元数据演练，显式勾选后才上传；后续推送与 `mod_version` 完全一致的 `v<版本>` 标签时自动上传。发布元数据从 `gradle.properties` 和对应版本的 `CHANGELOG.md` 生成，并声明 Minecraft/Fabric 兼容性及 Fabric API、SmartBrainLib、GeckoLib 三项必需依赖。上传令牌只保存在 GitHub Actions 的 `CURSEFORGE_API_TOKEN` Secret 中，禁止进入仓库或日志。详细操作见 `docs/CURSEFORGE_RELEASE.md`。
 - 项目采用混合许可：原创 Java 代码、构建逻辑和技术工具脚本采用 Apache License 2.0；原创模型、贴图、动画、Shader、音频、GUI、图标、文字、本地化、百科、宣传素材及工程源文件采用自定义 `Echo Warrior Creative Assets License 1.0`。
 - 自定义素材许可欢迎署名二创和商业化衍生作品。若 Minecraft 发布平台允许玩家强制付费购买、下载、安装、解锁或使用 Minecraft 内容，则在该平台直接使用或只轻微修改项目素材时，即使该具体作品免费，也必须先取得相关权利人的明确书面许可；具有明显独立创作贡献的实质性改造作品仍可在署名后商业发布。
 - 广告收入、视频分成、作者奖励计划、自愿捐赠和不妨碍玩家免费取得具体内容的赞助不视为强制付费。改名、统一换色、少量像素修改、格式转换、轻微模型/UV/骨骼/动画/Shader 调整或简单拼接不构成实质性改造。
