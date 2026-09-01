@@ -3,6 +3,7 @@ package com.yuriscat.echowarrior.binding;
 import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.entity.EchoWarriorEntity;
 import com.yuriscat.echowarrior.item.EchoRelicState;
+import com.yuriscat.echowarrior.item.SummonerStackContents;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -18,14 +19,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.item.component.ItemContainerContents;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /** Runtime coordinator for persistent Echo bindings. */
@@ -275,10 +273,8 @@ public final class EchoBindingSystem {
 	}
 
 	public static int destroySummonersIn(MinecraftServer server, ItemStack root, String reason) {
-		Set<UUID> found = new HashSet<>();
-		collectSummoners(root, found, 0);
 		int destroyed = 0;
-		for (UUID summonerId : found) {
+		for (UUID summonerId : SummonerStackContents.summonerIds(root)) {
 			if (dismiss(server, summonerId, reason)) destroyed++;
 		}
 		return destroyed;
@@ -370,15 +366,6 @@ public final class EchoBindingSystem {
 		if (player == null || location.slot() < 0
 				|| location.slot() >= player.getInventory().getContainerSize()) return false;
 		return TestEchoSummonerItem.hasSummoner(player.getInventory().getItem(location.slot()), summonerId);
-	}
-
-	private static void collectSummoners(ItemStack stack, Set<UUID> found, int depth) {
-		if (stack.isEmpty() || depth > 16) return;
-		TestEchoSummonerItem.getSummonerId(stack).ifPresent(found::add);
-		stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY)
-				.nonEmptyItemCopyStream().forEach(child -> collectSummoners(child, found, depth + 1));
-		BundleContents bundle = stack.get(DataComponents.BUNDLE_CONTENTS);
-		if (bundle != null) bundle.itemCopyStream().forEach(child -> collectSummoners(child, found, depth + 1));
 	}
 
 	private static void copyAuthoritativeState(ItemStack source, ItemStack target) {

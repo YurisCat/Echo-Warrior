@@ -20,6 +20,11 @@ public final class TutorialManualItem extends Item {
 	}
 
 	@Override
+	public Component getName(ItemStack stack) {
+		return Component.translatable(this.getDescriptionId()).withStyle(ChatFormatting.GOLD);
+	}
+
+	@Override
 	public InteractionResult use(Level level, Player player, InteractionHand hand) {
 		return TutorialManualMenu.open(player, hand);
 	}
@@ -28,7 +33,7 @@ public final class TutorialManualItem extends Item {
 	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
 			Consumer<Component> builder, TooltipFlag flag) {
 		builder.accept(Component.translatable("item.echo_warrior.tutorial_manual.subtitle")
-				.withStyle(ChatFormatting.GRAY));
+				.withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
 		builder.accept(Component.translatable("item.echo_warrior.tutorial_manual.read_hint")
 				.withStyle(ChatFormatting.DARK_GRAY));
 	}

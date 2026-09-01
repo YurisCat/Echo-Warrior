@@ -33,7 +33,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--input",
         type=Path,
-        default=Path(r"E:\Download-Terminal\TencentDownload\日本_追加前后闪避.bbmodel"),
+        required=True,
         help="Original Blockbench model",
     )
     parser.add_argument(

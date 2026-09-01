@@ -11,9 +11,6 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_INPUT = Path(
-    r"D:\TempHub-Terminal\Temp-ToDelete\beb30bc445ac6e5405c0135923ff02f2.png"
-)
 SOURCE_SHEET = (
     ROOT
     / "assets-source/textures/gui/summoner/skills/japanese_samurai_skills.png"
@@ -41,7 +38,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--input",
         type=Path,
-        default=DEFAULT_INPUT,
+        required=True,
         help="Authored 48x48 PNG containing the 3x3 icon grid",
     )
     return parser.parse_args()

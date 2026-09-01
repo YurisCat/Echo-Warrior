@@ -1,6 +1,25 @@
 # Project-local toolchains
 .toolchains/
 
+# Private author workspace and local agent state
+/human-work/
+/.agents/
+/.codex/
+/scripts/asset-tools/export_human_work_renders.py
+
+# Local credentials and machine-specific configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+credentials.*
+secrets.*
+local.properties
+
 # Gradle
 .gradle/
 build/
@@ -46,6 +65,7 @@ Desktop.ini
 
 # Temporary files
 temporary-delivery/
+/encyclopedia/exports/
 __pycache__/
 *.pyc
 *.log

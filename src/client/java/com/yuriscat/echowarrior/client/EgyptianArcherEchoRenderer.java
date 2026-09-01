@@ -257,7 +257,7 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 			state.exactHeadFrameBlend = 1.0F;
 		} else {
 			if (state.exactHeadFrameActive) {
-				EchoWarrior.LOGGER.info(
+				EchoWarrior.LOGGER.debug(
 						"[EgyptianArcherHeadFrameClient] archer={} tick={} event=release_blend_start action={}",
 						entityId, gameTime, actionState);
 			}
@@ -307,7 +307,7 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 			state.bowReturnReplayGuardUntilAge = age + 4.0F;
 			state.bowReturnReplayGuardPose.clear();
 			state.bowReturnReplayGuardPose.putAll(state.lastBowReturnRawPoses);
-			EchoWarrior.LOGGER.info(
+			EchoWarrior.LOGGER.debug(
 					"[EgyptianArcherBowBoundaryClient] archer={} tick={} event=replay_guard_start action={} age={}",
 					entityId, gameTime, actionState, String.format(Locale.ROOT, "%.3f", age));
 		}
@@ -319,7 +319,7 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 			if (controllerSettled || replacedByNewAction || timedOut) {
 				state.bowReturnReplayGuardActive = false;
 				state.bowReturnReplayGuardPose.clear();
-				EchoWarrior.LOGGER.info(
+				EchoWarrior.LOGGER.debug(
 						"[EgyptianArcherBowBoundaryClient] archer={} tick={} event=replay_guard_release "
 								+ "action={} age={} settled={} replaced={} timedOut={}",
 						entityId, gameTime, actionState, String.format(Locale.ROOT, "%.3f", age),
@@ -500,7 +500,7 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 
 		String marker = "melee".equals(state.boneDiagnosticContext)
 				? "EgyptianArcherMeleeBonesClient" : "EgyptianArcherBowBonesClient";
-		EchoWarrior.LOGGER.info(
+		EchoWarrior.LOGGER.debug(
 				"[{}] archer={} tick={} age={} action={} previousAction={} "
 						+ "target={} stabilized={} exactBlend={} maxBone={} maxRotDeg={} maxPos={} "
 						+ "maxScale={} visibilityChanged={} poses={}",
@@ -727,7 +727,7 @@ public final class EgyptianArcherEchoRenderer extends GeoEntityRenderer<Egyptian
 				state.diagnosticErrorTicks++;
 			}
 			if (state.diagnosticErrorTicks >= 2 && state.diagnosticGameTime >= state.nextDiagnosticAt) {
-				EchoWarrior.LOGGER.info(
+				EchoWarrior.LOGGER.debug(
 						"[EgyptianArcherGazeClient] archer={} tick={} action={} target={} worldError={} forward={} desired={}",
 						state.diagnosticEntityId, state.diagnosticGameTime, state.diagnosticActionState,
 						state.diagnosticTargetId, worldError, renderedForward, desiredForward);

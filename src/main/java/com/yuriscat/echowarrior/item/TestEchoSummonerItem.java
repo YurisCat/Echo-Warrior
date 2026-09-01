@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -29,8 +30,10 @@ import net.minecraft.world.inventory.ClickAction;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -38,10 +41,12 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Optional;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public final class TestEchoSummonerItem extends Item {
 	private static final String SUMMONER_ID = "EchoWarriorSummonerId";
 	private static final String SPIRIT_ID = "EchoWarriorSpiritId";
+	private static final int CONTROL_HINT_COLOR = 0x82999B;
 
 	public TestEchoSummonerItem(Properties properties) {
 		super(properties);
@@ -56,6 +61,48 @@ public final class TestEchoSummonerItem extends Item {
 						Component.translatable(EchoHeroType.fromRelic(relic).nameTranslationKey())
 				)
 				: Component.translatable(this.getDescriptionId());
+	}
+
+	@Override
+	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
+			Consumer<Component> builder, TooltipFlag flag) {
+		Component relic = highlightedTerm("item.echo_warrior.test_echo_summoner.tooltip.term.relic");
+		Component echo = plainTerm("item.echo_warrior.test_echo_summoner.tooltip.term.echo");
+		builder.accept(Component.translatable(
+				"item.echo_warrior.test_echo_summoner.tooltip.summary",
+				relic,
+				echo
+		).withStyle(ChatFormatting.GRAY));
+
+		if (!TooltipShiftState.isShiftDown()) {
+			builder.accept(Component.translatable("item.echo_warrior.test_echo_summoner.tooltip.more_hint")
+					.withStyle(ChatFormatting.DARK_GRAY));
+			return;
+		}
+
+		Component fuel = plainTerm("item.echo_warrior.test_echo_summoner.tooltip.term.fuel");
+		Component quickAction = Component.translatable(
+				"item.echo_warrior.test_echo_summoner.tooltip.term.quick_action"
+		).withStyle(style -> style.withColor(CONTROL_HINT_COLOR));
+		Component inventory = plainTerm("item.echo_warrior.test_echo_summoner.tooltip.term.inventory");
+		builder.accept(detailLine("item.echo_warrior.test_echo_summoner.tooltip.detail.healing", echo, fuel));
+		builder.accept(detailLine("item.echo_warrior.test_echo_summoner.tooltip.detail.quick_action", quickAction));
+		builder.accept(detailLine("item.echo_warrior.test_echo_summoner.tooltip.detail.direct_insert", inventory));
+	}
+
+	private static Component detailLine(String translationKey, Component... arguments) {
+		return Component.literal("+").withStyle(ChatFormatting.GRAY)
+				.append(Component.translatable(translationKey, (Object[]) arguments)
+						.withStyle(ChatFormatting.GRAY));
+	}
+
+	private static Component highlightedTerm(String translationKey) {
+		return Component.translatable(translationKey)
+				.withStyle(style -> style.withColor(KnowledgeTooltip.KNOWLEDGE_COLOR));
+	}
+
+	private static Component plainTerm(String translationKey) {
+		return Component.translatable(translationKey).withStyle(ChatFormatting.GRAY);
 	}
 
 	@Override

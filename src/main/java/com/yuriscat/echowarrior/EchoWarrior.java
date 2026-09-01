@@ -1,6 +1,7 @@
 package com.yuriscat.echowarrior;
 
 import com.yuriscat.echowarrior.command.VisualDebugCommands;
+import com.yuriscat.echowarrior.binding.CreativeSummonerDestroyTracker;
 import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.entity.EchoCombatEvents;
 import com.yuriscat.echowarrior.entity.EchoAuraAuditSystem;
@@ -14,8 +15,10 @@ import com.yuriscat.echowarrior.knowledge.KnowledgeLootSystem;
 import com.yuriscat.echowarrior.network.EchoCompassMessagePayload;
 import com.yuriscat.echowarrior.network.EchoCompassStatePayload;
 import com.yuriscat.echowarrior.network.EchoCompassPulsePayload;
+import com.yuriscat.echowarrior.network.CreativeSummonerDestroyPayload;
 import com.yuriscat.echowarrior.recycler.RecyclerSystem;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -30,6 +33,11 @@ public final class EchoWarrior implements ModInitializer {
 		PayloadTypeRegistry.clientboundPlay().register(EchoCompassStatePayload.TYPE, EchoCompassStatePayload.STREAM_CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(EchoCompassPulsePayload.TYPE, EchoCompassPulsePayload.STREAM_CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(EchoCompassMessagePayload.TYPE, EchoCompassMessagePayload.STREAM_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(
+				CreativeSummonerDestroyPayload.TYPE, CreativeSummonerDestroyPayload.STREAM_CODEC);
+		ServerPlayNetworking.registerGlobalReceiver(CreativeSummonerDestroyPayload.TYPE, (payload, context) ->
+				context.server().execute(() -> CreativeSummonerDestroyTracker.requestCreativeTrash(
+						context.player(), payload.summonerIds())));
 		ModEffects.initialize();
 		ModEntities.initialize();
 		ModBlocks.initialize();
@@ -44,6 +52,7 @@ public final class EchoWarrior implements ModInitializer {
 		EchoCompassSystem.initialize();
 		EchoExperienceSystem.initialize();
 		EchoBindingSystem.initialize();
+		CreativeSummonerDestroyTracker.initialize();
 		EchoAuraAuditSystem.initialize();
 		EchoCombatEvents.initialize();
 		EchoAccessorySystem.initialize();

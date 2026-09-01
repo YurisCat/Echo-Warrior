@@ -3,7 +3,7 @@
 ## Project root
 
 - Treat this directory as the only project root for the ModJam project.
-- Do not use or recreate the former `C:\Users\Administrator\Documents\mod-project` workspace.
+- Do not use or recreate any former ModJam workspace outside this repository root.
 
 ## Source of truth
 

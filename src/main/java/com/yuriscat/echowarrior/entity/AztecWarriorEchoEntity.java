@@ -147,6 +147,7 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 	private static final String PURSUIT_TRIGGER = "pursuit";
 	private static final String HURT_TRIGGER = "hurt";
 	private static final int ATTACK_ANIMATION_TICKS = 29;
+	private static final double MELEE_ATTACK_BASE_HORIZONTAL_RANGE = 2.25;
 	private static final int PURSUIT_IMMUNITY_TICKS = 18;
 	private static final int PURSUIT_ANIMATION_TICKS = 24;
 	private static final Identifier FAVORED_ATTACK_ID = EchoWarrior.id("aztec_favored_attack");
@@ -315,7 +316,17 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 
 	private boolean canPerformMeleeHit(LivingEntity target) {
 		return !isPursuing() && target.isAlive() && this.canAttack(target)
-				&& this.hasLineOfSight(target) && this.isWithinMeleeAttackRange(target);
+				&& this.hasLineOfSight(target) && this.isWithinMeleeAttackHorizontalRange(target);
+	}
+
+	private boolean isWithinMeleeAttackHorizontalRange(LivingEntity target) {
+		AABB ownBox = this.getBoundingBox();
+		AABB targetBox = target.getBoundingBox();
+		if (targetBox.maxY <= ownBox.minY || targetBox.minY >= ownBox.maxY) return false;
+		double reach = MELEE_ATTACK_BASE_HORIZONTAL_RANGE + target.getBbWidth() * 0.5;
+		double deltaX = target.getX() - this.getX();
+		double deltaZ = target.getZ() - this.getZ();
+		return deltaX * deltaX + deltaZ * deltaZ <= reach * reach;
 	}
 
 	@Override

@@ -21,6 +21,7 @@
   ],
   "client": [
     "AbstractContainerScreenMixin",
+	"CreativeModeInventoryScreenMixin",
     "GuiGraphicsExtractorMixin",
     "ItemInHandRendererMixin"
   ],

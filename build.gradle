@@ -66,6 +66,27 @@ processResources {
 	filesMatching('fabric.mod.json') {
 		expand 'version': project.version
 	}
+
+	from(rootProject.file('LICENSE')) {
+		into 'META-INF'
+		rename { 'LICENSE_ECHO_WARRIOR' }
+	}
+	from(rootProject.file('LICENSE-CODE')) {
+		into 'META-INF'
+		rename { 'LICENSE-CODE_ECHO_WARRIOR' }
+	}
+	from(rootProject.file('LICENSE-ASSETS.md')) {
+		into 'META-INF'
+		rename { 'LICENSE-ASSETS_ECHO_WARRIOR.md' }
+	}
+	from(rootProject.file('NOTICE')) {
+		into 'META-INF'
+		rename { 'NOTICE_ECHO_WARRIOR' }
+	}
+	from(rootProject.file('CREDITS.md')) {
+		into 'META-INF'
+		rename { 'CREDITS_ECHO_WARRIOR.md' }
+	}
 }
 
 tasks.withType(JavaCompile).configureEach {

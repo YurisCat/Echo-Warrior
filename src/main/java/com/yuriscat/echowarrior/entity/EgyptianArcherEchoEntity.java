@@ -606,7 +606,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (!target.getUUID().equals(this.aimTargetUuid)) {
 			this.aimTargetUuid = target.getUUID();
 			this.aimTicksRemaining = this.rangedPhaseBudget.aimTicks();
-			EchoWarrior.LOGGER.info(
+			EchoWarrior.LOGGER.debug(
 					"[EgyptianArcherRangedState] archer={} tick={} event=aim_reset target={} aimTicks={}",
 					this.getId(), now, target.getId(), this.aimTicksRemaining);
 		}
@@ -620,7 +620,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			long aimAge = now - this.actionStartedAt;
 			if (aimAge >= this.rangedPhaseBudget.aimTicks() + 4L && canReleaseAfterAimAlignmentGrace(target)) {
 				Entity aimTarget = rangedAimTarget(target);
-				EchoWarrior.LOGGER.info(
+				EchoWarrior.LOGGER.debug(
 						"[EgyptianArcherRangedState] archer={} tick={} event=aim_alignment_fallback "
 								+ "target={} aimAge={} lookDot={} distance={}",
 						this.getId(), now, target.getId(), aimAge,
@@ -681,7 +681,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 					meleeTarget.knockback(MELEE_KNOCKBACK, this.getX() - meleeTarget.getX(), this.getZ() - meleeTarget.getZ());
 				}
 			}
-			EchoWarrior.LOGGER.info(
+			EchoWarrior.LOGGER.debug(
 					"[EgyptianArcherMelee] archer={} tick={} event=release target={} eligible={} damaged={} centerDistance={} boxGap={}",
 					this.getId(), now, entityId(meleeTarget), eligible, damaged,
 					formatDistance(meleeTarget == null ? Double.NaN : Math.sqrt(this.distanceToSqr(meleeTarget))),
@@ -719,7 +719,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.committedAimTarget = null;
 		this.pendingBackstep = false;
 		this.triggerAnim(ACTION_CONTROLLER, reloadStyle ? RELOAD_NOCK_TRIGGER : FIRST_NOCK_TRIGGER);
-		EchoWarrior.LOGGER.info(
+		EchoWarrior.LOGGER.debug(
 				"[EgyptianArcherRangedState] archer={} tick={} event=nock_start target={} reload={} budget={}/{}/{}/{}",
 				this.getId(), now, entityId(target), reloadStyle, this.rangedPhaseBudget.nockTicks(),
 				this.rangedPhaseBudget.drawTicks(), this.rangedPhaseBudget.aimTicks(),
@@ -909,7 +909,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			this.combatSightExpired = true;
 			this.getNavigation().stop();
 			double progress = Math.sqrt(horizontalDistanceSqr(this.position(), this.combatSightLostPosition));
-			EchoWarrior.LOGGER.info(
+			EchoWarrior.LOGGER.debug(
 					"[EgyptianArcherSight] archer={} tick={} event=timeout target={} hiddenTicks={} progress={} navigationDone={}",
 					this.getId(), now, target.getId(), now - this.combatSightLostAt,
 					formatDistance(progress), this.getNavigation().isDone());
@@ -1005,7 +1005,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		beginCombatFacing();
 		this.nextAttackAt = now + 20L;
 		this.triggerAnim(ACTION_CONTROLLER, MELEE_TRIGGER);
-		EchoWarrior.LOGGER.info(
+		EchoWarrior.LOGGER.debug(
 				"[EgyptianArcherMelee] archer={} tick={} event=start target={} type={} previousAction={} centerDistance={} boxGap={} activity={}",
 				this.getId(), now, target.getId(), target.getType(), actionName(previousAction),
 				formatDistance(Math.sqrt(this.distanceToSqr(target))),
@@ -1107,7 +1107,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		stopMovementIntent();
 		extendPostCombatVisualSettleThrough(this.actionEndsAt + POST_BOW_VISUAL_RELEASE_GRACE_TICKS);
 		this.triggerAnim(ACTION_CONTROLLER, BOW_LOWER_TRIGGER);
-		EchoWarrior.LOGGER.info(
+		EchoWarrior.LOGGER.debug(
 				"[EgyptianArcherRangedState] archer={} tick={} event=bow_lower_start duration={} settleUntil={}",
 				this.getId(), now, BOW_LOWER_TICKS, this.postCombatVisualSettleUntil);
 	}
@@ -1126,7 +1126,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		stopMovementIntent();
 		extendPostCombatVisualSettleThrough(this.actionEndsAt + POST_BOW_VISUAL_RELEASE_GRACE_TICKS);
 		this.triggerAnim(ACTION_CONTROLLER, BOW_RECOVER_TRIGGER);
-		EchoWarrior.LOGGER.info(
+		EchoWarrior.LOGGER.debug(
 				"[EgyptianArcherRangedState] archer={} tick={} event=bow_recovery_start duration={} settleUntil={}",
 				this.getId(), now, BOW_RECOVERY_TICKS, this.postCombatVisualSettleUntil);
 	}
@@ -1147,7 +1147,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		extendPostCombatVisualSettleThrough(this.actionEndsAt + BOW_LOWER_TICKS
 				+ POST_BOW_VISUAL_RELEASE_GRACE_TICKS);
 		this.triggerAnim(ACTION_CONTROLLER, UNNOCK_TRIGGER);
-		EchoWarrior.LOGGER.info(
+		EchoWarrior.LOGGER.debug(
 				"[EgyptianArcherRangedState] archer={} tick={} event=un_nock_start duration={} settleUntil={}",
 				this.getId(), now, UNNOCK_TICKS, this.postCombatVisualSettleUntil);
 	}
@@ -1852,7 +1852,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (resolvedId == this.lastLoggedCombatGazeTargetId && locked == this.lastLoggedCombatGazeLocked
 				&& currentAction == this.lastLoggedCombatGazeAction) return;
 		LivingEntity selectedTarget = this.getTarget();
-		EchoWarrior.LOGGER.info(
+		EchoWarrior.LOGGER.debug(
 				"[EgyptianArcherGaze] archer={} tick={} action={} locked={} selected={} committed={} resolved={}",
 				this.getId(), now, actionName(action()), locked, entityId(selectedTarget),
 				entityId(this.actionTarget), resolvedId);
@@ -2873,7 +2873,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		int targetId = entityId(candidate.target());
 		if (candidate.kind() == this.lastLoggedPostCombatAttentionKind
 				&& targetId == this.lastLoggedPostCombatAttentionTargetId) return;
-		EchoWarrior.LOGGER.info(
+		EchoWarrior.LOGGER.debug(
 				"[EgyptianArcherPostCombatGaze] archer={} tick={} action={} kind={} target={} priority={} settleRemaining={} moving={}",
 				this.getId(), now, actionName(action()), candidate.kind().name().toLowerCase(Locale.ROOT),
 				targetId, candidate.priority(), Math.max(0L, this.postCombatVisualSettleUntil - now),
@@ -3540,7 +3540,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		LivingEntity target = this.selfDefenseTarget;
 		if (target == null) return null;
 		if (isRetainedSelfDefenseTarget(target)) return target;
-		EchoWarrior.LOGGER.info(
+		EchoWarrior.LOGGER.debug(
 				"[EgyptianArcherSelfDefense] archer={} tick={} event=release target={} distance={} anchorDistance={} activity={}",
 				this.getId(), this.level().getGameTime(), entityId(target),
 				formatDistance(Math.sqrt(this.distanceToSqr(target))),
@@ -3562,7 +3562,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (this.selfDefenseTarget == target) return;
 		LivingEntity previous = this.selfDefenseTarget;
 		this.selfDefenseTarget = target;
-		EchoWarrior.LOGGER.info(
+		EchoWarrior.LOGGER.debug(
 				"[EgyptianArcherSelfDefense] archer={} tick={} event=acquire target={} previous={} reason={} distance={} anchorDistance={} activity={}",
 				this.getId(), this.level().getGameTime(), entityId(target), entityId(previous), reason,
 				formatDistance(Math.sqrt(this.distanceToSqr(target))),
@@ -3711,12 +3711,12 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.meleeHitAgainDuringAction = false;
 		this.combatFacingInitialized = false;
 		if (naturallyCompletedMelee) {
-			EchoWarrior.LOGGER.info(
+			EchoWarrior.LOGGER.debug(
 					"[EgyptianArcherMelee] archer={} tick={} event=finish heldFinal=true controllerStopped=true",
 					this.getId(), now);
 		}
 		if (isBowReturnActionState(completedAction)) {
-			EchoWarrior.LOGGER.info(
+			EchoWarrior.LOGGER.debug(
 					"[EgyptianArcherRangedState] archer={} tick={} event=bow_return_finish previousAction={} settleRemaining={}",
 					this.getId(), now, actionName(completedAction),
 					Math.max(0L, this.postCombatVisualSettleUntil - now));
@@ -3889,7 +3889,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			if (!this.bowReturnMovementFrameLocked) {
 				this.bowReturnMovementFrameLocked = true;
 				this.movementAnimationActive = false;
-				EchoWarrior.LOGGER.info(
+				EchoWarrior.LOGGER.debug(
 						"[EgyptianArcherBowBoundaryClient] archer={} tick={} event=idle_base_lock action={}",
 						archer.getId(), archer.level().getGameTime(), actionName(archer.action()));
 			}
@@ -3902,7 +3902,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (this.bowReturnMovementFrameLocked) {
 			if (this.bowReturnMovementReleaseDeferredAtTick == Integer.MIN_VALUE) {
 				this.bowReturnMovementReleaseDeferredAtTick = currentTick;
-				EchoWarrior.LOGGER.info(
+				EchoWarrior.LOGGER.debug(
 						"[EgyptianArcherBowBoundaryClient] archer={} tick={} event=idle_base_release_deferred action={}",
 						archer.getId(), archer.level().getGameTime(), actionName(archer.action()));
 			}
@@ -3918,7 +3918,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			}
 			this.bowReturnMovementFrameLocked = false;
 			this.bowReturnMovementReleaseDeferredAtTick = Integer.MIN_VALUE;
-			EchoWarrior.LOGGER.info(
+			EchoWarrior.LOGGER.debug(
 					"[EgyptianArcherBowBoundaryClient] archer={} tick={} event=idle_base_release action={}",
 					archer.getId(), archer.level().getGameTime(), actionName(archer.action()));
 		}

@@ -1,0 +1,45 @@
+Echo Warrior Mixed License Notice
+=================================
+
+Copyright (c) 2026 YurisCat Calypso and the applicable contributors.
+
+Echo Warrior uses different licenses for different parts of the project.
+Using, modifying, or redistributing a part of the project requires compliance
+with the license that applies to that part.
+
+1. Code and technical tooling
+-----------------------------
+
+Original Java source code, build logic, project tooling scripts, and technical
+data definitions authored for Echo Warrior are licensed under the Apache
+License, Version 2.0. The complete terms are in `LICENSE-CODE`.
+
+2. Creative assets and content
+------------------------------
+
+Original models, textures, animations, shaders, audio, user-interface art,
+icons, illustrations, writing, localization, documentation, encyclopedia
+content, promotional artwork, and their editable source files are governed by
+the Echo Warrior Creative Assets License 1.0. The complete bilingual terms are
+in `LICENSE-ASSETS.md`.
+
+This custom license broadly permits attributed fan works and commercial
+derivative works. It requires prior explicit written permission for direct or
+only lightly modified use of covered assets in Minecraft content published on
+a platform where Minecraft content can be sold or placed behind mandatory
+payment, even when the particular upload is free.
+
+3. Contributor and third-party material
+---------------------------------------
+
+No person can grant rights that they do not own. The creative-assets license
+applies to a contributor's work only when that contributor has expressly
+authorized its use under that license. Contributor work not expressly covered
+remains under the contributor's copyright and may require separate permission.
+
+Minecraft, Mojang, Microsoft, library, dependency, historical-reference, and
+other third-party material retains its respective copyright, trademark, and
+license status. This notice licenses only the original contributions made by
+the Echo Warrior rightsholders.
+
+See `CREDITS.md` and `NOTICE` for attribution and scope information.

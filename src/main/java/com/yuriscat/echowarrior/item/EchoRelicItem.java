@@ -69,6 +69,7 @@ public class EchoRelicItem extends Item {
 		}
 		builder.accept(Component.translatable("tooltip.echo_warrior.relic.talents.header")
 				.withStyle(ChatFormatting.GOLD));
+		boolean showTalentDescriptions = TooltipShiftState.isShiftDown();
 		for (EchoTrait trait : EchoTrait.values()) {
 			if ((mask & trait.mask()) == 0) {
 				continue;
@@ -77,7 +78,14 @@ public class EchoRelicItem extends Item {
 					? EchoRelicState.biomeAffinity(stack).nameTranslationKey()
 					: trait.nameTranslationKey();
 			builder.accept(Component.translatable(nameKey).withStyle(ChatFormatting.AQUA));
-			builder.accept(Component.translatable(trait.descriptionTranslationKey()).withStyle(ChatFormatting.GRAY));
+			if (showTalentDescriptions) {
+				builder.accept(Component.translatable(trait.descriptionTranslationKey())
+						.withStyle(ChatFormatting.GRAY));
+			}
+		}
+		if (!showTalentDescriptions) {
+			builder.accept(Component.translatable("tooltip.echo_warrior.relic.more_hint")
+					.withStyle(ChatFormatting.DARK_GRAY));
 		}
 	}
 }

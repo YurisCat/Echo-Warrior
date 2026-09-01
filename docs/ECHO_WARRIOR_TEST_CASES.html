@@ -136,7 +136,7 @@ textarea{min-height:90px;resize:vertical}
       <img class="brand-icon" id="brandIcon" alt="Echo Warrior 召唤器图标">
       <div>
         <h1>Echo Warrior 测试用例</h1>
-        <p class="subtitle">适用版本 <span class="version">0.1.0-test.20260831.1</span>。这是可离线使用的单文件测试工具：逐项执行、记录实际结果、附加截图，最后导出独立结果 HTML 或可继续编辑的 JSON。</p>
+        <p class="subtitle">适用版本 <span class="version">0.1.0-test.20260901.1</span>。这是可离线使用的单文件测试工具：逐项执行、记录实际结果、附加截图，最后导出独立结果 HTML 或可继续编辑的 JSON。</p>
       </div>
     </div>
     <div class="principles">
@@ -190,7 +190,7 @@ textarea{min-height:90px;resize:vertical}
 
 <script>
 "use strict";
-const VERSION="0.1.0-test.20260831.1";
+const VERSION="0.1.0-test.20260901.1";
 const SCHEMA="echo-warrior-test-cases-v1";
 const mcIcons={
   summoner:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAHhlWElmTU0AKgAAAAgABQESAAMAAAABAAEAAAEaAAUAAAABAAAASgEbAAUAAAABAAAAUgEoAAMAAAABAAIAAIdpAAQAAAABAAAAWgAAAAAAAABIAAAAAQAAAEgAAAABAAKgAgAEAAAAAQAAABCgAwAEAAAAAQAAABAAAAAAiKeUQwAAAAlwSFlzAAALEwAACxMBAJqcGAAAABxpRE9UAAAAAgAAAAAAAAAIAAAAKAAAAAgAAAAIAAAAtJq5ZscAAACASURBVDgRYmDAAfy9XP6DMA5p/MIgjft3rARjsgyCGdDXUfP/7YtrYEy0QTDNMA3F2Qn/QZhog5ANeHzr7X8QhhkCMwgYABhhAw4wkOaTx2rBGmCalyw4/h+G8RoAkiRkAChgQeqwuQAULWDbQQGHjHduOvcfhEFisJiBGgD2BgAAAP//MQh4FwAAAKBJREFUY2BAgP8nj9X+7+uo+b/jUASYBrFheP+Olf+LsxPA+O2La/9B2N/L5T9M+3+QAphikAS6QSD5ipkPwRgkh9UAkCJsBoHEQLYjGwCyBMUFIAUwA2A0zEUwAxy8mv+DMMh2oNPhzgd5AyYAtglmAIwGGQ4zDEQjqQfpRQFwSWQXAVWAxWEGQvkoGtE5KAbBDECj0fVg5cMNwioLFAQAh9OJIon71jYAAAAASUVORK5CYII=",
@@ -239,7 +239,7 @@ function addRows(section,priority,rows){
 }
 
 addRows("P0 安装、启动与日志", "P0", [
-  ["测试目录文件完整性","缺少任一必需 JAR 会导致启动失败，重复或错误版本可能造成模组冲突。","新建一个干净的 Minecraft 26.1.2 Fabric 实例。",["确认 mods 目录只放入本包提供的 Echo Warrior、Fabric API、GeckoLib、SmartBrainLib；JEI 可一并放入。","启动实例并进入主菜单。","打开模组列表或查看 latest.log 中的加载列表。"],"游戏正常进入主菜单；Echo Warrior 版本为 0.1.0-test.20260831.1；四个必需模组均加载一次，JEI 若安装也只加载一次。"],
+  ["测试目录文件完整性","缺少任一必需 JAR 会导致启动失败，重复或错误版本可能造成模组冲突。","新建一个干净的 Minecraft 26.1.2 Fabric 实例。",["确认 mods 目录只放入本包提供的 Echo Warrior、Fabric API、GeckoLib、SmartBrainLib；JEI 可一并放入。","启动实例并进入主菜单。","打开模组列表或查看 latest.log 中的加载列表。"],"游戏正常进入主菜单；Echo Warrior 版本为 0.1.0-test.20260901.1；四个必需模组均加载一次，JEI 若安装也只加载一次。"],
   ["缺少 Fabric API 时的失败信息","依赖缺失若只表现为无提示崩溃，测试员难以自行定位。","复制实例后暂时移走 Fabric API。",["启动该实例。","记录启动器显示的错误文本。","恢复 Fabric API 后再次启动。"],"缺失时应明确指出 Fabric API 依赖；恢复后正常启动，不留下损坏配置或存档。"],
   ["缺少 GeckoLib 时的失败信息","实体渲染依赖缺失可能造成启动崩溃或进入世界后缺失模型。","复制实例后暂时移走 GeckoLib。",["启动实例。","记录错误文本。","恢复 GeckoLib 并再次启动。"],"缺失时明确指出 GeckoLib；恢复后可进入世界且英灵模型正常。"],
   ["缺少 SmartBrainLib 时的失败信息","AI 依赖缺失必须在加载阶段被阻止，不能带病进入存档。","复制实例后暂时移走 SmartBrainLib。",["启动实例。","记录错误文本。","恢复 SmartBrainLib。"],"缺失时明确指出 SmartBrainLib；恢复后正常。"],
@@ -418,8 +418,8 @@ const accessorySpecs=[
   ["玉蝉","最大生命值 +6"],
   ["盛宴胸针","最大生命值 +12，移动速度 -15%"],
   ["玉璧","最大生命值 +20，攻击力 -4"],
-  ["托纳蒂乌花冠","白天获得生命恢复 I"],
-  ["孔苏月露瓶","夜晚获得生命恢复 I"],
+  ["托纳蒂乌花冠","白天每 2.5 秒额外恢复 1 点生命"],
+  ["孔苏月露瓶","夜晚每 2.5 秒额外恢复 1 点生命"],
   ["尼罗河红鱼符","水中移动速度 +50%"],
   ["猫纹玉","压制 6 格内苦力怕爆炸；主动出击时可锁定苦力怕"],
   ["鹰纹宝石","英灵击杀产生的经验球 +50%"],
@@ -438,7 +438,7 @@ accessorySpecs.forEach(function(spec,index){
 addRows("P1 25 件英灵饰品", "P1", [
   ["六饰品组合的加减顺序","多个正负属性同时存在时重复加成、乘法顺序或最低值错误会产生异常面板。","选择包含攻击、护甲、生命和移速正负项的六件饰品。",["逐件安装并记录每一步面板。","全部装满后实际测量伤害、受伤、生命和移动。","按逆序取下。"],"每件只结算一次；加减结果与说明一致；取下后精确恢复，不遗留永久属性修饰器。"],
   ["概率饰品的独立判定与无递归","暴击、吸血、闪避、反伤同时存在时可能互相触发形成递归。","安装裂响祭祀石、血契河马牙、身代木偶、黑曜荆棘符。",["让英灵与近战敌人互相攻击至少 200 次。","记录暴击、回血、闪避、反伤。","检查日志与生命。"],"各概率接近设计值且相互独立；反伤不再次触发吸血或无限反伤；没有递归、负伤害或卡死。"],
-  ["昼夜饰品切换边界","日夜变化或 set time 可能让两个恢复效果同时存在。","同时安装托纳蒂乌花冠和孔苏月露瓶。",["跨过日出、日落边界。","反复设置时间并重登。","观察状态效果。"],"白天只由花冠提供恢复，夜晚只由月露瓶提供恢复；边界平滑切换，不同时残留、不闪烁叠加。"],
+  ["昼夜饰品切换边界","日夜变化或 set time 可能让两件饰品同时治疗。","同时安装托纳蒂乌花冠和孔苏月露瓶。",["跨过日出、日落边界。","反复设置时间并重登。","记录生命值与爱心粒子。"],"白天只由花冠每 2.5 秒恢复 1 点生命，夜晚只由月露瓶按相同频率恢复；每次真实恢复显示两颗轻量爱心粒子，不同时治疗、不添加或覆盖原版生命恢复效果。"],
   ["索敌视野上下限组合","盲剑目隐与鹰纹远目镜组合可能得到负范围或突破 32 格。","分别单装和同时安装两件饰品。",["在不同距离放置敌人。","切换主动与被动警戒。","记录最远获取距离。"],"各自倍率正确；组合仍为有效非负范围；鹰眼上限不超过 32 格；已锁定目标的释放规则正常。"],
   ["成长经验饰品的归属","鹰纹宝石和训练类饰品同时使用可能把玩家经验与英灵经验重复放大。","同时安装鹰纹宝石和墨西加鹰首唇饰。",["让英灵单独击杀同种生物多次。","让玩家共同参与。","记录世界经验球、玩家经验和成长经验。"],"经验球 +50% 与成长经验 +50% 各作用一次；说明中“主人不获得这部分经验”准确；没有重复生成或负经验。"]
 ]);

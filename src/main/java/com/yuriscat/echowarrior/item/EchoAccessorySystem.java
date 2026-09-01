@@ -16,8 +16,6 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -40,6 +38,8 @@ public final class EchoAccessorySystem {
 	private static final Identifier HEALTH_ID = EchoWarrior.id("accessory_health");
 	private static final Identifier SPEED_ID = EchoWarrior.id("accessory_speed");
 	private static final Identifier WATER_SPEED_ID = EchoWarrior.id("accessory_water_speed");
+	private static final int DAY_NIGHT_HEAL_INTERVAL_TICKS = 50;
+	private static final float DAY_NIGHT_HEAL_AMOUNT = 1.0F;
 	private static final Map<AttackWindow, Boolean> CRITICAL_WINDOWS = new HashMap<>();
 	private static final Map<AttackWindow, Boolean> HEAL_WINDOWS = new HashMap<>();
 
@@ -88,11 +88,22 @@ public final class EchoAccessorySystem {
 			if (!level.dimensionType().hasSkyLight()) continue;
 			long dayTime = Math.floorMod(level.getDefaultClockTime(), 24000L);
 			boolean day = dayTime < 13000L;
-			if (day && contains(accessories, ModItems.SUNWHEEL_GARLAND_ACCESSORY)
-					|| !day && contains(accessories, ModItems.MOONDEW_BOTTLE_ACCESSORY)) {
-				living.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 40, 0, true, false, true));
-			}
+			boolean periodicHealing = day && contains(accessories, ModItems.SUNWHEEL_GARLAND_ACCESSORY)
+					|| !day && contains(accessories, ModItems.MOONDEW_BOTTLE_ACCESSORY);
+			if (periodicHealing) tryApplyDayNightHealing(level, living, now);
 		}
+	}
+
+	private static void tryApplyDayNightHealing(ServerLevel level, LivingEntity living, long now) {
+		long phase = Math.floorMod(living.getUUID().getLeastSignificantBits(), (long)DAY_NIGHT_HEAL_INTERVAL_TICKS);
+		if (Math.floorMod(now, (long)DAY_NIGHT_HEAL_INTERVAL_TICKS) != phase
+				|| living.getHealth() >= living.getMaxHealth()) return;
+		float previousHealth = living.getHealth();
+		living.heal(DAY_NIGHT_HEAL_AMOUNT);
+		if (living.getHealth() <= previousHealth) return;
+		level.sendParticles(ParticleTypes.HEART,
+				living.getX(), living.getY() + living.getBbHeight() * 0.75, living.getZ(),
+				2, 0.22, 0.15, 0.22, 0.01);
 	}
 
 	/** Called by the LivingEntity mixin before vanilla mitigation. */

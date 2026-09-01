@@ -1942,7 +1942,7 @@
             "type": "callout",
             "tone": "info",
             "title": "动作稳定性与追猎防护",
-            "body": "普通攻击开始后，完整 29 tick 挥击不会被全身受伤动画打断，但仍会承受伤害、减益和击退，因此位移仍可能令攻击落空。追猎开始至落地前约 18 tick 免疫普通伤害；绕过无敌的绝对伤害仍然生效。落地后的伤害恢复正常，但完整 24 tick 追猎动画结束前仍不会切换为全身受伤动作。"
+            "body": "普通攻击主目标采用 2.25 格基础水平距离并计入目标体型，同时要求视线可达和垂直碰撞箱重叠。攻击开始后，完整 29 tick 挥击不会被全身受伤动画打断，但仍会承受伤害、减益和击退；目标在命中帧超出范围或被墙体阻挡时仍会落空。追猎开始至落地前约 18 tick 免疫普通伤害；绕过无敌的绝对伤害仍然生效。落地后的伤害恢复正常，但完整 24 tick 追猎动画结束前仍不会切换为全身受伤动作。"
           },
           {
             "type": "callout",
@@ -5286,7 +5286,7 @@
       "id": "sunwheel_garland_accessory",
       "categoryId": "accessories",
       "title": "托纳蒂乌花冠",
-      "subtitle": "白昼获得生命恢复 I",
+      "subtitle": "白昼每 2.5 秒额外恢复 1 点生命",
       "status": "development",
       "x": 270,
       "y": 445,
@@ -5294,7 +5294,7 @@
       "icon": "/assets/echo-warrior/item/sunwheel_garland_accessory.png",
       "connections": [],
       "article": {
-        "summary": "白昼获得生命恢复 I",
+        "summary": "白昼每 2.5 秒额外恢复 1 点生命",
         "tags": [
           "饰品",
           "精良",
@@ -5309,8 +5309,8 @@
             "items": [
               {
                 "label": "效果",
-                "value": "白昼获得生命恢复 I",
-                "note": "只影响绑定英灵；与等级无关"
+                "value": "每 2.5 秒额外恢复 1 点生命",
+                "note": "仅白昼生效；实际恢复时显示轻量爱心粒子"
               },
               {
                 "label": "考古稀有度",
@@ -5387,7 +5387,7 @@
       "id": "moondew_bottle_accessory",
       "categoryId": "accessories",
       "title": "孔苏月露瓶",
-      "subtitle": "夜间获得生命恢复 I",
+      "subtitle": "夜间每 2.5 秒额外恢复 1 点生命",
       "status": "development",
       "x": 440,
       "y": 445,
@@ -5395,7 +5395,7 @@
       "icon": "/assets/echo-warrior/item/moondew_bottle_accessory.png",
       "connections": [],
       "article": {
-        "summary": "夜间获得生命恢复 I",
+        "summary": "夜间每 2.5 秒额外恢复 1 点生命",
         "tags": [
           "饰品",
           "精良",
@@ -5410,8 +5410,8 @@
             "items": [
               {
                 "label": "效果",
-                "value": "夜间获得生命恢复 I",
-                "note": "只影响绑定英灵；与等级无关"
+                "value": "每 2.5 秒额外恢复 1 点生命",
+                "note": "仅夜间生效；实际恢复时显示轻量爱心粒子"
               },
               {
                 "label": "考古稀有度",

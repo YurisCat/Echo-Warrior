@@ -4,13 +4,22 @@
   "version": "${version}",
   "name": "Echo Warrior",
   "description": "Call echoes of warriors from the past to follow and defend you.",
+  "icon": "assets/echo_warrior/icon.png",
   "authors": [
-    "YurisCat"
+    "YurisCat Calypso"
+  ],
+  "contributors": [
+    "Tomato Fish",
+    "【：】"
   ],
   "contact": {
-    "sources": "https://github.com/YurisCat/Echo-Warrior"
+    "sources": "https://github.com/YurisCat/Echo-Warrior",
+    "issues": "https://github.com/YurisCat/Echo-Warrior/issues"
   },
-  "license": "All-Rights-Reserved",
+  "license": [
+    "Apache-2.0",
+    "LicenseRef-Echo-Warrior-Assets-1.0"
+  ],
   "environment": "*",
   "entrypoints": {
     "main": [

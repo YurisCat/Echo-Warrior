@@ -8,8 +8,11 @@ All notable development changes to Echo Warrior are recorded here.
 
 - Continue manual playtesting and tune the head-target radius, body-turn speed, and animation responsiveness if required.
 
+## 0.1.0 - 2026-09-01
+
 ### Added
 
+- Added the formal 0.1.0 release metadata, in-game project icon, contributor credits, and mixed code/creative-assets licensing files.
 - Added server-authoritative persistent Echo bindings, including container-safe summoner state, controller transfer, follow-mode cross-dimension reconstruction, duplicate UUID handling, configurable population limits, and operator diagnostics.
 - Added the 44-page in-game tutorial manual "Echoes, Warriors, and You" with chapter tabs, recipes, skill and accessory references, persistent reading position, credits, and source attribution.
 - Added the Roman Legionary's Legionary Bulwark passive, reducing direct attack and projectile damage from the front hemisphere by 50% after armor.
@@ -28,7 +31,7 @@ All notable development changes to Echo Warrior are recorded here.
 - Added Chinese Guandao Warrior documentation and interactive encyclopedia content, plus a repeatable BBModel-to-GeckoLib asset export script.
 - Added the complete server-synchronised visual-life system to the Chinese Guandao Warrior: natural and double blinks, layered eye/head attention, player mutual gaze, caught-watching reactions and exits, locomotion focus, creeper awareness, approaching-entity reactions, and damage-source attention.
 - Added command-toggleable Guandao animation diagnostics. Server logs cover action boundaries, hit windows, opening correction, and retaliation; client logs sample key-bone deltas around attack and combo release. Diagnostics now default to off after logs confirmed stable action release.
-- Temporarily re-enabled Guandao animation diagnostics by default for the rear-retaliation regression pass, including alignment waits, queued/promoted retaliation targets, and locked attack/body yaw values.
+- Restored Guandao animation diagnostics to default-off after the rear-retaliation regression pass, and moved Egyptian Archer action, gaze, and bone diagnostics from INFO to DEBUG for release-quality logs.
 - Added the modeler's updated Aztec and Egyptian relic icons to runtime, summoner, and encyclopedia assets; archived the future Japanese Samurai relic icon without registering that unreleased hero.
 - Head-centred player-gaze acquisition with distance-scaled timing, two-tick mouse tolerance, line-of-sight validation, multiplayer owner priority, and close-range handling for invisible players.
 - A mutual-gaze state with randomized hold and renewal durations, occasional glance-away breaks, last-seen-position persistence, combat suppression, and threat interruption.
@@ -41,6 +44,7 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Fixed
 
+- Fixed Shift-clicking the creative inventory trash slot clearing every summoner item before all matching Echo bindings could be dismissed; creative trash confirmation now waits for the complete slot-update batch and verifies that no visible copy remains.
 - Fixed long-lived aura effects and permanent attribute modifiers surviving without a valid source; periodic server audits now remove stale state, restore missing modifiers, and avoid multi-source stacking.
 - Fixed fast projectiles crossing the Legionary's shield-charge interception path between ticks; interception now uses continuous relative trajectories and updates homing projectile targets after reflection.
 - Fixed active Echo growth and summoner state depending on the physical item being loaded in a player's inventory; binding SavedData now remains authoritative while the item is stored or unloaded.
@@ -56,6 +60,7 @@ All notable development changes to Echo Warrior are recorded here.
 
 ### Changed
 
+- Identified Echo relic tooltips now show talent names by default with a localized Shift hint; holding Shift expands the existing description beneath each talent.
 - Echo Warriors no longer expire because of a lifetime timer or disappear when their controller logs out or dies; explicit dismissal, death, relic removal, confirmed summoner destruction, or operator action now ends the binding.
 - Follow-mode Echoes can reconstruct near their controller across dimensions, while wait and wander modes remain in their original dimension without force-loading chunks.
 - Raised the Roman Legionary conditional combo's second hit from 50% to 75% damage and expanded shield charge to redirect projectiles and punish primed creepers without granting ongoing Creeper pursuit.

@@ -230,8 +230,7 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	protected void defineSynchedData(SynchedEntityData.Builder builder) {
 		super.defineSynchedData(builder);
 		builder.define(COMBO_ACTIVE, false);
-		// Temporarily enabled while validating rear-target retaliation and attack-yaw locking.
-		builder.define(ANIMATION_DEBUG_ENABLED, true);
+		builder.define(ANIMATION_DEBUG_ENABLED, false);
 		builder.define(ANIMATION_ACTION, ANIMATION_ACTION_NONE);
 		builder.define(ANIMATION_ACTION_STARTED_AT, 0L);
 		builder.define(ANIMATION_ACTION_ENDS_AT, 0L);
