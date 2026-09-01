@@ -12,9 +12,9 @@ from pathlib import Path
 
 PROJECT_NAME = "Echo Warrior"
 REQUIRED_DEPENDENCIES = (
-    {"slug": "fabric-api", "projectID": "306612", "type": "requiredDependency"},
-    {"slug": "smartbrainlib", "projectID": "661293", "type": "requiredDependency"},
-    {"slug": "geckolib", "projectID": "388172", "type": "requiredDependency"},
+    {"slug": "fabric-api", "projectID": 306612, "type": "requiredDependency"},
+    {"slug": "smartbrainlib", "projectID": 661293, "type": "requiredDependency"},
+    {"slug": "geckolib", "projectID": 388172, "type": "requiredDependency"},
 )
 
 
