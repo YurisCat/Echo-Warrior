@@ -5,8 +5,6 @@ import net.minecraft.world.item.ItemStack;
 public enum EchoHeroType {
 	ROMAN_LEGIONARY(
 			"roman_legionary",
-			"罗马军团兵",
-			"Roman Legionary",
 			30.0,
 			6.0,
 			8.0,
@@ -17,8 +15,6 @@ public enum EchoHeroType {
 	),
 	AZTEC_WARRIOR(
 			"aztec_warrior",
-			"阿兹特克勇士",
-			"Aztec Warrior",
 			34.0,
 			8.0,
 			4.0,
@@ -29,8 +25,6 @@ public enum EchoHeroType {
 	),
 	EGYPTIAN_ARCHER(
 			"egyptian_archer",
-			"埃及弓箭手",
-			"Egyptian Archer",
 			28.0,
 			5.0,
 			0.0,
@@ -41,8 +35,6 @@ public enum EchoHeroType {
 	),
 	GUANDAO_WARRIOR(
 			"guandao_warrior",
-			"中国关刀战士",
-			"Chinese Guandao Warrior",
 			30.0,
 			7.0,
 			12.0,
@@ -53,8 +45,6 @@ public enum EchoHeroType {
 	),
 	JAPANESE_SAMURAI(
 			"japanese_samurai",
-			"日本武士",
-			"Japanese Samurai",
 			28.0,
 			6.0,
 			6.0,
@@ -65,8 +55,7 @@ public enum EchoHeroType {
 	);
 
 	private final String id;
-	private final String chineseName;
-	private final String englishName;
+	private final String nameTranslationKey;
 	private final double baseMaximumHealth;
 	private final double baseAttackDamage;
 	private final double baseArmor;
@@ -77,8 +66,6 @@ public enum EchoHeroType {
 
 	EchoHeroType(
 			String id,
-			String chineseName,
-			String englishName,
 			double baseMaximumHealth,
 			double baseAttackDamage,
 			double baseArmor,
@@ -88,8 +75,7 @@ public enum EchoHeroType {
 			int skillCount
 	) {
 		this.id = id;
-		this.chineseName = chineseName;
-		this.englishName = englishName;
+		this.nameTranslationKey = "hero.echo_warrior." + id;
 		this.baseMaximumHealth = baseMaximumHealth;
 		this.baseAttackDamage = baseAttackDamage;
 		this.baseArmor = baseArmor;
@@ -100,8 +86,7 @@ public enum EchoHeroType {
 	}
 
 	public String id() { return this.id; }
-	public String chineseName() { return this.chineseName; }
-	public String englishName() { return this.englishName; }
+	public String nameTranslationKey() { return this.nameTranslationKey; }
 	public double baseMaximumHealth() { return this.baseMaximumHealth; }
 	public double baseAttackDamage() { return this.baseAttackDamage; }
 	public double baseArmor() { return this.baseArmor; }

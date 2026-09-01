@@ -45,7 +45,7 @@ public final class EchoBindingCommands {
 			if (!binding.active()) continue;
 			active++;
 			if (shown++ >= 20) continue;
-			source.sendSuccess(() -> Component.literal(shortStatus(binding)), false);
+			source.sendSuccess(() -> shortStatus(binding), false);
 		}
 		int finalTotal = total;
 		int finalActive = active;
@@ -63,7 +63,7 @@ public final class EchoBindingCommands {
 			return 0;
 		}
 		EchoBindingSavedData.Snapshot snapshot = binding.snapshot();
-		source.sendSuccess(() -> Component.literal(shortStatus(binding)), false);
+		source.sendSuccess(() -> shortStatus(binding), false);
 		source.sendSuccess(() -> Component.literal("实体=" + value(binding.entityId())
 				+ " 维度=" + (snapshot.dimension().isEmpty() ? "未知" : snapshot.dimension())
 				+ " 生命=" + snapshot.health() + " 位置="
@@ -95,12 +95,16 @@ public final class EchoBindingCommands {
 		return 1;
 	}
 
-	private static String shortStatus(EchoBindingSavedData.Binding binding) {
+	private static Component shortStatus(EchoBindingSavedData.Binding binding) {
 		ItemStack relic = TestEchoSummonerItem.relicStack(binding.summonerState());
-		String hero = relic.getItem() instanceof EchoRelicItem
-				? EchoHeroType.fromRelic(relic).chineseName() : "无遗物";
-		return binding.summonerId() + " [" + hero + "] active=" + binding.active()
-				+ " controller=" + value(binding.controllerId());
+		Component hero = relic.getItem() instanceof EchoRelicItem
+				? Component.translatable(EchoHeroType.fromRelic(relic).nameTranslationKey())
+				: Component.translatable("command.echo_warrior.binding.no_relic");
+		return Component.empty()
+				.append(binding.summonerId().toString())
+				.append(" [")
+				.append(hero)
+				.append("] active=" + binding.active() + " controller=" + value(binding.controllerId()));
 	}
 
 	private static UUID parse(CommandSourceStack source, String rawUuid) {

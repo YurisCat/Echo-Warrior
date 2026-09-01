@@ -656,10 +656,12 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 	}
 
 	private int chapterAt(double mouseX, double mouseY) {
+		int paperLeft = this.leftPos + PAPER_X;
 		for (Chapter chapter : Chapter.values()) {
 			int x = this.leftPos + tabX(chapter.ordinal());
 			int y = this.topPos + tabY(chapter.ordinal());
-			if (isInside(mouseX, mouseY, x, y, TAB_WIDTH, TAB_HEIGHT)) return chapter.ordinal();
+			int exposedWidth = Math.clamp(paperLeft - x, 0, TAB_WIDTH);
+			if (isInside(mouseX, mouseY, x, y, exposedWidth, TAB_HEIGHT)) return chapter.ordinal();
 		}
 		return -1;
 	}

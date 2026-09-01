@@ -51,8 +51,11 @@ public final class TestEchoSummonerItem extends Item {
 	public Component getName(ItemStack stack) {
 		ItemStack relic = relicStack(stack);
 		return relic.getItem() instanceof EchoRelicItem
-				? Component.literal(EchoHeroType.fromRelic(relic).chineseName() + "召唤器")
-				: Component.literal("英灵之魂召唤器");
+				? Component.translatable(
+						"item.echo_warrior.test_echo_summoner.bound",
+						Component.translatable(EchoHeroType.fromRelic(relic).nameTranslationKey())
+				)
+				: Component.translatable(this.getDescriptionId());
 	}
 
 	@Override
@@ -206,7 +209,7 @@ public final class TestEchoSummonerItem extends Item {
 
 			@Override
 			public Component getDisplayName() {
-				return Component.literal("英灵之魂召唤器");
+				return stack.getHoverName();
 			}
 
 			@Override

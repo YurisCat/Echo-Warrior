@@ -4,6 +4,7 @@ import com.yuriscat.echowarrior.ModItems;
 import com.yuriscat.echowarrior.binding.EchoBindingSystem;
 import com.yuriscat.echowarrior.entity.EchoWarriorEntity;
 import com.yuriscat.echowarrior.item.EchoAccessorySystem;
+import com.yuriscat.echowarrior.item.EchoHeroType;
 import com.yuriscat.echowarrior.item.EchoRelicItem;
 import com.yuriscat.echowarrior.item.EchoRelicProgress;
 import com.yuriscat.echowarrior.item.EchoRelicState;
@@ -140,8 +141,12 @@ public final class EchoExperienceSystem {
 		UUID controllerId = EchoBindingSystem.controllerId(level, participation.summonerUuid());
 		ServerPlayer owner = controllerId == null ? null : level.getServer().getPlayerList().getPlayer(controllerId);
 		if (owner == null) return;
-		owner.sendOverlayMessage(Component.literal(com.yuriscat.echowarrior.item.EchoHeroType.fromRelic(relic).chineseName()
-				+ "升至 " + result.newLevel() + " 级"));
+		EchoHeroType heroType = EchoHeroType.fromRelic(relic);
+		owner.sendOverlayMessage(Component.translatable(
+				"message.echo_warrior.relic.level_up",
+				Component.translatable(heroType.nameTranslationKey()),
+				result.newLevel()
+		));
 		level.playSound(
 				null,
 				owner.blockPosition(),

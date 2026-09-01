@@ -41,12 +41,17 @@ public class EchoRelicItem extends Item {
 			TooltipFlag tooltipFlag
 	) {
 		int level = EchoRelicProgress.level(stack);
-		builder.accept(Component.literal("等级 " + level + "/" + EchoRelicProgress.MAX_LEVEL).withStyle(ChatFormatting.AQUA));
+		builder.accept(Component.translatable(
+				"tooltip.echo_warrior.relic.level", level, EchoRelicProgress.MAX_LEVEL
+		).withStyle(ChatFormatting.AQUA));
 		if (level >= EchoRelicProgress.MAX_LEVEL) {
-			builder.accept(Component.literal("经验：已达到最高等级").withStyle(ChatFormatting.GRAY));
+			builder.accept(Component.translatable("tooltip.echo_warrior.relic.experience.max")
+					.withStyle(ChatFormatting.GRAY));
 		} else {
-			builder.accept(Component.literal(
-					"经验 " + EchoRelicProgress.experience(stack) + "/" + EchoRelicProgress.experienceNeeded(level)
+			builder.accept(Component.translatable(
+					"tooltip.echo_warrior.relic.experience",
+					EchoRelicProgress.experience(stack),
+					EchoRelicProgress.experienceNeeded(level)
 			).withStyle(ChatFormatting.GRAY));
 		}
 

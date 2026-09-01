@@ -43,13 +43,6 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	private static final int[] MODULE_SLOT_X = {8, 37, 66, 94, 123, 152};
 	private static final int[] ATTRIBUTE_ICON_X = {61, 134, 61, 116, 61, 116, 61, 116};
 	private static final int[] ATTRIBUTE_ICON_Y = {19, 19, 32, 32, 45, 45, 58, 58};
-	private static final String[] HERO_NAME_TRANSLATION_KEYS = {
-			"gui.echo_warrior.summoner.hero.roman",
-			"gui.echo_warrior.summoner.hero.aztec",
-			"gui.echo_warrior.summoner.hero.egyptian",
-			"gui.echo_warrior.summoner.hero.guandao",
-			"gui.echo_warrior.summoner.hero.samurai"
-	};
 	private static final String[] ACTIVITY_MODE_TRANSLATION_KEYS = {
 			"gui.echo_warrior.summoner.activity.follow",
 			"gui.echo_warrior.summoner.activity.wait",
@@ -275,7 +268,9 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 	protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		boolean relicLoaded = hasRelicLoaded();
 		Component heroName = relicLoaded
-				? Component.translatable(HERO_NAME_TRANSLATION_KEYS[Math.clamp(this.menu.heroType(), 0, HERO_NAME_TRANSLATION_KEYS.length - 1)])
+				? Component.translatable(EchoHeroType.values()[Math.clamp(
+						this.menu.heroType(), 0, EchoHeroType.values().length - 1
+				)].nameTranslationKey())
 				: Component.translatable("gui.echo_warrior.summoner.hero.none");
 		drawFittedText(graphics, heroName, rx(Element.TITLE, 8), ry(Element.TITLE, 7), 115, PRIMARY_TEXT_COLOR, true);
 		if (relicLoaded) {
