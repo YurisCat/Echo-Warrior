@@ -1,14 +1,26 @@
 #!/usr/bin/env python3
-"""Generate culture-bound battlefield loot tables and item metadata tags."""
+"""Generate culture-bound battlefield loot tables and item metadata tags.
+
+The default output stays under ``human-work`` for review. Pass the tracked
+``src/main/resources/data/echo_warrior`` directory explicitly only after the
+generated files have been inspected.
+"""
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA = ROOT / "src/main/resources/data/echo_warrior"
+PROJECT_DATA = ROOT / "src/main/resources/data/echo_warrior"
+DEFAULT_OUTPUT = ROOT / "human-work/generated/knowledge-loot-tables/data/echo_warrior"
+
+# Archaeology drop tiers and item-name rarity are separate concepts. The
+# Peacemaker keeps the Chinese rare-tier drop weight but uses Rarity.EPIC in
+# game, so it must not be regenerated into the rare item tag.
+RARITY_TAG_EXCLUSIONS = {"peacemaker_accessory"}
 
 CULTURES = {
     "roman": {
@@ -116,7 +128,7 @@ def knowledge_entry(entry_id: str) -> dict[str, object]:
 
 
 def load_knowledge_by_culture() -> dict[str, list[str]]:
-    catalog_path = DATA / "knowledge/entries.json"
+    catalog_path = PROJECT_DATA / "knowledge/entries.json"
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     grouped = {culture: [] for culture in CULTURES}
     ordered_entries = sorted(catalog["entries"], key=lambda entry: (list(CULTURES).index(entry["culture"]), entry["order"]))
@@ -131,9 +143,11 @@ def load_knowledge_by_culture() -> dict[str, list[str]]:
     return grouped
 
 
-def generate_chest_knowledge_tables(knowledge_by_culture: dict[str, list[str]]) -> None:
+def generate_chest_knowledge_tables(
+    knowledge_by_culture: dict[str, list[str]], output_data: Path
+) -> None:
     """Generate the two-stage neutral roll: culture first, then one of its eight pages."""
-    base_dir = DATA / "loot_table/gameplay/knowledge_fragment"
+    base_dir = output_data / "loot_table/gameplay/knowledge_fragment"
     root_entries = []
     for culture in CULTURES:
         culture_entries = []
@@ -159,7 +173,23 @@ def generate_chest_knowledge_tables(knowledge_by_culture: dict[str, list[str]]) 
 
 
 def main() -> None:
-    loot_dir = DATA / "loot_table/archaeology"
+    parser = argparse.ArgumentParser(
+        description="Generate battlefield loot tables and related item tags."
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT,
+        help=(
+            "Target data/echo_warrior directory. Defaults to an ignored review "
+            "directory under human-work; pass the tracked project data directory "
+            "explicitly to update runtime files."
+        ),
+    )
+    args = parser.parse_args()
+    output_data = args.output.resolve()
+
+    loot_dir = output_data / "loot_table/archaeology"
     knowledge_by_culture = load_knowledge_by_culture()
     all_by_rarity = {"common": [], "uncommon": [], "rare": []}
     for culture, config in CULTURES.items():
@@ -186,16 +216,27 @@ def main() -> None:
         for rarity, items in config["accessories"].items():
             tagged = [f"echo_warrior:{item}" for item in items]
             culture_values.extend(tagged)
-            all_by_rarity[rarity].extend(tagged)
-        write_json(DATA / f"tags/item/accessories/culture/{culture}.json", {"replace": False, "values": culture_values})
+            all_by_rarity[rarity].extend(
+                tagged_item
+                for item, tagged_item in zip(items, tagged, strict=True)
+                if item not in RARITY_TAG_EXCLUSIONS
+            )
+        write_json(
+            output_data / f"tags/item/accessories/culture/{culture}.json",
+            {"replace": False, "values": culture_values},
+        )
 
     for rarity, values in all_by_rarity.items():
-        write_json(DATA / f"tags/item/accessories/rarity/{rarity}.json", {"replace": False, "values": values})
-    write_json(DATA / "tags/item/recyclable_knowledge.json", {
+        write_json(
+            output_data / f"tags/item/accessories/rarity/{rarity}.json",
+            {"replace": False, "values": values},
+        )
+    write_json(output_data / "tags/item/recyclable_knowledge.json", {
         "replace": False,
         "values": ["echo_warrior:knowledge_fragment", "echo_warrior:knowledge_fragment_collection"],
     })
-    generate_chest_knowledge_tables(knowledge_by_culture)
+    generate_chest_knowledge_tables(knowledge_by_culture, output_data)
+    print(f"Generated knowledge loot data under {output_data}")
 
 
 if __name__ == "__main__":

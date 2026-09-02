@@ -16,17 +16,6 @@ DEFAULT_SOURCE_ASE = ROOT / "human-work" / "英灵召唤器6.ase"
 DEFAULT_SOURCE_PNG = ROOT / "human-work" / "英灵召唤器6.png"
 DEFAULT_RELIC_PNG = ROOT / "human-work" / "罗马军团战士遗物.png"
 DEFAULT_OUTPUT = ROOT / "human-work" / "英灵召唤器6-整理输出"
-DEFAULT_GAME_OUTPUT = (
-    ROOT
-    / "src"
-    / "main"
-    / "resources"
-    / "assets"
-    / "echo_warrior"
-    / "textures"
-    / "gui"
-    / "summoner"
-)
 
 SOURCE_SIZE = (336, 256)
 GUI_SIZE = (241, 201)
@@ -579,11 +568,15 @@ README = """# 英灵召唤器 GUI v6 整理输出
 
 ## 游戏资源
 
-`游戏资源参考` 与 `src/main/resources/assets/echo_warrior/textures/gui/summoner` 使用相同的独立 PNG 目录结构。`manifest.json` 记录所有运行时坐标。
+`游戏资源参考` 使用与运行时资源相同的独立 PNG 目录结构，供人工检查。`manifest.json` 记录所有运行时坐标。
 
-重新生成：
+安全生成工作母版和参考资源（不会覆盖正式游戏资源）：
 
     python scripts/build-summoner-gui-v6.py
+
+确认参考资源正确后，才显式指定正式游戏资源目录：
+
+    python scripts/build-summoner-gui-v6.py --game-output src/main/resources/assets/echo_warrior/textures/gui/summoner
 """
 
 
@@ -593,7 +586,15 @@ def main() -> None:
     parser.add_argument("--source-png", type=Path, default=DEFAULT_SOURCE_PNG)
     parser.add_argument("--relic-png", type=Path, default=DEFAULT_RELIC_PNG)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--game-output", type=Path, default=DEFAULT_GAME_OUTPUT)
+    parser.add_argument(
+        "--game-output",
+        type=Path,
+        default=None,
+        help=(
+            "Optional runtime asset directory. Omit this argument to generate only "
+            "the review copy under --output."
+        ),
+    )
     args = parser.parse_args()
 
     width, height, parsed = read_ase(args.source_ase)
@@ -633,7 +634,8 @@ def main() -> None:
 
     reference = args.output / "游戏资源参考"
     save_png_tree(reference, assets, relic)
-    save_png_tree(args.game_output, assets, relic)
+    if args.game_output is not None:
+        save_png_tree(args.game_output, assets, relic)
     (args.output / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
     )
@@ -651,7 +653,7 @@ def main() -> None:
     summary = {
         "source": str(args.source_ase),
         "output": str(args.output),
-        "game_output": str(args.game_output),
+        "game_output": str(args.game_output) if args.game_output is not None else None,
         "master": str(master_path),
         "master_layers": len(layers),
         "gui_size": list(GUI_SIZE),
