@@ -88,7 +88,7 @@ function Find-NodeTooling {
         }
     }
 
-    throw '没有找到 Node.js 22.13 或更高版本。请安装 Node.js LTS，安装后重新双击启动本地百科.bat。'
+    throw '没有找到 Node.js 22.13 或更高版本。请安装 Node.js LTS，安装后重新双击 tools/windows/Start Local Encyclopedia.bat。'
 }
 
 try {

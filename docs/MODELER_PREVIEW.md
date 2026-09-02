@@ -22,7 +22,7 @@ The prototype exists to verify the complete Blockbench → GeckoLib → Minecraf
 - Facial-control change note: `outputs/roman_legionary_visual_changes.txt`
 - Runtime entity texture: `src/main/resources/assets/echo_warrior/textures/entity/roman_legionary_echo.png`
 - Exported GeckoLib model and animations: `src/main/resources/assets/echo_warrior/geckolib/`
-- Direct local playtest launcher: `scripts/playtest-now.bat`
+- Direct local playtest launcher: `tools/windows/Launch Test Client.bat`
 
 ## Current Roman legionary animations
 

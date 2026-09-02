@@ -12,10 +12,10 @@ Echo Warrior 的交互式网页版百科。
 
 ## 本地运行
 
-Windows 下最简单的方式是在项目根目录双击：
+Windows 下最简单的方式是在项目中双击：
 
 ```text
-启动本地百科.bat
+tools/windows/Start Local Encyclopedia.bat
 ```
 
 启动器会检查 Node.js 版本、在首次运行时自动安装依赖、启动本地服务并打开浏览器。百科运行期间请保持启动窗口开启。

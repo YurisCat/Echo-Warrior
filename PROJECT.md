@@ -341,18 +341,15 @@ MVP 必须先完成：
 
 ### 5.1 一键测试目标
 
-项目最终提供：
+项目提供两层测试入口：
 
 ```text
 scripts/run-test-client.ps1
-scripts/run-test-client.bat
 scripts/playtest-now.ps1
-scripts/playtest-now.bat
+tools/windows/Launch Test Client.bat
 ```
 
-`run-test-client.bat` 是面向 CMD 和双击启动的入口，并转交给 PowerShell 主脚本；避免 Windows 将 `.ps1` 当作普通文件打开。
-
-`playtest-now.bat` 是日常人工测试的最短入口：编译并启动开发客户端，然后通过 Quick Play 直接进入现有的 `CATTEST` 世界。对应 PowerShell 脚本要求该世界已经存在，避免名称错误时静默停在主菜单。
+`scripts/run-test-client.ps1` 是可配置的主脚本；`scripts/playtest-now.ps1` 固定要求现有 `CATTEST` 世界，并转交给主脚本。`tools/windows/Launch Test Client.bat` 是供开发者和模型师双击使用的稳定 Windows 入口，内部调用 `playtest-now.ps1`，避免 Windows 将 `.ps1` 当作普通文件打开。仓库不提交绑定本机绝对路径的 `.lnk` 快捷方式。
 
 当用户说“测试”“启动 MC”“进测试世界”等表达时，Codex 应：
 
@@ -441,25 +438,20 @@ CATTEST
 - 跨电脑或成员交接通过任务板内置的 JSON 导出与导入完成。任务板不替代 `PROJECT.md` 的设计来源地位，也不把其中的示例或工作流任务自动提升为比赛 MVP 范围。
 - 此工具只改变团队美术协作流程，不改变玩家可见内容，因此新增任务板本身不需要同步百科条目。
 
-### 5.9 测试员离线交付与 Git 更新
+### 5.9 测试员构建交付
 
-- 零 Git 经验测试员使用项目根目录的 `TESTER_GUIDE.html`。指南提供“第一次使用”和“每次强制更新”两个标签页，并通过浏览器本地存储保留上次选择。
-- Windows 10/11 x64 测试员的完整离线包生成到被 Git 忽略的 `temporary-delivery/`。交付目录包含带 `.git` 的当前项目、PortableGit、项目 Java 25、`CATTEST` 世界、项目本地 Gradle User Home 和已验证的离线构建缓存；测试员解压后不需要安装系统 Git、Java 或设置系统环境变量。
-- `首次安装.bat` 只检查离线包完整性、私有仓库远程地址、`main` 分支、Java 25 和离线编译，不进行首次联网下载。`启动测试.bat` 为测试员进程临时设置项目内 `GRADLE_USER_HOME`，再调用现有 `scripts/playtest-now.ps1`。
-- `强制更新.bat` 要求先关闭开发客户端，再执行 `git fetch --prune origin main`、`git reset --hard origin/main` 和保留测试员入口的 `git clean -fd`。它抛弃源码修改和非忽略散落文件，但保留 `.toolchains/`、`run/`、测试世界、配置、截图、日志与离线缓存；禁止使用会清除忽略文件的 `git clean -fdx`。
-- 私有仓库访问由项目所有者将测试员 GitHub 账号添加为协作者；PortableGit 内置的 Git Credential Manager 负责首次在线更新登录。更新脚本不自动启动 Minecraft。
-- 每次更新后执行离线 `classes` 检查。若版本升级引入离线包中不存在的新 Gradle、Minecraft、Fabric、SmartBrainLib 或 GeckoLib 文件，脚本停止并要求开发者重新生成支持包，不自动进行长时间联网下载。
-- 离线交付工具只改变测试协作流程，不改变玩家可见玩法，因此本节变更不需要同步百科条目。
+- 测试员不拉取源码仓库，也不接收 PortableGit、JDK、Gradle 缓存、测试世界或更新/启动 BAT。开发者向测试员提供当前模组 JAR、对应的 SHA-256 校验文件和最新测试用例 HTML。
+- 本地待交付文件保存在被 Git 忽略的 `temporary-delivery/`；这里只保留当前有效的三件套，不长期积累旧测试 JAR、旧测试用例、PCL 整包或其他可重新生成的归档。
+- 测试员自行把模组 JAR 与必需依赖放入兼容的 Fabric 客户端或服务端；源码更新、开发客户端和测试世界维护仍由项目开发环境负责。
+- 此流程只改变测试协作方式，不改变玩家可见玩法，因此不需要同步回声档案馆条目。
 
-### 5.10 模型师便携更新与启动
+### 5.10 模型师与 Windows 工具入口
 
-- 已经配置好项目、Java 25 和开发依赖的模型师使用独立轻量工具包，不复用测试员离线包。工具包不包含项目源码、JDK、Gradle 离线缓存、测试世界或 Minecraft 依赖，只携带 PortableGit、Git Credential Manager、中文 HTML 指南和更新/启动脚本。
-- 模型师工具包必须放在 Git 项目目录之外。第一次运行通过目录选择窗口指定已有 Echo Warrior 根目录，路径保存在工具包自己的 `state/project-root.txt` 中；随后所有双击入口复用该路径，并提供单独的“重新选择项目目录”入口。
-- `安全更新项目.bat` 是日常默认入口：只为当前 BAT/PowerShell/Git 进程临时设置 `HTTP_PROXY` 与 `HTTPS_PROXY` 为 `http://127.0.0.1:7897`，不写入系统环境变量或 Git 全局配置；随后要求客户端已关闭、当前处于 `main`，并在任何已跟踪修改、未跟踪文件或未推送本地提交存在时停止。只有工作树干净且本地没有领先提交时，才执行 `fetch` 与 `--ff-only` 快进更新。
-- `强制覆盖更新（自动备份）.bat` 使用相同的进程级 GitHub 代理，是显式恢复入口：先成功获取远程 `main`，显示本地变更并要求输入 `COVER`，再用包含未跟踪文件的 Git stash 保存未提交工作，并为可能被覆盖的本地 `main` 提交建立 `modeler-backup/<时间>` 分支，最后切换到远程 `main` 并执行不清除忽略文件的 `git clean -fd`。代理不可用、远程获取失败或任何自动备份失败都会在覆盖前停止。
-- `启动开发客户端.bat` 不提供离线环境；它按项目内 `.toolchains/jdk-25`、系统 `JAVA_HOME`、系统 PATH 的顺序寻找 Java 25，使用仓库 Gradle Wrapper 编译并启动。存在 `CATTEST` 时直接进入，否则进入主菜单；已运行的开发客户端不会重复启动。
-- 项目根目录提供 `启动本地百科.bat`，开发者与模型师在各自的本地 Git 项目中均可直接双击。它定位 `encyclopedia/`，要求 Node.js 22.13 或更高版本，在首次启动或锁文件更新时自动执行 `npm ci`，固定使用 `127.0.0.1:4173` 启动网页并自动打开默认浏览器；检测到同一地址已经是回声档案馆时直接复用。百科运行期间保留启动窗口，关闭窗口即停止服务。
-- 模型师便携工具只改变团队美术协作与启动流程，不改变玩家可见玩法，因此本节变更不需要同步百科条目。
+- 模型师直接拉取与开发者相同的 Git 仓库，不再维护独立的便携更新工具包、PortableGit、副本目录选择状态或专用强制覆盖流程。模型源文件、动画工作流和验收说明仍按各自文档管理。
+- 面向人工双击的跨机器入口统一放在 `tools/windows/`：`Launch Test Client.bat` 调用 `scripts/playtest-now.ps1`，编译并进入现有 `CATTEST`；`Start Local Encyclopedia.bat` 调用 `scripts/start-local-encyclopedia.ps1`。
+- `Start Local Encyclopedia.bat` 要求 Node.js 22.13 或更高版本，在首次启动或锁文件更新时自动执行 `npm ci`，固定使用 `127.0.0.1:4173` 启动网页并自动打开默认浏览器；检测到同一地址已经是回声档案馆时直接复用。百科运行期间保留启动窗口，关闭窗口即停止服务。
+- 两个英文 BAT 作为可移植、可审查的项目工具提交 Git；中文 Windows `.lnk` 快捷方式只在个人桌面创建，不进入仓库。
+- 此流程只改变团队协作与启动方式，不改变玩家可见玩法，因此不需要同步回声档案馆条目。
 
 ## 6. 预计项目结构
 
@@ -477,6 +469,10 @@ mod-project/
 ├─ scripts/
 │  ├─ run-test-client.ps1
 │  └─ playtest-now.ps1
+├─ tools/
+│  └─ windows/
+│     ├─ Launch Test Client.bat
+│     └─ Start Local Encyclopedia.bat
 ├─ src/
 │  ├─ main/
 │  └─ gametest/

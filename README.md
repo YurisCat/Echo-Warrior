@@ -30,25 +30,20 @@ See [`LICENSE`](LICENSE), [`LICENSE-CODE`](LICENSE-CODE), [`LICENSE-ASSETS.md`](
 
 - Java 25 is stored locally in `.toolchains/jdk-25`.
 - Build with `gradlew.bat build`.
-- From Command Prompt or by double-clicking, start the development client with `scripts\\run-test-client.bat`; it compiles and quick-plays into `CATTEST` when that world exists.
-- `scripts\\playtest-now.bat` requires the existing `CATTEST` world and is the shortest local playtest entry point.
+- From Command Prompt or by double-clicking, use `tools\\windows\\Launch Test Client.bat`; it compiles and quick-plays into the existing `CATTEST` world.
 - From PowerShell, use `./scripts/run-test-client.ps1` or `./scripts/playtest-now.ps1`.
-- The interactive encyclopedia lives in `encyclopedia/`; run it with `启动本地百科.bat`.
+- The interactive encyclopedia lives in `encyclopedia/`; run it with `tools\\windows\\Start Local Encyclopedia.bat`.
 - Runtime worlds under `run/` are intentionally not tracked by Git.
 
 ## Tester handoff
 
-- The Chinese tester guide is `TESTER_GUIDE.html` in the project root.
-- A self-contained Windows x64 tester package can include PortableGit, Java 25, `CATTEST`, and a project-local offline Gradle cache.
-- Testers use `首次安装.bat` once, `强制更新.bat` for destructive source synchronization, and `启动测试.bat` to launch the preserved local test environment.
+- Testers receive the current mod JAR, its SHA-256 checksum, and the latest HTML test checklist.
+- Testers do not receive a source checkout, PortableGit, a JDK, Gradle caches, project update scripts, or development-client launchers.
 
-## Model artist handoff
+## Model artist workflow
 
-- `MODELER_GUIDE.html` documents the separate portable model-artist toolkit.
-- The model-artist ZIP carries PortableGit and update/launch helpers only; it intentionally excludes the repository, Java, Gradle caches, dependencies, and test worlds.
-- `安全更新项目.bat` refuses to update over local work. `强制覆盖更新（自动备份）.bat` stashes uncommitted work and preserves displaced local commits before resetting to remote `main`.
-- Both update BAT files use the process-local proxy `http://127.0.0.1:7897` for GitHub access without changing system or global Git proxy settings.
-- Keep the extracted toolkit outside the Git repository. It remembers the selected existing project directory after the first run.
+- Model artists clone the same repository as developers and use the shared Windows test launcher under `tools/windows/`.
+- No separate model-artist updater, PortableGit bundle, or force-update package is maintained.
 
 The runtime requires Fabric API, SmartBrainLib 2.0.0, and GeckoLib 5.5.2.
 
