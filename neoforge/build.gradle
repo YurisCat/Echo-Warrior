@@ -1,0 +1,54 @@
+plugins {
+	id 'multiloader-loader'
+	id 'net.neoforged.moddev'
+}
+
+dependencies {
+	implementation("net.tslat:smartbrainlib-neoforge-${minecraft_version}:${smartbrainlib_version}")
+	implementation("com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}")
+}
+
+neoForge {
+	version = neoforge_version
+	interfaceInjectionData.from(file('src/main/interface-injections/geckolib.json'))
+
+	runs {
+		configureEach {
+			ideName = "Echo Warrior NeoForge ${it.name.capitalize()}"
+		}
+		client {
+			client()
+			gameDirectory = rootProject.file('run-neoforge')
+			programArguments.add '--username=EchoWarriorNeoForge'
+
+			def quickPlayWorld = providers.gradleProperty('quickPlayWorldNeoForge').orNull
+			if (quickPlayWorld) {
+				programArguments.addAll '--quickPlaySingleplayer', quickPlayWorld
+			}
+		}
+		server {
+			server()
+			gameDirectory = rootProject.file('run-neoforge-server')
+		}
+	}
+
+	mods {
+		"${mod_id}" {
+			sourceSet sourceSets.main
+		}
+	}
+}
+
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements'].each { variant ->
+	configurations.named(variant) {
+		attributes.attribute(loaderAttribute, 'neoforge')
+	}
+}
+sourceSets.configureEach {
+	[compileClasspathConfigurationName, runtimeClasspathConfigurationName].each { variant ->
+		configurations.named(variant) {
+			attributes.attribute(loaderAttribute, 'neoforge')
+		}
+	}
+}

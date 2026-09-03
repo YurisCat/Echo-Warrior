@@ -29,6 +29,8 @@ out/
 # Minecraft development runtime
 run/
 run-server/
+run-neoforge/
+run-neoforge-server/
 logs/
 crash-reports/
 saves/

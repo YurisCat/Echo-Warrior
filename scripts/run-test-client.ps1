@@ -33,14 +33,14 @@ if ($runningClient) {
 $env:JAVA_HOME = $jdkRoot
 $env:Path = "$(Join-Path $jdkRoot 'bin');$env:Path"
 
-$gradleArguments = @('runClient', '--console=plain')
+$gradleArguments = @(':fabric:runClient', '--console=plain')
 if (Test-Path -LiteralPath $worldPath) {
     $gradleArguments += "-PquickPlayWorld=$TestWorldName"
-    Write-Host "Launching Echo Warrior and entering $TestWorldName..."
+    Write-Host "Launching Echo Warrior Fabric and entering $TestWorldName..."
 } elseif ($RequireExistingWorld) {
     throw "The requested test world does not exist: $worldPath"
 } else {
-    Write-Host "Launching Echo Warrior. Create the world '$TestWorldName' once; later launches will enter it automatically."
+    Write-Host "Launching Echo Warrior Fabric. Create the world '$TestWorldName' once; later launches will enter it automatically."
 }
 
 Start-Process -FilePath 'powershell.exe' `

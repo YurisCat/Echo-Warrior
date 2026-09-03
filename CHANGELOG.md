@@ -4,6 +4,10 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+### Added
+
+- Added a shared common module with separate Fabric and NeoForge packages, explicit loader-specific test clients, and a reproducible dual-package delivery manifest.
+
 ### Planned
 
 - Continue manual playtesting and tune the head-target radius, body-turn speed, and animation responsiveness if required.

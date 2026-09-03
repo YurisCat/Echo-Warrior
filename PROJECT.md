@@ -293,18 +293,18 @@ MVP 必须先完成：
 ## 4. 技术基线（已冻结）
 
 - 目标游戏版本：Minecraft Java Edition 26.1.2。
-- 加载器：Fabric Loader 0.19.3。
-- Fabric API：0.155.2+26.1.2。
+- 加载器与输出：Fabric Loader 0.19.3 与 NeoForge 26.1.2.100，各自输出独立 JAR；不制作同时装入两个加载器的通用单包。
+- Fabric API：0.155.2+26.1.2，仅 Fabric 包需要。
 - Java：25，项目私有运行时位于 `.toolchains/jdk-25`，不修改系统 `JAVA_HOME`。
 - SmartBrainLib：2.0.0，必需前置。
 - GeckoLib：5.5.2，必需前置。
-- 构建：仓库内 Gradle Wrapper，不依赖系统全局 Gradle。
+- 构建：仓库内 Gradle Wrapper，不依赖系统全局 Gradle；共享实现位于 `common/`，加载器适配分别位于 `fabric/` 与 `neoforge/`。
 - IDE：IntelliJ IDEA 2025.3 或更高版本。
 - 版本控制：Git。
 - 模组 ID：`echo_warrior`。
 - Java 根包：`com.yuriscat.echowarrior`。
 
-选择 Fabric 的主要理由是开发运行、调试热替换和 26.1 文档路径比较清晰。上述版本均已在 2026-08-07 依据官方项目的 26.1.2 分支或发布信息核对并冻结；升级必须作为单独任务处理。
+日常开发、试错和个人实机测试继续以 Fabric 为主，因为启动路径成熟且能避免在未定稿方案上重复消耗双端适配时间。只有用户明确要求“双端同步”“双端输出”或“双端发布”时，才同步和验证 NeoForge 适配；正式候选的两个 JAR 必须来自同一版本、同一提交和同一次双端构筑。上述游戏与依赖版本已经冻结；升级必须作为单独任务处理。双端结构于 2026-09-03 建立，本次只改变工程与交付方式，不改变玩家可见玩法，因此不需要更新回声档案馆条目。
 
 ### 4.1 实体 AI 与依赖策略
 
@@ -347,15 +347,17 @@ MVP 必须先完成：
 scripts/run-test-client.ps1
 scripts/playtest-now.ps1
 tools/windows/Launch Test Client.bat
+scripts/run-neoforge-test-client.ps1
+tools/windows/Launch NeoForge Test Client.bat
 ```
 
-`scripts/run-test-client.ps1` 是可配置的主脚本；`scripts/playtest-now.ps1` 固定要求现有 `CATTEST` 世界，并转交给主脚本。`tools/windows/Launch Test Client.bat` 是供开发者和模型师双击使用的稳定 Windows 入口，内部调用 `playtest-now.ps1`，避免 Windows 将 `.ps1` 当作普通文件打开。仓库不提交绑定本机绝对路径的 `.lnk` 快捷方式。
+`scripts/run-test-client.ps1` 是日常 Fabric 主脚本；`scripts/playtest-now.ps1` 固定要求现有 `CATTEST` 世界，并转交给主脚本。`tools/windows/Launch Test Client.bat` 是供开发者和模型师双击使用的稳定 Fabric 入口。NeoForge 使用独立的 `scripts/run-neoforge-test-client.ps1`、`Launch NeoForge Test Client.bat`、运行目录和测试世界，只在明确需要时启动。仓库不提交绑定本机绝对路径的 `.lnk` 快捷方式。
 
 当用户说“测试”“启动 MC”“进测试世界”等表达时，Codex 应：
 
 1. 检查是否已有开发客户端在运行，避免重复启动。
 2. 编译当前代码并报告阻塞性错误。
-3. 使用 Gradle `runClient` 启动开发客户端。
+3. 默认使用 Gradle `:fabric:runClient` 启动 Fabric 开发客户端；只有明确要求 NeoForge 测试时才使用 `:neoforge:runClient`。
 4. 通过 `--quickPlaySingleplayer` 自动进入固定测试世界。
 5. 保留控制台和游戏日志，崩溃后主动定位原因。
 
@@ -365,9 +367,10 @@ tools/windows/Launch Test Client.bat
 
 ```text
 CATTEST
+CATTEST_NEOFORGE
 ```
 
-首次需要人工创建世界时，只做一次。之后启动脚本应直接进入该世界。
+Fabric 使用 `run/saves/CATTEST`；NeoForge 使用 `run-neoforge/saves/CATTEST_NEOFORGE`，避免两个加载器共用并改写同一开发存档。首次需要人工创建世界时，只做一次，之后对应启动脚本应直接进入对应世界。
 
 ### 5.2 测试世界原则
 
@@ -440,9 +443,10 @@ CATTEST
 
 ### 5.9 测试员构建交付
 
-- 测试员不拉取源码仓库，也不接收 PortableGit、JDK、Gradle 缓存、测试世界或更新/启动 BAT。开发者向测试员提供当前模组 JAR、对应的 SHA-256 校验文件和最新测试用例 HTML。
-- 本地待交付文件保存在被 Git 忽略的 `temporary-delivery/`；这里只保留当前有效的三件套，不长期积累旧测试 JAR、旧测试用例、PCL 整包或其他可重新生成的归档。
-- 测试员自行把模组 JAR 与必需依赖放入兼容的 Fabric 客户端或服务端；源码更新、开发客户端和测试世界维护仍由项目开发环境负责。
+- 测试员不拉取源码仓库，也不接收 PortableGit、JDK、Gradle 缓存、测试世界或更新/启动 BAT。双端测试交付包含 Fabric JAR、NeoForge JAR、各自 SHA-256、`release-manifest.json` 和统一测试用例 HTML。
+- 本地待交付文件保存在被 Git 忽略的 `temporary-delivery/`；这里只保留当前有效的一组双端产物，不长期积累旧测试 JAR、旧测试用例、PCL 整包或其他可重新生成的归档。
+- `scripts/build-dual-candidate.ps1` 默认要求干净 Git 工作区，并记录分支、提交、版本、游戏版本、加载器、依赖与哈希；`-AllowDirty` 只用于本地迁移验证，生成的清单必须标记为不可发布。
+- 测试员分别把对应 JAR 与必需依赖放入兼容的 Fabric 或 NeoForge 客户端/服务端，并对两个环境执行同一套测试案例；依赖 JAR 不打入 Echo Warrior 包内。
 - 此流程只改变测试协作方式，不改变玩家可见玩法，因此不需要同步回声档案馆条目。
 
 ### 5.10 模型师与 Windows 工具入口
@@ -468,26 +472,37 @@ mod-project/
 ├─ gradle/
 ├─ scripts/
 │  ├─ run-test-client.ps1
+│  ├─ run-neoforge-test-client.ps1
+│  ├─ build-dual-candidate.ps1
 │  └─ playtest-now.ps1
 ├─ tools/
 │  └─ windows/
 │     ├─ Launch Test Client.bat
+│     ├─ Launch NeoForge Test Client.bat
+│     ├─ Build Dual Package.bat
 │     └─ Start Local Encyclopedia.bat
-├─ src/
-│  ├─ main/
-│  └─ gametest/
+├─ common/
+│  └─ src/
+├─ fabric/
+│  └─ src/
+├─ neoforge/
+│  └─ src/
 ├─ run/
 │  ├─ saves/CATTEST/
 │  └─ logs/latest.log
+├─ run-neoforge/
+│  ├─ saves/CATTEST_NEOFORGE/
+│  └─ logs/latest.log
+├─ temporary-delivery/
 └─ docs/
 ```
 
-`run/`、构建产物和本地测试世界不提交 Git；必要的测试结构、GameTest 和配置则提交。`human-work/` 是仅供作者本地绘画与工程源文件整理的私人工作区，不得跟踪或发布；只有经过确认、适合公开的派生素材才复制到 `assets-source/`、`src/main/resources/` 或 `encyclopedia/public/` 等版本化目录。`encyclopedia/exports/` 与 `temporary-delivery/` 属于可重新生成的本地交付产物，同样不提交 Git。此项只调整仓库卫生与发布流程，不影响玩家可见内容，因此不需要更新回声档案馆条目。
+`run/`、`run-neoforge/`、构建产物和本地测试世界不提交 Git；必要的测试结构、GameTest 和配置则提交。`human-work/` 是仅供作者本地绘画与工程源文件整理的私人工作区，不得跟踪或发布；只有经过确认、适合公开的派生素材才复制到 `assets-source/`、`common/src/main/resources/` 或 `encyclopedia/public/` 等版本化目录。`encyclopedia/exports/` 与 `temporary-delivery/` 属于可重新生成的本地交付产物，同样不提交 Git。此项只调整仓库卫生与发布流程，不影响玩家可见内容，因此不需要更新回声档案馆条目。
 
 ## 7. 正式发布与许可
 
 - 第一个公开正式版本固定为 `0.1.0`，正式展示名称为 `Echo Warrior`；技术标识继续使用 `echo_warrior`，Java 根包继续使用 `com.yuriscat.echowarrior`。
-- CurseForge 项目 ID 固定为 `1677436`。仓库通过 `.github/workflows/publish-curseforge.yml` 使用 CurseForge 官方上传接口发布：手动运行默认只做 Java 25 干净构建与元数据演练，显式勾选后才上传；后续推送与 `mod_version` 完全一致的 `v<版本>` 标签时自动上传。发布元数据从 `gradle.properties` 和对应版本的 `CHANGELOG.md` 生成，并声明 Minecraft/Fabric 兼容性及 Fabric API、SmartBrainLib、GeckoLib 三项必需依赖。上传令牌只保存在 GitHub Actions 的 `CURSEFORGE_API_TOKEN` Secret 中，禁止进入仓库或日志。详细操作见 `docs/CURSEFORGE_RELEASE.md`。
+- CurseForge 项目 ID 固定为 `1677436`。旧自动化只能发布 Fabric 单包，现已失败即停并移除标签触发；在双文件上传流程另行实现、演练并获得明确发布指令前，任何标签或手动工作流都不能上传。未来流程必须从同一干净提交构筑两个独立 JAR，分别声明 Fabric／NeoForge 与各自依赖，任一端失败时停止全部发布；发布成功后再将双端分支合并回主分支，并在回复中明确说明已经合并。上传令牌只允许保存在 GitHub Actions Secret 中。详细状态见 `docs/CURSEFORGE_RELEASE.md`。
 - 项目采用混合许可：原创 Java 代码、构建逻辑和技术工具脚本采用 Apache License 2.0；原创模型、贴图、动画、Shader、音频、GUI、图标、文字、本地化、百科、宣传素材及工程源文件采用自定义 `Echo Warrior Creative Assets License 1.0`。
 - 自定义素材许可欢迎署名二创和商业化衍生作品。若 Minecraft 发布平台允许玩家强制付费购买、下载、安装、解锁或使用 Minecraft 内容，则在该平台直接使用或只轻微修改项目素材时，即使该具体作品免费，也必须先取得相关权利人的明确书面许可；具有明显独立创作贡献的实质性改造作品仍可在署名后商业发布。
 - 广告收入、视频分成、作者奖励计划、自愿捐赠和不妨碍玩家免费取得具体内容的赞助不视为强制付费。改名、统一换色、少量像素修改、格式转换、轻微模型/UV/骨骼/动画/Shader 调整或简单拼接不构成实质性改造。

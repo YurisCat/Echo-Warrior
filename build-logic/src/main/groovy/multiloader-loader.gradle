@@ -1,0 +1,17 @@
+plugins {
+	id 'multiloader-common'
+}
+
+def commonProject = project(':common')
+
+tasks.named('compileJava', JavaCompile) {
+	source(commonProject.sourceSets.main.allJava)
+}
+
+tasks.named('processResources', ProcessResources) {
+	from(commonProject.sourceSets.main.resources)
+}
+
+tasks.named('sourcesJar', Jar) {
+	from(commonProject.sourceSets.main.allSource)
+}

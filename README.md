@@ -1,19 +1,17 @@
 # Echo Warrior
 
-Echo Warrior is a Fabric mod for Minecraft 26.1.2 about recovering relics from ancient battlefields and summoning warrior echoes from the past.
+Echo Warrior is a Minecraft 26.1.2 mod about recovering relics from ancient battlefields and summoning warrior echoes from the past. It ships as two separate packages: one for Fabric and one for NeoForge.
 
-Version 0.1.0 is the first public release. It includes the Echo Compass and renewable battlefield archaeology loop, a portable fuelled summoner, five playable Echo Warriors, relic growth and talents, 25 accessories, 40 collectible knowledge pages, the Echo Recycler, an in-game tutorial manual, and a web-first interactive encyclopedia. The stable technical mod ID is `echo_warrior`.
+Version 0.1.0 includes the Echo Compass and renewable battlefield archaeology loop, a portable fuelled summoner, five playable Echo Warriors, relic growth and talents, 25 accessories, 40 collectible knowledge pages, the Echo Recycler, an in-game tutorial manual, and a web-first interactive encyclopedia. The stable technical mod ID is `echo_warrior`.
 
 ## Requirements
 
-- Minecraft 26.1.2
-- Fabric Loader 0.19.3 or newer
-- Fabric API 0.155.2+26.1.2 or newer compatible version
-- SmartBrainLib 2.0.0 or newer compatible version
-- GeckoLib 5.5.2 or newer compatible version
-- Java 25
+Both packages require Minecraft 26.1.2, Java 25, SmartBrainLib 2.0.0, and GeckoLib 5.5.2.
 
-Install the mod and its required dependencies in the `mods` folder of a compatible Fabric client or server. Client and server should use matching mod versions for multiplayer.
+- Fabric package: Fabric Loader 0.19.3 and Fabric API 0.155.2+26.1.2.
+- NeoForge package: NeoForge 26.1.2.100.
+
+Install only the JAR matching the chosen loader. Client and server should use the same loader and matching Echo Warrior version. Dependency JARs remain separate and are not bundled inside Echo Warrior.
 
 ## License
 
@@ -28,23 +26,21 @@ See [`LICENSE`](LICENSE), [`LICENSE-CODE`](LICENSE-CODE), [`LICENSE-ASSETS.md`](
 
 ## Development
 
-- Java 25 is stored locally in `.toolchains/jdk-25`.
-- Build with `gradlew.bat build`.
-- From Command Prompt or by double-clicking, use `tools\\windows\\Launch Test Client.bat`; it compiles and quick-plays into the existing `CATTEST` world.
-- From PowerShell, use `./scripts/run-test-client.ps1` or `./scripts/playtest-now.ps1`.
-- The interactive encyclopedia lives in `encyclopedia/`; run it with `tools\\windows\\Start Local Encyclopedia.bat`.
-- Runtime worlds under `run/` are intentionally not tracked by Git.
+- Shared gameplay code and resources live in `common/`; loader adapters live in `fabric/` and `neoforge/`.
+- Daily development remains Fabric-first: build with `gradlew.bat fabricBuild`.
+- Double-click `tools\windows\Launch Test Client.bat` to compile Fabric and quick-play into the existing `CATTEST` world.
+- Use `scripts\run-neoforge-test-client.ps1` or double-click `tools\windows\Launch NeoForge Test Client.bat` only when an explicit NeoForge check is needed. Its separate world is `CATTEST_NEOFORGE`.
+- Build both packages with `gradlew.bat dualBuild`.
+- Prepare the two JARs, checksums, manifest, and shared checklist with `scripts\build-dual-candidate.ps1` or `tools\windows\Build Dual Package.bat`.
+- The interactive encyclopedia lives in `encyclopedia/`; run it with `tools\windows\Start Local Encyclopedia.bat`.
+- Runtime worlds under `run/` and `run-neoforge/`, plus `temporary-delivery/`, are intentionally not tracked by Git.
 
 ## Tester handoff
 
-- Testers receive the current mod JAR, its SHA-256 checksum, and the latest HTML test checklist.
-- Testers do not receive a source checkout, PortableGit, a JDK, Gradle caches, project update scripts, or development-client launchers.
+Testers receive both loader-specific JARs, their SHA-256 checksums, `release-manifest.json`, and the latest HTML test checklist. They do not receive a source checkout, JDK, Gradle caches, test worlds, or development launchers.
 
 ## Model artist workflow
 
-- Model artists clone the same repository as developers and use the shared Windows test launcher under `tools/windows/`.
-- No separate model-artist updater, PortableGit bundle, or force-update package is maintained.
-
-The runtime requires Fabric API, SmartBrainLib 2.0.0, and GeckoLib 5.5.2.
+Model artists clone the same repository as developers and use the shared Windows Fabric test launcher under `tools/windows/`. No separate model-artist updater or force-update package is maintained.
 
 See [`docs/MODELER_PREVIEW.md`](docs/MODELER_PREVIEW.md) before preparing a preview for another computer.
