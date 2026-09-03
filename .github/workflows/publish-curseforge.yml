@@ -1,17 +1,148 @@
-name: Publish CurseForge (disabled)
+name: Publish CurseForge
 
 on:
   workflow_dispatch:
+    inputs:
+      release_type:
+        description: CurseForge release channel
+        required: true
+        default: release
+        type: choice
+        options:
+          - release
+          - beta
+          - alpha
+      manual_release:
+        description: Hold both approved files for a later manual release
+        required: true
+        default: false
+        type: boolean
+      publish:
+        description: Actually upload both files to CurseForge (leave off for a dry run)
+        required: true
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "v*"
 
 permissions:
   contents: read
 
+concurrency:
+  group: curseforge-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  publishing-disabled:
-    name: Dual-loader publisher not installed
+  build-and-publish:
+    name: Build and publish Fabric plus NeoForge
     runs-on: ubuntu-latest
+
     steps:
-      - name: Refuse legacy single-loader publishing
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: gradle
+
+      - name: Build both release JARs from this commit
         run: |
-          echo "::error::CurseForge publishing is intentionally disabled. The retired workflow could upload only the Fabric JAR; implement and validate the dual-loader publisher before enabling uploads."
-          exit 1
+          chmod +x ./gradlew
+          ./gradlew clean :fabric:build :neoforge:build --no-daemon --stacktrace
+
+      - name: Prepare and validate both CurseForge uploads
+        id: release
+        env:
+          RELEASE_TYPE: ${{ github.event_name == 'workflow_dispatch' && inputs.release_type || 'release' }}
+          MANUAL_RELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.manual_release || false }}
+          EXPECTED_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: |
+          python3 scripts/prepare-curseforge-release.py \
+            --release-type "$RELEASE_TYPE" \
+            --manual-release "$MANUAL_RELEASE" \
+            --expected-tag "$EXPECTED_TAG" \
+            --require-jars \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Keep both verified JARs and metadata as a GitHub artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: echo-warrior-${{ steps.release.outputs.version }}-dual-loader
+          path: |
+            ${{ steps.release.outputs.fabric_jar_path }}
+            ${{ steps.release.outputs.neoforge_jar_path }}
+            ${{ steps.release.outputs.fabric_metadata_path }}
+            ${{ steps.release.outputs.neoforge_metadata_path }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload both files to CurseForge
+        id: curseforge
+        if: github.event_name == 'push' || inputs.publish
+        env:
+          CURSEFORGE_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
+          CURSEFORGE_PROJECT_ID: "1677436"
+          FABRIC_JAR_PATH: ${{ steps.release.outputs.fabric_jar_path }}
+          FABRIC_METADATA_PATH: ${{ steps.release.outputs.fabric_metadata_path }}
+          NEOFORGE_JAR_PATH: ${{ steps.release.outputs.neoforge_jar_path }}
+          NEOFORGE_METADATA_PATH: ${{ steps.release.outputs.neoforge_metadata_path }}
+        run: |
+          if [ -z "${CURSEFORGE_API_TOKEN:-}" ]; then
+            echo "::error::Missing repository secret CURSEFORGE_API_TOKEN."
+            exit 1
+          fi
+
+          upload_file() {
+            loader="$1"
+            jar_path="$2"
+            metadata_path="$3"
+            response_file="$4"
+            metadata_json="$(python3 -c 'import json,sys; print(json.dumps(json.load(open(sys.argv[1], encoding="utf-8")), ensure_ascii=False, separators=(",", ":")))' "$metadata_path")"
+            http_status="$(curl --silent --show-error \
+              --output "$response_file" \
+              --write-out "%{http_code}" \
+              --request POST \
+              --header "X-Api-Token: $CURSEFORGE_API_TOKEN" \
+              --form-string "metadata=$metadata_json" \
+              --form "file=@$jar_path;type=application/java-archive" \
+              "https://minecraft.curseforge.com/api/projects/$CURSEFORGE_PROJECT_ID/upload-file")"
+
+            if [ "$http_status" -lt 200 ] || [ "$http_status" -ge 300 ]; then
+              echo "::error::$loader CurseForge upload failed with HTTP $http_status."
+              cat "$response_file"
+              return 1
+            fi
+          }
+
+          fabric_response="$(mktemp)"
+          neoforge_response="$(mktemp)"
+          upload_file "Fabric" "$FABRIC_JAR_PATH" "$FABRIC_METADATA_PATH" "$fabric_response"
+          upload_file "NeoForge" "$NEOFORGE_JAR_PATH" "$NEOFORGE_METADATA_PATH" "$neoforge_response"
+
+          fabric_file_id="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["id"])' "$fabric_response")"
+          neoforge_file_id="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["id"])' "$neoforge_response")"
+          echo "fabric_file_id=$fabric_file_id" >> "$GITHUB_OUTPUT"
+          echo "neoforge_file_id=$neoforge_file_id" >> "$GITHUB_OUTPUT"
+          echo "Uploaded Fabric file ID $fabric_file_id and NeoForge file ID $neoforge_file_id."
+
+      - name: Write release summary
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          FABRIC_JAR_NAME: ${{ steps.release.outputs.fabric_jar_name }}
+          NEOFORGE_JAR_NAME: ${{ steps.release.outputs.neoforge_jar_name }}
+          FABRIC_FILE_ID: ${{ steps.curseforge.outputs.fabric_file_id }}
+          NEOFORGE_FILE_ID: ${{ steps.curseforge.outputs.neoforge_file_id }}
+        run: |
+          echo "## Echo Warrior $VERSION dual-loader release" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Verified Fabric JAR: \`$FABRIC_JAR_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Verified NeoForge JAR: \`$NEOFORGE_JAR_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "${FABRIC_FILE_ID:-}" ] && [ -n "${NEOFORGE_FILE_ID:-}" ]; then
+            echo "- CurseForge uploads succeeded: Fabric \`$FABRIC_FILE_ID\`, NeoForge \`$NEOFORGE_FILE_ID\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Dry run only: nothing was uploaded to CurseForge." >> "$GITHUB_STEP_SUMMARY"
+          fi

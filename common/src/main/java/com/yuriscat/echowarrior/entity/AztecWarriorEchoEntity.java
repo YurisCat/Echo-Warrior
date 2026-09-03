@@ -2032,7 +2032,9 @@ public final class AztecWarriorEchoEntity extends PathfinderMob
 				applyAttention(new AttentionCandidate(living, living.getEyePosition(), 1100,
 						VISUAL_HURT, 16, false, AttentionKind.DAMAGE_SOURCE), now);
 			} else {
-				Vec3 point = this.position().add(this.getLookAngle().reverse());
+				// Poison and other environmental damage have no attacker. Preserve the
+				// current gaze instead of inventing a target behind the entity's feet.
+				Vec3 point = this.getEyePosition().add(this.getLookAngle().scale(4.0));
 				setEyeAttentionPoint(point);
 				setAttentionPoint(point);
 				setReaction(VISUAL_HURT, now + 16);

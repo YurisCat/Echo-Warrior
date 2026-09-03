@@ -136,11 +136,11 @@ textarea{min-height:90px;resize:vertical}
       <img class="brand-icon" id="brandIcon" alt="Echo Warrior 召唤器图标">
       <div>
         <h1>Echo Warrior 测试用例</h1>
-        <p class="subtitle">适用版本 <span class="version">0.1.0-test.20260901.1</span>。这是可离线使用的单文件测试工具：逐项执行、记录实际结果、附加截图，最后导出独立结果 HTML 或可继续编辑的 JSON。</p>
+        <p class="subtitle">适用批次 <span class="version">0.1.1-release.20260903.1</span>，覆盖 Fabric 与 NeoForge。选择当前加载器后逐项执行、记录实际结果、附加截图，最后导出独立结果 HTML 或可继续编辑的 JSON。</p>
       </div>
     </div>
     <div class="principles">
-      <div class="principle"><span data-icon="shield-alert"></span><div><b>P0 先测</b><small>崩溃、存档、物品丢失、复制、核心流程与多人控制权。</small></div></div>
+      <div class="principle"><span data-icon="shield-alert"></span><div><b>双端分别测试</b><small>Fabric 与 NeoForge 使用独立实例；页面会分别保存两个加载器的测试结果。</small></div></div>
       <div class="principle"><span data-icon="list-checks"></span><div><b>按步骤复现</b><small>不要只写“坏了”；记录位置、模式、物品、人数和稳定复现步骤。</small></div></div>
       <div class="principle"><span data-icon="image"></span><div><b>保留证据</b><small>失败时附截图；崩溃或异常同步同时保留 latest.log。</small></div></div>
     </div>
@@ -151,7 +151,9 @@ textarea{min-height:90px;resize:vertical}
     <div class="meta-grid">
       <div class="field"><label>测试员</label><input data-meta="tester" placeholder="姓名或昵称"></div>
       <div class="field"><label>测试日期</label><input data-meta="date" type="date"></div>
-      <div class="field"><label>PCL 实例名称</label><input data-meta="instance" placeholder="实例名称"></div>
+      <div class="field"><label>当前测试加载器</label><select data-meta="loader"><option value="fabric">Fabric</option><option value="neoforge">NeoForge</option></select></div>
+      <div class="field"><label>Fabric 实例名称</label><input data-meta="fabricInstance" placeholder="Fabric 实例名称"></div>
+      <div class="field"><label>NeoForge 实例名称</label><input data-meta="neoforgeInstance" placeholder="NeoForge 实例名称"></div>
       <div class="field"><label>Java 版本</label><input data-meta="java" placeholder="应为 Java 25"></div>
       <div class="field"><label>操作系统</label><input data-meta="os" placeholder="例如 Windows 11"></div>
       <div class="field"><label>显卡与驱动</label><input data-meta="gpu" placeholder="显卡型号 / 驱动"></div>
@@ -190,8 +192,8 @@ textarea{min-height:90px;resize:vertical}
 
 <script>
 "use strict";
-const VERSION="0.1.0-test.20260901.1";
-const SCHEMA="echo-warrior-test-cases-v1";
+const VERSION="0.1.1-release.20260903.1";
+const SCHEMA="echo-warrior-test-cases-v2";
 const mcIcons={
   summoner:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAHhlWElmTU0AKgAAAAgABQESAAMAAAABAAEAAAEaAAUAAAABAAAASgEbAAUAAAABAAAAUgEoAAMAAAABAAIAAIdpAAQAAAABAAAAWgAAAAAAAABIAAAAAQAAAEgAAAABAAKgAgAEAAAAAQAAABCgAwAEAAAAAQAAABAAAAAAiKeUQwAAAAlwSFlzAAALEwAACxMBAJqcGAAAABxpRE9UAAAAAgAAAAAAAAAIAAAAKAAAAAgAAAAIAAAAtJq5ZscAAACASURBVDgRYmDAAfy9XP6DMA5p/MIgjft3rARjsgyCGdDXUfP/7YtrYEy0QTDNMA3F2Qn/QZhog5ANeHzr7X8QhhkCMwgYABhhAw4wkOaTx2rBGmCalyw4/h+G8RoAkiRkAChgQeqwuQAULWDbQQGHjHduOvcfhEFisJiBGgD2BgAAAP//MQh4FwAAAKBJREFUY2BAgP8nj9X+7+uo+b/jUASYBrFheP+Olf+LsxPA+O2La/9B2N/L5T9M+3+QAphikAS6QSD5ipkPwRgkh9UAkCJsBoHEQLYjGwCyBMUFIAUwA2A0zEUwAxy8mv+DMMh2oNPhzgd5AyYAtglmAIwGGQ4zDEQjqQfpRQFwSWQXAVWAxWEGQvkoGtE5KAbBDECj0fVg5cMNwioLFAQAh9OJIon71jYAAAAASUVORK5CYII=",
   manual:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAATBJREFUOI3FkzFLw0AYhp+U/oGmIXQUHHXp0tWlUwcn6ZJJ6Vawg9ZFcBBcWh30BySLcRCnDqFDQFxdpNC6FUIRLCFNf0JcvCO5BC0uvtPd8b33Pt93HPy3tPRm0Gsnm5jObh+lT1ONna4lCyvVmlyvV0uC+RR/PCGMYq5dXwMoiYL+xYks9kYelWoN17EBcB0bb+Sxtb0LQPDxmW3h1GomAKah0+lamWRVw8ubPIFp6AzvriS269iZdNexeXv15SVpgjJAGMX0j88xDR0A6/BIFqTXRcoRqKlpEhGW1q8E9cbPJGVADmTQayfiud5nC2kU6a39Fqah52egqt5oyuR0+nq1zLVQUs3BfFqIKshEm4UEYRTjjyc83D/D93DVRFWaenCwt7PRf3h6meW8f9IX5pqGbExYx60AAAAASUVORK5CYII=",
@@ -239,12 +241,12 @@ function addRows(section,priority,rows){
 }
 
 addRows("P0 安装、启动与日志", "P0", [
-  ["测试目录文件完整性","缺少任一必需 JAR 会导致启动失败，重复或错误版本可能造成模组冲突。","新建一个干净的 Minecraft 26.1.2 Fabric 实例。",["确认 mods 目录只放入本包提供的 Echo Warrior、Fabric API、GeckoLib、SmartBrainLib；JEI 可一并放入。","启动实例并进入主菜单。","打开模组列表或查看 latest.log 中的加载列表。"],"游戏正常进入主菜单；Echo Warrior 版本为 0.1.0-test.20260901.1；四个必需模组均加载一次，JEI 若安装也只加载一次。"],
-  ["缺少 Fabric API 时的失败信息","依赖缺失若只表现为无提示崩溃，测试员难以自行定位。","复制实例后暂时移走 Fabric API。",["启动该实例。","记录启动器显示的错误文本。","恢复 Fabric API 后再次启动。"],"缺失时应明确指出 Fabric API 依赖；恢复后正常启动，不留下损坏配置或存档。"],
+  ["测试目录文件完整性","缺少任一必需 JAR 会导致启动失败，重复或错误加载器版本可能造成模组冲突。","根据页面所选加载器，新建一个干净的 Minecraft 26.1.2 实例。",["Fabric：放入 Fabric 版 Echo Warrior、Fabric API、Fabric 版 GeckoLib 与 SmartBrainLib。","NeoForge：放入 NeoForge 版 Echo Warrior、NeoForge 版 GeckoLib 与 SmartBrainLib，不要放入 Fabric API 或 Fabric 版依赖。","启动实例并进入主菜单，打开模组列表或查看 latest.log 中的加载列表。"],"游戏正常进入主菜单；Echo Warrior 版本为 0.1.1；当前加载器对应的模组与依赖均只加载一次。"],
+  ["缺少加载器依赖时的失败信息","依赖缺失若只表现为无提示崩溃，测试员难以自行定位。","复制当前加载器实例后暂时移走一项必需依赖；Fabric 可优先移走 Fabric API。",["启动该实例。","记录启动器显示的错误文本。","恢复依赖后再次启动。"],"缺失时应明确指出对应依赖；恢复后正常启动，不留下损坏配置或存档。"],
   ["缺少 GeckoLib 时的失败信息","实体渲染依赖缺失可能造成启动崩溃或进入世界后缺失模型。","复制实例后暂时移走 GeckoLib。",["启动实例。","记录错误文本。","恢复 GeckoLib 并再次启动。"],"缺失时明确指出 GeckoLib；恢复后可进入世界且英灵模型正常。"],
   ["缺少 SmartBrainLib 时的失败信息","AI 依赖缺失必须在加载阶段被阻止，不能带病进入存档。","复制实例后暂时移走 SmartBrainLib。",["启动实例。","记录错误文本。","恢复 SmartBrainLib。"],"缺失时明确指出 SmartBrainLib；恢复后正常。"],
   ["错误 Java 版本","Java 版本不匹配可能在启动器里表现为难懂的类版本错误。","准备 Java 25 与一个低于 25 的 Java 运行时。",["先用 Java 25 启动并进入主菜单。","再把复制实例切到较低 Java 版本启动。","记录 PCL 显示的错误。"],"Java 25 正常；较低版本被明确拒绝，不会改坏原实例。"],
-  ["重复放入同一模组","测试员可能重复拖入相同 JAR，需确认错误可诊断。","在 mods 中复制一份 Echo Warrior JAR 并改名。",["启动实例。","记录 Fabric Loader 或 PCL 的冲突提示。","移除副本后重启。"],"重复模组被加载器明确识别；移除副本后恢复正常。"],
+  ["重复放入同一模组","测试员可能重复拖入相同 JAR，需确认错误可诊断。","在 mods 中复制一份当前加载器的 Echo Warrior JAR 并改名。",["启动实例。","记录 Fabric Loader、NeoForge 或启动器给出的冲突提示。","移除副本后重启。"],"重复模组被加载器明确识别；移除副本后恢复正常。"],
   ["首次创建世界","注册表、数据包或资源加载错误常在建世界时才暴露。","干净实例，使用默认数据包。",["创建新的创造模式世界，允许作弊。","进入世界等待 60 秒。","退出到标题画面后重新进入。"],"世界可创建、保存、重进；没有数据包错误、注册表缺失、持续报错或明显卡死。"],
   ["加载旧测试世界","版本升级可能使旧物品组件、实体或 SavedData 无法读取。","备份后使用上一测试版创建的世界。",["复制旧世界到当前实例。","进入世界并检查已有召唤器、遗物、英灵和遗迹数据。","退出并再次进入。"],"存档可加载；兼容数据不会导致崩溃、物品清空或实体无限复制。若有明确不兼容，应给出可理解提示。"],
   ["资源重载","纹理、语言、模型和数据在 F3+T 后可能丢失或重复注册。","已进入世界，背包中准备主要模组物品。",["按 F3+T 执行资源重载。","打开创造栏、教程和召唤器 GUI。","召唤五种英灵各一次。"],"重载完成；无缺失纹理、重复声音、模型消失或 GUI 贴图偏移。"],
@@ -252,7 +254,7 @@ addRows("P0 安装、启动与日志", "P0", [
 ]);
 
 addRows("P0 JEI 与全部配方", "P0", [
-  ["JEI 版本与启动兼容","错误 JEI 版本可能直接阻断测试包启动。","mods 中安装随包提供的 JEI 29.33.0.87。",["启动 Minecraft 26.1.2 Fabric 实例。","进入创造模式世界。","打开物品栏并确认 JEI 面板出现。"],"JEI 正常加载，物品列表可见；没有依赖冲突、崩溃或界面严重重叠。"],
+  ["JEI 版本与启动兼容","错误加载器对应的 JEI 版本可能直接阻断测试包启动。","安装与当前 Minecraft 26.1.2 加载器相匹配的 JEI。",["启动当前选择的 Fabric 或 NeoForge 实例。","进入创造模式世界。","打开物品栏并确认 JEI 面板出现。"],"JEI 正常加载，物品列表可见；没有依赖冲突、崩溃或界面严重重叠。"],
   ["不安装 JEI 的基线","JEI 不是 Echo Warrior 的必需依赖，模组必须能单独运行。","复制实例并移走 JEI。",["启动并进入同一个世界。","打开召唤器、教程、知识碎片界面。","执行一次召唤与战斗。"],"不安装 JEI 时所有模组功能正常；仅缺少 JEI 查看配方功能。"],
   ["回声罗盘配方","配方注册、标签原料或摆放方向错误会卡住核心探索入口。","JEI 已加载。",["在 JEI 搜索回声罗盘。","查看配方。","按显示配方在工作台合成。"],"显示中央指南针、正方向紫水晶碎片、四角铜锭；可正常合成且产物正确。"],
   ["召唤器配方","召唤器是核心物品，配方任何缺失都属于阻断问题。","JEI 已加载。",["搜索英灵之魂召唤器。","确认 3×3 排列。","在工作台实际合成。"],"第一行铁锭/玻璃板/铁锭，第二行铁锭/末影珍珠/铁锭，第三行铁锭/箱子/铁锭；产物为一个召唤器。"],
@@ -594,12 +596,25 @@ addRows("P0 多人、存档、性能与最终回归", "P0", [
   ["结果包完整性","测试员填写的数据和截图若导出丢失，整轮测试将无法复盘。","至少填写通过、失败、阻塞各一项并附多张图片。",["点击导出独立结果 HTML。","在另一台电脑或无网络环境打开。","再导出 JSON，并在干净浏览器导入。"],"结果 HTML 独立显示全部用例、环境、状态、文字和截图；JSON 可恢复继续编辑；不依赖原目录、网络或本机缓存。"]
 ]);
 
+addRows("P0 2026-09-03 双端重点验证", "P0", [
+  ["当前双端测试包启动基线","先确认拿到的 JAR 与所选加载器一致，避免把安装错误误报为玩法问题。","分别准备 Minecraft 26.1.2、Java 25 的干净 Fabric 与 NeoForge 实例。",["Fabric 实例只安装 echo-warrior-fabric-26.1.2-0.1.1.jar 及 Fabric 对应依赖。","NeoForge 实例只安装 echo-warrior-neoforge-26.1.2-0.1.1.jar 及 NeoForge 对应依赖。","分别启动、创建新世界、退出并重进，然后检查 latest.log。"],"两个实例均能正常进入和重进世界；模组版本显示为 0.1.1；没有持续 ERROR、缺失资源、错误端 JAR 或每 tick 刷屏。"],
+  ["五种英灵死亡视觉","死亡状态若被立即遣散，玩家会看到英灵突然消失而不是原版生物死亡过程。","在当前加载器中分别召唤罗马、阿兹特克、埃及、中国与日本英灵。",["让每种英灵受到足以死亡的普通伤害。","观察受击当刻、变红、倾倒和消失时机。","在另一加载器重复相同步骤。"],"五种英灵死亡时都先出现原版生物式的变红与倾倒过程，完成死亡演出后才消失；不会在生命归零当刻突然抹除，也不会继续攻击。"],
+  ["中毒期间头部稳定性","持续伤害与受伤反馈叠加时，模型头部不能突然跳向异常角度。","五种英灵均在非战斗站立状态准备；中国关刀战士重点重复。",["分别给予中毒效果并观察完整持续时间。","每种英灵重复至少三次，中国关刀战士重复至少十次。","再在行走、跟随和战斗状态各抽查一次。"],"中毒扣血时头部、眼睛和身体姿态保持连续；不会突然向左下角或其他异常方向偏转、抽动或停留。"],
+  ["回声罗盘定位、无目标与提示","罗盘状态同步异常可能表现为永久旋转、持续检测但没有目标，也没有明确文字反馈。","在主世界分别准备有 2048 格内未完成遗迹和无可用遗迹的场景。",["无目标时手持罗盘观察至少十秒并记录文字、声音和指针。","有目标时从远处移动并确认指针、框体、声音与文本逐步进入正确状态。","完成或移除目标后继续观察，并在另一加载器重复。"],"无目标时指针按设计稳定旋转且只给出明确的无目标反馈；有目标时能够锁定并引导至遗迹；目标完成后及时释放。Fabric 与 NeoForge 行为一致，不会永久停在‘检测中’。"]
+]);
+
+addRows("P1 2026-09-03 饰品与回收规则", "P1", [
+  ["全部饰品属性数值颜色","饰品实际生效但面板颜色不变，会让玩家无法判断它相对英灵基础值是增益还是减益。","准备五种 1 级英灵和全部 25 件饰品，不叠加天赋或外部状态效果。",["记录每种英灵未装饰品时的生命、攻击、护甲、移速和警戒范围。","逐件单独安装 25 件饰品，核对发生变化的属性数值颜色。","组合安装正负效果，检查净变化为正、为负和完全抵消三种情况。","取下全部饰品，确认数值和颜色恢复。"],"以当前英灵无饰品基础数值为准：净增的属性显示绿色，净减显示红色，未变化或完全抵消显示白色；生命、攻击、护甲、移速和警戒范围均遵循同一规则，实际数值与物品说明一致。"],
+  ["五文化饰品稀有度分布","稀有度标签、教程和实际物品不一致会影响考古概率判断与回收结果。","准备全部 25 件饰品、教程手册《回声、战士与你》及创造模式物品标签。",["按古罗马、墨西加、古埃及、古代中国、日本武家分别统计五件饰品。","逐件核对物品名颜色、稀有度标签与手册介绍页。","在两端分别查看创造栏、JEI 与手册。"],"每个文化都恰好为 2 件常见、2 件罕见、1 件稀有；共计 10 常见、10 罕见、5 稀有；Fabric 与 NeoForge 的物品、标签、手册和配方显示一致，不出现史诗档饰品。"],
+  ["回收箱午夜与调时边界","自然时间、睡眠和管理员调时必须保持同一批次只结算一次，且不能通过倒拨时间重复获得产物。","看向八格内的回收箱，准备多批可回收物并记录开始时的游戏时间。",["先执行 /echo_warrior recycler trigger，确认能按正式规则处理且不消耗下一次自然午夜资格。","补入第二批物品并自然跨过时间 18000，确认午夜结算。","结算后执行 /time set 9000，再等待至天亮，观察是否对已经处理过的日期重复结算。","使用持续向前的 /time add 或自然等待跨入真正的新午夜，再确认下一批能够结算。"],"管理员 trigger 能处理目标箱；自然午夜每个有效日期最多结算一次；/time set 9000 倒拨到约下午三点后不会让已处理日期重复回收；进入真正的新午夜后正常产生下一批结果。"]
+]);
+
 // TEST_CASE_DATA
 
 testCases.forEach(function(tc,index){tc.id="EW-"+String(index+1).padStart(3,"0");});
 const statusLabels={untested:"未测试",pass:"通过",fail:"失败",blocked:"阻塞",skip:"跳过"};
 const severityLabels={"":"未填写",S1:"S1 阻断",S2:"S2 严重",S3:"S3 一般",S4:"S4 建议"};
-let state={schema:SCHEMA,version:VERSION,meta:{date:new Date().toISOString().slice(0,10)},results:{}};
+let state={schema:SCHEMA,version:VERSION,meta:{date:new Date().toISOString().slice(0,10),loader:"fabric"},results:{}};
 let db=null,saveTimer=0,activeAttachmentCaseId="";
 function openDb(){
   return new Promise(function(resolve,reject){
@@ -612,7 +627,7 @@ function dbGet(key){return new Promise(function(resolve,reject){const r=db.trans
 function dbPut(key,value){return new Promise(function(resolve,reject){const r=db.transaction("kv","readwrite").objectStore("kv").put(value,key);r.onsuccess=function(){resolve();};r.onerror=function(){reject(r.error);};});}
 async function loadState(){
   try{db=await openDb();const saved=await dbGet("state");if(saved&&saved.schema===SCHEMA)state=saved;}catch(error){console.warn(error);const raw=localStorage.getItem(SCHEMA);if(raw)state=JSON.parse(raw);}
-  if(!state.meta)state.meta={};if(!state.results)state.results={};if(!state.meta.date)state.meta.date=new Date().toISOString().slice(0,10);
+  if(!state.meta)state.meta={};if(!state.results)state.results={};if(!state.meta.date)state.meta.date=new Date().toISOString().slice(0,10);if(!state.meta.loader)state.meta.loader="fabric";
 }
 function scheduleSave(){
   clearTimeout(saveTimer);saveTimer=setTimeout(async function(){
@@ -620,9 +635,12 @@ function scheduleSave(){
     catch(error){console.warn(error);toast("自动保存失败：图片可能过大，请先导出 JSON 备份。");}
   },350);
 }
+function activeLoader(){return state.meta.loader==="neoforge"?"neoforge":"fabric";}
+function resultKey(id){return activeLoader()+"::"+id;}
 function resultFor(id){
-  if(!state.results[id])state.results[id]={status:"untested",severity:"",actual:"",issue:"",attachments:[]};
-  return state.results[id];
+  const key=resultKey(id);
+  if(!state.results[key])state.results[key]={status:"untested",severity:"",actual:"",issue:"",attachments:[]};
+  return state.results[key];
 }
 function esc(value){
   return String(value==null?"":value).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});
@@ -751,13 +769,13 @@ function updateSummary(){
 }
 function toast(message){const el=document.getElementById("toast");el.textContent=message;el.classList.add("show");clearTimeout(el._timer);el._timer=setTimeout(function(){el.classList.remove("show");},2600);}
 function download(name,content,type){const blob=new Blob([content],{type:type}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},1000);}
-function exportPayload(){return {schema:SCHEMA,version:VERSION,exportedAt:new Date().toISOString(),meta:state.meta,results:state.results,cases:testCases};}
+function exportPayload(){return {schema:SCHEMA,version:VERSION,exportedAt:new Date().toISOString(),activeLoader:activeLoader(),meta:state.meta,results:state.results,cases:testCases};}
 function reportHtml(){
   const payload=exportPayload(),rows=testCases.map(function(tc){
     const r=resultFor(tc.id),shots=(r.attachments||[]).map(function(a){return '<figure><img src="'+a.data+'" alt="'+esc(a.name)+'"><figcaption>'+esc(a.name)+'</figcaption></figure>';}).join("");
     return '<article class="case '+r.status+'"><header><b>'+tc.id+' · '+esc(tc.title)+'</b><span>'+tc.priority+' · '+statusLabels[r.status]+'</span></header><p class="section">'+esc(tc.section)+'</p><h3>风险与问题描述</h3><p>'+esc(tc.risk)+'</p><h3>前置条件</h3><p>'+esc(tc.preconditions)+'</p><h3>步骤</h3><ol>'+tc.steps.map(function(s){return "<li>"+esc(s)+"</li>";}).join("")+'</ol><h3>预期结果</h3><p>'+esc(tc.expected)+'</p><h3>实际结果</h3><p>'+esc(r.actual||"未填写")+'</p><h3>问题与复现</h3><p>'+esc(r.issue||"未填写")+'</p><p class="minor">严重程度：'+esc(severityLabels[r.severity||""])+'；复现频率：'+esc(r.frequency||"未填写")+'</p><div class="shots">'+shots+'</div></article>';
   }).join("");
-  return '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Echo Warrior 测试结果</title><style>body{margin:0;background:#121016;color:#eee8df;font:15px/1.6 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1050px;margin:auto;padding:30px 18px}h1{color:#e4c980}.meta,.case{border:1px solid #4b4352;border-radius:10px;background:#211d27;padding:16px;margin:12px 0}.case header{display:flex;gap:12px;justify-content:space-between}.case header span,.minor,.section{color:#aaa2af}.case.pass{border-left:4px solid #79c68d}.case.fail{border-left:4px solid #e17777}.case.blocked{border-left:4px solid #e3a15f}h3{font-size:13px;color:#dbc48d;margin:12px 0 3px}p{white-space:pre-wrap;margin:3px 0}ol{margin-top:4px}.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}figure{margin:0}figure img{width:100%;max-height:440px;object-fit:contain;background:#0b0a0d;border:1px solid #4d4554}figcaption{font-size:12px;color:#aaa2af} @media print{body{background:#fff;color:#111}.meta,.case{background:#fff;border-color:#bbb;break-inside:avoid}}</style></head><body><main><h1>Echo Warrior 测试结果</h1><div class="meta"><p>版本：'+VERSION+'</p><p>导出时间：'+esc(payload.exportedAt)+'</p><p>测试员：'+esc(state.meta.tester||"未填写")+'</p><p>环境：'+esc([state.meta.os,state.meta.java,state.meta.gpu,state.meta.mode,state.meta.mods].filter(Boolean).join("；")||"未填写")+'</p></div>'+rows+'</main></body></html>';
+  return '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Echo Warrior 测试结果</title><style>body{margin:0;background:#121016;color:#eee8df;font:15px/1.6 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1050px;margin:auto;padding:30px 18px}h1{color:#e4c980}.meta,.case{border:1px solid #4b4352;border-radius:10px;background:#211d27;padding:16px;margin:12px 0}.case header{display:flex;gap:12px;justify-content:space-between}.case header span,.minor,.section{color:#aaa2af}.case.pass{border-left:4px solid #79c68d}.case.fail{border-left:4px solid #e17777}.case.blocked{border-left:4px solid #e3a15f}h3{font-size:13px;color:#dbc48d;margin:12px 0 3px}p{white-space:pre-wrap;margin:3px 0}ol{margin-top:4px}.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}figure{margin:0}figure img{width:100%;max-height:440px;object-fit:contain;background:#0b0a0d;border:1px solid #4d4554}figcaption{font-size:12px;color:#aaa2af} @media print{body{background:#fff;color:#111}.meta,.case{background:#fff;border-color:#bbb;break-inside:avoid}}</style></head><body><main><h1>Echo Warrior 测试结果</h1><div class="meta"><p>批次：'+VERSION+'</p><p>加载器：'+(activeLoader()==="neoforge"?"NeoForge":"Fabric")+'</p><p>导出时间：'+esc(payload.exportedAt)+'</p><p>测试员：'+esc(state.meta.tester||"未填写")+'</p><p>实例：'+esc(activeLoader()==="neoforge"?(state.meta.neoforgeInstance||"未填写"):(state.meta.fabricInstance||"未填写"))+'</p><p>环境：'+esc([state.meta.os,state.meta.java,state.meta.gpu,state.meta.mode,state.meta.mods].filter(Boolean).join("；")||"未填写")+'</p></div>'+rows+'</main></body></html>';
 }
 function openLightbox(src){document.getElementById("lightboxImage").src=src;document.getElementById("lightbox").classList.add("open");}
 document.getElementById("closeLightbox").onclick=function(){document.getElementById("lightbox").classList.remove("open");};
@@ -772,16 +790,16 @@ document.addEventListener("paste",async function(event){
   event.preventDefault();card.classList.add("open");setActiveAttachmentCase(card);
   const added=await addAttachments(card.dataset.id,files);renderPreviews(card,card.dataset.id);if(added)toast("已粘贴 "+added+" 张截图到 "+card.dataset.id+"。");
 });
-document.querySelectorAll("[data-meta]").forEach(function(input){input.addEventListener("input",function(){state.meta[this.dataset.meta]=this.value;scheduleSave();});});
+document.querySelectorAll("[data-meta]").forEach(function(input){input.addEventListener("input",function(){state.meta[this.dataset.meta]=this.value;scheduleSave();if(this.dataset.meta==="loader")render();});});
 ["search","sectionFilter","priorityFilter","statusFilter"].forEach(function(id){document.getElementById(id).addEventListener(id==="search"?"input":"change",render);});
 document.getElementById("expandVisible").onclick=function(){document.querySelectorAll(".case").forEach(function(c){c.classList.add("open");});};
 document.getElementById("collapseAll").onclick=function(){document.querySelectorAll(".case").forEach(function(c){c.classList.remove("open");});};
-document.getElementById("exportJson").onclick=function(){download("Echo-Warrior-测试结果-"+(state.meta.tester||"tester")+"-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify(exportPayload(),null,2),"application/json");};
-document.getElementById("exportHtml").onclick=function(){download("Echo-Warrior-测试结果-"+(state.meta.tester||"tester")+"-"+new Date().toISOString().slice(0,10)+".html",reportHtml(),"text/html;charset=utf-8");};
+document.getElementById("exportJson").onclick=function(){download("Echo-Warrior-测试结果-"+activeLoader()+"-"+(state.meta.tester||"tester")+"-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify(exportPayload(),null,2),"application/json");};
+document.getElementById("exportHtml").onclick=function(){download("Echo-Warrior-测试结果-"+activeLoader()+"-"+(state.meta.tester||"tester")+"-"+new Date().toISOString().slice(0,10)+".html",reportHtml(),"text/html;charset=utf-8");};
 document.getElementById("importJson").onchange=async function(){
   try{const data=JSON.parse(await this.files[0].text());if(data.schema!==SCHEMA)throw new Error("schema");state.meta=data.meta||{};state.results=data.results||{};scheduleSave();bindMeta();render();toast("测试结果已导入。");}catch(error){toast("无法导入：不是本测试用例导出的 JSON。");}this.value="";
 };
-document.getElementById("reset").onclick=function(){if(confirm("确定清空所有状态、文字和截图吗？此操作无法撤销。")){state={schema:SCHEMA,version:VERSION,meta:{date:new Date().toISOString().slice(0,10)},results:{}};scheduleSave();bindMeta();render();toast("已清空全部结果。");}};
+document.getElementById("reset").onclick=function(){if(confirm("确定清空 Fabric 与 NeoForge 的全部状态、文字和截图吗？此操作无法撤销。")){state={schema:SCHEMA,version:VERSION,meta:{date:new Date().toISOString().slice(0,10),loader:"fabric"},results:{}};scheduleSave();bindMeta();render();toast("已清空双端全部结果。");}};
 function bindMeta(){document.querySelectorAll("[data-meta]").forEach(function(input){input.value=state.meta[input.dataset.meta]||"";});}
 async function init(){
   await loadState();bindMeta();

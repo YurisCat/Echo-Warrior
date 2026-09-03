@@ -191,8 +191,16 @@ public final class EchoAccessorySystem {
 	}
 
 	public static double proactiveRange(EchoWarriorEntity echo, double base, boolean waiting) {
-		double adjusted = has(echo, ModItems.BATTLE_BLINDFOLD_ACCESSORY) ? base * 0.25
-				: has(echo, ModItems.HAWKEYE_LENS_ACCESSORY) ? base * 1.50 : base;
+		return proactiveRange(installedAccessories(echo), base, waiting);
+	}
+
+	public static double proactiveRange(SimpleContainer contents, double base, boolean waiting) {
+		return proactiveRange(contents.getItems(), base, waiting);
+	}
+
+	private static double proactiveRange(List<ItemStack> accessories, double base, boolean waiting) {
+		double adjusted = contains(accessories, ModItems.BATTLE_BLINDFOLD_ACCESSORY) ? base * 0.25
+				: contains(accessories, ModItems.HAWKEYE_LENS_ACCESSORY) ? base * 1.50 : base;
 		return Math.min(adjusted, waiting ? 8.0 : 32.0);
 	}
 

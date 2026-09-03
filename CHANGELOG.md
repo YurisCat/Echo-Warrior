@@ -4,13 +4,27 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
-### Added
-
-- Added a shared common module with separate Fabric and NeoForge packages, explicit loader-specific test clients, and a reproducible dual-package delivery manifest.
-
 ### Planned
 
 - Continue manual playtesting and tune the head-target radius, body-turn speed, and animation responsiveness if required.
+
+## 0.1.1 - 2026-09-03
+
+### Added
+
+- Added an official NeoForge 26.1.2 package alongside Fabric, backed by one shared common module, loader-specific test clients, and a reproducible dual-package delivery flow.
+- Added fail-closed CurseForge automation that builds and validates both loader packages from the same tagged commit before uploading either release pair.
+
+### Fixed
+
+- Fixed summoner attribute colors covering only increased armor and reduced movement; health, attack, armor, movement, and active targeting range now consistently compare accessory-adjusted values with the loaded Echo's current base values.
+- Fixed Echo Warriors disappearing immediately on lethal damage instead of completing Minecraft's red-flash and falling death presentation.
+- Fixed poison and other attacker-less damage snapping some Echo Warriors' heads toward an invented low rear target, most visibly on the Chinese Guandao Warrior.
+- Fixed NeoForge battlefield chunk loads being indexed before the chunk reached its usable full state, stale compass tracking surviving integrated-server changes, and one-shot compass status text depending solely on the custom HUD layer.
+
+### Changed
+
+- Rebalanced every culture's five Echo accessories to exactly two common, two uncommon, and one rare item, and synchronized archaeology weights, recycling tiers, the tutorial manual, and the interactive encyclopedia.
 
 ## 0.1.0 - 2026-09-01
 

@@ -163,7 +163,9 @@ final class GuandaoVisualBehavior<T extends PathfinderMob & GuandaoVisualBehavio
 		this.entity.setVisualBlink(now, (byte)1);
 		Vec3 point = attacker != null
 				? attacker.getEyePosition()
-				: this.entity.position().add(this.entity.getLookAngle().reverse());
+				// Environmental damage such as poison has no attacker. Keep the current
+				// gaze level and forward instead of snapping toward a fake low rear point.
+				: this.entity.getEyePosition().add(this.entity.getLookAngle().scale(4.0));
 		applyAttention(new AttentionCandidate(attacker, point, 1100,
 				Host.VISUAL_HURT, 16, false, AttentionKind.DAMAGE_SOURCE), now);
 	}

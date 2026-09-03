@@ -80,7 +80,10 @@ final class EchoWarriorNeoForgeClient {
 		event.register(EchoCompassStatePayload.TYPE, (payload, context) -> EchoCompassClientState.accept(payload));
 		event.register(EchoCompassPulsePayload.TYPE, (payload, context) ->
 				EchoCompassPulseHud.pulse(payload.closeness(), payload.directional()));
-		event.register(EchoCompassMessagePayload.TYPE, (payload, context) -> EchoCompassPulseHud.showMessage(payload));
+		// Use Minecraft's action bar on NeoForge so one-shot compass status messages
+		// remain visible even if a custom HUD layer is suppressed by another mod.
+		event.register(EchoCompassMessagePayload.TYPE, (payload, context) ->
+				Minecraft.getInstance().gui.setOverlayMessage(payload.component(), false));
 	}
 
 	private static void onRenderers(EntityRenderersEvent.RegisterRenderers event) {

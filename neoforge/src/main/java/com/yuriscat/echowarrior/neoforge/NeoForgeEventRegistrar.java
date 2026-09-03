@@ -15,6 +15,7 @@ import com.yuriscat.echowarrior.world.BattlefieldSystem;
 import com.yuriscat.echowarrior.world.EchoCompassSystem;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BucketItem;
 import net.neoforged.bus.api.EventPriority;
@@ -32,7 +33,12 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 final class NeoForgeEventRegistrar {
+	private static final Queue<PendingChunkLoad> PENDING_CHUNK_LOADS = new ConcurrentLinkedQueue<>();
+
 	private NeoForgeEventRegistrar() {
 	}
 
@@ -55,6 +61,7 @@ final class NeoForgeEventRegistrar {
 
 	private static void onServerTick(ServerTickEvent.Post event) {
 		var server = event.getServer();
+		drainPendingChunkLoads();
 		CreativeSummonerDestroyTracker.tick(server);
 		EchoBindingSystem.tick(server);
 		EchoAuraAuditSystem.tick(server);
@@ -75,6 +82,8 @@ final class NeoForgeEventRegistrar {
 		EchoBindingSystem.onServerStopped();
 		EchoAuraAuditSystem.clear();
 		BattlefieldSystem.clear();
+		EchoCompassSystem.clear();
+		PENDING_CHUNK_LOADS.clear();
 	}
 
 	private static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -119,7 +128,24 @@ final class NeoForgeEventRegistrar {
 
 	private static void onChunkLoad(ChunkEvent.Load event) {
 		if (!(event.getChunk().getLevel() instanceof ServerLevel level)) return;
-		level.getServer().execute(() -> BattlefieldSystem.noteChunk(level, event.getChunk(), event.isNewChunk()));
+		// NeoForge fires this event before the server chunk reaches FULL. Queue only
+		// immutable load facts here and resolve the live chunk after the server tick.
+		PENDING_CHUNK_LOADS.add(new PendingChunkLoad(level, event.getChunk().getPos(), event.isNewChunk(), 20));
+	}
+
+	private static void drainPendingChunkLoads() {
+		int queued = PENDING_CHUNK_LOADS.size();
+		for (int index = 0; index < queued; index++) {
+			PendingChunkLoad pending = PENDING_CHUNK_LOADS.poll();
+			if (pending == null) return;
+			ChunkPos pos = pending.pos();
+			var chunk = pending.level().getChunkSource().getChunkNow(pos.x(), pos.z());
+			if (chunk != null) {
+				BattlefieldSystem.noteChunk(pending.level(), chunk, pending.newlyGenerated());
+			} else if (pending.retriesRemaining() > 0) {
+				PENDING_CHUNK_LOADS.add(pending.retry());
+			}
+		}
 	}
 
 	private static void onChunkUnload(ChunkEvent.Unload event) {
@@ -152,5 +178,16 @@ final class NeoForgeEventRegistrar {
 
 	private static void onRegisterCommands(RegisterCommandsEvent event) {
 		VisualDebugCommands.register(event.getDispatcher());
+	}
+
+	private record PendingChunkLoad(
+			ServerLevel level,
+			ChunkPos pos,
+			boolean newlyGenerated,
+			int retriesRemaining
+	) {
+		private PendingChunkLoad retry() {
+			return new PendingChunkLoad(this.level, this.pos, this.newlyGenerated, this.retriesRemaining - 1);
+		}
 	}
 }

@@ -2,9 +2,9 @@
   "replace": false,
   "values": [
     "echo_warrior:tomato_fish_accessory",
-    "echo_warrior:moondew_bottle_accessory",
     "echo_warrior:hollow_bird_bone_accessory",
-    "echo_warrior:blood_pact_fang_accessory",
-    "echo_warrior:memory_ritual_knife_accessory"
+    "echo_warrior:moondew_bottle_accessory",
+    "echo_warrior:memory_ritual_knife_accessory",
+    "echo_warrior:blood_pact_fang_accessory"
   ]
 }

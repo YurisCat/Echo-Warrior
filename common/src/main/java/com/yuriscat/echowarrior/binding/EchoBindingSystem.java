@@ -168,11 +168,14 @@ public final class EchoBindingSystem {
 	}
 
 	public static boolean validateAndSnapshot(EchoWarriorEntity echo, ServerLevel level) {
+		LivingEntity entity = echo.livingEntity();
+		// Death terminates the binding immediately, but the entity must remain valid
+		// long enough for vanilla to render its red flash and falling death pose.
+		if (entity.isDeadOrDying()) return true;
 		UUID summonerId = echo.getSummonerUuid();
 		if (summonerId == null) return false;
 		EchoBindingSavedData data = EchoBindingSavedData.get(level.getServer());
 		EchoBindingSavedData.Binding binding = data.get(summonerId);
-		LivingEntity entity = echo.livingEntity();
 		if (binding == null || !binding.active() || binding.entityId() == null
 				|| !binding.entityId().equals(entity.getUUID())
 				|| binding.generation() != echo.getBindingGeneration()) return false;

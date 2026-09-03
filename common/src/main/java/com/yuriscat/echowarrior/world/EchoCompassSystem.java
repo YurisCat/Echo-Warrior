@@ -50,6 +50,11 @@ public final class EchoCompassSystem {
 	public static void initialize() {
 	}
 
+	public static void clear() {
+		TRACKING.clear();
+		LAST_RENDER_STATES.clear();
+	}
+
 	public static void playToggle(ServerPlayer player, boolean enabled) {
 		player.connection.send(new ClientboundSoundPacket(HUM, SoundSource.PLAYERS,
 				player.getX(), player.getY() + 1.0, player.getZ(), 0.7F, enabled ? 1.28F : 0.68F,

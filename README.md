@@ -2,7 +2,7 @@
 
 Echo Warrior is a Minecraft 26.1.2 mod about recovering relics from ancient battlefields and summoning warrior echoes from the past. It ships as two separate packages: one for Fabric and one for NeoForge.
 
-Version 0.1.0 includes the Echo Compass and renewable battlefield archaeology loop, a portable fuelled summoner, five playable Echo Warriors, relic growth and talents, 25 accessories, 40 collectible knowledge pages, the Echo Recycler, an in-game tutorial manual, and a web-first interactive encyclopedia. The stable technical mod ID is `echo_warrior`.
+Version 0.1.1 includes the Echo Compass and renewable battlefield archaeology loop, a portable fuelled summoner, five playable Echo Warriors, relic growth and talents, 25 accessories, 40 collectible knowledge pages, the Echo Recycler, an in-game tutorial manual, and a web-first interactive encyclopedia. The stable technical mod ID is `echo_warrior`.
 
 ## Requirements
 
@@ -31,13 +31,13 @@ See [`LICENSE`](LICENSE), [`LICENSE-CODE`](LICENSE-CODE), [`LICENSE-ASSETS.md`](
 - Double-click `tools\windows\Launch Test Client.bat` to compile Fabric and quick-play into the existing `CATTEST` world.
 - Use `scripts\run-neoforge-test-client.ps1` or double-click `tools\windows\Launch NeoForge Test Client.bat` only when an explicit NeoForge check is needed. Its separate world is `CATTEST_NEOFORGE`.
 - Build both packages with `gradlew.bat dualBuild`.
-- Prepare the two JARs, checksums, manifest, and shared checklist with `scripts\build-dual-candidate.ps1` or `tools\windows\Build Dual Package.bat`.
+- Prepare the two JARs, shared checklist, and generated handoff document with `scripts\build-dual-candidate.ps1` or `tools\windows\Build Dual Package.bat`.
 - The interactive encyclopedia lives in `encyclopedia/`; run it with `tools\windows\Start Local Encyclopedia.bat`.
 - Runtime worlds under `run/` and `run-neoforge/`, plus `temporary-delivery/`, are intentionally not tracked by Git.
 
 ## Tester handoff
 
-Testers receive both loader-specific JARs, their SHA-256 checksums, `release-manifest.json`, and the latest HTML test checklist. They do not receive a source checkout, JDK, Gradle caches, test worlds, or development launchers.
+Testers receive exactly four files: both loader-specific JARs, the latest HTML test checklist, and a generated handoff document containing versions, dependencies, commit information, SHA-256 values, test priorities, and return requirements. They do not receive a source checkout, JDK, Gradle caches, test worlds, or development launchers.
 
 ## Model artist workflow
 

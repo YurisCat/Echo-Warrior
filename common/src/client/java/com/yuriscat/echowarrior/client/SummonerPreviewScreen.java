@@ -279,18 +279,20 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 					decimal(this.menu.spiritHealth()) + "/" + decimal(this.menu.spiritMaximumHealth()),
 					rx(Element.BASIC_INFO, 72),
 					ry(Element.BASIC_INFO, 21),
-					PRIMARY_TEXT_COLOR,
+					attributeColor(this.menu.accessoryMaximumHealthChange()),
 					true
 			);
 			graphics.text(this.font, Integer.toString(this.menu.relicLevel()), rx(Element.BASIC_INFO, 145), ry(Element.BASIC_INFO, 21), PRIMARY_TEXT_COLOR, true);
-			graphics.text(this.font, decimal(this.menu.spiritAttackDamage()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 34), PRIMARY_TEXT_COLOR, true);
+			graphics.text(this.font, decimal(this.menu.spiritAttackDamage()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 34),
+					attributeColor(this.menu.accessoryAttackDamageChange()), true);
 			graphics.text(this.font, this.menu.spiritAttackSpeed() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 34), PRIMARY_TEXT_COLOR, true);
 			graphics.text(this.font, decimal(this.menu.spiritArmor()), rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 47),
-					this.menu.moduleImprovesArmor() ? POSITIVE_TEXT_COLOR : PRIMARY_TEXT_COLOR, true);
+					attributeColor(this.menu.accessoryArmorChange()), true);
 			graphics.text(this.font, this.menu.spiritMovement() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 47),
-					this.menu.moduleReducesMovement() ? NEGATIVE_TEXT_COLOR : PRIMARY_TEXT_COLOR, true);
-			graphics.text(this.font, this.menu.heroType() == EchoHeroType.EGYPTIAN_ARCHER.ordinal() ? "24" : "16",
-					rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);
+					attributeColor(this.menu.accessoryMovementChange()), true);
+			graphics.text(this.font, Integer.toString(this.menu.spiritAlertRange()),
+					rx(Element.BASIC_INFO, 72), ry(Element.BASIC_INFO, 60),
+					attributeColor(this.menu.accessoryAlertRangeChange()), true);
 			graphics.text(this.font, this.menu.summonCostPercent() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);
 		}
 
@@ -700,8 +702,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				Component.translatable("gui.echo_warrior.summoner.attribute.attack_speed", this.menu.spiritAttackSpeed() + "%"),
 				Component.translatable("gui.echo_warrior.summoner.attribute.armor", decimal(this.menu.spiritArmor())),
 				Component.translatable("gui.echo_warrior.summoner.attribute.movement", this.menu.spiritMovement() + "%"),
-				Component.translatable("gui.echo_warrior.summoner.attribute.alert_range",
-						this.menu.heroType() == EchoHeroType.EGYPTIAN_ARCHER.ordinal() ? 24 : 16),
+				Component.translatable("gui.echo_warrior.summoner.attribute.alert_range", this.menu.spiritAlertRange()),
 				Component.translatable("gui.echo_warrior.summoner.attribute.fuel_cost", this.menu.summonCostPercent() + "%")
 		};
 		for (int index = 0; index < boxes.length; index++) {
@@ -863,6 +864,12 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		return tenths % 10 == 0
 				? Integer.toString(tenths / 10)
 				: String.format(java.util.Locale.ROOT, "%.1f", tenths / 10.0);
+	}
+
+	private static int attributeColor(double accessoryChange) {
+		if (accessoryChange > 1.0E-6) return POSITIVE_TEXT_COLOR;
+		if (accessoryChange < -1.0E-6) return NEGATIVE_TEXT_COLOR;
+		return PRIMARY_TEXT_COLOR;
 	}
 
 	private void showTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY,

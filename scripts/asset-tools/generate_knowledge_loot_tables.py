@@ -2,7 +2,7 @@
 """Generate culture-bound battlefield loot tables and item metadata tags.
 
 The default output stays under ``human-work`` for review. Pass the tracked
-``src/main/resources/data/echo_warrior`` directory explicitly only after the
+``common/src/main/resources/data/echo_warrior`` directory explicitly only after the
 generated files have been inspected.
 """
 
@@ -14,13 +14,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PROJECT_DATA = ROOT / "src/main/resources/data/echo_warrior"
+PROJECT_DATA = ROOT / "common/src/main/resources/data/echo_warrior"
 DEFAULT_OUTPUT = ROOT / "human-work/generated/knowledge-loot-tables/data/echo_warrior"
-
-# Archaeology drop tiers and item-name rarity are separate concepts. The
-# Peacemaker keeps the Chinese rare-tier drop weight but uses Rarity.EPIC in
-# game, so it must not be regenerated into the rare item tag.
-RARITY_TAG_EXCLUSIONS = {"peacemaker_accessory"}
 
 CULTURES = {
     "roman": {
@@ -34,33 +29,33 @@ CULTURES = {
     "aztec": {
         "relic": "echo_warrior:aztec_warrior_relic",
         "accessories": {
-            "common": [],
-            "uncommon": ["spiked_armor_accessory", "fractured_crystal_blade_accessory", "sunwheel_garland_accessory", "training_notes_accessory"],
+            "common": ["fractured_crystal_blade_accessory", "training_notes_accessory"],
+            "uncommon": ["spiked_armor_accessory", "sunwheel_garland_accessory"],
             "rare": ["crack_ring_hammer_charm_accessory"],
         },
     },
     "egyptian": {
         "relic": "echo_warrior:egyptian_archer_relic",
         "accessories": {
-            "common": ["tomato_fish_accessory"],
-            "uncommon": ["moondew_bottle_accessory", "hollow_bird_bone_accessory"],
-            "rare": ["blood_pact_fang_accessory", "memory_ritual_knife_accessory"],
+            "common": ["tomato_fish_accessory", "hollow_bird_bone_accessory"],
+            "uncommon": ["moondew_bottle_accessory", "memory_ritual_knife_accessory"],
+            "rare": ["blood_pact_fang_accessory"],
         },
     },
     "chinese": {
         "relic": "echo_warrior:guandao_warrior_relic",
         "accessories": {
-            "common": ["battle_worn_whetstone_accessory", "twin_oath_badge_accessory", "heart_sprout_amber_accessory"],
-            "uncommon": [],
-            "rare": ["peacemaker_accessory", "cat_bell_fish_charm_accessory"],
+            "common": ["battle_worn_whetstone_accessory", "heart_sprout_amber_accessory"],
+            "uncommon": ["twin_oath_badge_accessory", "peacemaker_accessory"],
+            "rare": ["cat_bell_fish_charm_accessory"],
         },
     },
     "japanese": {
         "relic": "echo_warrior:japanese_samurai_relic",
         "accessories": {
-            "common": ["substitute_doll_accessory", "windchaser_feather_accessory"],
-            "uncommon": ["chainmail_armor_accessory", "mountain_burden_blade_accessory", "battle_blindfold_accessory"],
-            "rare": [],
+            "common": ["windchaser_feather_accessory", "battle_blindfold_accessory"],
+            "uncommon": ["chainmail_armor_accessory", "mountain_burden_blade_accessory"],
+            "rare": ["substitute_doll_accessory"],
         },
     },
 }
@@ -216,11 +211,7 @@ def main() -> None:
         for rarity, items in config["accessories"].items():
             tagged = [f"echo_warrior:{item}" for item in items]
             culture_values.extend(tagged)
-            all_by_rarity[rarity].extend(
-                tagged_item
-                for item, tagged_item in zip(items, tagged, strict=True)
-                if item not in RARITY_TAG_EXCLUSIONS
-            )
+            all_by_rarity[rarity].extend(tagged)
         write_json(
             output_data / f"tags/item/accessories/culture/{culture}.json",
             {"replace": False, "values": culture_values},

@@ -673,8 +673,16 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	public int spiritAttackSpeed() { return this.spiritAttackSpeed.get(); }
 	public int spiritArmor() { return this.spiritArmor.get(); }
 	public int spiritMovement() { return this.spiritMovement.get(); }
-	public boolean moduleImprovesArmor() { return EchoAccessorySystem.armorBonus(this.summonerContainer) > 0.0; }
-	public boolean moduleReducesMovement() { return EchoAccessorySystem.movementMultiplier(this.summonerContainer) < 1.0; }
+	public int spiritAlertRange() {
+		int base = baseAlertRange();
+		return (int)Math.round(EchoAccessorySystem.proactiveRange(this.summonerContainer, base, false));
+	}
+	public double accessoryMaximumHealthChange() { return EchoAccessorySystem.maximumHealthBonus(this.summonerContainer); }
+	public double accessoryAttackDamageChange() { return EchoAccessorySystem.attackBonus(this.summonerContainer); }
+	public double accessoryArmorChange() { return EchoAccessorySystem.armorBonus(this.summonerContainer); }
+	public double accessoryMovementChange() { return EchoAccessorySystem.movementMultiplier(this.summonerContainer) - 1.0; }
+	public double accessoryAlertRangeChange() { return spiritAlertRange() - baseAlertRange(); }
+	private int baseAlertRange() { return this.heroType.get() == EchoHeroType.EGYPTIAN_ARCHER.ordinal() ? 24 : 16; }
 	public int summonCostPercent() { return this.summonCostPercent.get(); }
 	public int fuelAmount() { return this.fuelAmount.get(); }
 	public int traitMask() {

@@ -171,28 +171,28 @@
         },
         {
           "type": "minecraft:item",
-          "name": "echo_warrior:spiked_armor_accessory",
-          "weight": 945
-        },
-        {
-          "type": "minecraft:item",
           "name": "echo_warrior:fractured_crystal_blade_accessory",
-          "weight": 945
-        },
-        {
-          "type": "minecraft:item",
-          "name": "echo_warrior:sunwheel_garland_accessory",
-          "weight": 945
+          "weight": 1512
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:training_notes_accessory",
-          "weight": 945
+          "weight": 1512
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:spiked_armor_accessory",
+          "weight": 756
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:sunwheel_garland_accessory",
+          "weight": 756
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:crack_ring_hammer_charm_accessory",
-          "weight": 1260
+          "weight": 504
         }
       ]
     }

@@ -171,28 +171,28 @@
         },
         {
           "type": "minecraft:item",
-          "name": "echo_warrior:substitute_doll_accessory",
-          "weight": 1680
-        },
-        {
-          "type": "minecraft:item",
           "name": "echo_warrior:windchaser_feather_accessory",
-          "weight": 1680
-        },
-        {
-          "type": "minecraft:item",
-          "name": "echo_warrior:chainmail_armor_accessory",
-          "weight": 560
-        },
-        {
-          "type": "minecraft:item",
-          "name": "echo_warrior:mountain_burden_blade_accessory",
-          "weight": 560
+          "weight": 1512
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:battle_blindfold_accessory",
-          "weight": 560
+          "weight": 1512
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:chainmail_armor_accessory",
+          "weight": 756
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:mountain_burden_blade_accessory",
+          "weight": 756
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:substitute_doll_accessory",
+          "weight": 504
         }
       ]
     }

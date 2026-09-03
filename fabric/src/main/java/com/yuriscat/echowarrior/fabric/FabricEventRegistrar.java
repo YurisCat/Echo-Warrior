@@ -50,6 +50,7 @@ final class FabricEventRegistrar {
 			EchoBindingSystem.onServerStopped();
 			EchoAuraAuditSystem.clear();
 			BattlefieldSystem.clear();
+			EchoCompassSystem.clear();
 		});
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			EchoBindingSystem.onPlayerJoin(handler.getPlayer());

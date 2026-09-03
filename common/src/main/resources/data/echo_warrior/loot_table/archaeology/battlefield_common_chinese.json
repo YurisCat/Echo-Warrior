@@ -172,27 +172,27 @@
         {
           "type": "minecraft:item",
           "name": "echo_warrior:battle_worn_whetstone_accessory",
-          "weight": 1440
-        },
-        {
-          "type": "minecraft:item",
-          "name": "echo_warrior:twin_oath_badge_accessory",
-          "weight": 1440
+          "weight": 1512
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:heart_sprout_amber_accessory",
-          "weight": 1440
+          "weight": 1512
+        },
+        {
+          "type": "minecraft:item",
+          "name": "echo_warrior:twin_oath_badge_accessory",
+          "weight": 756
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:peacemaker_accessory",
-          "weight": 360
+          "weight": 756
         },
         {
           "type": "minecraft:item",
           "name": "echo_warrior:cat_bell_fish_charm_accessory",
-          "weight": 360
+          "weight": 504
         }
       ]
     }

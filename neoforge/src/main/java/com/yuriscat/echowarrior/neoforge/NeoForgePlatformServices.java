@@ -19,6 +19,7 @@ final class NeoForgePlatformServices implements PlatformServices.ServerBridge {
 
 	@Override
 	public boolean sendToPlayer(ServerPlayer player, CustomPacketPayload payload) {
+		if (!player.connection.hasChannel(payload.type())) return false;
 		PacketDistributor.sendToPlayer(player, payload);
 		return true;
 	}

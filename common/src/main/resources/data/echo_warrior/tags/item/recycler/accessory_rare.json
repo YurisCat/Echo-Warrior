@@ -1,7 +1,6 @@
 {
   "replace": false,
   "values": [
-    "#echo_warrior:accessories/rarity/rare",
-    "#echo_warrior:accessories/rarity/epic"
+    "#echo_warrior:accessories/rarity/rare"
   ]
 }

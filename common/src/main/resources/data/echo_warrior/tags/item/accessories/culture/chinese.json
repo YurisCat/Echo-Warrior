@@ -2,8 +2,8 @@
   "replace": false,
   "values": [
     "echo_warrior:battle_worn_whetstone_accessory",
-    "echo_warrior:twin_oath_badge_accessory",
     "echo_warrior:heart_sprout_amber_accessory",
+    "echo_warrior:twin_oath_badge_accessory",
     "echo_warrior:peacemaker_accessory",
     "echo_warrior:cat_bell_fish_charm_accessory"
   ]
