@@ -6,6 +6,7 @@ import com.yuriscat.echowarrior.ModBlocks;
 import com.yuriscat.echowarrior.ModEntities;
 import com.yuriscat.echowarrior.ModMenus;
 import com.yuriscat.echowarrior.client.AztecWarriorEchoRenderer;
+import com.yuriscat.echowarrior.client.AutomatedTestPauseController;
 import com.yuriscat.echowarrior.client.EchoCompassAngleProperty;
 import com.yuriscat.echowarrior.client.EchoCompassClientState;
 import com.yuriscat.echowarrior.client.EchoCompassGoldFrameProperty;
@@ -33,6 +34,7 @@ import net.minecraft.client.color.block.BlockTintSources;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterConditionalItemModelPropertyEvent;
@@ -70,6 +72,7 @@ final class EchoWarriorNeoForgeClient {
 		modBus.addListener(EchoWarriorNeoForgeClient::onRenderPipelines);
 		gameBus.addListener(EchoWarriorNeoForgeClient::onLogin);
 		gameBus.addListener(EchoWarriorNeoForgeClient::onLogout);
+		gameBus.addListener(EchoWarriorNeoForgeClient::onClientTick);
 	}
 
 	private static void onClientSetup(FMLClientSetupEvent event) {
@@ -145,5 +148,9 @@ final class EchoWarriorNeoForgeClient {
 
 	private static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
 		EchoWarriorClient.clearConnectionState();
+	}
+
+	private static void onClientTick(ClientTickEvent.Post event) {
+		AutomatedTestPauseController.tick(Minecraft.getInstance());
 	}
 }

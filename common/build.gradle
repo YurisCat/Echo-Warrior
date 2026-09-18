@@ -13,6 +13,8 @@ sourceSets {
 
 neoForge {
 	neoFormVersion = neo_form_version
+	interfaceInjectionData.from(rootProject.file('neoforge/src/main/interface-injections/geckolib.json'))
+	validateAccessTransformers = true
 }
 
 dependencies {

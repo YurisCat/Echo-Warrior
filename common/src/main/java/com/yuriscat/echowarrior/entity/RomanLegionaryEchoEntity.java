@@ -416,7 +416,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			LivingEntity target = resolveLiving(level, this.lockedMeleeTargetUuid);
 			if (target != null && canPerformMeleeHit(target, FIRST_STRIKE_RANGE)) {
 				dealRomanMeleeDamage(level, target,
-						level.damageSources().source(ModDamageTypes.ROMAN_FIRST_STRIKE, this), 1.0F);
+						ModDamageTypes.source(level, ModDamageTypes.ROMAN_FIRST_STRIKE, this), 1.0F);
 			}
 		}
 		if (now < this.meleeActionEndsAt) {
@@ -451,7 +451,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			LivingEntity target = resolveLiving(level, this.lockedMeleeTargetUuid);
 			if (target != null && canPerformMeleeHit(target, FOLLOW_STRIKE_RANGE)) {
 				dealRomanMeleeDamage(level, target,
-						level.damageSources().source(ModDamageTypes.ROMAN_FOLLOWUP, this),
+						ModDamageTypes.source(level, ModDamageTypes.ROMAN_FOLLOWUP, this),
 						FOLLOW_DAMAGE_MULTIPLIER);
 			}
 		}

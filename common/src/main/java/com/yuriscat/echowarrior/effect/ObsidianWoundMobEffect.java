@@ -21,7 +21,7 @@ public final class ObsidianWoundMobEffect extends MobEffect {
 
 	@Override
 	public boolean applyEffectTick(ServerLevel level, LivingEntity entity, int amplifier) {
-		boolean damaged = entity.hurtServer(level, level.damageSources().source(ModDamageTypes.OBSIDIAN_WOUND), 1.0F);
+		boolean damaged = entity.hurtServer(level, ModDamageTypes.source(level, ModDamageTypes.OBSIDIAN_WOUND), 1.0F);
 		level.sendParticles(
 				new BlockParticleOption(ParticleTypes.BLOCK, Blocks.REDSTONE_BLOCK.defaultBlockState()),
 				entity.getX(), entity.getY() + entity.getBbHeight() * 0.65, entity.getZ(),

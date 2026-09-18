@@ -1,0 +1,397 @@
+{
+  "schema_version": 1,
+  "save_compatibility_note": "Before the first public release entries may be rewritten. After that boundary, preserve ids or add migrations.",
+  "entries": [
+    {
+      "id": "roman_tortoise_limits", "culture": "roman", "order": 1,
+      "title_key": "knowledge.echo_warrior.entry.roman_tortoise_limits.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_tortoise_limits.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:shield"}],
+      "evidence_type": "primary_text_and_relief",
+      "source_notes": "The exact circumstances varied; the page avoids treating testudo as a permanent or invulnerable stance.",
+      "sources": [{"kind": "book", "citation": "Vegetius, Epitome of Military Science, trans. N. P. Milner, 2nd ed., 1996"}, {"kind": "monument", "citation": "Trajan's Column, testudo scenes"}]
+    },
+    {
+      "id": "roman_pilum_not_magic", "culture": "roman", "order": 2,
+      "title_key": "knowledge.echo_warrior.entry.roman_pilum_not_magic.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_pilum_not_magic.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:trident"}, {"type": "item", "resource": "minecraft:shield"}],
+      "evidence_type": "primary_text_and_weapons_archaeology",
+      "source_notes": "The popular claim that every pilum was engineered to bend on impact is stronger than the evidence.",
+      "sources": [{"kind": "book", "citation": "Polybius, Histories 6.23"}, {"kind": "book", "citation": "M. C. Bishop and J. C. N. Coulston, Roman Military Equipment, 2nd ed., 2006"}]
+    },
+    {
+      "id": "roman_vindolanda_socks", "culture": "roman", "order": 3,
+      "title_key": "knowledge.echo_warrior.entry.roman_vindolanda_socks.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_vindolanda_socks.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:plate_armor_accessory"}],
+      "evidence_type": "surviving_armour_and_hoard_reconstruction",
+      "source_notes": "The accessory is a stylized charm. The historical link is the hinged, strapped construction of lorica segmentata, not a documented Roman armour pendant.",
+      "sources": [{"kind": "museum", "title": "Plate armour (lorica segmentata)", "url": "https://www.londonmuseum.org.uk/collections/v/object-9398/plate-armour-lorica-segmentata/"}, {"kind": "heritage", "title": "The Corbridge Collection", "url": "https://www.english-heritage.org.uk/visit/places/corbridge-roman-town-hadrians-wall/history-and-stories/collection/"}]
+    },
+    {
+      "id": "roman_military_diploma", "culture": "roman", "order": 4,
+      "title_key": "knowledge.echo_warrior.entry.roman_military_diploma.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_military_diploma.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:copper_ingot"}, {"type": "item", "resource": "minecraft:name_tag"}],
+      "evidence_type": "inscribed_bronze_documents",
+      "source_notes": "Diplomas mainly concern qualifying auxiliary and fleet veterans; legionaries were normally citizens already.",
+      "sources": [{"kind": "book", "citation": "Margaret M. Roxan, Roman Military Diplomas 1954–1977, 1978"}, {"kind": "book", "citation": "Werner Eck and Andreas Pangerl, Neue Diplome für die Auxiliartruppen in den mösischen Provinzen, Chiron 38, 2008"}]
+    },
+    {
+      "id": "roman_hobnail_tracks", "culture": "roman", "order": 5,
+      "title_key": "knowledge.echo_warrior.entry.roman_hobnail_tracks.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_hobnail_tracks.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:light_gathering_magnet_accessory"}],
+      "evidence_type": "surviving_engraved_gems_and_seal_use",
+      "source_notes": "Roman engraved gems could function as seals. The accessory's attraction effect is fictional, while its eagle-gem imagery is historically grounded.",
+      "sources": [{"kind": "museum", "title": "Engraved Gems", "url": "https://www.getty.edu/art/exhibitions/gems/index.html"}, {"kind": "museum", "title": "Roman engraved gem with eagle, wreath and palm branch", "url": "https://www.britishmuseum.org/collection/object/G_1842-0728-142"}]
+    },
+    {
+      "id": "roman_monte_testaccio", "culture": "roman", "order": 6,
+      "title_key": "knowledge.echo_warrior.entry.roman_monte_testaccio.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_monte_testaccio.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:victors_laurel_accessory"}],
+      "evidence_type": "coinage_and_surviving_visual_culture",
+      "source_notes": "Laurel imagery repeatedly signalled victory and imperial authority. The accessory's combat bonuses are fictional.",
+      "sources": [{"kind": "museum", "title": "Coin of Domitian with laureate portrait", "url": "https://www.britishmuseum.org/collection/object/C_R-11097"}, {"kind": "museum", "title": "Roman token with Victory holding a wreath", "url": "https://www.britishmuseum.org/collection/object/C_B-8458"}]
+    },
+    {
+      "id": "roman_many_camp_gods", "culture": "roman", "order": 7,
+      "title_key": "knowledge.echo_warrior.entry.roman_many_camp_gods.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_many_camp_gods.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:golden_helmet"}, {"type": "item", "resource": "minecraft:candle"}],
+      "evidence_type": "inscriptions_and_archaeology",
+      "source_notes": "Mithras was important in some military communities but was never the single religion of the Roman army.",
+      "sources": [{"kind": "database", "title": "Roman Inscriptions of Britain", "url": "https://romaninscriptionsofbritain.org/"}, {"kind": "book", "citation": "Mary Beard, John North and Simon Price, Religions of Rome, 1998"}]
+    },
+    {
+      "id": "roman_games_in_forts", "culture": "roman", "order": 8,
+      "title_key": "knowledge.echo_warrior.entry.roman_games_in_forts.title",
+      "body_key": "knowledge.echo_warrior.entry.roman_games_in_forts.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:feast_ham_accessory"}],
+      "evidence_type": "surviving_fibulae_and_museum_analysis",
+      "source_notes": "Roman fibulae fastened garments; some Late Roman gold crossbow fibulae also signalled high military or administrative status. The accessory's ham motif and gameplay effects are project designs.",
+      "sources": [{"kind": "museum", "title": "Brooch (fibula)", "url": "https://www.londonmuseum.org.uk/collections/v/object-1242/brooch-fibula/"}, {"kind": "museum", "title": "Gold crossbow fibula", "url": "https://www.metmuseum.org/art/collection/search/245923"}]
+    },
+
+    {
+      "id": "aztec_mexica_name", "culture": "aztec", "order": 1,
+      "title_key": "knowledge.echo_warrior.entry.aztec_mexica_name.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_mexica_name.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:name_tag"}, {"type": "item", "resource": "minecraft:map"}],
+      "evidence_type": "historical_terminology",
+      "source_notes": "Aztec is useful as a modern umbrella term, while Mexica and Tenochca are more specific in many contexts.",
+      "sources": [{"kind": "book", "citation": "Frances F. Berdan, Aztec Archaeology and Ethnohistory, 2014"}, {"kind": "book", "citation": "Michael E. Smith, The Aztecs, 3rd ed., 2012"}]
+    },
+    {
+      "id": "aztec_macuahuitl_edges", "culture": "aztec", "order": 2,
+      "title_key": "knowledge.echo_warrior.entry.aztec_macuahuitl_edges.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_macuahuitl_edges.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:wooden_sword"}, {"type": "item", "resource": "minecraft:obsidian"}],
+      "evidence_type": "historical_accounts_codices_and_lithic_archaeology",
+      "source_notes": "No securely proven pre-contact complete macuahuitl survives; reconstruction combines several evidence types.",
+      "sources": [{"kind": "book", "citation": "Ross Hassig, Aztec Warfare: Imperial Expansion and Political Control, 1988"}, {"kind": "book", "citation": "Frances F. Berdan and Patricia Rieff Anawalt, The Essential Codex Mendoza, 1997"}]
+    },
+    {
+      "id": "aztec_chinampa_not_floating", "culture": "aztec", "order": 3,
+      "title_key": "knowledge.echo_warrior.entry.aztec_chinampa_not_floating.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_chinampa_not_floating.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:training_notes_accessory"}],
+      "evidence_type": "surviving_gold_body_ornament",
+      "source_notes": "The surviving object is a gold eagle-head labret inserted through a piercing below the lower lip. The accessory's experience effect is fictional.",
+      "sources": [{"kind": "museum", "title": "Labret with Eagle Head", "url": "https://www.metmuseum.org/art/collection/search/310663"}]
+    },
+    {
+      "id": "aztec_cacao_money", "culture": "aztec", "order": 4,
+      "title_key": "knowledge.echo_warrior.entry.aztec_cacao_money.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_cacao_money.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:training_notes_accessory"}],
+      "evidence_type": "surviving_gold_body_ornament_and_museum_analysis",
+      "source_notes": "The museum associates lavish gold labrets with elite power and military regalia. The page does not claim that one ornament encoded a universal fixed rank.",
+      "sources": [{"kind": "museum", "title": "Labret with Eagle Head", "url": "https://www.metmuseum.org/art/collection/search/310663"}]
+    },
+    {
+      "id": "aztec_featherwork", "culture": "aztec", "order": 5,
+      "title_key": "knowledge.echo_warrior.entry.aztec_featherwork.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_featherwork.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:spiked_armor_accessory"}],
+      "evidence_type": "surviving_obsidian_body_ornament",
+      "source_notes": "The historical object is an obsidian ear ornament. The accessory's retaliatory thorns are fictional.",
+      "sources": [{"kind": "museum", "title": "Ear Ornament", "url": "https://www.metmuseum.org/art/collection/search/313281"}]
+    },
+    {
+      "id": "aztec_offerings_travelled", "culture": "aztec", "order": 6,
+      "title_key": "knowledge.echo_warrior.entry.aztec_offerings_travelled.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_offerings_travelled.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:fractured_crystal_blade_accessory"}],
+      "evidence_type": "surviving_polished_obsidian_mirror",
+      "source_notes": "The historical object is a polished, perforated obsidian mirror. The accessory's fractured-blade effect is fictional.",
+      "sources": [{"kind": "museum", "title": "Obsidian mirror from Mexico", "url": "https://www.britishmuseum.org/collection/object/E_Am1825-1210-16"}]
+    },
+    {
+      "id": "aztec_warrior_distinctions", "culture": "aztec", "order": 7,
+      "title_key": "knowledge.echo_warrior.entry.aztec_warrior_distinctions.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_warrior_distinctions.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:sunwheel_garland_accessory"}],
+      "evidence_type": "digitized_early_colonial_codex",
+      "source_notes": "The page follows the Tonatiuh image and commentary in UNAM's Tlachia project. It avoids the disputed claim that the central face of the Sun Stone is unquestionably Tonatiuh.",
+      "sources": [{"kind": "university", "title": "Tlachia: Codex Telleriano-Remensis, folio 12v", "url": "https://tlachia.iib.unam.mx/telleriano/385_12v"}]
+    },
+    {
+      "id": "aztec_huitzilopochtli_myth", "culture": "aztec", "order": 8,
+      "title_key": "knowledge.echo_warrior.entry.aztec_huitzilopochtli_myth.title",
+      "body_key": "knowledge.echo_warrior.entry.aztec_huitzilopochtli_myth.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:crack_ring_hammer_charm_accessory"}],
+      "evidence_type": "surviving_greenstone_pendant_and_museum_analysis",
+      "source_notes": "The historical object is a perforated greenstone rain-god pendant. The accessory's cracking ritual-stone mechanics are fictional.",
+      "sources": [{"kind": "museum", "title": "Pendant in the Form of the Rain God", "url": "https://www.metmuseum.org/art/collection/search/313228"}]
+    },
+
+    {
+      "id": "egypt_giza_workers", "culture": "egyptian", "order": 1,
+      "title_key": "knowledge.echo_warrior.entry.egypt_giza_workers.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_giza_workers.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:blood_pact_fang_accessory"}],
+      "evidence_type": "surviving_hippopotamus_ivory_wands_and_inscriptions",
+      "source_notes": "Middle Kingdom apotropaic wands preserve the curve of hippopotamus ivory and carry protective beings or inscriptions. The accessory's blood-pact ability is fictional.",
+      "sources": [{"kind": "museum", "title": "Magic Wand Depicting a Procession of Deities", "url": "https://www.metmuseum.org/art/collection/search/545740"}, {"kind": "museum", "title": "Magic Wand with Protective Deities", "url": "https://www.metmuseum.org/art/collection/search/556561"}]
+    },
+    {
+      "id": "egypt_chariot_archery", "culture": "egyptian", "order": 2,
+      "title_key": "knowledge.echo_warrior.entry.egypt_chariot_archery.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_chariot_archery.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "minecraft:bow"}],
+      "evidence_type": "surviving_chariots_reliefs_and_texts",
+      "source_notes": "Elite representations emphasize royal success and should not be read as neutral battle photography.",
+      "sources": [{"kind": "book", "citation": "Robert Partridge, Fighting Pharaohs: Weapons and Warfare in Ancient Egypt, 2002"}, {"kind": "book", "citation": "Kathy Hansen, Chariots in Ancient Egypt, 2017"}]
+    },
+    {
+      "id": "egypt_faience_not_glass", "culture": "egyptian", "order": 3,
+      "title_key": "knowledge.echo_warrior.entry.egypt_faience_not_glass.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_faience_not_glass.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:moondew_bottle_accessory"}],
+      "evidence_type": "surviving_khonsu_amulets_and_museum_catalogues",
+      "source_notes": "Khonsu figures and amulets are identified through the moon disk, sidelock and wrapped form. The bottle shape, moon-dew name and gameplay effects are project designs.",
+      "sources": [{"kind": "museum", "title": "Amulet of Khonsu", "url": "https://www.metmuseum.org/art/collection/search/561529"}, {"kind": "museum", "title": "Shrine of Khonsu", "url": "https://www.metmuseum.org/art/collection/search/551004"}, {"kind": "museum", "title": "Statuette of Khonsu", "url": "https://www.metmuseum.org/art/collection/search/570650"}]
+    },
+    {
+      "id": "egypt_ostraca_attendance", "culture": "egyptian", "order": 4,
+      "title_key": "knowledge.echo_warrior.entry.egypt_ostraca_attendance.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_ostraca_attendance.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:hollow_bird_bone_accessory"}],
+      "evidence_type": "animal_mummies_and_museum_research",
+      "source_notes": "Sacred ibis mummies survive in patterned linen packages, sometimes with an applied divine image. The accessory's exposed-bone form and gameplay effects are fictional.",
+      "sources": [{"kind": "museum", "title": "Mummy of an ibis, EA67149", "url": "https://www.britishmuseum.org/collection/object/Y_EA67149"}, {"kind": "museum_project", "title": "Divine creatures: animal mummies in ancient Egypt", "url": "https://www.britishmuseum.org/research/projects/divine-creatures-animal-mummies-ancient-egypt"}]
+    },
+    {
+      "id": "egypt_senet_rules_lost", "culture": "egyptian", "order": 5,
+      "title_key": "knowledge.echo_warrior.entry.egypt_senet_rules_lost.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_senet_rules_lost.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:tomato_fish_accessory"}],
+      "evidence_type": "surviving_fish_pendants_and_museum_analysis",
+      "source_notes": "Middle Kingdom fish ornaments could hang from braided hair, and tilapia imagery acquired associations with fertility and rebirth. The accessory's red body and gameplay effects are project designs.",
+      "sources": [{"kind": "museum", "title": "Fish pendant, EA30485", "url": "https://www.britishmuseum.org/collection/object/Y_EA30485"}, {"kind": "museum", "title": "Fish Pendant", "url": "https://www.metmuseum.org/art/collection/search/548409"}]
+    },
+    {
+      "id": "egypt_cats_and_bastet", "culture": "egyptian", "order": 6,
+      "title_key": "knowledge.echo_warrior.entry.egypt_cats_and_bastet.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_cats_and_bastet.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:cat_spawn_egg"}, {"type": "item", "resource": "minecraft:gold_nugget"}],
+      "evidence_type": "votive_archaeology_and_religious_iconography",
+      "source_notes": "The popular phrase Egyptians worshipped cats collapses distinctions among animals, divine manifestations, pets and votive offerings.",
+      "sources": [{"kind": "book", "citation": "Salima Ikram, Divine Creatures: Animal Mummies in Ancient Egypt, 2005"}, {"kind": "book", "citation": "Geraldine Pinch, Egyptian Mythology, 2002"}]
+    },
+    {
+      "id": "egypt_arrowhead_materials", "culture": "egyptian", "order": 7,
+      "title_key": "knowledge.echo_warrior.entry.egypt_arrowhead_materials.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_arrowhead_materials.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "minecraft:arrow"}],
+      "evidence_type": "weapons_archaeology",
+      "source_notes": "Material choice depended on period, purpose and supply; technological change was not a clean one-step replacement.",
+      "sources": [{"kind": "book", "citation": "W. V. Davies, Catalogue of Egyptian Antiquities in the British Museum VII: Tools and Weapons I, 1987"}, {"kind": "book", "citation": "Robert Partridge, Fighting Pharaohs, 2002"}]
+    },
+    {
+      "id": "egypt_book_of_dead_varied", "culture": "egyptian", "order": 8,
+      "title_key": "knowledge.echo_warrior.entry.egypt_book_of_dead_varied.title",
+      "body_key": "knowledge.echo_warrior.entry.egypt_book_of_dead_varied.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:memory_ritual_knife_accessory"}],
+      "evidence_type": "surviving_faience_amulets_and_museum_analysis",
+      "source_notes": "Jackal-headed human-form Anubis amulets survive from Late Period and Ptolemaic Egypt. The accessory's memory-inheritance effect is fictional.",
+      "sources": [{"kind": "museum", "title": "Amulet of Anubis", "url": "https://www.metmuseum.org/art/collection/search/552666"}, {"kind": "museum", "title": "Glazed composition amulet of Anubis", "url": "https://www.britishmuseum.org/collection/object/G_1894-1101-69"}, {"kind": "museum", "title": "Ancient Egyptian gods and goddesses", "url": "https://www.britishmuseum.org/learn/schools/ages-7-11/ancient-egypt/ancient-egyptian-gods-and-goddesses"}]
+    },
+
+    {
+      "id": "china_crossbow_trigger", "culture": "chinese", "order": 1,
+      "title_key": "knowledge.echo_warrior.entry.china_crossbow_trigger.title",
+      "body_key": "knowledge.echo_warrior.entry.china_crossbow_trigger.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:peacemaker_accessory"}],
+      "evidence_type": "excavated_composite_jade_ornament_and_museum_catalogue",
+      "source_notes": "The National Museum of China catalogues a Warring States composite pendant set containing a jade bi among agate, jade, turquoise and crystal elements. The accessory's peace aura is fictional.",
+      "sources": [{"kind": "museum", "title": "Warring States composite jade pendant set", "url": "https://www.chnmuseum.cn/zp/zpml/kgfjp/202104/t20210419_249884.shtml"}]
+    },
+    {
+      "id": "china_terracotta_colors", "culture": "chinese", "order": 2,
+      "title_key": "knowledge.echo_warrior.entry.china_terracotta_colors.title",
+      "body_key": "knowledge.echo_warrior.entry.china_terracotta_colors.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:terracotta"}, {"type": "item", "resource": "minecraft:red_dye"}, {"type": "item", "resource": "minecraft:blue_dye"}],
+      "evidence_type": "pigment_analysis_and_conservation",
+      "source_notes": "Exposure after excavation can cause lacquer and pigment layers to curl and detach rapidly.",
+      "sources": [{"kind": "museum", "title": "Colors & Conservation of the Terracotta Army", "url": "https://learninglab.si.edu/collections/colors-conservation-of-the-terracotta-army/ReUnhHPJ1T92B2kB"}, {"kind": "article", "citation": "He Shimin et al., An exploratory study on the traditional craftsmanship of polychrome Terracotta Warriors, 2014"}]
+    },
+    {
+      "id": "china_bamboo_slips", "culture": "chinese", "order": 3,
+      "title_key": "knowledge.echo_warrior.entry.china_bamboo_slips.title",
+      "body_key": "knowledge.echo_warrior.entry.china_bamboo_slips.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "minecraft:bamboo"}],
+      "evidence_type": "excavated_manuscripts",
+      "source_notes": "Wood, bamboo and silk all carried writing; paper did not replace them everywhere at once.",
+      "sources": [{"kind": "book", "citation": "Enno Giele, Imperial Decision-Making and Communication in Early China, 2006"}, {"kind": "book", "citation": "Edward L. Shaughnessy, Rewriting Early Chinese Texts, 2006"}]
+    },
+    {
+      "id": "china_great_wall_network", "culture": "chinese", "order": 4,
+      "title_key": "knowledge.echo_warrior.entry.china_great_wall_network.title",
+      "body_key": "knowledge.echo_warrior.entry.china_great_wall_network.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:peacemaker_accessory"}],
+      "evidence_type": "excavated_high_status_burials_and_museum_analysis",
+      "source_notes": "Some Liangzhu elite burials contained many bi discs, but counts and placement vary by burial. The accessory's combat pacification effect is fictional.",
+      "sources": [{"kind": "museum", "title": "Jade disc (bi)", "url": "https://www.metmuseum.org/art/collection/search/49371"}]
+    },
+    {
+      "id": "china_ji_combined_weapon", "culture": "chinese", "order": 5,
+      "title_key": "knowledge.echo_warrior.entry.china_ji_combined_weapon.title",
+      "body_key": "knowledge.echo_warrior.entry.china_ji_combined_weapon.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:heart_sprout_amber_accessory"}],
+      "evidence_type": "surviving_han_jade_and_museum_catalogue",
+      "source_notes": "Many Han jade cicadas without suspension holes were mouth jades rather than pendants. The accessory's healing trigger is fictional.",
+      "sources": [{"kind": "museum", "title": "Han dynasty jade cicada", "url": "https://www.dpm.org.cn/collection/jade/229410.html"}]
+    },
+    {
+      "id": "china_cavalry_reforms", "culture": "chinese", "order": 6,
+      "title_key": "knowledge.echo_warrior.entry.china_cavalry_reforms.title",
+      "body_key": "knowledge.echo_warrior.entry.china_cavalry_reforms.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:heart_sprout_amber_accessory"}],
+      "evidence_type": "surviving_burial_jade_and_museum_analysis",
+      "source_notes": "Cicadas were used in several jade contexts; holes and archaeological placement help distinguish mouth jades from wearable ornaments. The accessory remains a fantasy reinterpretation.",
+      "sources": [{"kind": "museum", "title": "Jade cicada mouth piece", "url": "https://www.chnmuseum.cn/zp/zpml/kgfjp/202104/t20210419_249838_wap.shtml"}]
+    },
+    {
+      "id": "china_guandao_late", "culture": "chinese", "order": 7,
+      "title_key": "knowledge.echo_warrior.entry.china_guandao_late.title",
+      "body_key": "knowledge.echo_warrior.entry.china_guandao_late.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:cat_bell_fish_charm_accessory"}],
+      "evidence_type": "historical_paintings_and_museum_catalogues",
+      "source_notes": "Historical Chinese paintings treat cats as closely observed household companions and auspicious motifs. The accessory's jade, bell and fish combination is a project design rather than a reconstruction of either painting.",
+      "sources": [{"kind": "museum", "title": "Anonymous Song dynasty, Cats at Play", "url": "https://digitalarchive.npm.gov.tw/Collection/Detail/1361?dep=P"}, {"kind": "museum", "title": "Ming dynasty Cat and Butterfly", "url": "https://www.dpm.org.cn/collection/paint/370694.html"}]
+    },
+    {
+      "id": "china_guan_yu_afterlife", "culture": "chinese", "order": 8,
+      "title_key": "knowledge.echo_warrior.entry.china_guan_yu_afterlife.title",
+      "body_key": "knowledge.echo_warrior.entry.china_guan_yu_afterlife.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:twin_oath_badge_accessory"}],
+      "evidence_type": "surviving_western_zhou_jade_and_museum_catalogue",
+      "source_notes": "Fish-shaped jades are historically documented ornaments. The paired-fish composition and oath mechanics are project designs rather than a reconstruction of this single object.",
+      "sources": [{"kind": "museum", "title": "Western Zhou jade fish pendant", "url": "https://www.chnmuseum.cn/zp/zpml/201812/t20181218_24500.shtml"}]
+    },
+
+    {
+      "id": "japan_bow_before_sword", "culture": "japanese", "order": 1,
+      "title_key": "knowledge.echo_warrior.entry.japan_bow_before_sword.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_bow_before_sword.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:bow"}, {"type": "item", "resource": "minecraft:iron_sword"}, {"type": "item", "resource": "minecraft:saddle"}],
+      "evidence_type": "war_tales_documents_and_equipment",
+      "source_notes": "Weapon emphasis varied by century, social role and type of warfare.",
+      "sources": [{"kind": "book", "citation": "Karl F. Friday, Samurai, Warfare and the State in Early Medieval Japan, 2004"}, {"kind": "museum", "title": "Art of the Samurai", "url": "https://www.metmuseum.org/exhibitions/listings/2009/art-of-the-samurai"}]
+    },
+    {
+      "id": "japan_yari_battlefield", "culture": "japanese", "order": 2,
+      "title_key": "knowledge.echo_warrior.entry.japan_yari_battlefield.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_yari_battlefield.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:trident"}, {"type": "item", "resource": "minecraft:iron_sword"}],
+      "evidence_type": "weapons_and_battle_records",
+      "source_notes": "Yari included many blade and shaft forms and were used by warriors of different status.",
+      "sources": [{"kind": "book", "citation": "Morihiro Ogawa, ed., Art of the Samurai: Japanese Arms and Armor, 1156–1868, 2009"}, {"kind": "book", "citation": "Thomas D. Conlan, Weapons & Fighting Techniques of the Samurai Warrior, 1200–1877, 2008"}]
+    },
+    {
+      "id": "japan_laced_armor", "culture": "japanese", "order": 3,
+      "title_key": "knowledge.echo_warrior.entry.japan_laced_armor.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_laced_armor.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:iron_chestplate"}, {"type": "item", "resource": "minecraft:string"}, {"type": "item", "resource": "minecraft:honeycomb"}],
+      "evidence_type": "surviving_armor_and_technical_study",
+      "source_notes": "Construction changed substantially from early o-yoroi to later tosei gusoku and folding armors.",
+      "sources": [{"kind": "book", "citation": "Morihiro Ogawa, ed., Art of the Samurai, 2009"}, {"kind": "museum", "title": "Armor (Tatami Gusoku)", "url": "https://www.metmuseum.org/art/collection/search/35728"}]
+    },
+    {
+      "id": "japan_sword_hidden_signature", "culture": "japanese", "order": 4,
+      "title_key": "knowledge.echo_warrior.entry.japan_sword_hidden_signature.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_sword_hidden_signature.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:iron_sword"}, {"type": "item", "resource": "minecraft:name_tag"}],
+      "evidence_type": "surviving_signed_blades",
+      "source_notes": "Not every blade is signed, and signatures may be lost when a blade is shortened.",
+      "sources": [{"kind": "book", "citation": "Kanzan Sato, The Japanese Sword, 1983"}, {"kind": "museum", "title": "Art of the Samurai photo gallery", "url": "https://www.metmuseum.org/exhibitions/listings/2009/art-of-the-samurai/photo-gallery"}]
+    },
+    {
+      "id": "japan_daisho_edo", "culture": "japanese", "order": 5,
+      "title_key": "knowledge.echo_warrior.entry.japan_daisho_edo.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_daisho_edo.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:mountain_burden_blade_accessory"}],
+      "evidence_type": "surviving_netsuke_and_costume_history",
+      "source_notes": "Netsuke anchored suspended containers to an obi and later became miniature art. The accessory's mountain-burden combat effect is fictional.",
+      "sources": [{"kind": "museum", "title": "Netsuke: From Fashion Fobs to Coveted Collectibles", "url": "https://www.metmuseum.org/fr/essays/netsuke-from-fashion-fobs-to-coveted-collectibles"}]
+    },
+    {
+      "id": "japan_mongol_bombs", "culture": "japanese", "order": 6,
+      "title_key": "knowledge.echo_warrior.entry.japan_mongol_bombs.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_mongol_bombs.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:chainmail_armor_accessory"}],
+      "evidence_type": "surviving_armour_sleeves_and_greaves",
+      "source_notes": "Japanese armour incorporated chain mail into sleeves and greaves alongside plates and textile. It should not be reduced to a direct copy of a European mail shirt.",
+      "sources": [{"kind": "museum", "title": "Armour sleeves (kote)", "url": "https://www.britishmuseum.org/collection/object/A_1881-0802-165"}, {"kind": "museum", "title": "Armour set including chain-mail sleeves and greaves", "url": "https://www.britishmuseum.org/collection/object/A_2017-3024-1-1-14"}]
+    },
+    {
+      "id": "japan_bushido_changed", "culture": "japanese", "order": 7,
+      "title_key": "knowledge.echo_warrior.entry.japan_bushido_changed.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_bushido_changed.body",
+      "illustrations": [{"type": "item", "resource": "minecraft:book"}, {"type": "item", "resource": "minecraft:iron_sword"}],
+      "evidence_type": "intellectual_and_social_history",
+      "source_notes": "The page rejects a single timeless code while acknowledging real warrior ethics in different periods.",
+      "sources": [{"kind": "book", "citation": "Oleg Benesch, Inventing the Way of the Samurai, 2014"}, {"kind": "book", "citation": "Karl F. Friday, Bushido or Bull? in Budo Perspectives, 2005"}]
+    },
+    {
+      "id": "japan_tomoe_in_heike", "culture": "japanese", "order": 8,
+      "title_key": "knowledge.echo_warrior.entry.japan_tomoe_in_heike.title",
+      "body_key": "knowledge.echo_warrior.entry.japan_tomoe_in_heike.body",
+      "illustration_binding": "high",
+      "illustrations": [{"type": "item", "resource": "echo_warrior:substitute_doll_accessory"}],
+      "evidence_type": "documented_living_shrine_ritual",
+      "source_notes": "The cited ritual uses paper hitogata, not the accessory's wooden doll. The historical link is the transfer of impurity or misfortune to a substitute human form; combat evasion is fictional.",
+      "sources": [{"kind": "shrine", "title": "Kego Shrine yakuyoke and hitogata purification", "url": "https://kegojinja.or.jp/en/yakuyoke/"}]
+    }
+  ]
+}

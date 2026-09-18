@@ -3,6 +3,9 @@ package com.yuriscat.echowarrior.binding;
 import com.yuriscat.echowarrior.item.SummonerStackContents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.HashMap;
@@ -18,7 +21,8 @@ import java.util.UUID;
  * was actually removed from that player's server inventory.
  */
 public final class CreativeSummonerDestroyTracker {
-	private static final int CONFIRMATION_WINDOW_TICKS = 40;
+	private static final int REQUEST_WINDOW_TICKS = 40;
+	private static final int REMOVAL_WINDOW_TICKS = 20 * 60 * 30;
 	private static final Map<UUID, Map<UUID, Integer>> REMOVED_FROM_CREATIVE_INVENTORY = new HashMap<>();
 	private static final Map<UUID, Map<UUID, Integer>> REQUESTED_CREATIVE_TRASH = new HashMap<>();
 	private static final Map<UUID, Integer> REQUEST_NOT_BEFORE_TICK = new HashMap<>();
@@ -42,7 +46,7 @@ public final class CreativeSummonerDestroyTracker {
 		previousIds.removeAll(replacementIds);
 		if (previousIds.isEmpty()) return;
 
-		int expiresAt = player.level().getServer().getTickCount() + CONFIRMATION_WINDOW_TICKS;
+		int expiresAt = player.level().getServer().getTickCount() + REMOVAL_WINDOW_TICKS;
 		removed = REMOVED_FROM_CREATIVE_INVENTORY.computeIfAbsent(playerId, ignored -> new HashMap<>());
 		for (UUID previousId : previousIds) removed.put(previousId, expiresAt);
 	}
@@ -51,7 +55,7 @@ public final class CreativeSummonerDestroyTracker {
 		if (!player.hasInfiniteMaterials() || requestedIds.isEmpty()) return;
 		MinecraftServer server = player.level().getServer();
 		int now = server.getTickCount();
-		int expiresAt = now + CONFIRMATION_WINDOW_TICKS;
+		int expiresAt = now + REQUEST_WINDOW_TICKS;
 		UUID playerId = player.getUUID();
 		Map<UUID, Integer> requested = REQUESTED_CREATIVE_TRASH.computeIfAbsent(
 				playerId, ignored -> new HashMap<>());
@@ -114,6 +118,26 @@ public final class CreativeSummonerDestroyTracker {
 				visible.addAll(SummonerStackContents.summonerIds(stack));
 			}
 			visible.addAll(SummonerStackContents.summonerIds(player.inventoryMenu.getCarried()));
+			if (player.containerMenu != player.inventoryMenu) {
+				for (ItemStack stack : player.containerMenu.getItems()) {
+					visible.addAll(SummonerStackContents.summonerIds(stack));
+				}
+				visible.addAll(SummonerStackContents.summonerIds(player.containerMenu.getCarried()));
+			}
+			for (int slot = 0; slot < player.getEnderChestInventory().getContainerSize(); slot++) {
+				visible.addAll(SummonerStackContents.summonerIds(player.getEnderChestInventory().getItem(slot)));
+			}
+		}
+		for (var level : server.getAllLevels()) {
+			for (Entity entity : level.getAllEntities()) {
+				if (entity instanceof ItemEntity itemEntity) {
+					visible.addAll(SummonerStackContents.summonerIds(itemEntity.getItem()));
+				} else if (entity instanceof Container container) {
+					for (int slot = 0; slot < container.getContainerSize(); slot++) {
+						visible.addAll(SummonerStackContents.summonerIds(container.getItem(slot)));
+					}
+				}
+			}
 		}
 		return visible;
 	}

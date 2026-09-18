@@ -186,7 +186,7 @@ public final class EchoAccessorySystem {
 		LivingEntity direct = echo.livingEntity();
 		LivingEntity owner = echo.getOwner();
 		livingAttacker.hurtServer(level,
-				level.damageSources().source(ModDamageTypes.SPIKED_ARMOR_REFLECTION, direct, owner == null ? direct : owner),
+				ModDamageTypes.source(level, ModDamageTypes.SPIKED_ARMOR_REFLECTION, direct, owner == null ? direct : owner),
 				actualHealthDamage);
 	}
 

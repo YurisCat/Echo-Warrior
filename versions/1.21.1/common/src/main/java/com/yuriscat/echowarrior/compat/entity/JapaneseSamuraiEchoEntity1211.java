@@ -1,0 +1,1585 @@
+package com.yuriscat.echowarrior.compat.entity;
+
+import com.mojang.serialization.Dynamic;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.util.GeckoLibUtil;
+import com.yuriscat.echowarrior.compat.EchoHeroType1211;
+import com.yuriscat.echowarrior.compat.EchoWarrior1211;
+import com.yuriscat.echowarrior.compat.ModContent1211;
+import com.yuriscat.echowarrior.compat.ModDamageTypes1211;
+import com.yuriscat.echowarrior.compat.binding.EchoBindingSystem1211;
+import com.yuriscat.echowarrior.compat.entity.behavior.EchoActivityMovement1211;
+import com.yuriscat.echowarrior.compat.entity.behavior.EchoFollowOwner1211;
+import com.yuriscat.echowarrior.compat.entity.behavior.EchoSafeTeleport1211;
+import com.yuriscat.echowarrior.compat.entity.behavior.EchoWaterSafety1211;
+import com.yuriscat.echowarrior.compat.item.EchoAccessorySystem1211;
+import com.yuriscat.echowarrior.compat.item.EchoRelicState1211;
+import com.yuriscat.echowarrior.compat.item.EchoSummonerItem1211;
+import com.yuriscat.echowarrior.compat.item.EchoTalentSystem1211;
+import com.yuriscat.echowarrior.compat.item.SummonerFuel1211;
+import com.yuriscat.echowarrior.compat.progress.EchoExperienceSystem1211;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.tslat.smartbrainlib.api.SmartBrainOwner;
+import net.tslat.smartbrainlib.api.core.BrainActivityGroup;
+import net.tslat.smartbrainlib.api.core.SmartBrainProvider;
+import net.tslat.smartbrainlib.api.core.behaviour.custom.move.MoveToWalkTarget;
+import net.tslat.smartbrainlib.api.core.behaviour.custom.path.SetWalkTargetToAttackTarget;
+import net.tslat.smartbrainlib.api.core.behaviour.custom.target.InvalidateAttackTarget;
+import net.tslat.smartbrainlib.api.core.sensor.ExtendedSensor;
+import net.tslat.smartbrainlib.api.core.sensor.vanilla.NearbyLivingEntitySensor;
+import net.tslat.smartbrainlib.util.BrainUtils;
+import org.joml.Vector3f;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Medium-armour, high-mobility single-target duelist built around Zanshin
+ * dodges, Fumikomi charges, a branchable two-slash normal attack and Stab.
+ */
+public final class JapaneseSamuraiEchoEntity1211 extends PathfinderMob
+		implements EchoWarriorEntity1211, SmartBrainOwner<JapaneseSamuraiEchoEntity1211>, GeoEntity,
+		GuandaoVisualBehavior1211.Host {
+	public static final byte VISUAL_NORMAL = 0;
+	public static final byte VISUAL_ALERT = 1;
+	public static final byte VISUAL_STARTLED = 2;
+	public static final byte VISUAL_HURT = 3;
+	public static final byte VISUAL_CURIOUS = 4;
+	public static final byte VISUAL_MUTUAL_GAZE = 5;
+	public static final byte VISUAL_CAUGHT = 6;
+	public static final byte VISUAL_LOCOMOTION = 7;
+
+	public static final int SKILL_ZANSHIN = 0;
+	public static final int SKILL_FUMIKOMI = 1;
+	public static final int SKILL_ZAN = 2;
+	public static final int SKILL_STAB = 3;
+
+	public static final byte ACTION_NONE = 0;
+	public static final byte ACTION_ATTACK_FIRST = 1;
+	public static final byte ACTION_ATTACK_RECOVER = 2;
+	public static final byte ACTION_ATTACK_FOLLOW = 3;
+	public static final byte ACTION_STAB = 4;
+	public static final byte ACTION_DASH_FORWARD = 5;
+	public static final byte ACTION_DASH_BACKWARD = 6;
+	public static final byte ACTION_HURT = 7;
+
+	private static final EntityDataAccessor<Byte> ACTION = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Long> ACTION_STARTED_AT = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Long> ACTION_ENDS_AT = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Float> ACTION_SPEED = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Boolean> AFTERIMAGE_NEUTRAL = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Boolean> AFTERIMAGE_ADVANCED = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Boolean> AFTERIMAGE_OUTLINE = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Integer> AFTERIMAGE_SEQUENCE = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Byte> AFTERIMAGE_KIND = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Float> AFTERIMAGE_X = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> AFTERIMAGE_Y = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> AFTERIMAGE_Z = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> AFTERIMAGE_DIRECTION_X = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> AFTERIMAGE_DIRECTION_Z = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> AFTERIMAGE_YAW = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> ATTENTION_X = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> ATTENTION_Y = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> ATTENTION_Z = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_X = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_Y = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> EYE_ATTENTION_Z = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Byte> VISUAL_REACTION = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Long> VISUAL_REACTION_UNTIL = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Long> BLINK_START = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Byte> BLINK_COUNT = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Byte> CURIOUS_TILT = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Integer> VISUAL_SEQUENCE = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Long> ATTENTION_STARTED_AT = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.LONG);
+	private static final EntityDataAccessor<Long> CAUGHT_REACTION_START = SynchedEntityData.defineId(
+			JapaneseSamuraiEchoEntity1211.class, EntityDataSerializers.LONG);
+
+	public static final byte AFTERIMAGE_ZANSHIN_REAL = 1;
+	public static final byte AFTERIMAGE_ZANSHIN_PHANTOM = 2;
+	public static final byte AFTERIMAGE_FUMIKOMI = 3;
+
+	private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.japanese_samurai.idle");
+	private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.japanese_samurai.walk");
+	private static final RawAnimation ATTACK_FIRST = RawAnimation.begin()
+			.thenPlay("animation.japanese_samurai.attack_first")
+			.thenPlayAndHold("animation.japanese_samurai.attack_follow");
+	private static final RawAnimation ATTACK_RECOVER = RawAnimation.begin().thenPlayAndHold("animation.japanese_samurai.attack_recover");
+	private static final RawAnimation STAB = RawAnimation.begin().thenPlayAndHold("animation.japanese_samurai.stab");
+	private static final RawAnimation DASH_FORWARD = RawAnimation.begin().thenPlayAndHold("animation.japanese_samurai.dash_forward");
+	private static final RawAnimation DASH_BACKWARD = RawAnimation.begin().thenPlayAndHold("animation.japanese_samurai.dash_backward");
+	private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.japanese_samurai.hurt");
+	private static final String ACTION_CONTROLLER = "action";
+	private static final String ATTACK_FIRST_TRIGGER = "attack_first";
+	private static final String ATTACK_RECOVER_TRIGGER = "attack_recover";
+	private static final String STAB_TRIGGER = "stab";
+	private static final String DASH_FORWARD_TRIGGER = "dash_forward";
+	private static final String DASH_BACKWARD_TRIGGER = "dash_backward";
+	private static final String HURT_TRIGGER = "hurt";
+
+	private static final int BASE_ATTACK_CYCLE_TICKS = 40;
+	private static final int BASE_FIRST_TICKS = 13;
+	private static final int BASE_RECOVER_TICKS = 10;
+	private static final int BASE_FOLLOW_TICKS = 25;
+	private static final int BASE_FOLLOW_HIT_TICKS = 13;
+	private static final int STAB_ANIMATION_TICKS = 30;
+	private static final int STAB_FIRST_HIT_TICK = 16;
+	private static final int STAB_SECOND_HIT_TICK = 20;
+	private static final int HURT_TICKS = 10;
+	private static final int DASH_BACKWARD_TICKS = 14;
+	private static final double NORMAL_MELEE_RANGE = 2.75;
+	private static final double FIRST_SLASH_RADIUS = 2.25;
+	private static final double FIRST_SLASH_ANGLE = 90.0;
+	private static final double SECOND_SLASH_RADIUS = 2.75;
+	private static final double SECOND_SLASH_ANGLE = 160.0;
+	private static final double ATTACK_TRACKING_STOP_RANGE = 1.70;
+	private static final double FIRST_SLASH_TRACKING_SPEED = 0.30;
+	private static final double FIRST_SLASH_TRACKING_LIMIT = 1.50;
+	private static final double SECOND_SLASH_TRACKING_SPEED = 0.20;
+	private static final double SECOND_SLASH_TRACKING_LIMIT = 0.75;
+	private static final float ATTACK_TRACKING_TURN_PER_TICK = 15.0F;
+	private static final float ATTACK_TRACKING_TOTAL_TURN = 45.0F;
+	private static final double FUMIKOMI_MAX_RANGE = 8.0;
+	private static final double FUMIKOMI_STOP_RANGE = 2.0;
+	private static final double FUMIKOMI_SPEED = 0.45;
+	private static final int FUMIKOMI_MIN_TICKS = 6;
+	private static final int FUMIKOMI_MAX_TICKS = 14;
+	private static final int FUMIKOMI_INTERNAL_COOLDOWN_TICKS = 10;
+	private static final double DODGE_BACKSTEP_DISTANCE = 2.0;
+	private static final double STAB_TRIGGER_RANGE = 2.25;
+	private static final double STAB_CAPSULE_LENGTH = 2.75;
+	private static final double STAB_CAPSULE_RADIUS = 0.40;
+	private static final int ZANSHIN_ATTACK_BONUS_TICKS = 20;
+	private static final float ZANSHIN_ATTACK_BONUS = 0.20F;
+	private static final float ZANSHIN_BASE_MIN = 0.20F;
+	private static final float ZANSHIN_BASE_MAX = 0.60F;
+	private static final float ZANSHIN_FINAL_CAP = 0.80F;
+	private static final DustParticleOptions CYAN_AFTERIMAGE = new DustParticleOptions(new Vector3f(0.68F, 0.94F, 1.0F), 1.15F);
+	private static final DustParticleOptions GOLD_AFTERIMAGE = new DustParticleOptions(new Vector3f(1.0F, 0.89F, 0.64F), 1.15F);
+	private static final DustParticleOptions BLOOD = new DustParticleOptions(new Vector3f(0.71F, 0.06F, 0.13F), 1.05F);
+	private static final ResourceLocation SPECIAL_STEP_ID = EchoWarrior1211.id("samurai_special_step_height");
+	private static final AttributeModifier SPECIAL_STEP = new AttributeModifier(
+			SPECIAL_STEP_ID, 1.0, AttributeModifier.Operation.ADD_VALUE);
+
+	private static final Map<UUID, Long> PINNED_UNTIL = new ConcurrentHashMap<>();
+	private static final Map<UUID, Vec3> PINNED_CENTERS = new ConcurrentHashMap<>();
+
+	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
+	private final GuandaoVisualBehavior1211<JapaneseSamuraiEchoEntity1211> visualBehavior = new GuandaoVisualBehavior1211<>(this);
+	private final EchoTargetVisibilityMemory1211 targetVisibility = new EchoTargetVisibilityMemory1211();
+	private final EchoCreeperTargeting1211 creeperTargeting = new EchoCreeperTargeting1211();
+	private final List<UUID> secondSlashTargets = new ArrayList<>();
+	private final Map<UUID, Vec3> stabTargets = new LinkedHashMap<>();
+	private UUID ownerUuid;
+	private UUID summonerUuid;
+	private long bindingGeneration;
+	private EchoRelicState1211.ActivityMode activityMode = EchoRelicState1211.ActivityMode.FOLLOW;
+	private EchoRelicState1211.AlertMode alertMode = EchoRelicState1211.AlertMode.DEFENSIVE;
+	private int enabledSkills = EchoHeroType1211.JAPANESE_SAMURAI.allSkillsEnabledMask();
+	private Vec3 activityAnchor = Vec3.ZERO;
+	private long lastNaturalHealAt;
+	private long nextNormalAttackAt;
+	private long actionHitAt;
+	private boolean actionHitResolved;
+	private UUID lockedTargetUuid;
+	private UUID secondSlashPrimaryUuid;
+	private UUID dashTargetUuid;
+	private long fumikomiInternalCooldownUntil;
+	private Vec3 dashBackwardDirection = Vec3.ZERO;
+	private double dashBackwardTravelled;
+	private float stabYaw;
+	private boolean stabDirectionLocked;
+	private long zanshinBonusUntil;
+	private int fumikomiAfterimageStep;
+	private Vec3 fumikomiAfterimageOrigin = Vec3.ZERO;
+	private double attackTrackingTravelled;
+	private float attackTrackingStartYaw;
+	private boolean attackTrackingStopped;
+	private int committedSkillSnapshot = EchoHeroType1211.JAPANESE_SAMURAI.allSkillsEnabledMask();
+
+	public JapaneseSamuraiEchoEntity1211(EntityType<? extends JapaneseSamuraiEchoEntity1211> type, Level level) {
+		super(type, level);
+		this.setPersistenceRequired();
+	}
+
+	public static AttributeSupplier.Builder createAttributes() {
+		return PathfinderMob.createMobAttributes()
+				.add(Attributes.MAX_HEALTH, EchoHeroType1211.JAPANESE_SAMURAI.baseMaximumHealth())
+				.add(Attributes.ARMOR, EchoHeroType1211.JAPANESE_SAMURAI.baseArmor())
+				.add(Attributes.ATTACK_DAMAGE, EchoHeroType1211.JAPANESE_SAMURAI.baseAttackDamage())
+				.add(Attributes.MOVEMENT_SPEED, EchoHeroType1211.JAPANESE_SAMURAI.baseMovementSpeed())
+				.add(Attributes.FOLLOW_RANGE, 32.0)
+				.add(Attributes.KNOCKBACK_RESISTANCE, EchoHeroType1211.JAPANESE_SAMURAI.baseKnockbackResistance());
+	}
+
+	@Override
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(ACTION, ACTION_NONE);
+		builder.define(ACTION_STARTED_AT, 0L);
+		builder.define(ACTION_ENDS_AT, 0L);
+		builder.define(ACTION_SPEED, 1.0F);
+		builder.define(AFTERIMAGE_NEUTRAL, true);
+		builder.define(AFTERIMAGE_ADVANCED, true);
+		builder.define(AFTERIMAGE_OUTLINE, false);
+		builder.define(AFTERIMAGE_SEQUENCE, 0);
+		builder.define(AFTERIMAGE_KIND, (byte)0);
+		builder.define(AFTERIMAGE_X, 0.0F);
+		builder.define(AFTERIMAGE_Y, 0.0F);
+		builder.define(AFTERIMAGE_Z, 0.0F);
+		builder.define(AFTERIMAGE_DIRECTION_X, 0.0F);
+		builder.define(AFTERIMAGE_DIRECTION_Z, 0.0F);
+		builder.define(AFTERIMAGE_YAW, 0.0F);
+		builder.define(ATTENTION_X, 0.0F);
+		builder.define(ATTENTION_Y, 0.0F);
+		builder.define(ATTENTION_Z, 0.0F);
+		builder.define(EYE_ATTENTION_X, 0.0F);
+		builder.define(EYE_ATTENTION_Y, 0.0F);
+		builder.define(EYE_ATTENTION_Z, 0.0F);
+		builder.define(VISUAL_REACTION, VISUAL_NORMAL);
+		builder.define(VISUAL_REACTION_UNTIL, 0L);
+		builder.define(BLINK_START, -100L);
+		builder.define(BLINK_COUNT, (byte)0);
+		builder.define(CURIOUS_TILT, (byte)0);
+		builder.define(VISUAL_SEQUENCE, 0);
+		builder.define(ATTENTION_STARTED_AT, 0L);
+		builder.define(CAUGHT_REACTION_START, -100L);
+	}
+
+	@Override
+	protected void registerGoals() {
+		this.goalSelector.addGoal(0, new FloatGoal(this));
+	}
+
+	@Override
+	protected Brain.Provider<?> brainProvider() {
+		return new SmartBrainProvider<>(this);
+	}
+
+	@Override
+	protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+		return this.brainProvider().makeBrain(dynamic);
+	}
+
+	@Override
+	protected void customServerAiStep() {
+		tickBrain(this);
+	}
+
+	@Override
+	public List<? extends ExtendedSensor<? extends JapaneseSamuraiEchoEntity1211>> getSensors() {
+		return List.of(new NearbyLivingEntitySensor<>());
+	}
+
+	@Override
+	public BrainActivityGroup<? extends JapaneseSamuraiEchoEntity1211> getCoreTasks() {
+		return BrainActivityGroup.coreTasks(new MoveToWalkTarget<>());
+	}
+
+	@Override
+	public BrainActivityGroup<? extends JapaneseSamuraiEchoEntity1211> getIdleTasks() {
+		return BrainActivityGroup.idleTasks(new EchoFollowOwner1211<JapaneseSamuraiEchoEntity1211>());
+	}
+
+	@Override
+	public BrainActivityGroup<? extends JapaneseSamuraiEchoEntity1211> getFightTasks() {
+		return BrainActivityGroup.fightTasks(
+				new InvalidateAttackTarget<JapaneseSamuraiEchoEntity1211>(),
+				new SetWalkTargetToAttackTarget<JapaneseSamuraiEchoEntity1211>()
+						.speedMod(1.0F)
+						.closeEnoughDist((entity, target) -> 2)
+		);
+	}
+
+	@Override
+	public void aiStep() {
+		if (this.level() instanceof ServerLevel bindingLevel
+				&& !EchoBindingSystem1211.validateAndSnapshot(this, bindingLevel)) {
+			this.discard();
+			return;
+		}
+		super.aiStep();
+		if (!(this.level() instanceof ServerLevel level)) return;
+		this.setAirSupply(this.getMaxAirSupply());
+		LivingEntity resolvedOwner = this.getOwner();
+		boolean controllerAvailable = resolvedOwner instanceof Player player && player.isAlive()
+				&& !player.isSpectator() && player.level() == this.level();
+		LivingEntity owner = controllerAvailable ? resolvedOwner : this;
+		if (!controllerAvailable && this.activityMode == EchoRelicState1211.ActivityMode.FOLLOW) {
+			this.getNavigation().stop();
+		}
+
+		long now = level.getGameTime();
+		cleanupExpiredPins(now);
+		ItemStack relic = currentRelic();
+		if (!relic.isEmpty()) {
+			EchoRelicState1211.fumikomiCharges(relic, now);
+			if (action() != ACTION_NONE) tickAction(level, relic, now);
+			else tryStartCombatAction(level, relic, now);
+			if (this.tickCount % 20 == 0) {
+				applyRelicState(relic, false);
+				tickNaturalHealing(level, relic);
+			}
+		} else if (action() != ACTION_NONE) {
+			finishAction(now);
+		}
+
+		if (this.tickCount % 5 == 0 && action() == ACTION_NONE) {
+			LivingEntity target = selectProtectiveTarget(owner);
+			applySelectedCombatTarget(target);
+			enforceActivityBoundary(owner);
+		}
+		if (this.tickCount % 20 == 0 && this.getTarget() != null) {
+			EchoExperienceSystem1211.markParticipation(this, this.getTarget());
+		}
+
+		boolean actionOwned = action() != ACTION_NONE;
+		if (actionOwned) stopMovementIntent();
+		EchoActivityMovement1211.tick(level, this, this.activityMode, this.activityAnchor,
+				this.getTarget() != null || actionOwned || this.visualBehavior.ownsMovement());
+		if (controllerAvailable) this.visualBehavior.tick(level, owner);
+		EchoWaterSafety1211.tick(level, this, owner,
+				controllerAvailable && this.activityMode == EchoRelicState1211.ActivityMode.FOLLOW
+						&& !actionOwned && !this.visualBehavior.ownsMovement());
+	}
+
+	@Override
+	public void tick() {
+		super.tick();
+		if (!this.level().isClientSide()) {
+			// Apply presentation-owned body turns after vanilla rotation control. Combat
+			// and committed samurai actions suppress the shared social gaze first.
+			this.visualBehavior.tickBodyFacing(this.level().getGameTime());
+		}
+	}
+
+	private void tryStartCombatAction(ServerLevel level, ItemStack relic, long now) {
+		LivingEntity target = this.getTarget();
+		if (target == null || !target.isAlive() || !this.canAttack(target)) return;
+		double distance = horizontalDistance(this.position(), target.position());
+
+		if (skillEnabled(SKILL_FUMIKOMI)
+				&& distance > NORMAL_MELEE_RANGE && distance <= FUMIKOMI_MAX_RANGE
+				&& now >= this.fumikomiInternalCooldownUntil && this.hasLineOfSight(target)
+				&& EchoRelicState1211.fumikomiCharges(relic, now) > 0
+				&& canPrecheckDash(level, target)) {
+			startFumikomi(level, relic, target, now, distance);
+			return;
+		}
+		if (skillEnabled(SKILL_STAB) && distance <= STAB_TRIGGER_RANGE && this.hasLineOfSight(target)
+				&& now >= EchoRelicState1211.samuraiStabCooldownEnd(relic)) {
+			startStab(relic, target, now);
+			return;
+		}
+		if (distance <= NORMAL_MELEE_RANGE && this.hasLineOfSight(target) && now >= this.nextNormalAttackAt) {
+			startNormalAttack(relic, target, now);
+		}
+	}
+
+	private void startNormalAttack(ItemStack relic, LivingEntity target, long now) {
+		startNormalAttack(relic, target, now, this.enabledSkills);
+	}
+
+	private void startNormalAttack(ItemStack relic, LivingEntity target, long now, int skillSnapshot) {
+		int interval = relic.isEmpty() ? BASE_ATTACK_CYCLE_TICKS : EchoTalentSystem1211.attackIntervalTicks(this, relic);
+		float speed = BASE_ATTACK_CYCLE_TICKS / (float)interval;
+		int firstTicks = scaledAttackTicks(BASE_FIRST_TICKS, interval);
+		this.nextNormalAttackAt = now + interval;
+		this.lockedTargetUuid = target.getUUID();
+		this.secondSlashTargets.clear();
+		this.secondSlashPrimaryUuid = null;
+		this.committedSkillSnapshot = skillSnapshot;
+		faceTargetImmediately(target);
+		beginAttackTracking();
+		setAction(ACTION_ATTACK_FIRST, now, firstTicks, now + firstTicks, speed, ATTACK_FIRST_TRIGGER);
+	}
+
+	private void startStab(ItemStack relic, LivingEntity target, long now) {
+		EchoRelicState1211.setSamuraiStabCooldownEnd(relic, now + EchoRelicState1211.SAMURAI_STAB_COOLDOWN_TICKS);
+		persistCurrentRelic(relic);
+		this.lockedTargetUuid = target.getUUID();
+		this.stabTargets.clear();
+		this.stabDirectionLocked = false;
+		this.stabYaw = this.yBodyRot;
+		this.committedSkillSnapshot = this.enabledSkills;
+		setAction(ACTION_STAB, now, STAB_ANIMATION_TICKS, now + STAB_FIRST_HIT_TICK, 1.0F, STAB_TRIGGER);
+	}
+
+	private void startFumikomi(ServerLevel level, ItemStack relic, LivingEntity target, long now, double distance) {
+		double travel = Math.max(0.0, distance - FUMIKOMI_STOP_RANGE);
+		int duration = Math.clamp((int)Math.ceil(travel / FUMIKOMI_SPEED), FUMIKOMI_MIN_TICKS, FUMIKOMI_MAX_TICKS);
+		this.dashTargetUuid = target.getUUID();
+		this.fumikomiAfterimageOrigin = this.position();
+		this.fumikomiAfterimageStep = 0;
+		this.committedSkillSnapshot = this.enabledSkills;
+		setSpecialStepHeight(true);
+		faceTargetImmediately(target);
+		setAction(ACTION_DASH_FORWARD, now, duration, Long.MAX_VALUE,
+				(40.0F / 3.0F) / duration, DASH_FORWARD_TRIGGER);
+		emitFumikomiAfterimage(level, this.position());
+	}
+
+	private void startDashBackward(ServerLevel level, DamageSource source, long now) {
+		Vec3 direction = dodgeDirectionAwayFrom(source);
+		if (direction.horizontalDistanceSqr() < 1.0E-5) direction = this.getLookAngle().reverse().multiply(1.0, 0.0, 1.0).normalize();
+		this.dashBackwardDirection = direction;
+		this.dashBackwardTravelled = 0.0;
+		setSpecialStepHeight(true);
+		setAction(ACTION_DASH_BACKWARD, now, DASH_BACKWARD_TICKS, Long.MAX_VALUE,
+				(40.0F / 3.0F) / DASH_BACKWARD_TICKS, DASH_BACKWARD_TRIGGER);
+		emitZanshinResidual(level, this.position(), direction, false);
+	}
+
+	private void tickAction(ServerLevel level, ItemStack relic, long now) {
+		stopMovementIntent();
+		switch (action()) {
+			case ACTION_ATTACK_FIRST -> tickAttackFirst(level, relic, now);
+			case ACTION_ATTACK_RECOVER -> {
+				if (now >= actionEndsAt()) finishAction(now);
+			}
+			case ACTION_ATTACK_FOLLOW -> tickAttackFollow(level, now);
+			case ACTION_STAB -> tickStab(level, now);
+			case ACTION_DASH_FORWARD -> tickFumikomi(level, now);
+			case ACTION_DASH_BACKWARD -> tickDashBackward(level, now);
+			case ACTION_HURT -> {
+				if (now >= actionEndsAt()) finishAction(now);
+			}
+			default -> finishAction(now);
+		}
+	}
+
+	private void tickAttackFirst(ServerLevel level, ItemStack relic, long now) {
+		if (!this.actionHitResolved && now <= this.actionHitAt) {
+			tickAttackTracking(level, this.lockedTargetUuid, FIRST_SLASH_TRACKING_SPEED,
+					FIRST_SLASH_TRACKING_LIMIT, now);
+		}
+		if (!this.actionHitResolved && now >= this.actionHitAt) {
+			this.actionHitResolved = true;
+			boolean zanEnabled = (this.committedSkillSnapshot & 1 << SKILL_ZAN) != 0;
+			performSlash(level, FIRST_SLASH_RADIUS, FIRST_SLASH_ANGLE,
+					this.lockedTargetUuid,
+					zanEnabled || this.lockedTargetUuid == null ? null : List.of(this.lockedTargetUuid),
+					1.0F, 0.5F, 0.08, true);
+			if (!zanEnabled) {
+				startAttackRecovery(relic, now);
+				return;
+			}
+			List<LivingEntity> followTargets = targetsInSector(level, SECOND_SLASH_RADIUS, SECOND_SLASH_ANGLE);
+			if (followTargets.isEmpty()) {
+				startAttackRecovery(relic, now);
+				return;
+			}
+			this.secondSlashTargets.clear();
+			for (LivingEntity target : followTargets) this.secondSlashTargets.add(target.getUUID());
+			LivingEntity locked = resolveLiving(level, this.lockedTargetUuid);
+			this.secondSlashPrimaryUuid = locked != null && followTargets.contains(locked)
+					? locked.getUUID() : followTargets.getFirst().getUUID();
+			int interval = relic.isEmpty() ? BASE_ATTACK_CYCLE_TICKS : EchoTalentSystem1211.attackIntervalTicks(this, relic);
+			int duration = scaledAttackTicks(BASE_FOLLOW_TICKS, interval);
+			int hit = scaledAttackTicks(BASE_FOLLOW_HIT_TICKS, interval);
+			beginAttackTracking();
+			continueAction(ACTION_ATTACK_FOLLOW, now, duration, now + hit,
+					BASE_ATTACK_CYCLE_TICKS / (float)interval);
+		}
+	}
+
+	private void startAttackRecovery(ItemStack relic, long now) {
+		int interval = relic.isEmpty() ? BASE_ATTACK_CYCLE_TICKS : EchoTalentSystem1211.attackIntervalTicks(this, relic);
+		int duration = scaledAttackTicks(BASE_RECOVER_TICKS, interval);
+		setAction(ACTION_ATTACK_RECOVER, now, duration, Long.MAX_VALUE,
+				BASE_ATTACK_CYCLE_TICKS / (float)interval, ATTACK_RECOVER_TRIGGER);
+	}
+
+	private void tickAttackFollow(ServerLevel level, long now) {
+		if (!this.actionHitResolved && now <= this.actionHitAt) {
+			tickAttackTracking(level, this.secondSlashPrimaryUuid, SECOND_SLASH_TRACKING_SPEED,
+					SECOND_SLASH_TRACKING_LIMIT, now);
+		}
+		if (!this.actionHitResolved && now >= this.actionHitAt) {
+			this.actionHitResolved = true;
+			performSlash(level, SECOND_SLASH_RADIUS, SECOND_SLASH_ANGLE,
+					this.secondSlashPrimaryUuid, List.copyOf(this.secondSlashTargets), 1.0F, 0.5F, 0.28, false);
+		}
+		if (now >= actionEndsAt()) finishAction(now);
+	}
+
+	private void tickStab(ServerLevel level, long now) {
+		long elapsed = now - actionStartedAt();
+		if (!this.stabTargets.isEmpty() && elapsed < STAB_SECOND_HIT_TICK) {
+			for (Map.Entry<UUID, Vec3> entry : this.stabTargets.entrySet()) {
+				LivingEntity pinned = resolveLiving(level, entry.getKey());
+				if (pinned != null && pinned.isAlive()) freezePinnedTarget(pinned, entry.getValue());
+			}
+		}
+		if (!this.stabDirectionLocked && elapsed < STAB_FIRST_HIT_TICK) {
+			LivingEntity target = resolveLiving(level, this.lockedTargetUuid);
+			if (target != null && target.isAlive()) turnToward(target, 20.0F);
+		}
+		if (!this.stabDirectionLocked && elapsed >= STAB_FIRST_HIT_TICK) {
+			this.stabDirectionLocked = true;
+			this.stabYaw = this.yBodyRot;
+			performStabFirstHit(level, now);
+		}
+		if (!this.actionHitResolved && elapsed >= STAB_SECOND_HIT_TICK) {
+			this.actionHitResolved = true;
+			performStabSecondHit(level);
+		}
+		if (now >= actionEndsAt()) finishAction(now);
+	}
+
+	private void tickFumikomi(ServerLevel level, long now) {
+		LivingEntity target = resolveLiving(level, this.dashTargetUuid);
+		if (target == null || !target.isAlive() || !this.canAttack(target) || !this.hasLineOfSight(target)) {
+			finishAction(now);
+			return;
+		}
+		turnToward(target, 15.0F);
+		Vec3 delta = target.position().subtract(this.position()).multiply(1.0, 0.0, 1.0);
+		double distance = delta.length();
+		if (distance <= FUMIKOMI_STOP_RANGE) {
+			completeFumikomi(level, target, now);
+			return;
+		}
+		// Movement starts on the tick after setAction. The calculated duration is
+		// the number of movement steps required, so the end tick must still be
+		// allowed to take its final step before timing out.
+		boolean finalMovementTick = now >= actionEndsAt();
+		double step = Math.min(FUMIKOMI_SPEED, distance - FUMIKOMI_STOP_RANGE);
+		Vec3 before = this.position();
+		if (step <= 0.0 || !moveSpecial(level, delta.normalize().scale(step))) {
+			finishAction(now);
+			return;
+		}
+		// The client interpolates the body between its previous and latest server
+		// positions. Only sample the previous position, which the body has visibly
+		// traversed already, so a trail snapshot can never appear ahead of it.
+		double visiblyTravelled = horizontalDistance(this.fumikomiAfterimageOrigin, before);
+		while (this.fumikomiAfterimageStep < 4
+				&& visiblyTravelled >= (this.fumikomiAfterimageStep + 1) * 1.25) {
+			this.fumikomiAfterimageStep++;
+			emitFumikomiAfterimage(level, before);
+		}
+		double remaining = horizontalDistance(this.position(), target.position());
+		if (remaining <= FUMIKOMI_STOP_RANGE + 1.0E-4) {
+			completeFumikomi(level, target, now);
+		} else if (finalMovementTick) {
+			finishAction(now);
+		}
+	}
+
+	private void completeFumikomi(ServerLevel level, LivingEntity target, long now) {
+		ItemStack relic = currentRelic();
+		boolean canAttackNow = !relic.isEmpty() && target.isAlive() && this.canAttack(target)
+				&& this.hasLineOfSight(target)
+				&& horizontalDistance(this.position(), target.position()) <= NORMAL_MELEE_RANGE;
+		if (!canAttackNow || !EchoRelicState1211.consumeFumikomiCharge(relic, now)) {
+			finishAction(now);
+			return;
+		}
+		persistCurrentRelic(relic);
+		setSpecialStepHeight(false);
+		this.fumikomiInternalCooldownUntil = now + FUMIKOMI_INTERNAL_COOLDOWN_TICKS;
+		startNormalAttack(relic, target, now, this.committedSkillSnapshot);
+	}
+
+	private void tickDashBackward(ServerLevel level, long now) {
+		if (now >= actionEndsAt() || this.dashBackwardTravelled >= DODGE_BACKSTEP_DISTANCE - 0.01) {
+			finishAction(now);
+			return;
+		}
+		double remaining = DODGE_BACKSTEP_DISTANCE - this.dashBackwardTravelled;
+		double step = Math.min(DODGE_BACKSTEP_DISTANCE / DASH_BACKWARD_TICKS, remaining);
+		Vec3 before = this.position();
+		if (!moveSpecial(level, this.dashBackwardDirection.scale(step))) {
+			finishAction(now);
+			return;
+		}
+		this.dashBackwardTravelled += horizontalDistance(before, this.position());
+		int elapsed = (int)(now - actionStartedAt());
+		if (elapsed == 5 || elapsed == 10) emitZanshinResidual(level, before, this.dashBackwardDirection, false);
+	}
+
+	private void performSlash(
+			ServerLevel level,
+			double radius,
+			double angle,
+			UUID primaryUuid,
+			List<UUID> allowedTargets,
+			float primaryMultiplier,
+			float secondaryMultiplier,
+			double knockbackStrength,
+			boolean suppressVanillaKnockback
+	) {
+		List<LivingEntity> targets = targetsInSector(level, radius, angle);
+		if (allowedTargets != null) targets = targets.stream().filter(target -> allowedTargets.contains(target.getUUID())).toList();
+		boolean damaged = false;
+		for (LivingEntity target : targets) {
+			boolean primary = primaryUuid != null && primaryUuid.equals(target.getUUID());
+			float multiplier = primary ? primaryMultiplier : secondaryMultiplier;
+			if (dealDamage(level, target, multiplier, suppressVanillaKnockback)) {
+				damaged = true;
+				applyLightKnockback(target, knockbackStrength);
+			}
+		}
+		if (damaged) grantAttackZanshin(level.getGameTime());
+		level.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+				SoundSource.PLAYERS, 0.55F, angle > 100.0 ? 0.88F : 1.08F);
+		Vec3 particle = this.position().add(facing(this.yBodyRot).scale(radius * 0.65)).add(0.0, 1.0, 0.0);
+		level.sendParticles(ParticleTypes.SWEEP_ATTACK, particle.x, particle.y, particle.z, 1, 0.15, 0.15, 0.15, 0.0);
+	}
+
+	private void performStabFirstHit(ServerLevel level, long now) {
+		this.stabTargets.clear();
+		boolean damaged = false;
+		for (LivingEntity target : targetsInStabCapsule(level, this.stabYaw)) {
+			Vec3 stored = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
+			if (dealDamage(level, target, 1.5F,
+					ModDamageTypes1211.source(level, ModDamageTypes1211.SAMURAI_STAB, this))) {
+				damaged = true;
+				this.stabTargets.put(target.getUUID(), stored);
+				PINNED_UNTIL.put(target.getUUID(), now + 8L);
+				PINNED_CENTERS.put(target.getUUID(), stored);
+				freezePinnedTarget(target, stored);
+			}
+		}
+		if (damaged) grantAttackZanshin(now);
+		level.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
+				SoundSource.PLAYERS, 0.65F, 0.92F);
+	}
+
+	private void performStabSecondHit(ServerLevel level) {
+		boolean damaged = false;
+		for (Map.Entry<UUID, Vec3> entry : this.stabTargets.entrySet()) {
+			LivingEntity target = resolveLiving(level, entry.getKey());
+			Vec3 bloodPosition = target != null ? target.position().add(0.0, target.getBbHeight() * 0.55, 0.0) : entry.getValue();
+			if (target != null && target.isAlive() && this.canAttack(target) && dealDamage(level, target, 3.0F,
+					ModDamageTypes1211.source(level, ModDamageTypes1211.SAMURAI_STAB, this))) {
+				damaged = true;
+				applyLightKnockback(target, 0.32);
+			}
+			PINNED_UNTIL.remove(entry.getKey());
+			PINNED_CENTERS.remove(entry.getKey());
+			level.sendParticles(BLOOD, bloodPosition.x, bloodPosition.y, bloodPosition.z,
+					12, 0.28, 0.35, 0.28, 0.03);
+		}
+		if (damaged) grantAttackZanshin(level.getGameTime());
+		level.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT,
+				SoundSource.PLAYERS, 0.75F, 0.78F);
+	}
+
+	private boolean dealDamage(ServerLevel level, LivingEntity target, float multiplier) {
+		return dealDamage(level, target, multiplier, false);
+	}
+
+	private boolean dealDamage(
+			ServerLevel level,
+			LivingEntity target,
+			float multiplier,
+			boolean suppressVanillaKnockback
+	) {
+		DamageSource source = suppressVanillaKnockback
+				? ModDamageTypes1211.source(level, ModDamageTypes1211.SAMURAI_FIRST_SLASH, this)
+				: level.damageSources().mobAttack(this);
+		return dealDamage(level, target, multiplier, source);
+	}
+
+	private boolean dealDamage(
+			ServerLevel level,
+			LivingEntity target,
+			float multiplier,
+			DamageSource source
+	) {
+		if (!target.isAlive() || !this.canAttack(target)) return false;
+		float previousHealth = target.getHealth();
+		float damage = (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE) * multiplier;
+		boolean hurt = target.hurt(source, damage);
+		return hurt && target.getHealth() < previousHealth;
+	}
+
+	private void grantAttackZanshin(long now) {
+		if (!skillEnabled(SKILL_ZANSHIN)) return;
+		this.zanshinBonusUntil = now + ZANSHIN_ATTACK_BONUS_TICKS;
+	}
+
+	private List<LivingEntity> targetsInSector(ServerLevel level, double radius, double angleDegrees) {
+		Vec3 forward = facing(this.yBodyRot);
+		double cosine = Math.cos(Math.toRadians(angleDegrees * 0.5));
+		return level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(radius, 2.0, radius), target -> {
+			if (!isValidCombatEnemy(target) || !this.hasLineOfSight(target)) return false;
+			Vec3 delta = target.position().subtract(this.position()).multiply(1.0, 0.0, 1.0);
+			double horizontal = delta.length();
+			if (horizontal > radius + target.getBbWidth() * 0.5 || horizontal < 1.0E-5) return false;
+			return forward.dot(delta.scale(1.0 / horizontal)) >= cosine;
+		}).stream().sorted(Comparator.comparingDouble(this::distanceToSqr)).toList();
+	}
+
+	private List<LivingEntity> targetsInStabCapsule(ServerLevel level, float yaw) {
+		Vec3 start = this.position().add(0.0, this.getBbHeight() * 0.55, 0.0);
+		Vec3 end = start.add(facing(yaw).scale(STAB_CAPSULE_LENGTH));
+		AABB search = this.getBoundingBox().expandTowards(facing(yaw).scale(STAB_CAPSULE_LENGTH)).inflate(0.75, 1.0, 0.75);
+		return level.getEntitiesOfClass(LivingEntity.class, search, target -> {
+			if (!isValidCombatEnemy(target) || !this.hasLineOfSight(target)) return false;
+			Vec3 point = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
+			double allowance = STAB_CAPSULE_RADIUS + target.getBbWidth() * 0.5;
+			return distanceToSegmentSqr(point, start, end) <= allowance * allowance;
+		}).stream().sorted(Comparator.comparingDouble(target -> projectionAlong(
+				target.position().add(0.0, target.getBbHeight() * 0.5, 0.0), start, end))).toList();
+	}
+
+	@Override
+	public boolean hurt(DamageSource source, float damage) {
+		if (!(this.level() instanceof ServerLevel level)) return false;
+		Entity attacker = source.getEntity();
+		if (attacker == this.getOwner()
+				|| attacker instanceof EchoWarriorEntity1211 echo && echo.ownerEntity() == this.getOwner()) return false;
+		long now = level.getGameTime();
+		if (action() == ACTION_DASH_FORWARD && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
+
+		if (isEligibleDodgeEvent(level, source, damage)) {
+			float chance = zanshinChance(now);
+			if (chance > 0.0F && this.random.nextFloat() < chance) {
+				onSuccessfulDodge(level, source, now);
+				return false;
+			}
+		}
+
+		float previousHealth = this.getHealth();
+		boolean wasIdle = action() == ACTION_NONE;
+		boolean hurt = super.hurt(source, damage);
+		if (hurt && this.getHealth() < previousHealth) {
+			LivingEntity livingAttacker = attacker instanceof LivingEntity living ? living : null;
+			if (wasIdle) {
+				setAction(ACTION_HURT, now, HURT_TICKS, Long.MAX_VALUE, 1.0F, HURT_TRIGGER);
+			}
+			if (livingAttacker != null && canProtectAgainst(livingAttacker)) {
+				this.creeperTargeting.authorizeReactive(this, livingAttacker, now);
+				BrainUtils.setTargetOfEntity(this, livingAttacker);
+			}
+			this.visualBehavior.onHurt(now, livingAttacker);
+		}
+		this.reflectModuleMeleeDamage(level, source, previousHealth);
+		return hurt;
+	}
+
+	private boolean isEligibleDodgeEvent(ServerLevel level, DamageSource source, float damage) {
+		if (damage <= 0.0F || this.isDeadOrDying() || this.isInvulnerableTo(source)) return false;
+		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
+		if (this.invulnerableTime > 10 && !source.is(DamageTypeTags.BYPASSES_COOLDOWN) && damage <= this.lastHurt) return false;
+		return !source.is(DamageTypes.IN_FIRE)
+				&& !source.is(DamageTypes.CAMPFIRE)
+				&& !source.is(DamageTypes.ON_FIRE)
+				&& !source.is(DamageTypes.LAVA)
+				&& !source.is(DamageTypes.HOT_FLOOR)
+				&& !source.is(DamageTypes.IN_WALL)
+				&& !source.is(DamageTypes.CRAMMING)
+				&& !source.is(DamageTypes.DROWN)
+				&& !source.is(DamageTypes.STARVE)
+				&& !source.is(DamageTypes.FALL)
+				&& !source.is(DamageTypes.FLY_INTO_WALL)
+				&& !source.is(DamageTypes.FELL_OUT_OF_WORLD)
+				&& !source.is(DamageTypes.MAGIC)
+				&& !source.is(DamageTypes.WITHER)
+				&& !source.is(DamageTypes.DRY_OUT)
+				&& !source.is(DamageTypes.FREEZE)
+				&& !source.is(DamageTypes.OUTSIDE_BORDER)
+				&& !source.is(DamageTypes.GENERIC_KILL)
+				&& !source.is(ModDamageTypes1211.BLEEDING)
+				&& !source.is(ModDamageTypes1211.OBSIDIAN_WOUND);
+	}
+
+	private float zanshinChance(long now) {
+		if (!skillEnabled(SKILL_ZANSHIN)) return 0.0F;
+		float denominator = Math.max(1.0F, this.getMaxHealth() - 1.0F);
+		float missingHealthRatio = Math.clamp(
+				(this.getMaxHealth() - this.getHealth()) / denominator, 0.0F, 1.0F);
+		float base = ZANSHIN_BASE_MIN
+				+ missingHealthRatio * (ZANSHIN_BASE_MAX - ZANSHIN_BASE_MIN);
+		float bonus = now < this.zanshinBonusUntil ? ZANSHIN_ATTACK_BONUS : 0.0F;
+		return Math.min(ZANSHIN_FINAL_CAP, base + bonus);
+	}
+
+	private void onSuccessfulDodge(ServerLevel level, DamageSource source, long now) {
+		ItemStack relic = currentRelic();
+		if (skillEnabled(SKILL_FUMIKOMI) && !relic.isEmpty()
+				&& EchoRelicState1211.addFumikomiCharge(relic, now)) persistCurrentRelic(relic);
+		advanceDodgedProjectile(source);
+		if (action() == ACTION_NONE) {
+			startDashBackward(level, source, now);
+		} else if (action() == ACTION_DASH_BACKWARD) {
+			emitZanshinResidual(level, this.position(), this.dashBackwardDirection, true);
+		} else {
+			Vec3 direction = selectPhantomDodgeDirection(level, source);
+			emitZanshinResidual(level, this.position(), direction, true);
+		}
+		level.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_NODAMAGE,
+				SoundSource.PLAYERS, 0.55F, 1.55F);
+	}
+
+	@Override
+	public void onAccessoryDodge(DamageSource source) {
+		if (this.level() instanceof ServerLevel level) onSuccessfulDodge(level, source, level.getGameTime());
+	}
+
+	private void advanceDodgedProjectile(DamageSource source) {
+		if (!(source.getDirectEntity() instanceof Projectile projectile)) return;
+		Vec3 velocity = projectile.getDeltaMovement();
+		if (velocity.lengthSqr() < 1.0E-5) return;
+		Vec3 advanced = this.position().add(velocity.normalize().scale(this.getBbWidth() + 1.0));
+		projectile.setPos(advanced);
+	}
+
+	private Vec3 selectPhantomDodgeDirection(ServerLevel level, DamageSource source) {
+		Vec3 backward = this.getLookAngle().reverse().multiply(1.0, 0.0, 1.0).normalize();
+		Vec3 left = new Vec3(-backward.z, 0.0, backward.x);
+		Vec3 right = left.reverse();
+		Vec3 sourcePosition = source.getSourcePosition();
+		Vec3 best = backward;
+		double bestScore = Double.NEGATIVE_INFINITY;
+		for (Vec3 candidate : List.of(backward, left, right)) {
+			if (safeSpecialDestination(level, this.position().add(candidate.scale(1.05))) == null) continue;
+			double score = sourcePosition == null ? candidate.dot(backward)
+					: this.position().add(candidate.scale(1.05)).distanceToSqr(sourcePosition);
+			if (score > bestScore) {
+				bestScore = score;
+				best = candidate;
+			}
+		}
+		return best;
+	}
+
+	private Vec3 dodgeDirectionAwayFrom(DamageSource source) {
+		Vec3 sourcePosition = source.getSourcePosition();
+		if (sourcePosition == null) return this.getLookAngle().reverse().multiply(1.0, 0.0, 1.0).normalize();
+		Vec3 away = this.position().subtract(sourcePosition).multiply(1.0, 0.0, 1.0);
+		return away.horizontalDistanceSqr() < 1.0E-5 ? Vec3.ZERO : away.normalize();
+	}
+
+	private void emitZanshinResidual(ServerLevel level, Vec3 origin, Vec3 direction, boolean phantom) {
+		syncAfterimageEvent(phantom ? AFTERIMAGE_ZANSHIN_PHANTOM : AFTERIMAGE_ZANSHIN_REAL, origin, direction);
+		for (int stage = 0; stage < 3; stage++) {
+			double distance = phantom ? 0.35 * (stage + 1) : 0.18 * stage;
+			Vec3 point = origin.add(direction.scale(distance)).add(0.0, 0.95, 0.0);
+			if (safeSpecialDestination(level, point.add(0.0, -0.95, 0.0)) == null && phantom) continue;
+			if (isAfterimageNeutral()) {
+				level.sendParticles(ParticleTypes.CRIT, point.x, point.y, point.z, 5 - stage,
+						0.18, 0.45, 0.18, 0.01);
+			} else {
+				level.sendParticles(CYAN_AFTERIMAGE, point.x, point.y, point.z, 6 - stage,
+						0.20, 0.50, 0.20, 0.01);
+			}
+		}
+	}
+
+	private void emitFumikomiAfterimage(ServerLevel level, Vec3 origin) {
+		syncAfterimageEvent(AFTERIMAGE_FUMIKOMI, origin, facing(this.yBodyRot));
+		Vec3 point = origin.add(0.0, 0.95, 0.0);
+		if (isAfterimageNeutral()) {
+			level.sendParticles(ParticleTypes.CRIT, point.x, point.y, point.z, 8, 0.22, 0.52, 0.22, 0.01);
+		} else {
+			level.sendParticles(GOLD_AFTERIMAGE, point.x, point.y, point.z, 9, 0.22, 0.52, 0.22, 0.01);
+		}
+		level.sendParticles(ParticleTypes.CLOUD, origin.x, origin.y + 0.08, origin.z, 3, 0.18, 0.04, 0.18, 0.01);
+		level.playSound(null, this.blockPosition(), SoundEvents.WIND_CHARGE_THROW,
+				SoundSource.PLAYERS, 0.28F, 1.35F);
+	}
+
+	private void syncAfterimageEvent(byte kind, Vec3 origin, Vec3 direction) {
+		Vec3 horizontal = direction.multiply(1.0, 0.0, 1.0);
+		if (horizontal.horizontalDistanceSqr() > 1.0E-5) horizontal = horizontal.normalize();
+		this.entityData.set(AFTERIMAGE_KIND, kind);
+		this.entityData.set(AFTERIMAGE_X, (float)origin.x);
+		this.entityData.set(AFTERIMAGE_Y, (float)origin.y);
+		this.entityData.set(AFTERIMAGE_Z, (float)origin.z);
+		this.entityData.set(AFTERIMAGE_DIRECTION_X, (float)horizontal.x);
+		this.entityData.set(AFTERIMAGE_DIRECTION_Z, (float)horizontal.z);
+		this.entityData.set(AFTERIMAGE_YAW, this.yBodyRot);
+		this.entityData.set(AFTERIMAGE_SEQUENCE, this.entityData.get(AFTERIMAGE_SEQUENCE) + 1);
+	}
+
+	private boolean canPrecheckDash(ServerLevel level, LivingEntity target) {
+		Vec3 delta = target.position().subtract(this.position()).multiply(1.0, 0.0, 1.0);
+		double total = Math.max(0.0, delta.length() - FUMIKOMI_STOP_RANGE);
+		if (total <= 0.0 || delta.horizontalDistanceSqr() < 1.0E-5) return false;
+		Vec3 direction = delta.normalize();
+		Vec3 cursor = this.position();
+		for (double travelled = 0.5; travelled <= total + 1.0E-5; travelled += 0.5) {
+			Vec3 desired = cursor.add(direction.scale(Math.min(0.5, total - travelled + 0.5)));
+			Vec3 safe = safeSpecialDestination(level, desired);
+			if (safe == null) return false;
+			cursor = safe;
+		}
+		return true;
+	}
+
+	private boolean moveSpecial(ServerLevel level, Vec3 horizontalDelta) {
+		Vec3 safe = safeSpecialDestination(level, this.position().add(horizontalDelta));
+		if (safe == null) return false;
+		double verticalVelocity = this.getDeltaMovement().y;
+		this.setPos(safe.x, safe.y, safe.z);
+		this.setDeltaMovement(0.0, verticalVelocity, 0.0);
+		return true;
+	}
+
+	private void beginAttackTracking() {
+		this.attackTrackingTravelled = 0.0;
+		this.attackTrackingStartYaw = this.yBodyRot;
+		this.attackTrackingStopped = false;
+	}
+
+	private void tickAttackTracking(
+			ServerLevel level,
+			UUID targetUuid,
+			double speed,
+			double travelLimit,
+			long now
+	) {
+		if (this.attackTrackingStopped || targetUuid == null) return;
+		LivingEntity target = resolveLiving(level, targetUuid);
+		if (target == null || !target.isAlive() || !this.canAttack(target) || !this.hasLineOfSight(target)) {
+			this.attackTrackingStopped = true;
+			return;
+		}
+
+		float desiredYaw = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		float totalTurn = Mth.wrapDegrees(desiredYaw - this.attackTrackingStartYaw);
+		if (Math.abs(totalTurn) > ATTACK_TRACKING_TOTAL_TURN) {
+			this.attackTrackingStopped = true;
+			return;
+		}
+		float turn = Mth.clamp(Mth.wrapDegrees(desiredYaw - this.yBodyRot),
+				-ATTACK_TRACKING_TURN_PER_TICK, ATTACK_TRACKING_TURN_PER_TICK);
+		float yaw = this.yBodyRot + turn;
+		this.setYRot(yaw);
+		this.setYBodyRot(yaw);
+		this.setYHeadRot(yaw);
+
+		if (this.attackTrackingTravelled >= travelLimit) return;
+		Vec3 delta = target.position().subtract(this.position()).multiply(1.0, 0.0, 1.0);
+		double distance = delta.length();
+		if (distance <= ATTACK_TRACKING_STOP_RANGE || distance < 1.0E-5) return;
+		double step = Math.min(speed, Math.min(
+				travelLimit - this.attackTrackingTravelled,
+				distance - ATTACK_TRACKING_STOP_RANGE));
+		if (step <= 1.0E-5) return;
+
+		Vec3 before = this.position();
+		if (!moveSpecial(level, delta.scale(step / distance))) {
+			this.attackTrackingStopped = true;
+			return;
+		}
+		this.attackTrackingTravelled += horizontalDistance(before, this.position());
+		if (((now - actionStartedAt()) & 1L) == 0L) {
+			level.sendParticles(ParticleTypes.CLOUD, before.x, before.y + 0.08, before.z,
+					1, 0.10, 0.025, 0.10, 0.004);
+		}
+	}
+
+	private Vec3 safeSpecialDestination(ServerLevel level, Vec3 desired) {
+		for (double dy : new double[] {0.0, 1.0, -1.0}) {
+			Vec3 candidate = new Vec3(desired.x, desired.y + dy, desired.z);
+			AABB moved = this.getBoundingBox().move(candidate.subtract(this.position()));
+			if (!level.noCollision(this, moved) || !hasSafeSupport(level, candidate)) continue;
+			return candidate;
+		}
+		return null;
+	}
+
+	private static boolean hasSafeSupport(ServerLevel level, Vec3 candidate) {
+		BlockPos feet = BlockPos.containing(candidate);
+		BlockPos floor = feet.below();
+		return level.getBlockState(floor).isFaceSturdy(level, floor, Direction.UP)
+				&& level.getFluidState(feet).isEmpty()
+				&& level.getFluidState(feet.above()).isEmpty();
+	}
+
+	private void setAction(byte action, long now, int duration, long hitAt, float speed, String trigger) {
+		stopAllActionTriggers();
+		this.entityData.set(ACTION, action);
+		this.entityData.set(ACTION_STARTED_AT, now);
+		this.entityData.set(ACTION_ENDS_AT, now + duration);
+		this.entityData.set(ACTION_SPEED, speed);
+		this.actionHitAt = hitAt;
+		this.actionHitResolved = false;
+		stopMovementIntent();
+		this.triggerAnim(ACTION_CONTROLLER, trigger);
+	}
+
+	private void continueAction(byte action, long now, int duration, long hitAt, float speed) {
+		this.entityData.set(ACTION, action);
+		this.entityData.set(ACTION_STARTED_AT, now);
+		this.entityData.set(ACTION_ENDS_AT, now + duration);
+		this.entityData.set(ACTION_SPEED, speed);
+		this.actionHitAt = hitAt;
+		this.actionHitResolved = false;
+		stopMovementIntent();
+	}
+
+	private void finishAction(long now) {
+		byte previous = action();
+		if (previous == ACTION_STAB) releaseStabPins();
+		if (previous == ACTION_DASH_FORWARD || previous == ACTION_DASH_BACKWARD) setSpecialStepHeight(false);
+		if (previous == ACTION_DASH_FORWARD) this.fumikomiInternalCooldownUntil = now + FUMIKOMI_INTERNAL_COOLDOWN_TICKS;
+		stopAllActionTriggers();
+		this.entityData.set(ACTION, ACTION_NONE);
+		this.entityData.set(ACTION_STARTED_AT, 0L);
+		this.entityData.set(ACTION_ENDS_AT, 0L);
+		this.entityData.set(ACTION_SPEED, 1.0F);
+		this.actionHitAt = Long.MAX_VALUE;
+		this.actionHitResolved = false;
+		this.lockedTargetUuid = null;
+		this.secondSlashTargets.clear();
+		this.secondSlashPrimaryUuid = null;
+		this.dashTargetUuid = null;
+		this.dashBackwardDirection = Vec3.ZERO;
+		this.stabDirectionLocked = false;
+		this.stabTargets.clear();
+		this.attackTrackingTravelled = 0.0;
+		this.attackTrackingStopped = true;
+	}
+
+	private void stopAllActionTriggers() {
+		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_FIRST_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, ATTACK_RECOVER_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, STAB_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, DASH_FORWARD_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, DASH_BACKWARD_TRIGGER);
+		this.stopTriggeredAnim(ACTION_CONTROLLER, HURT_TRIGGER);
+	}
+
+	private void releaseStabPins() {
+		for (UUID uuid : this.stabTargets.keySet()) {
+			PINNED_UNTIL.remove(uuid);
+			PINNED_CENTERS.remove(uuid);
+		}
+	}
+
+	private static void cleanupExpiredPins(long now) {
+		PINNED_UNTIL.entrySet().removeIf(entry -> {
+			if (entry.getValue() > now) return false;
+			PINNED_CENTERS.remove(entry.getKey());
+			return true;
+		});
+	}
+
+	public static boolean isTemporarilyPinned(LivingEntity entity) {
+		Long until = PINNED_UNTIL.get(entity.getUUID());
+		return until != null && entity.level().getGameTime() < until;
+	}
+
+	private static void freezePinnedTarget(LivingEntity target, Vec3 storedCenter) {
+		Vec3 center = PINNED_CENTERS.getOrDefault(target.getUUID(), storedCenter);
+		target.setPos(center.x, center.y - target.getBbHeight() * 0.5, center.z);
+		target.setDeltaMovement(Vec3.ZERO);
+		if (target instanceof net.minecraft.world.entity.Mob mob) {
+			mob.getNavigation().stop();
+			mob.setTarget(null);
+		}
+	}
+
+	private void setSpecialStepHeight(boolean enabled) {
+		var attribute = this.getAttribute(Attributes.STEP_HEIGHT);
+		if (attribute == null) return;
+		attribute.removeModifier(SPECIAL_STEP_ID);
+		if (enabled) attribute.addTransientModifier(SPECIAL_STEP);
+	}
+
+	private void stopMovementIntent() {
+		this.getNavigation().stop();
+		this.setSpeed(0.0F);
+		this.setXxa(0.0F);
+		this.setZza(0.0F);
+		this.setDeltaMovement(0.0, this.getDeltaMovement().y, 0.0);
+		BrainUtils.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.WALK_TARGET);
+	}
+
+	private void faceTargetImmediately(LivingEntity target) {
+		float yaw = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		this.setYRot(yaw);
+		this.setYBodyRot(yaw);
+		this.setYHeadRot(yaw);
+	}
+
+	private void turnToward(LivingEntity target, float maxDegrees) {
+		float desired = yawToward(this.getX(), this.getZ(), target.getX(), target.getZ());
+		float delta = Mth.wrapDegrees(desired - this.yBodyRot);
+		float yaw = this.yBodyRot + Mth.clamp(delta, -maxDegrees, maxDegrees);
+		this.setYRot(yaw);
+		this.setYBodyRot(yaw);
+		this.setYHeadRot(yaw);
+	}
+
+	private void applyLightKnockback(LivingEntity target, double strength) {
+		Vec3 direction = target.position().subtract(this.position()).multiply(1.0, 0.0, 1.0);
+		if (direction.horizontalDistanceSqr() > 1.0E-5) target.knockback(strength, -direction.x, -direction.z);
+	}
+
+	private LivingEntity selectProtectiveTarget(LivingEntity owner) {
+		long now = this.level().getGameTime();
+		this.creeperTargeting.validate(this, now, this::canProtectAgainst);
+		LivingEntity ownAttacker = this.getLastHurtByMob();
+		if (isRecentWithin(this, this.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory1211.GRACE_TICKS)
+				&& canProtectAgainst(ownAttacker)) {
+			this.creeperTargeting.authorizeReactive(this, ownAttacker, now);
+			this.targetVisibility.observe(this, ownAttacker, now);
+			return ownAttacker;
+		}
+		if (this.alertMode == EchoRelicState1211.AlertMode.PEACEFUL) return null;
+		LivingEntity ownerAttacker = owner.getLastHurtByMob();
+		if (isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory1211.GRACE_TICKS)
+				&& canProtectAgainst(ownerAttacker)) {
+			this.creeperTargeting.authorizeReactive(this, ownerAttacker, now);
+			this.targetVisibility.observe(this, ownerAttacker, now);
+			return ownerAttacker;
+		}
+		LivingEntity ownerTarget = owner.getLastHurtMob();
+		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory1211.GRACE_TICKS)
+				&& canProtectAgainst(ownerTarget)) {
+			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
+			this.targetVisibility.observe(this, ownerTarget, now);
+			return ownerTarget;
+		}
+		LivingEntity current = this.getTarget();
+		if (canProtectAgainst(current) && this.creeperTargeting.canTarget(this, current, now, false)
+				&& this.targetVisibility.canRetain(this, current, now)) return current;
+		if (this.alertMode == EchoRelicState1211.AlertMode.AGGRESSIVE) {
+			double range = EchoAccessorySystem1211.proactiveRange(this, 16.0,
+					this.activityMode == EchoRelicState1211.ActivityMode.WAIT);
+			AABB box = this.activityMode == EchoRelicState1211.ActivityMode.WAIT
+					? new AABB(this.activityAnchor.x - range, this.activityAnchor.y - 4.0, this.activityAnchor.z - range,
+						this.activityAnchor.x + range, this.activityAnchor.y + 4.0, this.activityAnchor.z + range)
+					: this.getBoundingBox().inflate(range);
+			LivingEntity selected = this.level().getEntitiesOfClass(Monster.class, box,
+					candidate -> canProtectAgainst(candidate)
+							&& this.creeperTargeting.canTarget(this, candidate, now,
+									EchoAccessorySystem1211.has(this, ModContent1211.CAT_BELL_FISH_CHARM_ACCESSORY))
+							&& this.hasLineOfSight(candidate)).stream()
+					.min(Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
+			this.targetVisibility.observe(this, selected, now);
+			return selected;
+		}
+		return null;
+	}
+
+	private void applySelectedCombatTarget(LivingEntity target) {
+		if (target != null) {
+			BrainUtils.setTargetOfEntity(this, target);
+			return;
+		}
+		this.setTarget(null);
+		this.targetVisibility.clear();
+		BrainUtils.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
+	}
+
+	private static boolean isRecent(LivingEntity source, int timestamp) {
+		return timestamp > 0 && source.tickCount - timestamp <= 100;
+	}
+
+	private static boolean isRecentWithin(LivingEntity source, int timestamp, int ticks) {
+		return timestamp > 0 && source.tickCount - timestamp <= ticks;
+	}
+
+	private boolean canProtectAgainst(LivingEntity target) {
+		if (target == null || !target.isAlive() || this.distanceToSqr(target) > 1024.0 || !this.canAttack(target)) return false;
+		if (this.activityMode == EchoRelicState1211.ActivityMode.WAIT) return target.position().distanceToSqr(this.activityAnchor) <= 64.0;
+		if (this.activityMode == EchoRelicState1211.ActivityMode.WANDER) return target.position().distanceToSqr(this.activityAnchor) <= 256.0;
+		return true;
+	}
+
+	private boolean isValidCombatEnemy(LivingEntity target) {
+		if (!this.canAttack(target)) return false;
+		if (target == this.getTarget() || target instanceof Monster) return true;
+		if (target == this.getLastHurtByMob() && isRecent(this, this.getLastHurtByMobTimestamp())) return true;
+		LivingEntity owner = this.getOwner();
+		return owner != null && (
+				target == owner.getLastHurtByMob() && isRecent(owner, owner.getLastHurtByMobTimestamp())
+						|| target == owner.getLastHurtMob() && isRecent(owner, owner.getLastHurtMobTimestamp())
+		);
+	}
+
+	private void enforceActivityBoundary(LivingEntity owner) {
+		LivingEntity target = this.getTarget();
+		Vec3 center = this.activityMode == EchoRelicState1211.ActivityMode.FOLLOW ? owner.position() : this.activityAnchor;
+		double giveUp = this.activityMode == EchoRelicState1211.ActivityMode.WAIT ? 8.0
+				: this.activityMode == EchoRelicState1211.ActivityMode.WANDER ? 24.0 : 32.0;
+		if (target != null && target.position().distanceToSqr(center) > giveUp * giveUp) {
+			BrainUtils.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
+			this.setTarget(null);
+		}
+	}
+
+	@Override
+	public boolean canAttack(LivingEntity target) {
+		LivingEntity owner = this.getOwner();
+		if (target == this || target == owner || target.isAlliedTo(this) || owner != null && owner.isAlliedTo(target)) return false;
+		if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
+		if (target instanceof EchoWarriorEntity1211 echo && owner != null && owner == echo.ownerEntity()) return false;
+		if (target instanceof OwnableEntity ownable && owner != null && ownable.getOwner() == owner) return false;
+		return super.canAttack(target);
+	}
+
+	@Override
+	public boolean isAlliedTo(Entity other) {
+		LivingEntity owner = this.getOwner();
+		if (other == owner) return true;
+		if (other instanceof EchoWarriorEntity1211 echo && owner != null && owner == echo.ownerEntity()) return true;
+		return owner != null && owner.isAlliedTo(other) || super.isAlliedTo(other);
+	}
+
+	@Override
+	public boolean isPushable() {
+		return action() != ACTION_DASH_FORWARD && action() != ACTION_DASH_BACKWARD && super.isPushable();
+	}
+
+	private void tickNaturalHealing(ServerLevel level, ItemStack relic) {
+		long now = level.getGameTime();
+		if (this.getHealth() >= this.getMaxHealth() || this.getTarget() != null || action() != ACTION_NONE
+				|| this.tickCount - this.getLastHurtByMobTimestamp() < 100 || now - this.lastNaturalHealAt < 40L) return;
+		if (this.summonerUuid == null
+				|| !EchoBindingSystem1211.consumeFractionalFuel(level, this.summonerUuid, SummonerFuel1211.healCost(relic))) return;
+		this.heal(1.0F);
+		this.lastNaturalHealAt = now;
+		level.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 2, 0.15, 0.3, 0.15, 0.0);
+	}
+
+	@Override
+	public void bindTo(Player owner, UUID summonerUuid) {
+		this.ownerUuid = owner.getUUID();
+		this.summonerUuid = summonerUuid;
+		this.activityAnchor = this.position();
+		this.visualBehavior.bindTo(owner);
+	}
+
+	@Override
+	public void applyRelicState(ItemStack relic, boolean resetAnchor) {
+		if (relic.isEmpty()) return;
+		EchoRelicState1211.ActivityMode previousActivity = this.activityMode;
+		EchoRelicState1211.AlertMode previousAlert = this.alertMode;
+		int previousSkills = this.enabledSkills;
+		this.activityMode = EchoRelicState1211.activityMode(relic);
+		this.alertMode = EchoRelicState1211.alertMode(relic);
+		this.enabledSkills = EchoRelicState1211.enabledSkills(relic);
+		if ((previousSkills & 1 << SKILL_ZANSHIN) != 0 && !skillEnabled(SKILL_ZANSHIN)) {
+			this.zanshinBonusUntil = 0L;
+		}
+		if (previousActivity != this.activityMode || previousAlert != this.alertMode || resetAnchor) {
+			this.setTarget(null);
+			this.targetVisibility.clear();
+			BrainUtils.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
+		}
+		if (previousActivity != this.activityMode || resetAnchor) EchoActivityMovement1211.reset(this);
+		if (resetAnchor || this.activityAnchor == Vec3.ZERO) this.activityAnchor = this.position();
+		double oldMaximum = this.getMaxHealth();
+		this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(EchoRelicState1211.maximumHealth(relic));
+		this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(EchoRelicState1211.attackDamage(relic));
+		this.getAttribute(Attributes.ARMOR).setBaseValue(EchoRelicState1211.armor(relic));
+		this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(EchoRelicState1211.movementSpeed(relic));
+		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(EchoRelicState1211.knockbackResistance(relic));
+		this.applyModuleState();
+		if (this.getHealth() > this.getMaxHealth()) this.setHealth(this.getMaxHealth());
+	}
+
+	@Override
+	public void writeMigrationState(CompoundTag tag) {
+		tag.putLong("SamuraiLastNaturalHealAt", this.lastNaturalHealAt);
+		tag.putLong("SamuraiZanshinBonusUntil", this.zanshinBonusUntil);
+	}
+
+	@Override
+	public void readMigrationState(CompoundTag tag) {
+		this.lastNaturalHealAt = tag.getLong("SamuraiLastNaturalHealAt");
+		this.zanshinBonusUntil = tag.getLong("SamuraiZanshinBonusUntil");
+	}
+
+	private ItemStack currentRelic() {
+		if (!(this.level() instanceof ServerLevel level) || this.summonerUuid == null) return ItemStack.EMPTY;
+		return EchoBindingSystem1211.relic(level, this.summonerUuid);
+	}
+
+	private void persistCurrentRelic(ItemStack relic) {
+		if (this.level() instanceof ServerLevel level && this.summonerUuid != null) {
+			EchoBindingSystem1211.persistRelic(level, this.summonerUuid, relic);
+		}
+	}
+
+	public byte action() { return this.entityData.get(ACTION); }
+	public long actionStartedAt() { return this.entityData.get(ACTION_STARTED_AT); }
+	public long actionEndsAt() { return this.entityData.get(ACTION_ENDS_AT); }
+	public float actionAnimationSpeed() { return this.entityData.get(ACTION_SPEED); }
+	public boolean isAfterimageNeutral() { return this.entityData.get(AFTERIMAGE_NEUTRAL); }
+	public boolean isAfterimageAdvanced() { return this.entityData.get(AFTERIMAGE_ADVANCED); }
+	public boolean isAfterimageOutline() { return this.entityData.get(AFTERIMAGE_OUTLINE); }
+	public int afterimageSequence() { return this.entityData.get(AFTERIMAGE_SEQUENCE); }
+	public byte afterimageKind() { return this.entityData.get(AFTERIMAGE_KIND); }
+	public Vec3 afterimageOrigin() { return new Vec3(
+			this.entityData.get(AFTERIMAGE_X), this.entityData.get(AFTERIMAGE_Y), this.entityData.get(AFTERIMAGE_Z)); }
+	public Vec3 afterimageDirection() { return new Vec3(
+			this.entityData.get(AFTERIMAGE_DIRECTION_X), 0.0, this.entityData.get(AFTERIMAGE_DIRECTION_Z)); }
+	public float afterimageYaw() { return this.entityData.get(AFTERIMAGE_YAW); }
+	public Vec3 getSyncedAttentionPoint() {
+		return new Vec3(this.entityData.get(ATTENTION_X), this.entityData.get(ATTENTION_Y), this.entityData.get(ATTENTION_Z));
+	}
+	public Vec3 getSyncedEyeAttentionPoint() {
+		return new Vec3(this.entityData.get(EYE_ATTENTION_X), this.entityData.get(EYE_ATTENTION_Y), this.entityData.get(EYE_ATTENTION_Z));
+	}
+	@Override public byte getVisualReaction() { return this.entityData.get(VISUAL_REACTION); }
+	@Override public long getVisualReactionUntil() { return this.entityData.get(VISUAL_REACTION_UNTIL); }
+	public long getBlinkStart() { return this.entityData.get(BLINK_START); }
+	public byte getBlinkCount() { return this.entityData.get(BLINK_COUNT); }
+	public byte getCuriousTilt() { return this.entityData.get(CURIOUS_TILT); }
+	public int getVisualSequence() { return this.entityData.get(VISUAL_SEQUENCE); }
+	public long getAttentionStartedAt() { return this.entityData.get(ATTENTION_STARTED_AT); }
+	public long getCaughtReactionStart() { return this.entityData.get(CAUGHT_REACTION_START); }
+	@Override public void setVisualAttentionPoint(Vec3 point) {
+		this.entityData.set(ATTENTION_X, (float)point.x);
+		this.entityData.set(ATTENTION_Y, (float)point.y);
+		this.entityData.set(ATTENTION_Z, (float)point.z);
+	}
+	@Override public void setVisualEyeAttentionPoint(Vec3 point) {
+		this.entityData.set(EYE_ATTENTION_X, (float)point.x);
+		this.entityData.set(EYE_ATTENTION_Y, (float)point.y);
+		this.entityData.set(EYE_ATTENTION_Z, (float)point.z);
+	}
+	@Override public void setVisualReaction(byte reaction, long until) {
+		this.entityData.set(VISUAL_REACTION, reaction);
+		this.entityData.set(VISUAL_REACTION_UNTIL, until);
+	}
+	@Override public void setVisualBlink(long start, byte count) {
+		this.entityData.set(BLINK_START, start);
+		this.entityData.set(BLINK_COUNT, count);
+	}
+	@Override public void setVisualCuriousTilt(byte tilt) { this.entityData.set(CURIOUS_TILT, tilt); }
+	@Override public void bumpVisualSequence() { this.entityData.set(VISUAL_SEQUENCE, this.entityData.get(VISUAL_SEQUENCE) + 1); }
+	@Override public void setVisualAttentionStartedAt(long startedAt) { this.entityData.set(ATTENTION_STARTED_AT, startedAt); }
+	@Override public void setVisualCaughtReactionStart(long startedAt) { this.entityData.set(CAUGHT_REACTION_START, startedAt); }
+	@Override public float visualBodyYaw() { return this.yBodyRot; }
+	@Override public void turnVisualBodyToward(Vec3 point, float maxDegrees) {
+		float desiredYaw = yawToward(this.getX(), this.getZ(), point.x, point.z);
+		float delta = Mth.wrapDegrees(desiredYaw - this.yBodyRot);
+		this.yBodyRot += Mth.clamp(delta, -maxDegrees, maxDegrees);
+		this.setYRot(this.yBodyRot);
+	}
+	@Override public boolean isVisualCombatActive(long now) {
+		LivingEntity target = this.getTarget();
+		return action() != ACTION_NONE || target != null && target.isAlive();
+	}
+	public void setAfterimageNeutral(boolean neutral) { this.entityData.set(AFTERIMAGE_NEUTRAL, neutral); }
+	public void setAfterimageAdvanced(boolean advanced) {
+		this.entityData.set(AFTERIMAGE_ADVANCED, advanced);
+		if (!advanced) this.entityData.set(AFTERIMAGE_OUTLINE, false);
+	}
+	public void setAfterimageOutline(boolean outline) {
+		this.entityData.set(AFTERIMAGE_OUTLINE, outline && isAfterimageAdvanced());
+	}
+
+	@Override public LivingEntity livingEntity() { return this; }
+	@Override public EchoHeroType1211 heroType() { return EchoHeroType1211.JAPANESE_SAMURAI; }
+	@Override public boolean shouldFollowOwner() { return this.activityMode == EchoRelicState1211.ActivityMode.FOLLOW && action() == ACTION_NONE; }
+	@Override public boolean isFollowMovementSuppressed() { return action() != ACTION_NONE || this.visualBehavior.ownsMovement(); }
+	@Override public UUID getOwnerUUID() {
+		if (this.level() instanceof ServerLevel level && this.summonerUuid != null) {
+			return EchoBindingSystem1211.controllerId(level, this.summonerUuid);
+		}
+		return this.ownerUuid;
+	}
+	@Override public UUID getSummonerId() { return this.summonerUuid; }
+	@Override public long getBindingGeneration() { return this.bindingGeneration; }
+	@Override public void setBindingGeneration(long generation) { this.bindingGeneration = Math.max(0L, generation); }
+
+	@Override
+	public void recallTo(Player player) {
+		finishAction(this.level().getGameTime());
+		if (!EchoSafeTeleport1211.teleportBesideOwner(this, player)) return;
+		if (this.level() instanceof ServerLevel level) {
+			level.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 12, 0.25, 0.5, 0.25, 0.01);
+			level.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.45F, 1.45F);
+		}
+	}
+
+	@Override
+	public void dismiss() {
+		if (this.isRemoved()) return;
+		finishAction(this.level().getGameTime());
+		if (this.level() instanceof ServerLevel level) {
+			level.sendParticles(ParticleTypes.SOUL, this.getX(), this.getY() + 1.0, this.getZ(), 24, 0.35, 0.7, 0.35, 0.02);
+			level.playSound(null, this.blockPosition(), SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 0.7F, 0.75F);
+		}
+		this.discard();
+	}
+
+	@Override
+	public void remove(Entity.RemovalReason reason) {
+		releaseStabPins();
+		setSpecialStepHeight(false);
+		super.remove(reason);
+	}
+
+	@Override
+	public void addAdditionalSaveData(CompoundTag tag) {
+		super.addAdditionalSaveData(tag);
+		if (this.ownerUuid != null) tag.putUUID("EchoOwner", this.ownerUuid);
+		if (this.summonerUuid != null) tag.putUUID("SummonerUuid", this.summonerUuid);
+		tag.putLong("BindingGeneration", this.bindingGeneration);
+		tag.putInt("ActivityMode", this.activityMode.ordinal());
+		tag.putInt("AlertMode", this.alertMode.ordinal());
+		tag.putInt("EnabledSkills", this.enabledSkills);
+		tag.putDouble("ActivityAnchorX", this.activityAnchor.x);
+		tag.putDouble("ActivityAnchorY", this.activityAnchor.y);
+		tag.putDouble("ActivityAnchorZ", this.activityAnchor.z);
+		tag.putLong("ZanshinBonusUntil", this.zanshinBonusUntil);
+		tag.putLong("LastNaturalHealAt", this.lastNaturalHealAt);
+	}
+
+	@Override
+	public void readAdditionalSaveData(CompoundTag tag) {
+		super.readAdditionalSaveData(tag);
+		this.ownerUuid = tag.hasUUID("EchoOwner") ? tag.getUUID("EchoOwner") : null;
+		this.summonerUuid = tag.hasUUID("SummonerUuid") ? tag.getUUID("SummonerUuid") : null;
+		this.bindingGeneration = tag.getLong("BindingGeneration");
+		this.activityMode = EchoRelicState1211.ActivityMode.byOrdinal(tag.getInt("ActivityMode"));
+		this.alertMode = EchoRelicState1211.AlertMode.byOrdinal(tag.contains("AlertMode") ? tag.getInt("AlertMode") : 1);
+		this.enabledSkills = tag.contains("EnabledSkills") ? tag.getInt("EnabledSkills")
+				: EchoHeroType1211.JAPANESE_SAMURAI.allSkillsEnabledMask();
+		this.activityAnchor = new Vec3(tag.contains("ActivityAnchorX") ? tag.getDouble("ActivityAnchorX") : this.getX(),
+				tag.contains("ActivityAnchorY") ? tag.getDouble("ActivityAnchorY") : this.getY(),
+				tag.contains("ActivityAnchorZ") ? tag.getDouble("ActivityAnchorZ") : this.getZ());
+		this.zanshinBonusUntil = tag.getLong("ZanshinBonusUntil");
+		this.lastNaturalHealAt = tag.getLong("LastNaturalHealAt");
+	}
+
+	@Override protected boolean shouldDropLoot() { return false; }
+
+	@Override
+	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+		controllers.add(new AnimationController<JapaneseSamuraiEchoEntity1211>(this, "movement", 3, this::selectMovementAnimation));
+		controllers.add(new AnimationController<JapaneseSamuraiEchoEntity1211>(this, ACTION_CONTROLLER, 0, test -> {
+			test.setControllerSpeed(test.getAnimatable().action() == ACTION_STAB
+					? 1.0F : test.getAnimatable().actionAnimationSpeed());
+			return PlayState.STOP;
+		})
+				.triggerableAnim(ATTACK_FIRST_TRIGGER, ATTACK_FIRST)
+				.triggerableAnim(ATTACK_RECOVER_TRIGGER, ATTACK_RECOVER)
+				.triggerableAnim(STAB_TRIGGER, STAB)
+				.triggerableAnim(DASH_FORWARD_TRIGGER, DASH_FORWARD)
+				.triggerableAnim(DASH_BACKWARD_TRIGGER, DASH_BACKWARD)
+				.triggerableAnim(HURT_TRIGGER, HURT));
+	}
+
+	private PlayState selectMovementAnimation(AnimationState<JapaneseSamuraiEchoEntity1211> test) {
+		return test.setAndContinue(test.getAnimatable().action() == ACTION_NONE && test.isMoving() ? WALK : IDLE);
+	}
+
+	private boolean skillEnabled(int skill) {
+		return (this.enabledSkills & 1 << skill) != 0;
+	}
+
+	@Override public AnimatableInstanceCache getAnimatableInstanceCache() { return this.animationCache; }
+
+	private static int scaledAttackTicks(int baseTicks, int interval) {
+		return Math.max(1, (int)Math.ceil(baseTicks * interval / (double)BASE_ATTACK_CYCLE_TICKS));
+	}
+
+	private static LivingEntity resolveLiving(ServerLevel level, UUID uuid) {
+		if (uuid == null) return null;
+		Entity entity = level.getEntity(uuid);
+		return entity instanceof LivingEntity living ? living : null;
+	}
+
+	private static Vec3 facing(float yaw) {
+		double radians = Math.toRadians(yaw);
+		return new Vec3(-Math.sin(radians), 0.0, Math.cos(radians));
+	}
+
+	private static float yawToward(double fromX, double fromZ, double targetX, double targetZ) {
+		return (float)(Math.atan2(targetZ - fromZ, targetX - fromX) * 180.0 / Math.PI) - 90.0F;
+	}
+
+	private static double horizontalDistance(Vec3 first, Vec3 second) {
+		double x = first.x - second.x;
+		double z = first.z - second.z;
+		return Math.sqrt(x * x + z * z);
+	}
+
+	private static double distanceToSegmentSqr(Vec3 point, Vec3 start, Vec3 end) {
+		Vec3 segment = end.subtract(start);
+		double lengthSqr = segment.lengthSqr();
+		if (lengthSqr < 1.0E-8) return point.distanceToSqr(start);
+		double t = Math.clamp(point.subtract(start).dot(segment) / lengthSqr, 0.0, 1.0);
+		return point.distanceToSqr(start.add(segment.scale(t)));
+	}
+
+	private static double projectionAlong(Vec3 point, Vec3 start, Vec3 end) {
+		Vec3 segment = end.subtract(start);
+		double lengthSqr = segment.lengthSqr();
+		return lengthSqr < 1.0E-8 ? 0.0 : point.subtract(start).dot(segment) / lengthSqr;
+	}
+}

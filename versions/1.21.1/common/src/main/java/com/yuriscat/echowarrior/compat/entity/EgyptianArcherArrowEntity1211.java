@@ -1,0 +1,191 @@
+package com.yuriscat.echowarrior.compat.entity;
+
+import com.yuriscat.echowarrior.compat.ModDamageTypes1211;
+import com.yuriscat.echowarrior.compat.ModEffects1211;
+import com.yuriscat.echowarrior.compat.binding.EchoBindingSystem1211;
+import com.yuriscat.echowarrior.compat.item.EchoRelicState1211;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.EntityTypeTags;
+import net.minecraft.world.damagesource.CombatRules;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.EnderDragonPart;
+import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
+import org.joml.Vector3f;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+public final class EgyptianArcherArrowEntity1211 extends Arrow {
+	private static final EntityDataAccessor<Integer> ARROW_MODE = SynchedEntityData.defineId(
+			EgyptianArcherArrowEntity1211.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Float> RAW_DAMAGE = SynchedEntityData.defineId(
+			EgyptianArcherArrowEntity1211.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Boolean> PIERCE_ON_HIT = SynchedEntityData.defineId(
+			EgyptianArcherArrowEntity1211.class, EntityDataSerializers.BOOLEAN);
+
+	private final Set<UUID> hitEntities = new HashSet<>();
+	private UUID summonerUuid;
+	private long bindingGeneration;
+
+	public EgyptianArcherArrowEntity1211(EntityType<? extends EgyptianArcherArrowEntity1211> type, Level level) {
+		super(type, level);
+		this.pickup = Pickup.DISALLOWED;
+	}
+
+	public void configure(LivingEntity owner, EchoRelicState1211.EgyptianArrowMode mode, float damage, boolean pierceOnHit) {
+		this.setOwner(owner);
+		if (owner instanceof EchoWarriorEntity1211 echo) {
+			this.summonerUuid = echo.getSummonerUuid();
+			this.bindingGeneration = echo.getBindingGeneration();
+		}
+		this.entityData.set(ARROW_MODE, mode.ordinal());
+		this.entityData.set(RAW_DAMAGE, damage);
+		this.entityData.set(PIERCE_ON_HIT, pierceOnHit);
+		this.pickup = Pickup.DISALLOWED;
+	}
+
+	public EchoRelicState1211.EgyptianArrowMode arrowMode() {
+		return EchoRelicState1211.EgyptianArrowMode.byOrdinal(this.entityData.get(ARROW_MODE));
+	}
+
+	@Override
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(ARROW_MODE, EchoRelicState1211.EgyptianArrowMode.OFF.ordinal());
+		builder.define(RAW_DAMAGE, 5.0F);
+		builder.define(PIERCE_ON_HIT, false);
+	}
+
+	@Override
+	public void tick() {
+		if (this.level() instanceof ServerLevel level && (this.summonerUuid == null
+				|| !EchoBindingSystem1211.isActive(level, this.summonerUuid)
+				|| EchoBindingSystem1211.generation(level, this.summonerUuid) != this.bindingGeneration)) {
+			this.discard();
+			return;
+		}
+		super.tick();
+		if (this.level().isClientSide()) {
+			int color = switch (arrowMode()) {
+				case LEAF -> 0xE6C84E;
+				case CONE -> 0x17120F;
+				case OFF -> -1;
+			};
+            if (color >= 0 && !this.inGround) {
+				this.level().addParticle(dust(color, 0.72F),
+						this.getX(), this.getY(), this.getZ(), 0.0, 0.0, 0.0);
+			}
+        } else if (this.inGround && this.inGroundTime > 40) {
+			this.discard();
+		}
+	}
+
+	@Override
+	protected boolean canHitEntity(Entity entity) {
+		LivingEntity target = normalizeLivingTarget(entity);
+		if (target != null && this.hitEntities.contains(target.getUUID())) return false;
+		if (target != null && this.getOwner() instanceof EgyptianArcherEchoEntity1211 owner
+				&& !owner.canAttack(target)) return false;
+		return super.canHitEntity(entity);
+	}
+
+	@Override
+	protected void onHitEntity(EntityHitResult hitResult) {
+		Entity hitEntity = hitResult.getEntity();
+		LivingEntity target = normalizeLivingTarget(hitEntity);
+		if (!(this.level() instanceof ServerLevel level) || target == null) {
+			this.discard();
+			return;
+		}
+		Entity ownerEntity = this.getOwner();
+		if (ownerEntity instanceof EgyptianArcherEchoEntity1211 owner && !owner.canAttack(target)) return;
+		this.hitEntities.add(target.getUUID());
+		float damage = this.entityData.get(RAW_DAMAGE);
+		if (target.getType().builtInRegistryHolder().is(EntityTypeTags.UNDEAD)) damage *= 1.20F;
+		Entity causingEntity = ownerEntity == null ? this : ownerEntity;
+		if (target instanceof EnderDragon && ownerEntity instanceof EgyptianArcherEchoEntity1211 archer
+				&& archer.getOwner() != null) {
+			// Vanilla only accepts ordinary dragon damage when the causing entity is a
+			// player. Keep the projectile and echo ownership, but attribute this special
+			// boss hit to the echo's owner so dragon parts use their normal damage rules.
+			causingEntity = archer.getOwner();
+		}
+		DamageSource normalArrowSource = level.damageSources().arrow(this, causingEntity);
+		DamageSource actualSource = normalArrowSource;
+		if (arrowMode() == EchoRelicState1211.EgyptianArrowMode.CONE) {
+			float reducedArmor = target.getArmorValue() * 0.65F;
+			damage = CombatRules.getDamageAfterAbsorb(target, damage, normalArrowSource, reducedArmor,
+					(float)target.getAttributeValue(Attributes.ARMOR_TOUGHNESS));
+			actualSource = ModDamageTypes1211.source(level, ModDamageTypes1211.ARMOR_PIERCING_ARROW, this, causingEntity);
+		}
+		boolean damaged = hitEntity.hurt(actualSource, damage);
+		if (damaged) {
+			if (ownerEntity instanceof LivingEntity owner) owner.setLastHurtMob(target);
+			if (arrowMode() == EchoRelicState1211.EgyptianArrowMode.LEAF) {
+				target.addEffect(new MobEffectInstance(ModEffects1211.BLEEDING, 80, 0, false, true, true));
+                target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 0, false, true, true));
+			}
+		}
+		this.playSound(SoundEvents.ARROW_HIT, 1.0F, 1.0F);
+		boolean continuePiercing = arrowMode() == EchoRelicState1211.EgyptianArrowMode.CONE
+				&& this.entityData.get(PIERCE_ON_HIT) && this.hitEntities.size() < 2;
+		if (!continuePiercing) this.discard();
+	}
+
+	private static LivingEntity normalizeLivingTarget(Entity entity) {
+		if (entity instanceof LivingEntity living) return living;
+		return entity instanceof EnderDragonPart part ? part.parentMob : null;
+	}
+
+	@Override
+	protected ItemStack getDefaultPickupItem() {
+		// Vanilla serializes this stack even when pickup is disabled. Returning an
+		// empty stack makes chunk saving fail with "Cannot encode empty ItemStack".
+		return Items.ARROW.getDefaultInstance();
+	}
+
+	@Override
+	public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+		super.addAdditionalSaveData(tag);
+		tag.putInt("ArrowMode", this.entityData.get(ARROW_MODE));
+		tag.putFloat("RawDamage", this.entityData.get(RAW_DAMAGE));
+		tag.putBoolean("PierceOnHit", this.entityData.get(PIERCE_ON_HIT));
+		if (this.summonerUuid != null) tag.putUUID("SummonerUuid", this.summonerUuid);
+		tag.putLong("BindingGeneration", this.bindingGeneration);
+	}
+
+	@Override
+	public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+		super.readAdditionalSaveData(tag);
+		this.entityData.set(ARROW_MODE, tag.contains("ArrowMode") ? tag.getInt("ArrowMode") : 0);
+		this.entityData.set(RAW_DAMAGE, tag.contains("RawDamage") ? tag.getFloat("RawDamage") : 5.0F);
+		this.entityData.set(PIERCE_ON_HIT, tag.getBoolean("PierceOnHit"));
+		this.summonerUuid = tag.hasUUID("SummonerUuid") ? tag.getUUID("SummonerUuid") : null;
+		this.bindingGeneration = tag.getLong("BindingGeneration");
+		this.pickup = Pickup.DISALLOWED;
+	}
+
+	private static DustParticleOptions dust(int color, float scale) {
+		return new DustParticleOptions(new Vector3f(
+				((color >> 16) & 0xFF) / 255.0F,
+				((color >> 8) & 0xFF) / 255.0F,
+				(color & 0xFF) / 255.0F), scale);
+	}
+}

@@ -1,0 +1,22 @@
+plugins {
+	id 'multiloader-common'
+	id 'net.neoforged.moddev'
+}
+
+neoForge {
+	neoFormVersion = neo_form_version
+	accessTransformers.from(file('src/main/resources/META-INF/accesstransformer.cfg'))
+	validateAccessTransformers = true
+}
+
+dependencies {
+	compileOnly('net.fabricmc:sponge-mixin:0.17.3+mixin.0.8.7')
+	compileOnly(annotationProcessor('io.github.llamalad7:mixinextras-common:0.5.3'))
+	// NeoForm compiles the shared source in Mojang's official namespace. Use
+	// the NeoForge dependency variants here so a fresh common compilation does
+	// not mix intermediary-named Fabric bytecode into the official namespace.
+	compileOnly("net.tslat.smartbrainlib:SmartBrainLib-neoforge-${minecraft_version}:${smartbrainlib_version}")
+	compileOnly("software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}")
+}
+
+sourceSets.main.java.srcDirs += 'src/client/java'

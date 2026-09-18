@@ -96,6 +96,13 @@ public final class KnowledgeStackData {
 		CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> tag.putString(COLLECTION_BOOKMARK, id));
 	}
 
+	/** Ignores the bookmark while retaining the collection's actual page contents as its hand identity. */
+	public static boolean isSamePhysicalCollection(ItemStack first, ItemStack second) {
+		return first.is(ModItems.KNOWLEDGE_FRAGMENT_COLLECTION)
+				&& second.is(ModItems.KNOWLEDGE_FRAGMENT_COLLECTION)
+				&& collectionCounts(first).equals(collectionCounts(second));
+	}
+
 	public static long totalCount(Map<String, Integer> counts) {
 		long total = 0L;
 		for (int count : counts.values()) total += Math.max(0, count);

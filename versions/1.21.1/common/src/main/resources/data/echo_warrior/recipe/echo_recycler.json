@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IPI",
+    "PKP",
+    "IPI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "tag": "minecraft:planks"
+    },
+    "K": {
+      "item": "echo_warrior:knowledge_fragment"
+    }
+  },
+  "result": {
+    "id": "echo_warrior:echo_recycler"
+  }
+}

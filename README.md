@@ -1,15 +1,22 @@
 # Echo Warrior
 
-Echo Warrior is a Minecraft 26.1.2 mod about recovering relics from ancient battlefields and summoning warrior echoes from the past. It ships as two separate packages: one for Fabric and one for NeoForge.
+Echo Warrior is a Minecraft mod about recovering relics from ancient battlefields and summoning warrior echoes from the past. Minecraft 26.1.2 remains the complete feature and day-to-day development line. A separately built Minecraft 1.21.1 compatibility line carries the same current gameplay scope through loader- and version-specific adapters. Both lines ship as separate Fabric and NeoForge packages.
 
-Version 0.1.1 includes the Echo Compass and renewable battlefield archaeology loop, a portable fuelled summoner, five playable Echo Warriors, relic growth and talents, 25 accessories, 40 collectible knowledge pages, the Echo Recycler, an in-game tutorial manual, and a web-first interactive encyclopedia. The stable technical mod ID is `echo_warrior`.
+Version 0.2.0 adds the complete Minecraft 1.21.1 Fabric and NeoForge compatibility line alongside Minecraft 26.1.2, while retaining the Echo Compass and renewable battlefield archaeology loop, a portable fuelled summoner, five playable Echo Warriors, relic growth and talents, 25 accessories, 40 collectible knowledge pages, the Echo Recycler, an in-game tutorial manual, and a web-first interactive encyclopedia. The stable technical mod ID is `echo_warrior`.
 
 ## Requirements
 
-Both packages require Minecraft 26.1.2, Java 25, SmartBrainLib 2.0.0, and GeckoLib 5.5.2.
+Minecraft 26.1.2 packages require Java 25, SmartBrainLib 2.0.0, and GeckoLib 5.5.2.
 
 - Fabric package: Fabric Loader 0.19.3 and Fabric API 0.155.2+26.1.2.
 - NeoForge package: NeoForge 26.1.2.100.
+
+Minecraft 1.21.1 compatibility packages require Java 21, SmartBrainLib 1.16.11, and GeckoLib 4.9.2.
+
+- Fabric package: Fabric Loader 0.19.5 and Fabric API 0.116.17+1.21.1.
+- NeoForge package: NeoForge 21.1.250.
+
+The 1.21.1 scope includes all five Echo Warriors, their relics, summoner UI and persistence, growth and talents, five Legacies, 25 accessories, recipes, combat behavior, models and animations, plus battlefield archaeology, the Echo Compass, 40 knowledge pages, the 44-page tutorial manual, and the Echo Recycler. It does not implicitly promote deferred post-MVP ideas or promise direct downgrade compatibility for 26.1.2 saves.
 
 Install only the JAR matching the chosen loader. Client and server should use the same loader and matching Echo Warrior version. Dependency JARs remain separate and are not bundled inside Echo Warrior.
 
@@ -31,9 +38,12 @@ See [`LICENSE`](LICENSE), [`LICENSE-CODE`](LICENSE-CODE), [`LICENSE-ASSETS.md`](
 - Double-click `tools\windows\Launch Test Client.bat` to compile Fabric and quick-play into the existing `CATTEST` world.
 - Use `scripts\run-neoforge-test-client.ps1` or double-click `tools\windows\Launch NeoForge Test Client.bat` only when an explicit NeoForge check is needed. Its separate world is `CATTEST_NEOFORGE`.
 - Build both packages with `gradlew.bat dualBuild`.
-- Prepare the two JARs, shared checklist, and generated handoff document with `scripts\build-dual-candidate.ps1` or `tools\windows\Build Dual Package.bat`.
+- Build both Minecraft 1.21.1 packages with `scripts\build-1.21.1.ps1 -Loader Dual`; validate their archive contents with `scripts\check-1.21.1-baseline.ps1`.
+- Run the isolated Minecraft 1.21.1 dedicated-server checks with `scripts\smoke-test-1.21.1-servers.ps1 -Loader Dual` and the sequential Quick Play client checks with `scripts\run-test-client.ps1 -TargetVersion 1.21.1 -Loader <Fabric|NeoForge> -StartupOnly -RequireExistingWorld`.
+- Prepare the two Minecraft 26.1.2 tester JARs, shared checklist, and generated handoff document with `scripts\build-dual-candidate.ps1` or `tools\windows\Build Dual Package.bat`. Formal CurseForge releases use the four-file matrix documented in `docs/CURSEFORGE_RELEASE.md`.
 - The interactive encyclopedia lives in `encyclopedia/`; run it with `tools\windows\Start Local Encyclopedia.bat`.
 - Runtime worlds under `run/` and `run-neoforge/`, plus `temporary-delivery/`, are intentionally not tracked by Git.
+- Minecraft 1.21.1 runtime worlds under `versions/1.21.1/run-*` are also intentionally not tracked by Git.
 
 ## Tester handoff
 

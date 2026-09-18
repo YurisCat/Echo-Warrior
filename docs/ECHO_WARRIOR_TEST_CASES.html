@@ -136,7 +136,7 @@ textarea{min-height:90px;resize:vertical}
       <img class="brand-icon" id="brandIcon" alt="Echo Warrior 召唤器图标">
       <div>
         <h1>Echo Warrior 测试用例</h1>
-        <p class="subtitle">适用批次 <span class="version">0.1.1-release.20260903.1</span>，覆盖 Fabric 与 NeoForge。选择当前加载器后逐项执行、记录实际结果、附加截图，最后导出独立结果 HTML 或可继续编辑的 JSON。</p>
+        <p class="subtitle">适用批次 <span class="version">0.2.0-release.20260918.1</span>，覆盖 Fabric 与 NeoForge。选择当前加载器后逐项执行、记录实际结果、附加截图，最后导出独立结果 HTML 或可继续编辑的 JSON。</p>
       </div>
     </div>
     <div class="principles">
@@ -192,7 +192,7 @@ textarea{min-height:90px;resize:vertical}
 
 <script>
 "use strict";
-const VERSION="0.1.1-release.20260903.1";
+const VERSION="0.2.0-release.20260918.1";
 const SCHEMA="echo-warrior-test-cases-v2";
 const mcIcons={
   summoner:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAHhlWElmTU0AKgAAAAgABQESAAMAAAABAAEAAAEaAAUAAAABAAAASgEbAAUAAAABAAAAUgEoAAMAAAABAAIAAIdpAAQAAAABAAAAWgAAAAAAAABIAAAAAQAAAEgAAAABAAKgAgAEAAAAAQAAABCgAwAEAAAAAQAAABAAAAAAiKeUQwAAAAlwSFlzAAALEwAACxMBAJqcGAAAABxpRE9UAAAAAgAAAAAAAAAIAAAAKAAAAAgAAAAIAAAAtJq5ZscAAACASURBVDgRYmDAAfy9XP6DMA5p/MIgjft3rARjsgyCGdDXUfP/7YtrYEy0QTDNMA3F2Qn/QZhog5ANeHzr7X8QhhkCMwgYABhhAw4wkOaTx2rBGmCalyw4/h+G8RoAkiRkAChgQeqwuQAULWDbQQGHjHduOvcfhEFisJiBGgD2BgAAAP//MQh4FwAAAKBJREFUY2BAgP8nj9X+7+uo+b/jUASYBrFheP+Olf+LsxPA+O2La/9B2N/L5T9M+3+QAphikAS6QSD5ipkPwRgkh9UAkCJsBoHEQLYjGwCyBMUFIAUwA2A0zEUwAxy8mv+DMMh2oNPhzgd5AyYAtglmAIwGGQ4zDEQjqQfpRQFwSWQXAVWAxWEGQvkoGtE5KAbBDECj0fVg5cMNwioLFAQAh9OJIon71jYAAAAASUVORK5CYII=",
@@ -241,7 +241,7 @@ function addRows(section,priority,rows){
 }
 
 addRows("P0 安装、启动与日志", "P0", [
-  ["测试目录文件完整性","缺少任一必需 JAR 会导致启动失败，重复或错误加载器版本可能造成模组冲突。","根据页面所选加载器，新建一个干净的 Minecraft 26.1.2 实例。",["Fabric：放入 Fabric 版 Echo Warrior、Fabric API、Fabric 版 GeckoLib 与 SmartBrainLib。","NeoForge：放入 NeoForge 版 Echo Warrior、NeoForge 版 GeckoLib 与 SmartBrainLib，不要放入 Fabric API 或 Fabric 版依赖。","启动实例并进入主菜单，打开模组列表或查看 latest.log 中的加载列表。"],"游戏正常进入主菜单；Echo Warrior 版本为 0.1.1；当前加载器对应的模组与依赖均只加载一次。"],
+  ["测试目录文件完整性","缺少任一必需 JAR 会导致启动失败，重复或错误加载器版本可能造成模组冲突。","根据页面所选加载器，新建一个干净的 Minecraft 26.1.2 实例。",["Fabric：放入 Fabric 版 Echo Warrior、Fabric API、Fabric 版 GeckoLib 与 SmartBrainLib。","NeoForge：放入 NeoForge 版 Echo Warrior、NeoForge 版 GeckoLib 与 SmartBrainLib，不要放入 Fabric API 或 Fabric 版依赖。","启动实例并进入主菜单，打开模组列表或查看 latest.log 中的加载列表。"],"游戏正常进入主菜单；Echo Warrior 版本为 0.2.0；当前加载器对应的模组与依赖均只加载一次。"],
   ["缺少加载器依赖时的失败信息","依赖缺失若只表现为无提示崩溃，测试员难以自行定位。","复制当前加载器实例后暂时移走一项必需依赖；Fabric 可优先移走 Fabric API。",["启动该实例。","记录启动器显示的错误文本。","恢复依赖后再次启动。"],"缺失时应明确指出对应依赖；恢复后正常启动，不留下损坏配置或存档。"],
   ["缺少 GeckoLib 时的失败信息","实体渲染依赖缺失可能造成启动崩溃或进入世界后缺失模型。","复制实例后暂时移走 GeckoLib。",["启动实例。","记录错误文本。","恢复 GeckoLib 并再次启动。"],"缺失时明确指出 GeckoLib；恢复后可进入世界且英灵模型正常。"],
   ["缺少 SmartBrainLib 时的失败信息","AI 依赖缺失必须在加载阶段被阻止，不能带病进入存档。","复制实例后暂时移走 SmartBrainLib。",["启动实例。","记录错误文本。","恢复 SmartBrainLib。"],"缺失时明确指出 SmartBrainLib；恢复后正常。"],
@@ -597,7 +597,7 @@ addRows("P0 多人、存档、性能与最终回归", "P0", [
 ]);
 
 addRows("P0 2026-09-03 双端重点验证", "P0", [
-  ["当前双端测试包启动基线","先确认拿到的 JAR 与所选加载器一致，避免把安装错误误报为玩法问题。","分别准备 Minecraft 26.1.2、Java 25 的干净 Fabric 与 NeoForge 实例。",["Fabric 实例只安装 echo-warrior-fabric-26.1.2-0.1.1.jar 及 Fabric 对应依赖。","NeoForge 实例只安装 echo-warrior-neoforge-26.1.2-0.1.1.jar 及 NeoForge 对应依赖。","分别启动、创建新世界、退出并重进，然后检查 latest.log。"],"两个实例均能正常进入和重进世界；模组版本显示为 0.1.1；没有持续 ERROR、缺失资源、错误端 JAR 或每 tick 刷屏。"],
+  ["当前双端测试包启动基线","先确认拿到的 JAR 与所选加载器一致，避免把安装错误误报为玩法问题。","分别准备 Minecraft 26.1.2、Java 25 的干净 Fabric 与 NeoForge 实例。",["Fabric 实例只安装 echo-warrior-fabric-26.1.2-0.2.0.jar 及 Fabric 对应依赖。","NeoForge 实例只安装 echo-warrior-neoforge-26.1.2-0.2.0.jar 及 NeoForge 对应依赖。","分别启动、创建新世界、退出并重进，然后检查 latest.log。"],"两个实例均能正常进入和重进世界；模组版本显示为 0.2.0；没有持续 ERROR、缺失资源、错误端 JAR 或每 tick 刷屏。"],
   ["五种英灵死亡视觉","死亡状态若被立即遣散，玩家会看到英灵突然消失而不是原版生物死亡过程。","在当前加载器中分别召唤罗马、阿兹特克、埃及、中国与日本英灵。",["让每种英灵受到足以死亡的普通伤害。","观察受击当刻、变红、倾倒和消失时机。","在另一加载器重复相同步骤。"],"五种英灵死亡时都先出现原版生物式的变红与倾倒过程，完成死亡演出后才消失；不会在生命归零当刻突然抹除，也不会继续攻击。"],
   ["中毒期间头部稳定性","持续伤害与受伤反馈叠加时，模型头部不能突然跳向异常角度。","五种英灵均在非战斗站立状态准备；中国关刀战士重点重复。",["分别给予中毒效果并观察完整持续时间。","每种英灵重复至少三次，中国关刀战士重复至少十次。","再在行走、跟随和战斗状态各抽查一次。"],"中毒扣血时头部、眼睛和身体姿态保持连续；不会突然向左下角或其他异常方向偏转、抽动或停留。"],
   ["回声罗盘定位、无目标与提示","罗盘状态同步异常可能表现为永久旋转、持续检测但没有目标，也没有明确文字反馈。","在主世界分别准备有 2048 格内未完成遗迹和无可用遗迹的场景。",["无目标时手持罗盘观察至少十秒并记录文字、声音和指针。","有目标时从远处移动并确认指针、框体、声音与文本逐步进入正确状态。","完成或移除目标后继续观察，并在另一加载器重复。"],"无目标时指针按设计稳定旋转且只给出明确的无目标反馈；有目标时能够锁定并引导至遗迹；目标完成后及时释放。Fabric 与 NeoForge 行为一致，不会永久停在‘检测中’。"]

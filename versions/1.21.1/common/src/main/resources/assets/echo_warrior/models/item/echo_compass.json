@@ -1,0 +1,651 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "echo_warrior:item/echo_compass/echo_compass_background",
+    "layer1": "echo_warrior:item/echo_compass/echo_compass_pointer_16",
+    "layer2": "echo_warrior:item/echo_compass/echo_compass_highlight",
+    "layer3": "echo_warrior:item/echo_compass/echo_compass_frame_copper"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0
+      },
+      "model": "echo_warrior:item/echo_compass_state_00"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.03125
+      },
+      "model": "echo_warrior:item/echo_compass_state_01"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.0625
+      },
+      "model": "echo_warrior:item/echo_compass_state_02"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.09375
+      },
+      "model": "echo_warrior:item/echo_compass_state_03"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.125
+      },
+      "model": "echo_warrior:item/echo_compass_state_04"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.15625
+      },
+      "model": "echo_warrior:item/echo_compass_state_05"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.1875
+      },
+      "model": "echo_warrior:item/echo_compass_state_06"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.21875
+      },
+      "model": "echo_warrior:item/echo_compass_state_07"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.25
+      },
+      "model": "echo_warrior:item/echo_compass_state_08"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.28125
+      },
+      "model": "echo_warrior:item/echo_compass_state_09"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.3125
+      },
+      "model": "echo_warrior:item/echo_compass_state_10"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.34375
+      },
+      "model": "echo_warrior:item/echo_compass_state_11"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.375
+      },
+      "model": "echo_warrior:item/echo_compass_state_12"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.40625
+      },
+      "model": "echo_warrior:item/echo_compass_state_13"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.4375
+      },
+      "model": "echo_warrior:item/echo_compass_state_14"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.46875
+      },
+      "model": "echo_warrior:item/echo_compass_state_15"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.5
+      },
+      "model": "echo_warrior:item/echo_compass_state_16"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.53125
+      },
+      "model": "echo_warrior:item/echo_compass_state_17"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.5625
+      },
+      "model": "echo_warrior:item/echo_compass_state_18"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.59375
+      },
+      "model": "echo_warrior:item/echo_compass_state_19"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.625
+      },
+      "model": "echo_warrior:item/echo_compass_state_20"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.65625
+      },
+      "model": "echo_warrior:item/echo_compass_state_21"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.6875
+      },
+      "model": "echo_warrior:item/echo_compass_state_22"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.71875
+      },
+      "model": "echo_warrior:item/echo_compass_state_23"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.75
+      },
+      "model": "echo_warrior:item/echo_compass_state_24"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.78125
+      },
+      "model": "echo_warrior:item/echo_compass_state_25"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.8125
+      },
+      "model": "echo_warrior:item/echo_compass_state_26"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.84375
+      },
+      "model": "echo_warrior:item/echo_compass_state_27"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.875
+      },
+      "model": "echo_warrior:item/echo_compass_state_28"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.90625
+      },
+      "model": "echo_warrior:item/echo_compass_state_29"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.9375
+      },
+      "model": "echo_warrior:item/echo_compass_state_30"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.96875
+      },
+      "model": "echo_warrior:item/echo_compass_state_31"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_00"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.03125,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_01"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.0625,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_02"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.09375,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_03"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.125,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_04"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.15625,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_05"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.1875,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_06"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.21875,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_07"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.25,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_08"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.28125,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_09"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.3125,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_10"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.34375,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_11"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.375,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_12"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.40625,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_13"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.4375,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_14"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.46875,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_15"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.5,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_16"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.53125,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_17"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.5625,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_18"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.59375,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_19"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.625,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_20"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.65625,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_21"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.6875,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_22"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.71875,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_23"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.75,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_24"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.78125,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_25"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.8125,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_26"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.84375,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_27"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.875,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_28"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.90625,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_29"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.9375,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_30"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.96875,
+        "echo_warrior:echo_compass_iron_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_iron_31"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_00"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.03125,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_01"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.0625,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_02"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.09375,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_03"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.125,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_04"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.15625,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_05"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.1875,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_06"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.21875,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_07"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.25,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_08"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.28125,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_09"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.3125,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_10"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.34375,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_11"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.375,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_12"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.40625,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_13"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.4375,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_14"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.46875,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_15"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.5,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_16"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.53125,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_17"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.5625,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_18"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.59375,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_19"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.625,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_20"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.65625,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_21"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.6875,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_22"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.71875,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_23"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.75,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_24"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.78125,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_25"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.8125,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_26"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.84375,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_27"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.875,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_28"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.90625,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_29"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.9375,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_30"
+    },
+    {
+      "predicate": {
+        "echo_warrior:echo_compass_angle": 0.96875,
+        "echo_warrior:echo_compass_gold_frame": 1
+      },
+      "model": "echo_warrior:item/echo_compass_state_gold_31"
+    }
+  ]
+}

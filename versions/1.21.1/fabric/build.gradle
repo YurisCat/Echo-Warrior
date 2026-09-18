@@ -1,0 +1,60 @@
+plugins {
+	id 'multiloader-loader'
+	id 'net.fabricmc.fabric-loom-remap'
+}
+
+dependencies {
+	minecraft("com.mojang:minecraft:${minecraft_version}")
+	mappings(loom.officialMojangMappings())
+	modImplementation("net.fabricmc:fabric-loader:${loader_version}")
+	modImplementation("net.fabricmc.fabric-api:fabric-api:${fabric_api_version}")
+	modImplementation("net.tslat.smartbrainlib:SmartBrainLib-fabric-${minecraft_version}:${smartbrainlib_version}")
+	modImplementation("software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}")
+}
+
+loom {
+	mods {
+		"${mod_id}" {
+			sourceSet sourceSets.main
+		}
+	}
+
+	runs {
+		client {
+			client()
+			setConfigName('Echo Warrior 1.21.1 Fabric Client')
+			runDir(rootProject.file('run-fabric').absolutePath)
+			programArg '--username=Echo1211Fabric'
+			vmArg '-Decho_warrior.egyptian_archer_diagnostics=true'
+			vmArg '-Decho_warrior.summoner_insertion_diagnostics=true'
+
+			def quickPlayWorld = providers.gradleProperty('quickPlayWorld').orNull
+			if (quickPlayWorld) {
+				programArg '--quickPlaySingleplayer'
+				programArg quickPlayWorld
+			}
+			if (providers.gradleProperty('autoPauseAfterQuickPlay').orNull == 'true') {
+				vmArg '-Decho_warrior.auto_pause_after_quick_play=true'
+			}
+		}
+		server {
+			server()
+			setConfigName('Echo Warrior 1.21.1 Fabric Server')
+			runDir(rootProject.file('run-fabric-server').absolutePath)
+		}
+	}
+}
+
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements', 'includeInternal', 'modCompileClasspath'].each { variant ->
+	configurations.named(variant) {
+		attributes.attribute(loaderAttribute, 'fabric')
+	}
+}
+sourceSets.configureEach {
+	[compileClasspathConfigurationName, runtimeClasspathConfigurationName].each { variant ->
+		configurations.named(variant) {
+			attributes.attribute(loaderAttribute, 'fabric')
+		}
+	}
+}

@@ -133,7 +133,7 @@ public final class EgyptianArcherArrowEntity extends Arrow {
 			float reducedArmor = target.getArmorValue() * 0.65F;
 			damage = CombatRules.getDamageAfterAbsorb(target, damage, normalArrowSource, reducedArmor,
 					(float)target.getAttributeValue(Attributes.ARMOR_TOUGHNESS));
-			actualSource = level.damageSources().source(ModDamageTypes.ARMOR_PIERCING_ARROW, this, causingEntity);
+			actualSource = ModDamageTypes.source(level, ModDamageTypes.ARMOR_PIERCING_ARROW, this, causingEntity);
 		}
 		boolean damaged = hitEntity.hurtServer(level, actualSource, damage);
 		if (damaged) {

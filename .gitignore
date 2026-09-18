@@ -31,6 +31,7 @@ run/
 run-server/
 run-neoforge/
 run-neoforge-server/
+/versions/*/run-*/
 logs/
 crash-reports/
 saves/

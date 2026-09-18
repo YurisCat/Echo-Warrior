@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "echo_warrior:courage_legacy",
+    "echo_warrior:fortitude_legacy",
+    "echo_warrior:purity_legacy",
+    "echo_warrior:wisdom_legacy",
+    "echo_warrior:craft_legacy"
+  ]
+}

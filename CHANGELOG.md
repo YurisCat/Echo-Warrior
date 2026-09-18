@@ -8,6 +8,28 @@ All notable development changes to Echo Warrior are recorded here.
 
 - Continue manual playtesting and tune the head-target radius, body-turn speed, and animation responsiveness if required.
 
+## 0.2.0 - 2026-09-18
+
+### Added
+
+- Added complete Minecraft 1.21.1 compatibility packages for both Fabric and NeoForge, carrying the five Echo Warriors, summoner, relic growth and talents, accessories, archaeology, Echo Compass, knowledge collection, tutorial manual, Echo Recycler, recipes, models, animations, and persistent bindings.
+- Added a four-file CurseForge release matrix that builds Minecraft 1.21.1 with Java 21 and Minecraft 26.1.2 with Java 25 from the same tagged commit, validates every loader-specific JAR and publishes independent metadata for each target.
+- Added reusable compatibility baselines, dedicated-server smoke tests, scripted client interaction checks, and a maintained version-porting playbook for future Minecraft and loader migrations.
+
+### Fixed
+
+- Fixed creative-inventory summoner insertion and destruction edge cases that could consume relics or accessories, restore removed contents, or leave bound Echo Warriors alive after the last summoner copy was destroyed.
+- Fixed summoner UI scaling, localized status text, health display, skill toggles, skill and talent tooltips, item-transfer feedback, and first-person hand animations across supported loaders.
+- Fixed Egyptian Archer aiming and bow-animation resets, Roman Legionary attack animation timing, missing effect icons, inheritance charge presentation, and several cross-version GeckoLib animation differences.
+- Fixed the tutorial manual and knowledge collection page layout, tooltip layering, pagination, related-item illustrations, localized skill descriptions, and accidental repeated use animations while turning pages.
+- Fixed Echo Compass needle animation and color, suspicious grass biome tint and transparent side rendering, and Echo Recycler inventory rendering and chest-latch presentation.
+- Fixed version-specific client registration, Mixin class-loading, menu synchronization, resource packaging, and NeoForge startup failures found during the 1.21.1 port.
+
+### Changed
+
+- Restored concise localized skill descriptions and complete talent-effect hints for all five Echo Warriors.
+- Release artifacts now identify both the Minecraft version and loader in their CurseForge display names and filenames.
+
 ## 0.1.1 - 2026-09-03
 
 ### Added

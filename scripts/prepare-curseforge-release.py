@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare and validate the two CurseForge uploads for one Echo Warrior release."""
+"""Prepare and validate the four CurseForge uploads for one Echo Warrior release."""
 
 from __future__ import annotations
 
@@ -25,7 +25,6 @@ LOADERS = {
     "fabric": {
         "display_name": "Fabric",
         "game_version_name": "Fabric",
-        "jar_directory": Path("fabric/build/libs"),
         "descriptor": "fabric.mod.json",
         "forbidden_descriptor": "META-INF/neoforge.mods.toml",
         "dependencies": (FABRIC_API_DEPENDENCY, *COMMON_REQUIRED_DEPENDENCIES),
@@ -33,11 +32,17 @@ LOADERS = {
     "neoforge": {
         "display_name": "NeoForge",
         "game_version_name": "NeoForge",
-        "jar_directory": Path("neoforge/build/libs"),
         "descriptor": "META-INF/neoforge.mods.toml",
         "forbidden_descriptor": "fabric.mod.json",
         "dependencies": COMMON_REQUIRED_DEPENDENCIES,
     },
+}
+REQUIRED_LICENSE_ENTRIES = {
+    "META-INF/LICENSE_ECHO_WARRIOR",
+    "META-INF/LICENSE-CODE_ECHO_WARRIOR",
+    "META-INF/LICENSE-ASSETS_ECHO_WARRIOR.md",
+    "META-INF/NOTICE_ECHO_WARRIOR",
+    "META-INF/CREDITS_ECHO_WARRIOR.md",
 }
 
 
@@ -107,6 +112,7 @@ def validate_loader_jar(
     descriptor: str,
     forbidden_descriptor: str,
     loader_name: str,
+    expected_version: str,
 ) -> None:
     if not jar_path.is_file():
         raise ValueError(f"Expected {loader_name} release JAR was not produced: {jar_path}")
@@ -116,6 +122,7 @@ def validate_loader_jar(
     try:
         with zipfile.ZipFile(jar_path) as archive:
             entries = set(archive.namelist())
+            descriptor_text = archive.read(descriptor).decode("utf-8")
     except zipfile.BadZipFile as error:
         raise ValueError(f"Invalid {loader_name} JAR: {jar_path}") from error
 
@@ -127,6 +134,25 @@ def validate_loader_jar(
         raise ValueError(
             f"{loader_name} JAR unexpectedly contains the other loader descriptor "
             f"'{forbidden_descriptor}': {jar_path}"
+        )
+    missing_license_entries = REQUIRED_LICENSE_ENTRIES - entries
+    if missing_license_entries:
+        raise ValueError(
+            f"{loader_name} JAR is missing required license/credit entries: "
+            f"{', '.join(sorted(missing_license_entries))}"
+        )
+    if descriptor == "fabric.mod.json":
+        descriptor_version = str(json.loads(descriptor_text).get("version", ""))
+    else:
+        version_match = re.search(
+            r'(?m)^\s*version\s*=\s*"([^"]+)"\s*$',
+            descriptor_text,
+        )
+        descriptor_version = version_match.group(1) if version_match else ""
+    if descriptor_version != expected_version:
+        raise ValueError(
+            f"{loader_name} descriptor version is '{descriptor_version}', "
+            f"expected '{expected_version}': {jar_path}"
         )
 
 
@@ -141,6 +167,11 @@ def append_github_output(path: Path, values: dict[str, str]) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--properties", type=Path, default=Path("gradle.properties"))
+    parser.add_argument(
+        "--compat-properties",
+        type=Path,
+        default=Path("versions/1.21.1/gradle.properties"),
+    )
     parser.add_argument("--changelog", type=Path, default=Path("CHANGELOG.md"))
     parser.add_argument(
         "--output-directory",
@@ -161,7 +192,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--require-jars",
         action="store_true",
-        help="Fail unless both exact loader-specific release JARs exist and validate.",
+        help="Fail unless all four exact version- and loader-specific JARs exist and validate.",
     )
     parser.add_argument(
         "--github-output",
@@ -175,12 +206,38 @@ def main() -> int:
     args = build_parser().parse_args()
 
     try:
-        properties = read_gradle_properties(args.properties)
-        version = require_property(properties, "mod_version")
-        minecraft_version = require_property(properties, "minecraft_version")
-        archive_name = require_property(properties, "archives_base_name")
-        manual_release = parse_boolean(args.manual_release)
+        release_lines = (
+            ("main", Path("."), args.properties),
+            ("compat_1211", Path("versions/1.21.1"), args.compat_properties),
+        )
+        parsed_lines: list[dict[str, str | Path]] = []
+        for line_key, project_root, properties_path in release_lines:
+            properties = read_gradle_properties(properties_path)
+            parsed_lines.append(
+                {
+                    "key": line_key,
+                    "project_root": project_root,
+                    "version": require_property(properties, "mod_version"),
+                    "minecraft_version": require_property(properties, "minecraft_version"),
+                    "archive_name": require_property(properties, "archives_base_name"),
+                }
+            )
 
+        versions = {str(line["version"]) for line in parsed_lines}
+        if len(versions) != 1:
+            version_summary = ", ".join(
+                f"{line['key']}={line['version']}" for line in parsed_lines
+            )
+            raise ValueError(
+                "Every Minecraft compatibility line must use the same release version: "
+                f"{version_summary}"
+            )
+        archive_names = {str(line["archive_name"]) for line in parsed_lines}
+        if len(archive_names) != 1:
+            raise ValueError("Every compatibility line must use the same archives_base_name.")
+
+        version = versions.pop()
+        manual_release = parse_boolean(args.manual_release)
         expected_tag = args.expected_tag.strip()
         release_tag = f"v{version}"
         if expected_tag and expected_tag != release_tag:
@@ -196,55 +253,72 @@ def main() -> int:
             "version": version,
             "release_tag": release_tag,
         }
-        for loader_key, loader in LOADERS.items():
-            jar_name = f"{archive_name}-{loader_key}-{minecraft_version}-{version}.jar"
-            jar_path = loader["jar_directory"] / jar_name
-            if args.require_jars:
-                validate_loader_jar(
-                    jar_path,
-                    str(loader["descriptor"]),
-                    str(loader["forbidden_descriptor"]),
-                    str(loader["display_name"]),
+        for line in parsed_lines:
+            line_key = str(line["key"])
+            project_root = Path(line["project_root"])
+            minecraft_version = str(line["minecraft_version"])
+            archive_name = str(line["archive_name"])
+            for loader_key, loader in LOADERS.items():
+                target_key = f"{line_key}_{loader_key}"
+                jar_name = f"{archive_name}-{loader_key}-{minecraft_version}-{version}.jar"
+                jar_path = project_root / loader_key / "build" / "libs" / jar_name
+                target_display_name = f"{loader['display_name']} {minecraft_version}"
+                if args.require_jars:
+                    validate_loader_jar(
+                        jar_path,
+                        str(loader["descriptor"]),
+                        str(loader["forbidden_descriptor"]),
+                        target_display_name,
+                        version,
+                    )
+
+                display_name = (
+                    f"{PROJECT_NAME} {version} "
+                    f"({loader['display_name']} {minecraft_version})"
+                )
+                metadata = {
+                    "changelog": changelog,
+                    "changelogType": "markdown",
+                    "displayName": display_name,
+                    "gameVersionNames": [
+                        "Client",
+                        "Server",
+                        minecraft_version,
+                        loader["game_version_name"],
+                    ],
+                    "releaseType": args.release_type,
+                    "isMarkedForManualRelease": manual_release,
+                    "relations": {"projects": list(loader["dependencies"])},
+                }
+                metadata_path = (
+                    args.output_directory
+                    / f"{minecraft_version}-{loader_key}-metadata.json"
+                )
+                metadata_path.write_text(
+                    json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
                 )
 
-            display_name = f"{PROJECT_NAME} {version} ({loader['display_name']})"
-            metadata = {
-                "changelog": changelog,
-                "changelogType": "markdown",
-                "displayName": display_name,
-                "gameVersionNames": [
-                    "Client",
-                    "Server",
-                    minecraft_version,
-                    loader["game_version_name"],
-                ],
-                "releaseType": args.release_type,
-                "isMarkedForManualRelease": manual_release,
-                "relations": {"projects": list(loader["dependencies"])},
-            }
-            metadata_path = args.output_directory / f"{loader_key}-metadata.json"
-            metadata_path.write_text(
-                json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
-            )
-
-            outputs.update(
-                {
-                    f"{loader_key}_jar_path": jar_path.as_posix(),
-                    f"{loader_key}_jar_name": jar_path.name,
-                    f"{loader_key}_metadata_path": metadata_path.as_posix(),
-                    f"{loader_key}_display_name": display_name,
-                }
-            )
+                outputs.update(
+                    {
+                        f"{target_key}_jar_path": jar_path.as_posix(),
+                        f"{target_key}_jar_name": jar_path.name,
+                        f"{target_key}_metadata_path": metadata_path.as_posix(),
+                        f"{target_key}_display_name": display_name,
+                    }
+                )
 
         if args.github_output:
             append_github_output(args.github_output, outputs)
 
         print(f"Prepared CurseForge metadata for {PROJECT_NAME} {version}.")
-        print(f"Minecraft: {minecraft_version}; release type: {args.release_type}")
-        for loader_key in LOADERS:
-            print(f"{loader_key}: {outputs[f'{loader_key}_jar_path']}")
-            print(f"metadata: {outputs[f'{loader_key}_metadata_path']}")
+        print(f"Release type: {args.release_type}")
+        for line in parsed_lines:
+            line_key = str(line["key"])
+            for loader_key in LOADERS:
+                target_key = f"{line_key}_{loader_key}"
+                print(f"{target_key}: {outputs[f'{target_key}_jar_path']}")
+                print(f"metadata: {outputs[f'{target_key}_metadata_path']}")
         return 0
     except (OSError, ValueError) as error:
         print(f"Release preparation failed: {error}", file=sys.stderr)

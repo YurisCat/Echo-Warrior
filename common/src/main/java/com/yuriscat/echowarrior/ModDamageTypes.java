@@ -2,7 +2,10 @@ package com.yuriscat.echowarrior;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.entity.Entity;
 
 public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> OBSIDIAN_WOUND = ResourceKey.create(
@@ -39,5 +42,28 @@ public final class ModDamageTypes {
 	);
 
 	private ModDamageTypes() {
+	}
+
+	public static DamageSource source(ServerLevel level, ResourceKey<DamageType> type) {
+		return new DamageSource(level.registryAccess()
+				.lookupOrThrow(Registries.DAMAGE_TYPE)
+				.getOrThrow(type));
+	}
+
+	public static DamageSource source(ServerLevel level, ResourceKey<DamageType> type, Entity directEntity) {
+		return new DamageSource(level.registryAccess()
+				.lookupOrThrow(Registries.DAMAGE_TYPE)
+				.getOrThrow(type), directEntity);
+	}
+
+	public static DamageSource source(
+			ServerLevel level,
+			ResourceKey<DamageType> type,
+			Entity directEntity,
+			Entity causingEntity
+	) {
+		return new DamageSource(level.registryAccess()
+				.lookupOrThrow(Registries.DAMAGE_TYPE)
+				.getOrThrow(type), directEntity, causingEntity);
 	}
 }

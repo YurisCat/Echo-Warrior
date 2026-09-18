@@ -114,28 +114,28 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			"gui.echo_warrior.summoner.skill.aztec.pursuit",
 			"gui.echo_warrior.summoner.skill.aztec.macuahuitl"
 	};
-	private static final int[] AZTEC_SKILL_DESCRIPTION_LINES = {1, 2, 2, 2, 2};
+	private static final int[] AZTEC_SKILL_DESCRIPTION_LINES = {1, 2, 1, 2, 2};
 	private static final String[] EGYPTIAN_SKILL_TRANSLATION_KEYS = {
 			"gui.echo_warrior.summoner.skill.egyptian.cat_god",
 			"gui.echo_warrior.summoner.skill.egyptian.leaf_arrow",
 			"gui.echo_warrior.summoner.skill.egyptian.chariot_volley",
 			"gui.echo_warrior.summoner.skill.egyptian.backstep"
 	};
-	private static final int[] EGYPTIAN_SKILL_DESCRIPTION_LINES = {3, 2, 2, 2};
+	private static final int[] EGYPTIAN_SKILL_DESCRIPTION_LINES = {2, 2, 2, 2};
 	private static final String[] GUANDAO_SKILL_TRANSLATION_KEYS = {
 			"gui.echo_warrior.summoner.skill.guandao.armor_clad",
 			"gui.echo_warrior.summoner.skill.guandao.growing_valor",
 			"gui.echo_warrior.summoner.skill.guandao.crescent_blade",
 			"gui.echo_warrior.summoner.skill.guandao.combo"
 	};
-	private static final int[] GUANDAO_SKILL_DESCRIPTION_LINES = {2, 3, 2, 5};
+	private static final int[] GUANDAO_SKILL_DESCRIPTION_LINES = {1, 2, 2, 3};
 	private static final String[] SAMURAI_SKILL_TRANSLATION_KEYS = {
 			"gui.echo_warrior.summoner.skill.samurai.zanshin",
 			"gui.echo_warrior.summoner.skill.samurai.fumikomi",
 			"gui.echo_warrior.summoner.skill.samurai.zan",
 			"gui.echo_warrior.summoner.skill.samurai.stab"
 	};
-	private static final int[] SAMURAI_SKILL_DESCRIPTION_LINES = {4, 4, 3, 5};
+	private static final int[] SAMURAI_SKILL_DESCRIPTION_LINES = {3, 2, 2, 3};
 	private static final Identifier[] TALENT_ICONS = {
 			icon("traits/bad_temper.png"),
 			icon("traits/lazy.png"),

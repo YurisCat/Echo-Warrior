@@ -23,4 +23,9 @@ public final class TutorialManualStackData {
 		int normalized = Math.clamp(page, 0, TutorialManualCatalog.pageCount() - 1);
 		CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> tag.putInt(BOOKMARK, normalized));
 	}
+
+	/** The renderer calls this only for the old and new snapshots of one hand slot. */
+	public static boolean isSamePhysicalManual(ItemStack first, ItemStack second) {
+		return first.is(ModItems.TUTORIAL_MANUAL) && second.is(ModItems.TUTORIAL_MANUAL);
+	}
 }

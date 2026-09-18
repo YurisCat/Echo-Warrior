@@ -1,0 +1,30 @@
+{
+  "required": true,
+  "package": "com.yuriscat.echowarrior.compat.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "BlockTalentMixin1211",
+    "CreeperMixin1211",
+    "ExperienceOrbTalentMixin1211",
+    "FishingHookTalentMixin1211",
+    "LivingEntityMixin1211",
+    "LivingEntityAccessoryMixin1211",
+    "MerchantTalentMixin1211",
+    "PlayerTalentMixin1211",
+    "ServerGamePacketListenerMixin1211",
+    "ShulkerBulletAccessor1211"
+  ],
+  "client": [
+    "AbstractContainerScreenMixin1211",
+    "CreativeModeInventoryScreenInvoker1211",
+    "CreativeModeInventoryScreenMixin1211",
+    "CreativeModeSlotWrapperAccessor1211",
+    "GuiGraphicsInvoker1211",
+    "GuiGraphicsMixin1211",
+    "GuiMixin1211",
+    "ItemInHandRendererMixin1211"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -688,7 +688,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		for (LivingEntity target : targetsInStabCapsule(level, this.stabYaw)) {
 			Vec3 stored = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
 			if (dealDamage(level, target, 1.5F,
-					level.damageSources().source(ModDamageTypes.SAMURAI_STAB, this))) {
+					ModDamageTypes.source(level, ModDamageTypes.SAMURAI_STAB, this))) {
 				damaged = true;
 				this.stabTargets.put(target.getUUID(), stored);
 				PINNED_UNTIL.put(target.getUUID(), now + 8L);
@@ -707,7 +707,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 			LivingEntity target = resolveLiving(level, entry.getKey());
 			Vec3 bloodPosition = target != null ? target.position().add(0.0, target.getBbHeight() * 0.55, 0.0) : entry.getValue();
 			if (target != null && target.isAlive() && this.canAttack(target) && dealDamage(level, target, 3.0F,
-					level.damageSources().source(ModDamageTypes.SAMURAI_STAB, this))) {
+					ModDamageTypes.source(level, ModDamageTypes.SAMURAI_STAB, this))) {
 				damaged = true;
 				applyLightKnockback(target, 0.32);
 			}
@@ -732,7 +732,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 			boolean suppressVanillaKnockback
 	) {
 		DamageSource source = suppressVanillaKnockback
-				? level.damageSources().source(ModDamageTypes.SAMURAI_FIRST_SLASH, this)
+				? ModDamageTypes.source(level, ModDamageTypes.SAMURAI_FIRST_SLASH, this)
 				: level.damageSources().mobAttack(this);
 		return dealDamage(level, target, multiplier, source);
 	}

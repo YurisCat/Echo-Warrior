@@ -6,6 +6,7 @@ import com.yuriscat.echowarrior.ModBlocks;
 import com.yuriscat.echowarrior.ModEntities;
 import com.yuriscat.echowarrior.ModMenus;
 import com.yuriscat.echowarrior.client.AztecWarriorEchoRenderer;
+import com.yuriscat.echowarrior.client.AutomatedTestPauseController;
 import com.yuriscat.echowarrior.client.EchoCompassClientState;
 import com.yuriscat.echowarrior.client.EchoCompassAngleProperty;
 import com.yuriscat.echowarrior.client.EchoCompassGoldFrameProperty;
@@ -32,6 +33,7 @@ import com.yuriscat.echowarrior.platform.ClientPlatformServices;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockColorRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -56,6 +58,7 @@ public final class EchoWarriorFabricClient implements ClientModInitializer {
 			return true;
 		});
 		EchoWarriorClient.initialize();
+		ClientTickEvents.END_CLIENT_TICK.register(AutomatedTestPauseController::tick);
 		RangeSelectItemModelProperties.ID_MAPPER.put(
 				EchoWarrior.id("echo_compass_angle"), EchoCompassAngleProperty.MAP_CODEC);
 		ConditionalItemModelProperties.ID_MAPPER.put(

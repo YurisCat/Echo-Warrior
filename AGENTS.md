@@ -21,6 +21,15 @@
 - Inspect `run/logs/latest.log` and crash reports after failures.
 - Prefer automated checks and GameTests for deterministic behavior; reserve manual testing for visuals, sound, controls, and game feel.
 
+## Compatibility porting knowledge
+
+- Read `docs/VERSION_PORTING_PLAYBOOK.md` before creating, extending, or auditing a Minecraft compatibility line.
+- After diagnosing and fixing a bug, always classify it using the playbook maintenance rules. Update the playbook in the same task when the root cause is reusable across Minecraft versions, loaders, dependency versions, save/network boundaries, Mixin/class-loading rules, resource formats, or rendering lifecycles.
+- Do not append every bug indiscriminately. Keep one-off candidate history in the version status or test checklist, and keep unconfirmed reports out of the playbook until the root cause is known.
+- A reusable lesson must record the symptom, root cause, future porting rule, automatic guard, remaining manual acceptance, and applicable versions.
+- When a reusable bug can be checked deterministically, update the relevant baseline script, GameTest, self-test, or integration test as well as the Markdown guidance. Markdown alone is not a regression guard.
+- Keep `PROJECT.md` as the source of truth for current behavior. Player-visible gameplay, controls, balance, or state changes still follow the encyclopedia update policy below.
+
 ## Reload policy
 
 - Prefer resource reloads for assets and data reloads for data-driven content.

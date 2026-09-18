@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${version}",
+  "name": "${mod_name}",
+  "description": "${mod_description}",
+  "authors": [
+    "${mod_author}"
+  ],
+  "contributors": [
+    "Tomato Fish",
+    "【：】"
+  ],
+  "contact": {
+    "sources": "https://github.com/YurisCat/Echo-Warrior",
+    "issues": "https://github.com/YurisCat/Echo-Warrior/issues"
+  },
+  "license": [
+    "Apache-2.0",
+    "LicenseRef-Echo-Warrior-Assets-1.0"
+  ],
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.yuriscat.echowarrior.compat.fabric.EchoWarrior1211Fabric"
+    ],
+    "client": [
+      "com.yuriscat.echowarrior.compat.fabric.EchoWarrior1211FabricClient"
+    ]
+  },
+  "mixins": [
+    "echo_warrior_1211.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=${java_version}",
+    "fabric-api": ">=${fabric_api_version}",
+    "smartbrainlib": ">=${smartbrainlib_version}",
+    "geckolib": ">=${geckolib_version}"
+  }
+}

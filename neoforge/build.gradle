@@ -11,6 +11,8 @@ dependencies {
 neoForge {
 	version = neoforge_version
 	interfaceInjectionData.from(file('src/main/interface-injections/geckolib.json'))
+	accessTransformers.from(project(':common').file('src/main/resources/META-INF/accesstransformer.cfg'))
+	validateAccessTransformers = true
 
 	runs {
 		configureEach {
@@ -24,6 +26,9 @@ neoForge {
 			def quickPlayWorld = providers.gradleProperty('quickPlayWorldNeoForge').orNull
 			if (quickPlayWorld) {
 				programArguments.addAll '--quickPlaySingleplayer', quickPlayWorld
+			}
+			if (providers.gradleProperty('autoPauseAfterQuickPlay').orNull == 'true') {
+				jvmArguments.add '-Decho_warrior.auto_pause_after_quick_play=true'
 			}
 		}
 		server {

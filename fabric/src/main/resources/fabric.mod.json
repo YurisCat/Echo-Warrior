@@ -32,6 +32,7 @@
   "mixins": [
     "echo_warrior.mixins.json"
   ],
+  "accessWidener": "echo_warrior.classtweaker",
   "depends": {
     "fabricloader": ">=0.19.3",
     "minecraft": "~26.1.2",

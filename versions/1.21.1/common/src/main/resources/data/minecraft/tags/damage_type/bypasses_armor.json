@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "echo_warrior:bleeding",
+    "echo_warrior:armor_piercing_arrow"
+  ]
+}

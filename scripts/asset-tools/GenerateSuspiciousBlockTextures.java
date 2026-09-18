@@ -60,6 +60,7 @@ public final class GenerateSuspiciousBlockTextures {
 			BufferedImage dirt = readTexture(zip, "dirt");
 			BufferedImage grassTop = readTexture(zip, "grass_block_top");
 			BufferedImage grassSide = readTexture(zip, "grass_block_side");
+			BufferedImage grassSideOverlay = readTexture(zip, "grass_block_side_overlay");
 			BufferedImage[] wearStages = new BufferedImage[STAGE_COUNT];
 			for (int stage = 0; stage < STAGE_COUNT; stage++) {
 				wearStages[stage] = readTexture(zip, "suspicious_sand_" + stage);
@@ -82,6 +83,9 @@ public final class GenerateSuspiciousBlockTextures {
 						write(compose(grassSide, marks.get(first), marks.get(second), wear,
 								wearStages[0], Surface.GRASS_SIDE), textureOutput.resolve(
 								"suspicious_grass_block_side_" + suffix + ".png"));
+						write(compose(grassSideOverlay, marks.get(first), marks.get(second), wear,
+								wearStages[0], Surface.GRASS_SIDE), textureOutput.resolve(
+								"suspicious_grass_block_side_overlay_" + suffix + ".png"));
 						writeDirtModel(blockModelOutput, suffix);
 						writeGrassModel(blockModelOutput, suffix);
 					}
@@ -249,15 +253,17 @@ public final class GenerateSuspiciousBlockTextures {
 	private static void writeGrassModel(Path output, String suffix) throws IOException {
 		String json = """
 				{
+				  "render_type": "minecraft:cutout_mipped",
 				  "parent": "minecraft:block/grass_block",
 				  "textures": {
 				    "particle": "echo_warrior:block/suspicious_dirt_%s",
 				    "bottom": "echo_warrior:block/suspicious_dirt_%s",
 				    "top": "echo_warrior:block/suspicious_grass_block_top_%s",
-				    "side": "echo_warrior:block/suspicious_grass_block_side_%s"
+				    "side": "echo_warrior:block/suspicious_grass_block_side_%s",
+				    "overlay": "echo_warrior:block/suspicious_grass_block_side_overlay_%s"
 				  }
 				}
-				""".formatted(suffix, suffix, suffix, suffix);
+				""".formatted(suffix, suffix, suffix, suffix, suffix);
 		writeText(output.resolve("suspicious_grass_block_" + suffix + ".json"), json);
 	}
 
@@ -295,7 +301,7 @@ public final class GenerateSuspiciousBlockTextures {
 	private static boolean isGeneratedTexture(Path path) {
 		String name = path.getFileName().toString();
 		return name.matches("suspicious_dirt_(?:[0-3]|c\\d{2}(?:_r\\d)?_s\\d)\\.png")
-				|| name.matches("suspicious_grass_block_(?:top|side)_(?:[0-3]|c\\d{2}(?:_r\\d)?_s\\d)\\.png");
+				|| name.matches("suspicious_grass_block_(?:top|side|side_overlay)_(?:[0-3]|c\\d{2}(?:_r\\d)?_s\\d)\\.png");
 	}
 
 	private static boolean isGeneratedBlockModel(Path path) {

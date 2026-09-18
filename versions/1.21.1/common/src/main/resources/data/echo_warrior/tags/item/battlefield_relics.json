@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "echo_warrior:roman_legionary_relic",
+    "echo_warrior:aztec_warrior_relic",
+    "echo_warrior:egyptian_archer_relic",
+    "echo_warrior:guandao_warrior_relic",
+    "echo_warrior:japanese_samurai_relic"
+  ]
+}

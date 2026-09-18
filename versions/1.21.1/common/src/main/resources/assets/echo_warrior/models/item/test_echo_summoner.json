@@ -1,0 +1,38 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "echo_warrior:item/test_echo_summoner"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "echo_warrior:summoner_relic_icon": 0.1
+      },
+      "model": "echo_warrior:item/roman_legionary_relic"
+    },
+    {
+      "predicate": {
+        "echo_warrior:summoner_relic_icon": 0.2
+      },
+      "model": "echo_warrior:item/aztec_warrior_relic"
+    },
+    {
+      "predicate": {
+        "echo_warrior:summoner_relic_icon": 0.3
+      },
+      "model": "echo_warrior:item/egyptian_archer_relic"
+    },
+    {
+      "predicate": {
+        "echo_warrior:summoner_relic_icon": 0.4
+      },
+      "model": "echo_warrior:item/guandao_warrior_relic"
+    },
+    {
+      "predicate": {
+        "echo_warrior:summoner_relic_icon": 0.5
+      },
+      "model": "echo_warrior:item/japanese_samurai_relic"
+    }
+  ]
+}

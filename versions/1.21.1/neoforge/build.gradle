@@ -1,0 +1,60 @@
+plugins {
+	id 'multiloader-loader'
+	id 'net.neoforged.moddev'
+}
+
+dependencies {
+	implementation("net.tslat.smartbrainlib:SmartBrainLib-neoforge-${minecraft_version}:${smartbrainlib_version}")
+	implementation("software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}")
+}
+
+neoForge {
+	version = neoforge_version
+	accessTransformers.from(project(':common').file('src/main/resources/META-INF/accesstransformer.cfg'))
+	validateAccessTransformers = true
+
+	runs {
+		configureEach {
+			ideName = "Echo Warrior 1.21.1 NeoForge ${it.name.capitalize()}"
+		}
+		client {
+			client()
+			gameDirectory = rootProject.file('run-neoforge')
+			programArguments.add '--username=Echo1211Neo'
+			jvmArguments.add '-Decho_warrior.egyptian_archer_diagnostics=true'
+			jvmArguments.add '-Decho_warrior.summoner_insertion_diagnostics=true'
+
+			def quickPlayWorld = providers.gradleProperty('quickPlayWorldNeoForge').orNull
+			if (quickPlayWorld) {
+				programArguments.addAll '--quickPlaySingleplayer', quickPlayWorld
+			}
+			if (providers.gradleProperty('autoPauseAfterQuickPlay').orNull == 'true') {
+				jvmArguments.add '-Decho_warrior.auto_pause_after_quick_play=true'
+			}
+		}
+		server {
+			server()
+			gameDirectory = rootProject.file('run-neoforge-server')
+		}
+	}
+
+	mods {
+		"${mod_id}" {
+			sourceSet sourceSets.main
+		}
+	}
+}
+
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements'].each { variant ->
+	configurations.named(variant) {
+		attributes.attribute(loaderAttribute, 'neoforge')
+	}
+}
+sourceSets.configureEach {
+	[compileClasspathConfigurationName, runtimeClasspathConfigurationName].each { variant ->
+		configurations.named(variant) {
+			attributes.attribute(loaderAttribute, 'neoforge')
+		}
+	}
+}

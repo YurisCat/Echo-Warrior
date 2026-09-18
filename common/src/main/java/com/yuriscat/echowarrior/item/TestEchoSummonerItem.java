@@ -85,6 +85,14 @@ public final class TestEchoSummonerItem extends Item {
 				"item.echo_warrior.test_echo_summoner.tooltip.term.quick_action"
 		).withStyle(style -> style.withColor(CONTROL_HINT_COLOR));
 		Component inventory = plainTerm("item.echo_warrior.test_echo_summoner.tooltip.term.inventory");
+		ItemStack loadedRelic = relicStack(stack);
+		if (loadedRelic.getItem() instanceof EchoRelicItem) {
+			Component hero = Component.translatable(EchoHeroType.fromRelic(loadedRelic).nameTranslationKey())
+					.withStyle(ChatFormatting.GOLD);
+			builder.accept(detailLine("item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo", hero));
+		} else {
+			builder.accept(detailLine("item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo.empty"));
+		}
 		builder.accept(detailLine("item.echo_warrior.test_echo_summoner.tooltip.detail.healing", echo, fuel));
 		builder.accept(detailLine("item.echo_warrior.test_echo_summoner.tooltip.detail.quick_action", quickAction));
 		builder.accept(detailLine("item.echo_warrior.test_echo_summoner.tooltip.detail.direct_insert", inventory));

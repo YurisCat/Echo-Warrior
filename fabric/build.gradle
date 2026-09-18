@@ -12,6 +12,8 @@ dependencies {
 }
 
 loom {
+	accessWidenerPath = project(':common').file('src/main/resources/echo_warrior.classtweaker')
+
 	mods {
 		"${mod_id}" {
 			sourceSet sourceSets.main
@@ -29,6 +31,9 @@ loom {
 			if (quickPlayWorld) {
 				programArg '--quickPlaySingleplayer'
 				programArg quickPlayWorld
+			}
+			if (providers.gradleProperty('autoPauseAfterQuickPlay').orNull == 'true') {
+				vmArg '-Decho_warrior.auto_pause_after_quick_play=true'
 			}
 		}
 		server {

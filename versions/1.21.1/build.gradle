@@ -1,0 +1,59 @@
+plugins {
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
+	id 'net.neoforged.moddev' version "${moddev_version}" apply false
+}
+
+allprojects {
+	version = project.mod_version
+	group = project.maven_group
+
+	if (project != rootProject) {
+		repositories {
+			maven {
+				name = 'SmartBrainLib'
+				url = 'https://dl.cloudsmith.io/public/tslat/sbl/maven/'
+				content { includeGroup 'net.tslat.smartbrainlib' }
+			}
+			maven {
+				name = 'GeckoLib'
+				url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+				content { includeGroup 'software.bernie.geckolib' }
+			}
+		}
+	}
+}
+
+tasks.register('fabricBuild') {
+	group = 'build'
+	description = 'Builds the Minecraft 1.21.1 Fabric package.'
+	dependsOn(':fabric:build')
+}
+
+tasks.register('neoForgeBuild') {
+	group = 'build'
+	description = 'Builds the Minecraft 1.21.1 NeoForge package.'
+	dependsOn(':neoforge:build')
+}
+
+tasks.register('dualBuild') {
+	group = 'build'
+	description = 'Builds both Minecraft 1.21.1 loader packages.'
+	dependsOn(':fabric:build', ':neoforge:build')
+}
+
+tasks.register('runFabricClient') {
+	group = 'application'
+	description = 'Starts the isolated Minecraft 1.21.1 Fabric development client.'
+	dependsOn(':fabric:runClient')
+}
+
+tasks.register('runNeoForgeClient') {
+	group = 'application'
+	description = 'Starts the isolated Minecraft 1.21.1 NeoForge development client.'
+	dependsOn(':neoforge:runClient')
+}
+
+tasks.register('clean') {
+	group = 'build'
+	dependsOn(':common:clean', ':fabric:clean', ':neoforge:clean')
+}

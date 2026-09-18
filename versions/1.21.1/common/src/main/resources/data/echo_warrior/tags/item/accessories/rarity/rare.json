@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "echo_warrior:victors_laurel_accessory",
+    "echo_warrior:crack_ring_hammer_charm_accessory",
+    "echo_warrior:blood_pact_fang_accessory",
+    "echo_warrior:cat_bell_fish_charm_accessory",
+    "echo_warrior:substitute_doll_accessory"
+  ]
+}

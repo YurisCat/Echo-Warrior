@@ -120,7 +120,7 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 					"gui.echo_warrior.summoner.skill.samurai.stab"}
 	};
 	private static final int[][] HERO_SKILL_LINES = {
-			{2, 1, 2, 2}, {1, 2, 2, 2, 2}, {3, 2, 2, 2, 2}, {2, 3, 2, 5}, {4, 4, 3, 5}
+			{2, 1, 2, 2}, {1, 2, 1, 2, 2}, {2, 2, 2, 2, 2}, {1, 2, 2, 3}, {3, 2, 2, 3}
 	};
 	private static final String[] HERO_RELICS = {
 			"roman_legionary_relic", "aztec_warrior_relic", "egyptian_archer_relic",
