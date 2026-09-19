@@ -54,7 +54,7 @@ The initial Roman Legionary vertical slice has expanded into the current five-he
 - Dedicated-server assertions for registry IDs, item components, authoritative fuel/relic/accessories, duplicate accessory rejection, accessory calculations, modes, skill state, charges, cooldown, binding generations, complete binding NBT round-trips, attributes, entity NBT round-trips, procedural blink/gaze and mutual-gaze acquisition math, attack-tracking hazard rejection, moving interception geometry, shulker-bullet rehoming, and persistent creeper suppression.
 - Automated Fabric and NeoForge client startup checks through title-screen resource loading.
 - Aztec Warrior, Egyptian Archer, Chinese Guandao Warrior, and Japanese Samurai entities, relics, skills, combat state, renderers, models, animations, and persistence.
-- Battlefield archaeology, the Echo Compass, knowledge fragments and collection, the 44-page tutorial manual, the Echo Recycler, five legacies, 25 accessories, relic growth, and 22 relic talents.
+- Battlefield archaeology, the Echo Compass, knowledge fragments and collection, the 44-page tutorial manual, the Echo Salvage Chest, five legacies, 25 accessories, relic growth, and 22 relic talents.
 - Source/JAR regression checks for localization parity, resources, recipes, tags, client feedback, stale-menu protection, safe summoning, and loader metadata isolation.
 
 The current candidate is intended to match the approved existing 26.1.2 gameplay scope, with target-version-specific implementations where APIs and resource formats differ. Automated builds, JAR audits, and dedicated-server checks do not replace manual acceptance of GUI, animation, sound, controls, and multiplayer feel; use the compatibility checklist for final sign-off.

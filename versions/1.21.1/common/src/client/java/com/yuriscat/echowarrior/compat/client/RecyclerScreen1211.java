@@ -8,6 +8,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
@@ -20,11 +21,16 @@ public final class RecyclerScreen1211 extends AbstractContainerScreen<RecyclerMe
     private static final int INFO_Y = 4;
     private static final int INFO_WIDTH = 15;
     private static final int INFO_HEIGHT = 12;
+    private static final int INFO_HIT_PADDING = 1;
+    private static final int TITLE_X = 8;
+    private static final int TITLE_Y = 6;
+    private static final int TITLE_ICON_GAP = 5;
 
     public RecyclerScreen1211(RecyclerMenu1211 menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         this.imageHeight = 114 + menu.getRowCount() * 18;
         this.inventoryLabelY = this.imageHeight - 94;
+        this.titleLabelX = -1000;
     }
 
     @Override
@@ -38,17 +44,36 @@ public final class RecyclerScreen1211 extends AbstractContainerScreen<RecyclerMe
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         super.renderLabels(graphics, mouseX, mouseY);
-        boolean hovered = isInside(mouseX, mouseY, this.leftPos + INFO_X - 1, this.topPos + INFO_Y - 1,
-                INFO_WIDTH + 2, INFO_HEIGHT + 2);
+        drawFittedTitle(graphics);
+        boolean hovered = isInside(mouseX, mouseY,
+                this.leftPos + INFO_X - INFO_HIT_PADDING, this.topPos + INFO_Y - INFO_HIT_PADDING,
+                INFO_WIDTH + INFO_HIT_PADDING * 2, INFO_HEIGHT + INFO_HIT_PADDING * 2);
         graphics.blit(hovered ? INFO_HOVERED : INFO, INFO_X, INFO_Y,
                 0.0F, 0.0F, INFO_WIDTH, INFO_HEIGHT, INFO_WIDTH, INFO_HEIGHT);
+    }
+
+    private void drawFittedTitle(GuiGraphics graphics) {
+        FormattedCharSequence sequence = this.title.getVisualOrderText();
+        int width = this.font.width(sequence);
+        int maximumWidth = INFO_X - INFO_HIT_PADDING - TITLE_ICON_GAP - TITLE_X;
+        if (width <= maximumWidth) {
+            graphics.drawString(this.font, sequence, TITLE_X, TITLE_Y, 0x404040, false);
+            return;
+        }
+        float scale = maximumWidth / (float) width;
+        graphics.pose().pushPose();
+        graphics.pose().translate(TITLE_X, TITLE_Y + (9.0F - 9.0F * scale) / 2.0F, 0.0F);
+        graphics.pose().scale(scale, scale, 1.0F);
+        graphics.drawString(this.font, sequence, 0, 0, 0x404040, false);
+        graphics.pose().popPose();
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isInside(mouseX, mouseY, this.leftPos + INFO_X - 1, this.topPos + INFO_Y - 1,
-                INFO_WIDTH + 2, INFO_HEIGHT + 2)) {
+        if (isInside(mouseX, mouseY,
+                this.leftPos + INFO_X - INFO_HIT_PADDING, this.topPos + INFO_Y - INFO_HIT_PADDING,
+                INFO_WIDTH + INFO_HIT_PADDING * 2, INFO_HEIGHT + INFO_HIT_PADDING * 2)) {
             graphics.renderComponentTooltip(this.font, infoTooltip(), mouseX, mouseY);
         }
     }

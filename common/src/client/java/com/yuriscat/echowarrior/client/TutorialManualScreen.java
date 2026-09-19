@@ -205,13 +205,13 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 	}
 
 	private void renderCover(GuiGraphicsExtractor graphics) {
-		centeredFittedEnglish(graphics, Component.translatable("gui.echo_warrior.tutorial.cover.title"),
+		centeredFitted(graphics, Component.translatable("gui.echo_warrior.tutorial.cover.title"),
 				PAGE_CENTER_X, PAPER_Y + 50, CONTENT_WIDTH, INK);
-		centeredFittedEnglish(graphics, Component.translatable("gui.echo_warrior.tutorial.cover.author"),
+		centeredFitted(graphics, Component.translatable("gui.echo_warrior.tutorial.cover.author"),
 				PAGE_CENTER_X, PAPER_Y + 93, CONTENT_WIDTH, INK);
-		centeredFittedEnglish(graphics, Component.translatable("gui.echo_warrior.tutorial.cover.by"),
+		centeredFitted(graphics, Component.translatable("gui.echo_warrior.tutorial.cover.by"),
 				PAGE_CENTER_X, PAPER_Y + 108, CONTENT_WIDTH, MUTED_INK);
-		centeredFittedEnglish(graphics, Component.translatable("gui.echo_warrior.tutorial.page_number",
+		centeredFitted(graphics, Component.translatable("gui.echo_warrior.tutorial.page_number",
 				this.menu.currentPage() + 1, TutorialManualCatalog.pageCount()),
 				PAGE_CENTER_X, PAPER_Y + 184, CONTENT_WIDTH, MUTED_INK);
 	}
@@ -237,7 +237,7 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 		renderAttachment(graphics, "knowledge_fragment", PAPER_X + 32, PAPER_Y + 151, mouseX, mouseY);
 		renderAttachment(graphics, legacy, PAPER_X + 74, PAPER_Y + 151, mouseX, mouseY);
 		renderAttachment(graphics, accessory, PAPER_X + 116, PAPER_Y + 151, mouseX, mouseY);
-		centeredFittedEnglish(graphics, Component.translatable("gui.echo_warrior.tutorial.attachment.click"),
+		centeredFitted(graphics, Component.translatable("gui.echo_warrior.tutorial.attachment.click"),
 				PAGE_CENTER_X, PAPER_Y + 171, CONTENT_WIDTH, MUTED_INK);
 	}
 
@@ -283,7 +283,7 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 		if (accessory.getItem() instanceof EchoAccessoryItem accessoryItem) {
 			Component rarity = Component.translatable("gui.echo_warrior.tutorial.accessory.rarity",
 					Component.translatable("gui.echo_warrior.tutorial.rarity." + accessoryItem.type().rarity().name().toLowerCase()));
-			drawFittedEnglish(graphics, rarity, CONTENT_LEFT + 28, PAPER_Y + 41, CONTENT_WIDTH - 28, MUTED_INK);
+			drawFitted(graphics, rarity, CONTENT_LEFT + 28, PAPER_Y + 41, CONTENT_WIDTH - 28, MUTED_INK);
 			List<ColoredText> effects = new ArrayList<>();
 			for (int index = 0; index < accessoryItem.type().effectCount(); index++) {
 				boolean positive = accessoryItem.type().effectIsPositive(index);
@@ -293,14 +293,14 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 			}
 			renderAccessoryEffects(graphics, effects);
 		}
-		drawFittedEnglish(graphics, Component.translatable("gui.echo_warrior.tutorial.recipe"),
+		drawFitted(graphics, Component.translatable("gui.echo_warrior.tutorial.recipe"),
 				RECIPE_X, ACCESSORY_RECIPE_Y - 11, RECIPE_WIDTH, MUTED_INK);
 		renderRecipe(graphics, page.subjectId(), RECIPE_X, ACCESSORY_RECIPE_Y, mouseX, mouseY);
 	}
 
 	private void renderAccessoryEffects(GuiGraphicsExtractor graphics, List<ColoredText> effects) {
 		List<ColoredLine> lines = wrapColoredLines(effects, ACCESSORY_EFFECT_WIDTH);
-		if (isEnglishLanguage() && lines.size() * 9 > ACCESSORY_EFFECT_HEIGHT) {
+		if (lines.size() * 9 > ACCESSORY_EFFECT_HEIGHT) {
 			float scale = 0.65F;
 			lines = wrapColoredLines(effects, (int)Math.floor(ACCESSORY_EFFECT_WIDTH / scale));
 			for (int percent = 98; percent >= 65; percent--) {
@@ -351,15 +351,15 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 				CREDITS_IMAGE_SOURCE_SIZE, CREDITS_IMAGE_SOURCE_SIZE);
 		int textY = y + CREDITS_IMAGE_SIZE + CREDITS_IMAGE_TEXT_GAP;
 		for (int line = 0; line < thanksLines.length; line++) {
-			centeredFittedEnglish(graphics, Component.literal(thanksLines[line]), PAGE_CENTER_X,
+			centeredFitted(graphics, Component.literal(thanksLines[line]), PAGE_CENTER_X,
 					textY + line * CREDITS_TEXT_HEIGHT, CONTENT_WIDTH, INK);
 		}
 	}
 
 	private void renderTeam(GuiGraphicsExtractor graphics) {
 		renderTitle(graphics, Component.translatable("gui.echo_warrior.tutorial.page.team.title"));
-		if (isEnglishLanguage()) {
-			renderEnglishTeam(graphics);
+		if (usesWordWrappedTeamLayout()) {
+			renderWordWrappedTeam(graphics);
 			return;
 		}
 		int y = BODY_Y;
@@ -401,20 +401,20 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 		drawScaledText(graphics, suffix, x, y, fitScale, color);
 	}
 
-	private void renderEnglishTeam(GuiGraphicsExtractor graphics) {
+	private void renderWordWrappedTeam(GuiGraphicsExtractor graphics) {
 		int y = BODY_Y;
 		for (String key : ENGLISH_TEAM_LINES) {
 			int color = key.endsWith("header") ? MUTED_INK : INK;
 			String text = Component.translatable("gui.echo_warrior.tutorial.team." + key).getString();
-			for (List<TeamWord> line : wrapEnglishTeamLine(text)) {
-				renderEnglishTeamLine(graphics, line, y, color);
+			for (List<TeamWord> line : wrapTeamLine(text)) {
+				renderTeamLine(graphics, line, y, color);
 				y += ENGLISH_TEAM_LINE_HEIGHT;
 			}
 			if (!key.endsWith("header")) y += ENGLISH_TEAM_ENTRY_GAP;
 		}
 	}
 
-	private List<List<TeamWord>> wrapEnglishTeamLine(String text) {
+	private List<List<TeamWord>> wrapTeamLine(String text) {
 		int parenthesis = text.indexOf('(');
 		List<TeamWord> words = new ArrayList<>();
 		int cursor = 0;
@@ -444,7 +444,7 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 		return lines;
 	}
 
-	private void renderEnglishTeamLine(GuiGraphicsExtractor graphics, List<TeamWord> words, int y, int color) {
+	private void renderTeamLine(GuiGraphicsExtractor graphics, List<TeamWord> words, int y, int color) {
 		float x = CONTENT_LEFT;
 		for (int index = 0; index < words.size(); index++) {
 			TeamWord word = words.get(index);
@@ -462,8 +462,8 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 		int lineHeight = lineCount * 9 + paragraphGaps * 3 <= available ? 9 : 8;
 		int paragraphGap = lineHeight == 9 ? 3 : 1;
 		if (lineCount * lineHeight + paragraphGaps * paragraphGap > available) paragraphGap = 0;
-		if (isEnglishLanguage() && lineCount * lineHeight + paragraphGaps * paragraphGap > available) {
-			renderScaledEnglishParagraphs(graphics, page, startY, available);
+		if (lineCount * lineHeight + paragraphGaps * paragraphGap > available) {
+			renderScaledParagraphs(graphics, page, startY, available);
 			return;
 		}
 
@@ -479,8 +479,8 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 		}
 	}
 
-	private void renderScaledEnglishParagraphs(GuiGraphicsExtractor graphics, Page page, int startY, int available) {
-		ScaledParagraphLayout layout = findEnglishParagraphLayout(page, available);
+	private void renderScaledParagraphs(GuiGraphicsExtractor graphics, Page page, int startY, int available) {
+		ScaledParagraphLayout layout = findParagraphLayout(page, available);
 		graphics.pose().pushMatrix();
 		graphics.pose().translate(CONTENT_LEFT, startY);
 		graphics.pose().scale(layout.scale(), layout.scale());
@@ -495,7 +495,7 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 		graphics.pose().popMatrix();
 	}
 
-	private ScaledParagraphLayout findEnglishParagraphLayout(Page page, int available) {
+	private ScaledParagraphLayout findParagraphLayout(Page page, int available) {
 		for (int percent = 98; percent >= 65; percent--) {
 			float scale = percent / 100.0F;
 			int wrapWidth = Math.max(CONTENT_WIDTH, (int)Math.floor(CONTENT_WIDTH / scale));
@@ -695,7 +695,7 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 	}
 
 	private void renderTitle(GuiGraphicsExtractor graphics, Component title) {
-		centeredFittedEnglish(graphics, title, PAGE_CENTER_X, TITLE_Y, CONTENT_WIDTH, INK);
+		centeredFitted(graphics, title, PAGE_CENTER_X, TITLE_Y, CONTENT_WIDTH, INK);
 	}
 
 	private void centered(GuiGraphicsExtractor graphics, Component text, int y, int color) {
@@ -710,22 +710,22 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 		graphics.text(this.font, text, centerX - this.font.width(text) / 2, y, color, false);
 	}
 
-	private void centeredFittedEnglish(GuiGraphicsExtractor graphics, Component text,
+	private void centeredFitted(GuiGraphicsExtractor graphics, Component text,
 			int centerX, int y, int maximumWidth, int color) {
 		FormattedCharSequence sequence = text.getVisualOrderText();
 		int width = this.font.width(sequence);
-		if (isEnglishLanguage() && width > maximumWidth) {
+		if (width > maximumWidth) {
 			drawScaledCentered(graphics, sequence, centerX, y, maximumWidth / (float)width, color);
 		} else {
 			centeredAt(graphics, sequence, centerX, y, color);
 		}
 	}
 
-	private void drawFittedEnglish(GuiGraphicsExtractor graphics, Component text,
+	private void drawFitted(GuiGraphicsExtractor graphics, Component text,
 			int x, int y, int maximumWidth, int color) {
 		FormattedCharSequence sequence = text.getVisualOrderText();
 		int width = this.font.width(sequence);
-		if (isEnglishLanguage() && width > maximumWidth) {
+		if (width > maximumWidth) {
 			drawScaledText(graphics, sequence, x, y, maximumWidth / (float)width, color);
 		} else {
 			graphics.text(this.font, sequence, x, y, color, false);
@@ -763,8 +763,10 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 		graphics.pose().popMatrix();
 	}
 
-	private boolean isEnglishLanguage() {
-		return this.minecraft != null && this.minecraft.getLanguageManager().getSelected().startsWith("en_");
+	private boolean usesWordWrappedTeamLayout() {
+		if (this.minecraft == null) return true;
+		String language = this.minecraft.getLanguageManager().getSelected();
+		return !language.startsWith("zh_") && !language.startsWith("ja_") && !language.startsWith("ko_");
 	}
 
 	private boolean insideLocal(double mouseX, double mouseY, int x, int y, int width, int height) {

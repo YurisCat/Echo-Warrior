@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -164,6 +165,23 @@ def append_github_output(path: Path, values: dict[str, str]) -> None:
             output.write(f"{key}={value}\n")
 
 
+def validate_localization(allow_pending: bool) -> None:
+    command = [
+        sys.executable,
+        "scripts/check-localization.py",
+        "--release-gate",
+    ]
+    if allow_pending:
+        command.append("--allow-pending")
+    result = subprocess.run(command, check=False)
+    if result.returncode != 0:
+        raise ValueError(
+            "Localization release gate failed. Review the report above, update the "
+            "translations, or obtain the author's explicit waiver and rerun with "
+            "--allow-pending-localization."
+        )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--properties", type=Path, default=Path("gradle.properties"))
@@ -193,6 +211,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--require-jars",
         action="store_true",
         help="Fail unless all four exact version- and loader-specific JARs exist and validate.",
+    )
+    parser.add_argument(
+        "--allow-pending-localization",
+        action="store_true",
+        help=(
+            "Explicit author waiver for missing or stale non-core localizations. "
+            "Malformed files and placeholder errors still fail."
+        ),
     )
     parser.add_argument(
         "--github-output",
@@ -247,6 +273,7 @@ def main() -> int:
             )
 
         changelog = extract_release_changelog(args.changelog, version)
+        validate_localization(args.allow_pending_localization)
         args.output_directory.mkdir(parents=True, exist_ok=True)
 
         outputs = {

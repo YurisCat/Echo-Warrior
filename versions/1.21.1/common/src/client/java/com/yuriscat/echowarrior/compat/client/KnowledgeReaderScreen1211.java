@@ -26,6 +26,8 @@ public final class KnowledgeReaderScreen1211 extends AbstractContainerScreen<Kno
     private static final int CONTENT_LEFT = 38;
     private static final int CONTENT_WIDTH = 124;
     private static final int BODY_Y = 55;
+    private static final int BODY_LINE_HEIGHT = 9;
+    private static final int MINIMUM_BODY_SCALE_PERCENT = 65;
     private static final int ILLUSTRATION_Y = 154;
     private static final int BUTTON_PADDING = 2;
     private static final ResourceLocation COLLECTION = texture("knowledge_collection.png");
@@ -123,13 +125,13 @@ public final class KnowledgeReaderScreen1211 extends AbstractContainerScreen<Kno
         int available = bodyBottom - BODY_Y;
         List<FormattedCharSequence> lines = this.font.split(body, CONTENT_WIDTH);
         float scale = 1.0F;
-        if (isEnglish() && lines.size() * 9 > available) {
-            scale = 0.65F;
-            for (int percent = 99; percent >= 65; percent--) {
+        if (lines.size() * BODY_LINE_HEIGHT > available) {
+            scale = MINIMUM_BODY_SCALE_PERCENT / 100.0F;
+            for (int percent = 99; percent >= MINIMUM_BODY_SCALE_PERCENT; percent--) {
                 float candidate = percent / 100.0F;
                 List<FormattedCharSequence> candidateLines = this.font.split(body,
                         (int)Math.floor(CONTENT_WIDTH / candidate));
-                if (candidateLines.size() * 9 * candidate <= available) {
+                if (candidateLines.size() * BODY_LINE_HEIGHT * candidate <= available) {
                     scale = candidate;
                     lines = candidateLines;
                     break;
@@ -138,7 +140,8 @@ public final class KnowledgeReaderScreen1211 extends AbstractContainerScreen<Kno
         }
         if (scale == 1.0F) {
             for (int index = 0; index < lines.size(); index++) {
-                graphics.drawString(this.font, lines.get(index), CONTENT_LEFT, BODY_Y + index * 9, INK, false);
+                graphics.drawString(this.font, lines.get(index), CONTENT_LEFT,
+                        BODY_Y + index * BODY_LINE_HEIGHT, INK, false);
             }
             return;
         }
@@ -146,7 +149,7 @@ public final class KnowledgeReaderScreen1211 extends AbstractContainerScreen<Kno
         graphics.pose().translate(CONTENT_LEFT, BODY_Y, 0.0F);
         graphics.pose().scale(scale, scale, 1.0F);
         for (int index = 0; index < lines.size(); index++) {
-            graphics.drawString(this.font, lines.get(index), 0, index * 9, INK, false);
+            graphics.drawString(this.font, lines.get(index), 0, index * BODY_LINE_HEIGHT, INK, false);
         }
         graphics.pose().popPose();
     }
@@ -200,7 +203,7 @@ public final class KnowledgeReaderScreen1211 extends AbstractContainerScreen<Kno
     private void drawCenteredFitted(GuiGraphics graphics, Component text, int y, int color) {
         FormattedCharSequence sequence = text.getVisualOrderText();
         int width = this.font.width(sequence);
-        if (!isEnglish() || width <= CONTENT_WIDTH) {
+        if (width <= CONTENT_WIDTH) {
             graphics.drawString(this.font, sequence, IMAGE_WIDTH / 2 - width / 2, y, color, false);
             return;
         }
@@ -210,10 +213,6 @@ public final class KnowledgeReaderScreen1211 extends AbstractContainerScreen<Kno
         graphics.pose().scale(scale, scale, 1.0F);
         graphics.drawString(this.font, sequence, 0, 0, color, false);
         graphics.pose().popPose();
-    }
-
-    private boolean isEnglish() {
-        return this.minecraft != null && this.minecraft.getLanguageManager().getSelected().startsWith("en_");
     }
 
     @Override

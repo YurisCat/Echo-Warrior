@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
@@ -23,10 +24,14 @@ public final class RecyclerScreen extends AbstractContainerScreen<RecyclerMenu> 
 	private static final int INFO_WIDTH = 15;
 	private static final int INFO_HEIGHT = 12;
 	private static final int INFO_HIT_PADDING = 1;
+	private static final int TITLE_X = 8;
+	private static final int TITLE_Y = 6;
+	private static final int TITLE_ICON_GAP = 5;
 
 	public RecyclerScreen(RecyclerMenu menu, Inventory inventory, Component title) {
 		super(menu, inventory, title, 176, 114 + menu.getRowCount() * 18);
 		this.inventoryLabelY = this.imageHeight - 94;
+		this.titleLabelX = -1000;
 	}
 
 	@Override
@@ -43,6 +48,7 @@ public final class RecyclerScreen extends AbstractContainerScreen<RecyclerMenu> 
 	@Override
 	protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		super.extractLabels(graphics, mouseX, mouseY);
+		drawFittedTitle(graphics);
 		boolean hovered = isInside(
 				mouseX,
 				mouseY,
@@ -57,6 +63,22 @@ public final class RecyclerScreen extends AbstractContainerScreen<RecyclerMenu> 
 		if (hovered) {
 			graphics.setTooltipForNextFrame(this.font, infoTooltip(), Optional.empty(), mouseX, mouseY);
 		}
+	}
+
+	private void drawFittedTitle(GuiGraphicsExtractor graphics) {
+		FormattedCharSequence sequence = this.title.getVisualOrderText();
+		int width = this.font.width(sequence);
+		int maximumWidth = INFO_X - INFO_HIT_PADDING - TITLE_ICON_GAP - TITLE_X;
+		if (width <= maximumWidth) {
+			graphics.text(this.font, sequence, TITLE_X, TITLE_Y, 0x404040, false);
+			return;
+		}
+		float scale = maximumWidth / (float) width;
+		graphics.pose().pushMatrix();
+		graphics.pose().translate(TITLE_X, TITLE_Y + (9.0F - 9.0F * scale) / 2.0F);
+		graphics.pose().scale(scale, scale);
+		graphics.text(this.font, sequence, 0, 0, 0x404040, false);
+		graphics.pose().popMatrix();
 	}
 
 	private static List<Component> infoTooltip() {

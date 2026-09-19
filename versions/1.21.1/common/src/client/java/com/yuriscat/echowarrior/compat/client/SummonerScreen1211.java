@@ -472,7 +472,7 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
         boolean active = this.menu.relicLevel() > 0;
         Component heroName = active ? Component.translatable(heroType().translationKey())
                 : Component.translatable("gui.echo_warrior.summoner.hero.none");
-        graphics.drawString(this.font, heroName, 8, 7, 0xFFFFFF, true);
+        drawFittedText(graphics, heroName, 8, 7, 115, 0xFFFFFF, true);
         if (active) {
             graphics.drawString(this.font,
                     this.menu.spiritHealth() + "/" + this.menu.spiritMaximumHealth(),
@@ -488,16 +488,46 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
                     attributeColor(this.menu.accessoryAlertRangeChange()), true);
             graphics.drawString(this.font, this.menu.summonCostPercent() + "%", 127, 60, 0xFFFFFF, true);
         }
-        graphics.drawString(this.font, Component.translatable("gui.echo_warrior.summoner.section.activity"),
-                179, 78, 0xFFFFFF, true);
-        graphics.drawString(this.font, Component.translatable("gui.echo_warrior.summoner.section.alert"),
-                179, 111, 0xFFFFFF, true);
+        drawFittedText(graphics, Component.translatable("gui.echo_warrior.summoner.section.activity"),
+                179, 78, 55, 0xFFFFFF, true);
+        drawFittedText(graphics, Component.translatable("gui.echo_warrior.summoner.section.alert"),
+                179, 111, 55, 0xFFFFFF, true);
         Component label = Component.translatable(this.menu.relicLevel() <= 0
                 ? "gui.echo_warrior.summoner.button.no_relic"
                 : this.menu.spiritPresent()
                         ? "gui.echo_warrior.summoner.button.dismiss"
                         : "gui.echo_warrior.summoner.button.summon");
-        graphics.drawCenteredString(this.font, label, 206, 148, 0xE0E0E0);
+        drawCenteredFittedText(graphics, label, 206, 148, SUMMON_BUTTON_WIDTH - 8, 0xE0E0E0);
+    }
+
+    private void drawFittedText(GuiGraphics graphics, Component text, int x, int y,
+                                int maximumWidth, int color, boolean shadow) {
+        FormattedCharSequence sequence = text.getVisualOrderText();
+        int width = this.font.width(sequence);
+        if (width <= maximumWidth) {
+            graphics.drawString(this.font, sequence, x, y, color, shadow);
+            return;
+        }
+        float scale = maximumWidth / (float)width;
+        graphics.pose().pushPose();
+        graphics.pose().translate(x, y + (9.0F - 9.0F * scale) / 2.0F, 0.0F);
+        graphics.pose().scale(scale, scale, 1.0F);
+        graphics.drawString(this.font, sequence, 0, 0, color, shadow);
+        graphics.pose().popPose();
+    }
+
+    private void drawCenteredFittedText(GuiGraphics graphics, Component text, int centerX, int y,
+                                        int maximumWidth, int color) {
+        FormattedCharSequence sequence = text.getVisualOrderText();
+        int width = this.font.width(sequence);
+        float scale = Math.min(1.0F, maximumWidth / (float)Math.max(1, width));
+        float drawnWidth = width * scale;
+        graphics.pose().pushPose();
+        graphics.pose().translate(centerX - drawnWidth / 2.0F,
+                y + (9.0F - 9.0F * scale) / 2.0F, 0.0F);
+        graphics.pose().scale(scale, scale, 1.0F);
+        graphics.drawString(this.font, sequence, 0, 0, color, false);
+        graphics.pose().popPose();
     }
 
     private void renderControlTooltip(GuiGraphics graphics, int mouseX, int mouseY) {

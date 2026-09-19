@@ -44,7 +44,7 @@ public final class KnowledgeReaderScreen extends AbstractContainerScreen<Knowled
 	private static final int ILLUSTRATION_Y = 154;
 	private static final int BODY_BOTTOM_WITH_ILLUSTRATION = ILLUSTRATION_Y - 5;
 	private static final int BODY_BOTTOM_WITHOUT_ILLUSTRATION = 174;
-	private static final int MINIMUM_ENGLISH_BODY_SCALE_PERCENT = 65;
+	private static final int MINIMUM_BODY_SCALE_PERCENT = 65;
 
 	private static final Identifier COLLECTION_BACKGROUND = EchoWarrior.id("textures/gui/knowledge/knowledge_collection.png");
 	private static final Identifier FRAGMENT_BACKGROUND = EchoWarrior.id("textures/gui/knowledge/knowledge_fragment.png");
@@ -133,13 +133,13 @@ public final class KnowledgeReaderScreen extends AbstractContainerScreen<Knowled
 	protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		KnowledgeCatalog.entry(this.selectedKnowledgeId).ifPresent(entry -> {
 			PageGeometry page = pageGeometry();
-			drawCenteredFittedEnglish(
+			drawCenteredFitted(
 					graphics,
 					Component.translatable(KnowledgeCatalog.cultureTranslationKey(entry.culture())),
 					CULTURE_Y,
 					MUTED_INK
 			);
-			drawCenteredFittedEnglish(graphics, Component.translatable(entry.titleKey()), TITLE_Y, INK);
+			drawCenteredFitted(graphics, Component.translatable(entry.titleKey()), TITLE_Y, INK);
 			renderBody(graphics, entry);
 
 			int count = this.menu.pageCount(this.selectedKnowledgeId);
@@ -158,14 +158,14 @@ public final class KnowledgeReaderScreen extends AbstractContainerScreen<Knowled
 				? BODY_BOTTOM_WITHOUT_ILLUSTRATION
 				: BODY_BOTTOM_WITH_ILLUSTRATION;
 		int availableHeight = bodyBottom - BODY_Y;
-		if (!isEnglishLanguage() || lines.size() * BODY_LINE_HEIGHT <= availableHeight) {
+		if (lines.size() * BODY_LINE_HEIGHT <= availableHeight) {
 			renderBodyLines(graphics, lines, 1.0F);
 			return;
 		}
 
-		float scale = MINIMUM_ENGLISH_BODY_SCALE_PERCENT / 100.0F;
+		float scale = MINIMUM_BODY_SCALE_PERCENT / 100.0F;
 		lines = this.font.split(body, (int)Math.floor(CONTENT_WIDTH / scale));
-		for (int percent = 99; percent >= MINIMUM_ENGLISH_BODY_SCALE_PERCENT; percent--) {
+		for (int percent = 99; percent >= MINIMUM_BODY_SCALE_PERCENT; percent--) {
 			float candidate = percent / 100.0F;
 			List<FormattedCharSequence> candidateLines = this.font.split(
 					body,
@@ -274,10 +274,10 @@ public final class KnowledgeReaderScreen extends AbstractContainerScreen<Knowled
 		graphics.fill(x + size, y, x + size + 1, y + size, ILLUSTRATION_HIGHLIGHT);
 	}
 
-	private void drawCenteredFittedEnglish(GuiGraphicsExtractor graphics, Component text, int y, int color) {
+	private void drawCenteredFitted(GuiGraphicsExtractor graphics, Component text, int y, int color) {
 		FormattedCharSequence sequence = text.getVisualOrderText();
 		int width = this.font.width(sequence);
-		if (!isEnglishLanguage() || width <= CONTENT_WIDTH) {
+		if (width <= CONTENT_WIDTH) {
 			graphics.text(this.font, sequence, PAGE_CENTER_X - width / 2, y, color, false);
 			return;
 		}
@@ -287,10 +287,6 @@ public final class KnowledgeReaderScreen extends AbstractContainerScreen<Knowled
 		graphics.pose().scale(scale, scale);
 		graphics.text(this.font, sequence, 0, 0, color, false);
 		graphics.pose().popMatrix();
-	}
-
-	private boolean isEnglishLanguage() {
-		return this.minecraft != null && this.minecraft.getLanguageManager().getSelected().startsWith("en_");
 	}
 
 	private static Identifier processedIllustrationTexture(Identifier item) {

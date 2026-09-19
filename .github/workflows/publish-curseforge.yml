@@ -22,6 +22,11 @@ on:
         required: true
         default: false
         type: boolean
+      allow_pending_localization:
+        description: Explicitly publish with missing or stale non-core translations
+        required: true
+        default: false
+        type: boolean
   push:
     tags:
       - "v*"
@@ -70,13 +75,19 @@ jobs:
         env:
           RELEASE_TYPE: ${{ github.event_name == 'workflow_dispatch' && inputs.release_type || 'release' }}
           MANUAL_RELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.manual_release || false }}
+          ALLOW_PENDING_LOCALIZATION: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_pending_localization || false }}
           EXPECTED_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
         run: |
+          localization_args=()
+          if [ "$ALLOW_PENDING_LOCALIZATION" = "true" ]; then
+            localization_args+=(--allow-pending-localization)
+          fi
           python3 scripts/prepare-curseforge-release.py \
             --release-type "$RELEASE_TYPE" \
             --manual-release "$MANUAL_RELEASE" \
             --expected-tag "$EXPECTED_TAG" \
             --require-jars \
+            "${localization_args[@]}" \
             --github-output "$GITHUB_OUTPUT"
 
       - name: Keep all verified JARs and metadata as a GitHub artifact

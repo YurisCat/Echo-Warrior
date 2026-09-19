@@ -47,6 +47,17 @@
 - Do not generate AI project avatars or CurseForge gallery artwork for the submission.
 - Preserve source files for manually created models, textures, audio, and promotional material.
 
+## Localization workflow
+
+- Treat `en_us` and `zh_cn` as the mandatory source locales. Any player-visible text change must update both in the same task.
+- Non-source locales may lag during ordinary development. Do not turn every gameplay or code change into an immediate full translation pass.
+- Before preparing or uploading any CurseForge or Modrinth release, run `python scripts/check-localization.py --release-gate`. If it reports missing or stale translations, stop and show the author the report before publishing.
+- Only use `--allow-pending` or `prepare-curseforge-release.py --allow-pending-localization` after the author explicitly accepts that release's incomplete localization. Never infer this waiver from a previous release.
+- Update `docs/localization/state.json` with `--mark-current` only after the relevant locale has passed structural checks and its translation has been reviewed. A file merely existing is not proof that it is current.
+- Use `docs/localization/TERMINOLOGY.md` as the terminology source. New recurring gameplay terms, hero names, skill names, or culturally specific names must be added or reconciled there before batch translation.
+- Follow `docs/localization/REVIEW_WORKFLOW.md` when the author cannot directly judge a target language. Present Chinese back-translations, terminology mappings, risk notes, and an independent reviewer verdict; ask the author only about meaning, tone, and cultural intent.
+- First-wave targets are Traditional Chinese, Japanese, Russian, Brazilian Portuguese, Spanish (Spain), and neutral Latin American Spanish. The regional Latin American files remain exact aliases of `es_mx` until the localization config explicitly changes that policy.
+
 ## Interactive encyclopedia
 
 - The web-first interactive encyclopedia lives in `encyclopedia/`.

@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "source_locales": [
+    "en_us",
+    "zh_cn"
+  ],
+  "language_directories": [
+    "common/src/main/resources/assets/echo_warrior/lang",
+    "versions/1.21.1/common/src/main/resources/assets/echo_warrior/lang"
+  ],
+  "state_path": "docs/localization/state.json",
+  "target_locales": [
+    {
+      "code": "zh_tw",
+      "label": "繁體中文"
+    },
+    {
+      "code": "zh_hk",
+      "label": "繁體中文（香港特別行政區；暫與 zh_tw 同步）"
+    },
+    {
+      "code": "ja_jp",
+      "label": "日本語"
+    },
+    {
+      "code": "ru_ru",
+      "label": "Русский"
+    },
+    {
+      "code": "pt_br",
+      "label": "Português (Brasil)"
+    },
+    {
+      "code": "es_es",
+      "label": "Español (España)"
+    },
+    {
+      "code": "es_mx",
+      "label": "Español (Latinoamérica, base)"
+    },
+    {
+      "code": "es_ar",
+      "label": "Español (Argentina)"
+    },
+    {
+      "code": "es_cl",
+      "label": "Español (Chile)"
+    },
+    {
+      "code": "es_ec",
+      "label": "Español (Ecuador)"
+    },
+    {
+      "code": "es_uy",
+      "label": "Español (Uruguay)"
+    },
+    {
+      "code": "es_ve",
+      "label": "Español (Venezuela)"
+    }
+  ],
+  "exact_aliases": {
+    "zh_hk": "zh_tw",
+    "es_ar": "es_mx",
+    "es_cl": "es_mx",
+    "es_ec": "es_mx",
+    "es_uy": "es_mx",
+    "es_ve": "es_mx"
+  }
+}

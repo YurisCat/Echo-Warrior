@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>英灵召唤器测试清单</title>
+<title>回声召唤器测试清单</title>
 <style>
 :root{color-scheme:dark;--bg:#17151d;--panel:#24212c;--line:#494254;--gold:#d2b46c;--text:#eee8dc;--muted:#aaa3b1;--ok:#78bf8b}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#332b39,var(--bg) 48%);color:var(--text);font:15px/1.55 system-ui,"Microsoft YaHei",sans-serif}
@@ -14,7 +14,7 @@ button,.file{border:1px solid var(--line);background:#302b39;color:var(--text);p
 h2{font-size:18px;margin:0 0 8px;color:#e3cf9b}.item{display:flex;gap:10px;padding:7px 4px;border-top:1px solid #ffffff0c}.item:first-of-type{border-top:0}.item.done{color:#89838d;text-decoration:line-through}.item input{width:18px;height:18px;accent-color:var(--ok);flex:none;margin-top:2px}
 textarea{width:100%;min-height:72px;margin-top:12px;background:#15131a;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:9px;resize:vertical}small{color:var(--muted)}
 </style></head><body><main>
-<header><div><h1>英灵召唤器 · 开发测试清单</h1><p>勾选结果自动保存在当前浏览器。每个分区下方可记录故障、复现步骤或手感意见。</p></div><div class="toolbar"><button id="export">导出结果</button><label class="file">导入结果<input id="import" type="file" accept="application/json"></label><button id="clear">清空勾选</button></div></header>
+<header><div><h1>回声召唤器 · 开发测试清单</h1><p>勾选结果自动保存在当前浏览器。每个分区下方可记录故障、复现步骤或手感意见。</p></div><div class="toolbar"><button id="export">导出结果</button><label class="file">导入结果<input id="import" type="file" accept="application/json"></label><button id="clear">清空勾选</button></div></header>
 <div id="summary"></div><div class="progress"><div class="bar" id="bar"></div></div><div id="sections"></div>
 <script>
 const groups={

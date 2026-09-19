@@ -18,12 +18,28 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 .\gradlew.bat clean dualBuild
 
 # 四个 JAR 与四份 CurseForge 元数据
+python .\scripts\check-localization.py --release-gate
 python .\scripts\prepare-curseforge-release.py --release-type release --require-jars
 ```
 
 客户端冒烟检查使用 `scripts/run-test-client.ps1`。每个 Minecraft 版本至少完成一次真实交互检查，其余加载器必须完成自动启动检查；脚本结束后确认没有遗留的开发客户端进程。
 
 内部测试包、`temporary-delivery/` 文件、来源包以及工作区不干净时生成的临时候选不得上传。正式候选必须来自已经提交的发布分支。
+
+### 本地化软门禁
+
+`en_us` 与 `zh_cn` 是持续维护的核心语言；其他目标语言允许在日常开发和内部测试期间滞后。正式准备 CurseForge 或 Modrinth 候选时，`prepare-curseforge-release.py` 会自动执行 `scripts/check-localization.py --release-gate`，报告缺失文件、缺失键、占位符错误、主线/兼容线差异，以及源文本变化后尚未重新接受的旧翻译。
+
+存在硬错误（无效 JSON、占位符损坏、两条版本线内容不一致）时不能放行。只有缺失或过期的非核心翻译时，流程暂停并由作者选择：先补翻译、暂缓发布，或明确允许本次带待处理翻译发布。作者明确放行后，本地命令增加 `--allow-pending-localization`；GitHub Actions 手动运行则打开 `allow_pending_localization`。该放行只适用于当次发布，不能沿用到未来版本。自动标签发布不接受隐式放行，待处理翻译会令工作流失败。
+
+翻译审校完成后，使用下列命令记录该语言对应当前中英文源文本。不能仅因文件存在就更新基线：
+
+```powershell
+python .\scripts\check-localization.py --mark-current ja_jp
+python .\scripts\check-localization.py --mark-current ru_ru
+# 所有目标语言均已审校时才使用：
+python .\scripts\check-localization.py --mark-current all
+```
 
 ## GitHub Actions 自动发布
 
@@ -53,5 +69,6 @@ CurseForge 的四个文件是四次独立上传，平台没有本项目可用的
 - Minecraft 26.1.2 使用 Java 25，Minecraft 1.21.1 使用 Java 21；
 - 四份元数据分别声明正确的 Minecraft 版本、加载器和依赖；
 - `CURSEFORGE_API_TOKEN` 只保存在 GitHub Actions Secret；
+- 本地化门禁无硬错误；若存在待处理翻译，已经取得作者对本次发布的明确放行；
 - GitHub Actions 显示四个文件 ID 后，才合并发布分支；
 - 回复中明确说明四个 CurseForge 文件结果、GitHub 标签以及发布分支是否已经合并进 `main`。

@@ -2,7 +2,9 @@
 
 Echo Warrior is a Minecraft mod about recovering relics from ancient battlefields and summoning warrior echoes from the past. Minecraft 26.1.2 remains the complete feature and day-to-day development line. A separately built Minecraft 1.21.1 compatibility line carries the same current gameplay scope through loader- and version-specific adapters. Both lines ship as separate Fabric and NeoForge packages.
 
-Version 0.2.0 adds the complete Minecraft 1.21.1 Fabric and NeoForge compatibility line alongside Minecraft 26.1.2, while retaining the Echo Compass and renewable battlefield archaeology loop, a portable fuelled summoner, five playable Echo Warriors, relic growth and talents, 25 accessories, 40 collectible knowledge pages, the Echo Recycler, an in-game tutorial manual, and a web-first interactive encyclopedia. The stable technical mod ID is `echo_warrior`.
+Version 0.2.0 adds the complete Minecraft 1.21.1 Fabric and NeoForge compatibility line alongside Minecraft 26.1.2, while retaining the Echo Compass and renewable battlefield archaeology loop, a portable fuelled summoner, five playable Echo Warriors, relic growth and talents, 25 accessories, 40 collectible knowledge pages, the Echo Salvage Chest, an in-game tutorial manual, and a web-first interactive encyclopedia. The stable technical mod ID is `echo_warrior`.
+
+Version 0.2.1 adds Traditional Chinese, Japanese, Russian, Brazilian Portuguese, European Spanish, and neutral Latin American Spanish translations to both Minecraft lines, with a Hong Kong Traditional Chinese alias and text-layout fixes for longer translations. It does not add gameplay content.
 
 ## Requirements
 
@@ -16,7 +18,7 @@ Minecraft 1.21.1 compatibility packages require Java 21, SmartBrainLib 1.16.11, 
 - Fabric package: Fabric Loader 0.19.5 and Fabric API 0.116.17+1.21.1.
 - NeoForge package: NeoForge 21.1.250.
 
-The 1.21.1 scope includes all five Echo Warriors, their relics, summoner UI and persistence, growth and talents, five Legacies, 25 accessories, recipes, combat behavior, models and animations, plus battlefield archaeology, the Echo Compass, 40 knowledge pages, the 44-page tutorial manual, and the Echo Recycler. It does not implicitly promote deferred post-MVP ideas or promise direct downgrade compatibility for 26.1.2 saves.
+The 1.21.1 scope includes all five Echo Warriors, their relics, summoner UI and persistence, growth and talents, five Legacies, 25 accessories, recipes, combat behavior, models and animations, plus battlefield archaeology, the Echo Compass, 40 knowledge pages, the 44-page tutorial manual, and the Echo Salvage Chest. It does not implicitly promote deferred post-MVP ideas or promise direct downgrade compatibility for 26.1.2 saves.
 
 Install only the JAR matching the chosen loader. Client and server should use the same loader and matching Echo Warrior version. Dependency JARs remain separate and are not bundled inside Echo Warrior.
 
