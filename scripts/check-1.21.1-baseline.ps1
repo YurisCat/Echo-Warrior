@@ -8,6 +8,8 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $compatibilityRoot = Join-Path $repositoryRoot 'versions\1.21.1'
 $propertiesPath = Join-Path $compatibilityRoot 'gradle.properties'
+& python (Join-Path $PSScriptRoot 'check-battlefield-snow.py')
+if ($LASTEXITCODE -ne 0) { throw 'Cross-version snow cover policy check failed.' }
 
 if (-not $SkipBuild) {
     & (Join-Path $PSScriptRoot 'build-1.21.1.ps1') -Loader Dual
@@ -409,8 +411,9 @@ Assert-Condition ($containerScreenMixinSource -match 'loadSummonerAlphaMask' `
     -and $containerScreenMixinSource -notmatch 'SummonerInsertionParticle1211\.polish') `
     'Direct insertion polish must use the screen-consumed pending queue, flush into a no-depth overlay, clip to the summoner texture, and anchor to the actual target slot.'
 Assert-Condition ($egyptianArrowSource -match 'return Items\.ARROW\.getDefaultInstance\(\)' `
+    -and $egyptianArrowSource -match 'this\.pickup = Pickup\.DISALLOWED' `
     -and $egyptianArrowSource -notmatch 'getDefaultPickupItem\(\)\s*\{\s*return ItemStack\.EMPTY') `
-    'Disabled-pickup Egyptian arrows still need a non-empty vanilla pickup stack so chunk saving can encode them.'
+    'Egyptian arrows must remain pickup-disabled while retaining a non-empty vanilla pickup stack for chunk saving.'
 Assert-Condition ($egyptianModelSource -match 'inheritedRotation' `
     -and $egyptianModelSource -match 'extractEulerZyx' `
     -and $egyptianModelSource -match 'exactHeadFrameBlend' `
@@ -634,6 +637,7 @@ function Assert-Archive {
             'com/yuriscat/echowarrior/compat/binding/EchoBindingSystem1211.class',
             'com/yuriscat/echowarrior/compat/binding/EchoBindingConfig1211.class',
             'com/yuriscat/echowarrior/compat/command/EchoBindingCommands1211.class',
+            'com/yuriscat/echowarrior/compat/test/DepartureEffectsSelfTest1211.class',
             'com/yuriscat/echowarrior/compat/entity/behavior/EchoSafeTeleport1211.class',
             'com/yuriscat/echowarrior/compat/combat/FormationAura1211.class',
             'com/yuriscat/echowarrior/compat/item/EchoRelicProgress1211.class',

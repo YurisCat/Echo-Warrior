@@ -1,0 +1,20 @@
+plugins { id 'net.neoforged.moddev.legacyforge' }
+
+legacyForge {
+    enable {
+        mcpVersion = minecraft_version
+        disableRecompilation = true
+    }
+}
+
+dependencies {
+    modCompileOnly("net.tslat.smartbrainlib:SmartBrainLib-forge-${minecraft_version}:${smartbrainlib_version}")
+    modCompileOnly("software.bernie.geckolib:geckolib-forge-${minecraft_version}:${geckolib_version}")
+    compileOnly('org.spongepowered:mixin:0.8.5')
+    annotationProcessor('org.spongepowered:mixin:0.8.5:processor')
+}
+
+mixin {
+    add sourceSets.main, 'echo_warrior_1201.refmap.json'
+    config 'echo_warrior_1201.mixins.json'
+}

@@ -1,0 +1,39 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "Apache-2.0 AND LicenseRef-Echo-Warrior-Assets-1.0"
+issueTrackerURL = "https://github.com/YurisCat/Echo-Warrior/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${version}"
+displayName = "${mod_name}"
+authors = "${mod_author}"
+description = '''${mod_description}'''
+
+[[dependencies.echo_warrior]]
+modId = "forge"
+mandatory = true
+versionRange = "[${forge_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.echo_warrior]]
+modId = "minecraft"
+mandatory = true
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.echo_warrior]]
+modId = "geckolib"
+mandatory = true
+versionRange = "[${geckolib_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.echo_warrior]]
+modId = "smartbrainlib"
+mandatory = true
+versionRange = "[${smartbrainlib_version},)"
+ordering = "NONE"
+side = "BOTH"

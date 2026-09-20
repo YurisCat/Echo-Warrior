@@ -90,7 +90,7 @@ public final class EchoBindingSystem1211 {
             EchoWarriorEntity1211 loaded = findLoaded(level.getServer(), binding.spiritId());
             binding.deactivate();
             EchoSummonerItem1211.setSpiritId(summoner, null);
-            if (loaded != null) loaded.livingEntity().discard();
+            if (loaded != null) loaded.dismiss();
         }
         binding.setRelic(relic);
         data.setDirty();
@@ -139,7 +139,7 @@ public final class EchoBindingSystem1211 {
             EchoWarriorEntity1211 loaded = findLoaded(level.getServer(), binding.spiritId());
             binding.deactivate();
             EchoSummonerItem1211.setSpiritId(summoner, null);
-            if (loaded != null) loaded.livingEntity().discard();
+            if (loaded != null) loaded.dismiss();
         }
 
         binding.setRelic(relic);
@@ -341,7 +341,7 @@ public final class EchoBindingSystem1211 {
         binding.deactivate();
         data.setDirty();
         EchoSummonerItem1211.setSpiritId(summoner, null);
-        if (loaded != null) loaded.livingEntity().discard();
+        if (loaded != null) loaded.dismiss();
         return true;
     }
 
@@ -352,7 +352,7 @@ public final class EchoBindingSystem1211 {
         EchoWarriorEntity1211 loaded = findLoaded(server, binding.spiritId());
         binding.deactivate();
         data.setDirty();
-        if (loaded != null) loaded.livingEntity().discard();
+        if (loaded != null) loaded.dismiss();
         for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
             for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
                 ItemStack candidate = player.getInventory().getItem(slot);
@@ -380,7 +380,7 @@ public final class EchoBindingSystem1211 {
         SpawnAttempt attempt = spawnAndActivate(
                 controller.serverLevel(), controller, summoner, binding, restoredHealth);
         if (!attempt.succeeded()) return false;
-        if (loaded != null) loaded.livingEntity().discard();
+        if (loaded != null) loaded.dismiss();
         return true;
     }
 
@@ -396,7 +396,7 @@ public final class EchoBindingSystem1211 {
         EchoBindingSavedData1211.Binding binding = data.get(summonerId);
         if (binding == null) return false;
         EchoWarriorEntity1211 loaded = findLoaded(level.getServer(), binding.spiritId());
-        if (loaded != null) loaded.livingEntity().discard();
+        if (loaded != null) loaded.dismiss();
         data.remove(summonerId);
         CANONICAL_PHYSICAL_LOCATIONS.remove(summonerId);
         return true;
@@ -422,7 +422,7 @@ public final class EchoBindingSystem1211 {
         SpawnAttempt attempt = spawnAndActivate(
                 destination, controller, summoner, binding, health);
         EchoWarriorEntity1211 replacement = attempt.spirit();
-        if (replacement != null && loaded != null) loaded.livingEntity().discard();
+        if (replacement != null && loaded != null) loaded.dismiss();
         return replacement;
     }
 
@@ -543,7 +543,7 @@ public final class EchoBindingSystem1211 {
             SpawnAttempt attempt = spawnAndActivate(
                     controller.serverLevel(), controller, summoner, binding, restoredHealth);
             EchoWarriorEntity1211 replacement = attempt.spirit();
-            if (replacement != null && loaded != null) loaded.livingEntity().discard();
+            if (replacement != null && loaded != null) loaded.dismiss();
         }
     }
 

@@ -8,28 +8,24 @@ on:
         required: true
         default: release
         type: choice
-        options:
-          - release
-          - beta
-          - alpha
+        options: [release, beta, alpha]
       manual_release:
-        description: Hold all four approved files for a later manual release
+        description: Hold all six approved files for a later manual release
         required: true
         default: false
         type: boolean
       publish:
-        description: Actually upload all four files to CurseForge (leave off for a dry run)
+        description: Actually upload all six files (leave off for a dry run)
         required: true
         default: false
         type: boolean
       allow_pending_localization:
-        description: Explicitly publish with missing or stale non-core translations
+        description: Explicit author waiver for this release's pending translations
         required: true
         default: false
         type: boolean
   push:
-    tags:
-      - "v*"
+    tags: ["v*"]
 
 permissions:
   contents: read
@@ -40,24 +36,38 @@ concurrency:
 
 jobs:
   build-and-publish:
-    name: Build and publish the four-version matrix
+    name: Build and publish the six-file matrix
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out source
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-      - name: Set up Java 21 for Minecraft 1.21.1
+      - name: Install Java 17 toolchain for Minecraft 1.20.1
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Java 21 for legacy builds and Minecraft 1.21.1
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
           cache: gradle
 
-      - name: Build the Minecraft 1.21.1 release JARs
+      - name: Build and audit Minecraft 1.20.1 Fabric and Forge
         run: |
           chmod +x ./gradlew
-          ./gradlew -p versions/1.21.1 clean dualBuild --no-daemon --stacktrace
+          ./gradlew -p versions/1.20.1 clean dualBuild --no-daemon --stacktrace
+          python3 scripts/check-1.20.1-baseline.py
+          python3 scripts/test_compatibility_1201_baseline.py
+          python3 scripts/check-1.20.1-content-parity.py
+
+      - name: Build Minecraft 1.21.1 Fabric and NeoForge
+        run: ./gradlew -p versions/1.21.1 clean dualBuild --no-daemon --stacktrace
+
+      - name: Audit Minecraft 1.21.1
+        shell: pwsh
+        run: ./scripts/check-1.21.1-baseline.ps1 -SkipBuild
 
       - name: Set up Java 25 for Minecraft 26.1.2
         uses: actions/setup-java@v5
@@ -66,11 +76,10 @@ jobs:
           java-version: "25"
           cache: gradle
 
-      - name: Build the Minecraft 26.1.2 release JARs
-        run: |
-          ./gradlew clean dualBuild --no-daemon --stacktrace
+      - name: Build Minecraft 26.1.2 Fabric and NeoForge
+        run: ./gradlew clean dualBuild --no-daemon --stacktrace
 
-      - name: Prepare and validate all four CurseForge uploads
+      - name: Prepare and validate all six CurseForge uploads
         id: release
         env:
           RELEASE_TYPE: ${{ github.event_name == 'workflow_dispatch' && inputs.release_type || 'release' }}
@@ -78,117 +87,75 @@ jobs:
           ALLOW_PENDING_LOCALIZATION: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_pending_localization || false }}
           EXPECTED_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
         run: |
+          python3 scripts/test_curseforge_release.py
           localization_args=()
           if [ "$ALLOW_PENDING_LOCALIZATION" = "true" ]; then
             localization_args+=(--allow-pending-localization)
           fi
           python3 scripts/prepare-curseforge-release.py \
-            --release-type "$RELEASE_TYPE" \
-            --manual-release "$MANUAL_RELEASE" \
-            --expected-tag "$EXPECTED_TAG" \
-            --require-jars \
-            "${localization_args[@]}" \
-            --github-output "$GITHUB_OUTPUT"
+            --release-type "$RELEASE_TYPE" --manual-release "$MANUAL_RELEASE" \
+            --expected-tag "$EXPECTED_TAG" --require-jars \
+            "${localization_args[@]}" --github-output "$GITHUB_OUTPUT"
 
-      - name: Keep all verified JARs and metadata as a GitHub artifact
+      - name: Archive verified JARs and metadata
         uses: actions/upload-artifact@v7
         with:
-          name: echo-warrior-${{ steps.release.outputs.version }}-four-version-matrix
+          name: echo-warrior-${{ steps.release.outputs.version }}-six-file-matrix
           path: |
             ${{ steps.release.outputs.main_fabric_jar_path }}
             ${{ steps.release.outputs.main_neoforge_jar_path }}
             ${{ steps.release.outputs.compat_1211_fabric_jar_path }}
             ${{ steps.release.outputs.compat_1211_neoforge_jar_path }}
-            ${{ steps.release.outputs.main_fabric_metadata_path }}
-            ${{ steps.release.outputs.main_neoforge_metadata_path }}
-            ${{ steps.release.outputs.compat_1211_fabric_metadata_path }}
-            ${{ steps.release.outputs.compat_1211_neoforge_metadata_path }}
+            ${{ steps.release.outputs.compat_1201_fabric_jar_path }}
+            ${{ steps.release.outputs.compat_1201_forge_jar_path }}
+            build/curseforge/*.json
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90
 
-      - name: Upload all four files to CurseForge
-        id: curseforge
+      - name: Upload each verified file once and record its ID immediately
         if: github.event_name == 'push' || inputs.publish
         env:
           CURSEFORGE_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
-          CURSEFORGE_PROJECT_ID: "1677436"
-          MAIN_FABRIC_JAR_PATH: ${{ steps.release.outputs.main_fabric_jar_path }}
-          MAIN_FABRIC_METADATA_PATH: ${{ steps.release.outputs.main_fabric_metadata_path }}
-          MAIN_NEOFORGE_JAR_PATH: ${{ steps.release.outputs.main_neoforge_jar_path }}
-          MAIN_NEOFORGE_METADATA_PATH: ${{ steps.release.outputs.main_neoforge_metadata_path }}
-          COMPAT_FABRIC_JAR_PATH: ${{ steps.release.outputs.compat_1211_fabric_jar_path }}
-          COMPAT_FABRIC_METADATA_PATH: ${{ steps.release.outputs.compat_1211_fabric_metadata_path }}
-          COMPAT_NEOFORGE_JAR_PATH: ${{ steps.release.outputs.compat_1211_neoforge_jar_path }}
-          COMPAT_NEOFORGE_METADATA_PATH: ${{ steps.release.outputs.compat_1211_neoforge_metadata_path }}
         run: |
           if [ -z "${CURSEFORGE_API_TOKEN:-}" ]; then
             echo "::error::Missing repository secret CURSEFORGE_API_TOKEN."
             exit 1
           fi
-
-          upload_file() {
-            target="$1"
-            jar_path="$2"
-            metadata_path="$3"
-            response_file="$4"
-            metadata_json="$(python3 -c 'import json,sys; print(json.dumps(json.load(open(sys.argv[1], encoding="utf-8")), ensure_ascii=False, separators=(",", ":")))' "$metadata_path")"
-            http_status="$(curl --silent --show-error \
-              --output "$response_file" \
-              --write-out "%{http_code}" \
-              --request POST \
+          mkdir -p build/curseforge/responses
+          echo "## Echo Warrior uploads (verify all six before merging)" >> "$GITHUB_STEP_SUMMARY"
+          python3 -c 'import json; m=json.load(open("build/curseforge/release-manifest.json")); [print(a["target"], a["jar_path"], a["metadata_path"], a["sha256"], sep="\t") for a in m["artifacts"]]' > build/curseforge/uploads.tsv
+          while IFS=$'\t' read -r target jar_path metadata_path expected_sha; do
+            actual_sha="$(sha256sum "$jar_path" | cut -d ' ' -f 1)"
+            test "$actual_sha" = "$expected_sha"
+            response_file="build/curseforge/responses/$target.json"
+            metadata_json="$(python3 -c 'import json,sys; print(json.dumps(json.load(open(sys.argv[1])), separators=(",", ":")))' "$metadata_path")"
+            # No automatic POST retry: a timeout can occur after CF has accepted a file.
+            http_status="$(curl --silent --show-error --connect-timeout 30 --max-time 300 \
+              --output "$response_file" --write-out "%{http_code}" --request POST \
               --header "X-Api-Token: $CURSEFORGE_API_TOKEN" \
               --form-string "metadata=$metadata_json" \
               --form "file=@$jar_path;type=application/java-archive" \
-              "https://minecraft.curseforge.com/api/projects/$CURSEFORGE_PROJECT_ID/upload-file")"
-
+              "https://minecraft.curseforge.com/api/projects/1677436/upload-file")"
             if [ "$http_status" -lt 200 ] || [ "$http_status" -ge 300 ]; then
-              echo "::error::$target CurseForge upload failed with HTTP $http_status."
+              echo "::error::$target upload returned HTTP $http_status. Check existing files before retrying."
               cat "$response_file"
-              return 1
+              exit 1
             fi
-          }
+            file_id="$(python3 -c 'import json,sys; n=json.load(open(sys.argv[1]))["id"]; assert isinstance(n,int) and n>0; print(n)' "$response_file")"
+            echo "Uploaded $target: $file_id"
+            echo "- $target: https://www.curseforge.com/minecraft/mc-mods/echo-warrior/files/$file_id" >> "$GITHUB_STEP_SUMMARY"
+          done < build/curseforge/uploads.tsv
+          echo "All six uploads accepted by CurseForge." >> "$GITHUB_STEP_SUMMARY"
 
-          main_fabric_response="$(mktemp)"
-          main_neoforge_response="$(mktemp)"
-          compat_fabric_response="$(mktemp)"
-          compat_neoforge_response="$(mktemp)"
+      - name: Preserve upload responses even after a partial failure
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: curseforge-upload-responses-${{ github.run_id }}
+          path: build/curseforge/responses/
+          if-no-files-found: ignore
+          retention-days: 90
 
-          upload_file "Fabric 26.1.2" "$MAIN_FABRIC_JAR_PATH" "$MAIN_FABRIC_METADATA_PATH" "$main_fabric_response"
-          upload_file "NeoForge 26.1.2" "$MAIN_NEOFORGE_JAR_PATH" "$MAIN_NEOFORGE_METADATA_PATH" "$main_neoforge_response"
-          upload_file "Fabric 1.21.1" "$COMPAT_FABRIC_JAR_PATH" "$COMPAT_FABRIC_METADATA_PATH" "$compat_fabric_response"
-          upload_file "NeoForge 1.21.1" "$COMPAT_NEOFORGE_JAR_PATH" "$COMPAT_NEOFORGE_METADATA_PATH" "$compat_neoforge_response"
-
-          main_fabric_file_id="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["id"])' "$main_fabric_response")"
-          main_neoforge_file_id="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["id"])' "$main_neoforge_response")"
-          compat_fabric_file_id="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["id"])' "$compat_fabric_response")"
-          compat_neoforge_file_id="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["id"])' "$compat_neoforge_response")"
-
-          echo "main_fabric_file_id=$main_fabric_file_id" >> "$GITHUB_OUTPUT"
-          echo "main_neoforge_file_id=$main_neoforge_file_id" >> "$GITHUB_OUTPUT"
-          echo "compat_fabric_file_id=$compat_fabric_file_id" >> "$GITHUB_OUTPUT"
-          echo "compat_neoforge_file_id=$compat_neoforge_file_id" >> "$GITHUB_OUTPUT"
-          echo "Uploaded CurseForge file IDs $main_fabric_file_id, $main_neoforge_file_id, $compat_fabric_file_id, and $compat_neoforge_file_id."
-
-      - name: Write release summary
-        env:
-          VERSION: ${{ steps.release.outputs.version }}
-          MAIN_FABRIC_JAR_NAME: ${{ steps.release.outputs.main_fabric_jar_name }}
-          MAIN_NEOFORGE_JAR_NAME: ${{ steps.release.outputs.main_neoforge_jar_name }}
-          COMPAT_FABRIC_JAR_NAME: ${{ steps.release.outputs.compat_1211_fabric_jar_name }}
-          COMPAT_NEOFORGE_JAR_NAME: ${{ steps.release.outputs.compat_1211_neoforge_jar_name }}
-          MAIN_FABRIC_FILE_ID: ${{ steps.curseforge.outputs.main_fabric_file_id }}
-          MAIN_NEOFORGE_FILE_ID: ${{ steps.curseforge.outputs.main_neoforge_file_id }}
-          COMPAT_FABRIC_FILE_ID: ${{ steps.curseforge.outputs.compat_fabric_file_id }}
-          COMPAT_NEOFORGE_FILE_ID: ${{ steps.curseforge.outputs.compat_neoforge_file_id }}
-        run: |
-          echo "## Echo Warrior $VERSION four-version release" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Verified: \`$MAIN_FABRIC_JAR_NAME\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Verified: \`$MAIN_NEOFORGE_JAR_NAME\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Verified: \`$COMPAT_FABRIC_JAR_NAME\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Verified: \`$COMPAT_NEOFORGE_JAR_NAME\`" >> "$GITHUB_STEP_SUMMARY"
-          if [ -n "${MAIN_FABRIC_FILE_ID:-}" ] && [ -n "${MAIN_NEOFORGE_FILE_ID:-}" ] && [ -n "${COMPAT_FABRIC_FILE_ID:-}" ] && [ -n "${COMPAT_NEOFORGE_FILE_ID:-}" ]; then
-            echo "- CurseForge uploads succeeded: \`$MAIN_FABRIC_FILE_ID\`, \`$MAIN_NEOFORGE_FILE_ID\`, \`$COMPAT_FABRIC_FILE_ID\`, \`$COMPAT_NEOFORGE_FILE_ID\`" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "- Dry run only: nothing was uploaded to CurseForge." >> "$GITHUB_STEP_SUMMARY"
-          fi
+      - name: Record dry run
+        if: github.event_name == 'workflow_dispatch' && !inputs.publish
+        run: echo "Six release JARs verified. Dry run only; nothing uploaded to CurseForge." >> "$GITHUB_STEP_SUMMARY"

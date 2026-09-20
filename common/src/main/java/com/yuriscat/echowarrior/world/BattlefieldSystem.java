@@ -433,11 +433,10 @@ public final class BattlefieldSystem {
 		for (int dx = -radius; dx <= radius; dx += 2) {
 			for (int dz = -radius; dz <= radius; dz += 2) {
 				if (dx * dx + dz * dz > radius * radius) continue;
-				int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-						center.getX() + dx, center.getZ() + dz) - 1;
+				BlockPos floor = naturalSurface(level, center.getX() + dx, center.getZ() + dz);
+				int y = floor.getY();
 				minimumY = Math.min(minimumY, y);
 				maximumY = Math.max(maximumY, y);
-				BlockPos floor = new BlockPos(center.getX() + dx, y, center.getZ() + dz);
 				BlockState floorState = level.getBlockState(floor);
 				if (!isNaturalFloor(floorState) || floorState.hasBlockEntity()
 						|| !floorState.isFaceSturdy(level, floor, Direction.UP)) return false;
@@ -456,9 +455,7 @@ public final class BattlefieldSystem {
 			for (int dz = -radius; dz <= radius; dz++) {
 				double edgeNoise = random.nextDouble() * 2.4 - 1.2;
 				if (Math.sqrt(dx * dx + dz * dz) > radius + edgeNoise) continue;
-				int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-						center.getX() + dx, center.getZ() + dz) - 1;
-				BlockPos floor = new BlockPos(center.getX() + dx, y, center.getZ() + dz);
+				BlockPos floor = naturalSurface(level, center.getX() + dx, center.getZ() + dz);
 				BlockState state = level.getBlockState(floor);
 				if (!isNaturalFloor(state)) continue;
 				clearVegetation(level, floor.above());
@@ -481,11 +478,19 @@ public final class BattlefieldSystem {
 		return new Placement(center, guaranteed, culture, brushables);
 	}
 
+	// Thick snow layers can enter the heightmap; they are cover, never an excavation floor.
+	private static BlockPos naturalSurface(ServerLevel level, int x, int z) {
+		BlockPos surface = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z);
+		return level.getBlockState(surface).is(Blocks.SNOW) ? surface.below() : surface;
+	}
+
 	private static void clearVegetation(ServerLevel level, BlockPos pos) {
 		for (int offset = 0; offset < 3; offset++) {
 			BlockPos target = pos.above(offset);
 			BlockState state = level.getBlockState(target);
 			if (state.isAir()) continue;
+			// Snow is replaceable in vanilla, but is not vegetation. Preserve its exact layer count.
+			if (state.is(Blocks.SNOW)) break;
 			if (!isClearable(state) || state.is(BlockTags.LOGS) || state.is(BlockTags.LEAVES)
 					|| state.hasBlockEntity() || !state.getFluidState().isEmpty()) break;
 			level.setBlock(target, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
@@ -493,7 +498,7 @@ public final class BattlefieldSystem {
 	}
 
 	private static boolean isClearable(BlockState state) {
-		return state.isAir() || state.canBeReplaced() || state.is(BlockTags.REPLACEABLE)
+		return state.isAir() || state.is(Blocks.SNOW) || state.canBeReplaced() || state.is(BlockTags.REPLACEABLE)
 				|| state.is(BlockTags.FLOWERS) || state.is(BlockTags.SAPLINGS);
 	}
 

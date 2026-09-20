@@ -1,0 +1,202 @@
+plugins {
+    id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
+    id 'net.neoforged.moddev.legacyforge' version "${moddev_version}" apply false
+}
+
+def repositoryRoot = rootProject.file('../..')
+
+// Convert only understood schema differences; fail on new component types instead of silently dropping data.
+def convertedData = layout.buildDirectory.dir('generated/legacy-data')
+// GeckoLib 4 otherwise resets an unkeyed root over five ticks, linearly blending
+// the combo's equivalent +/-180 degree Euler pose through a full-body tumble.
+def legacyGuandao = layout.buildDirectory.dir('generated/legacy-guandao')
+tasks.register('generateLegacyGuandaoAnimation') {
+    def input = new File(repositoryRoot, 'versions/1.21.1/common/src/main/resources/assets/echo_warrior/animations/guandao_warrior_echo.animation.json')
+    inputs.file(input)
+    outputs.dir(legacyGuandao)
+    doLast {
+        def content = new groovy.json.JsonSlurper().parse(input, 'UTF-8')
+        ['idle', 'walk'].each { name ->
+            def bones = content.animations["animation.guandao_warrior.${name}"].bones
+            if (!bones.containsKey('Main')) bones.Main = [:]
+            if (bones.Main.containsKey('rotation'))
+                throw new GradleException("Guandao ${name} now authors Main rotation; review legacy root-rest conversion")
+            bones.Main.rotation = [0, 0, 0]
+        }
+        def output = new File(legacyGuandao.get().asFile, 'assets/echo_warrior/animations/guandao_warrior_echo.animation.json')
+        output.parentFile.mkdirs()
+        output.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(content)) + '\n', 'UTF-8')
+    }
+}
+tasks.register('generateLegacyData') {
+    def sourceRoot = new File(repositoryRoot, 'versions/1.21.1/common/src/main/resources/data/echo_warrior')
+    inputs.dir(new File(sourceRoot, 'recipe'))
+    inputs.dir(new File(sourceRoot, 'loot_table'))
+    outputs.dir(convertedData)
+    doLast {
+        delete(convertedData.get().asFile) // Only this task's generated build directory; remove obsolete source outputs.
+        def convert
+        convert = { node ->
+            if (node instanceof List) return node.collect { convert(it) }
+            if (!(node instanceof Map)) return node
+            def result = node.collectEntries { k, v -> [(k): convert(v)] }
+            if (result.function == 'minecraft:set_components') {
+                if (result.components.keySet() != ['minecraft:custom_data'] as Set)
+                    throw new GradleException("Unsupported 1.20.1 component conversion: ${result}")
+                def nbt = result.components['minecraft:custom_data']
+                if (nbt.any { k, v -> !(v instanceof String) })
+                    throw new GradleException("Expected string-only knowledge NBT: ${nbt}")
+                result.remove('components')
+                result.function = 'minecraft:set_nbt'
+                result.tag = groovy.json.JsonOutput.toJson(nbt)
+            }
+            if (result.type == 'minecraft:loot_table' && result.containsKey('value')) result.name = result.remove('value')
+            return result
+        }
+        ['recipe': 'recipes', 'loot_table': 'loot_tables'].each { sourceFolder, targetFolder ->
+            fileTree(new File(sourceRoot, sourceFolder)).matching { include '**/*.json' }.files.each { input ->
+                def relative = new File(sourceRoot, sourceFolder).toPath().relativize(input.toPath()).toString()
+                // Reviewed explicit old-version block-name preservation is not a generic component conversion.
+                if (sourceFolder == 'loot_table' && relative.replace('\\', '/') == 'blocks/echo_recycler.json') return
+                if (sourceFolder == 'recipe' && relative in ['echo_recycler.json', 'knowledge_fragment_collection.json']) return
+                def content = convert(new groovy.json.JsonSlurper().parse(input, 'UTF-8'))
+                if (sourceFolder == 'recipe' && content.result instanceof Map && content.result.containsKey('id'))
+                    content.result.item = content.result.remove('id')
+                def output = new File(convertedData.get().asFile, "data/echo_warrior/${targetFolder}/${relative}")
+                output.parentFile.mkdirs()
+                output.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(content)) + '\n', 'UTF-8')
+            }
+        }
+    }
+}
+
+subprojects {
+    apply plugin: 'java-library'
+    version = rootProject.mod_version
+    group = rootProject.maven_group
+
+    base.archivesName = "${archives_base_name}-${project.name}-${minecraft_version}"
+    java {
+        toolchain.languageVersion = JavaLanguageVersion.of(java_version as int)
+        withSourcesJar()
+    }
+    // Client classes are included in the artifact, but only client Mixins reference them.
+    sourceSets.main.java.srcDir('src/client/java')
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.release = java_version as int
+    }
+    tasks.withType(AbstractArchiveTask).configureEach {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
+    repositories {
+        mavenCentral()
+        maven {
+            url = 'https://dl.cloudsmith.io/public/tslat/sbl/maven/'
+            content { includeGroup 'net.tslat.smartbrainlib' }
+        }
+        maven {
+            url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+            content {
+                includeGroup 'software.bernie.geckolib'
+                includeGroup 'com.eliotlash.mclib'
+            }
+        }
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    }
+    tasks.withType(Jar).configureEach {
+        ['LICENSE', 'LICENSE-CODE', 'LICENSE-ASSETS.md', 'NOTICE', 'CREDITS.md'].each { licenseFile ->
+            from(new File(repositoryRoot, licenseFile)) { into 'META-INF' }
+        }
+        manifest.attributes(
+            'Implementation-Title': 'Echo Warrior',
+            'Implementation-Version': project.version,
+            'Built-On-Minecraft': minecraft_version,
+            'Echo-Warrior-Port-Stage': 'full-content-candidate'
+        )
+    }
+    tasks.named('processResources', ProcessResources) {
+        dependsOn(rootProject.tasks.named('generateLegacyData'))
+        dependsOn(rootProject.tasks.named('generateLegacyGuandaoAnimation'))
+        from(convertedData)
+        from(legacyGuandao)
+        filteringCharset = 'UTF-8'
+        // Reuse the author's unchanged texture; old-model GUI predicates select relic overlays.
+        from(new File(repositoryRoot, 'common/src/main/resources/assets/echo_warrior/textures/item/test_echo_summoner.png')) {
+            into 'assets/echo_warrior/textures/item'
+        }
+        from(new File(repositoryRoot, 'common/src/main/resources/assets/echo_warrior/textures/item')) {
+            include '*_relic.png', '*_accessory.png', '*_legacy.png', 'knowledge_fragment*.png', 'tutorial_manual.png', 'echo_compass/**', 'echo_compass*.png'
+            into 'assets/echo_warrior/textures/item'
+        }
+        from(new File(repositoryRoot, 'versions/1.21.1/common/src/main/resources/assets/echo_warrior/models/item')) {
+            include '*_relic.json', '*_accessory.json', '*_legacy.json', 'knowledge_fragment*.json', 'tutorial_manual.json', 'echo_recycler.json', 'echo_compass*.json', 'suspicious*.json'
+            into 'assets/echo_warrior/models/item'
+        }
+        // Reuse reviewed source wording without maintaining another divergent translation copy.
+        from(new File(repositoryRoot, 'versions/1.21.1/common/src/main/resources/assets/echo_warrior')) {
+            include 'geo/**', 'animations/**', 'textures/entity/**', 'textures/effect/**', 'textures/mob_effect/**', 'blockstates/**', 'models/block/**', 'textures/block/**'
+            exclude 'animations/guandao_warrior_echo.animation.json'
+            into 'assets/echo_warrior'
+        }
+        from(new File(repositoryRoot, 'versions/1.21.1/common/src/main/resources/data')) {
+            include 'echo_warrior/damage_type/**', 'minecraft/tags/damage_type/**', 'echo_warrior/knowledge/**', 'echo_warrior/tags/worldgen/biome/**'
+            into 'data'
+        }
+        from(new File(repositoryRoot, 'versions/1.21.1/common/src/main/resources/data/echo_warrior/tags/item')) {
+            include '**/*.json'
+            into 'data/echo_warrior/tags/items'
+        }
+        ['echo_warrior', 'minecraft'].each { namespace ->
+            from(new File(repositoryRoot, "versions/1.21.1/common/src/main/resources/data/${namespace}/tags/block")) {
+                include '**/*.json'
+                into "data/${namespace}/tags/blocks"
+            }
+        }
+        // Reuse all 14 reviewed locales and regional aliases verbatim. No fresh translation pass.
+        def sourceLanguages = fileTree(new File(repositoryRoot, 'common/src/main/resources/assets/echo_warrior/lang')).matching { include '*.json' }.files
+        inputs.files(sourceLanguages)
+        doLast {
+            sourceLanguages.each { sourceLanguage ->
+                def shared = new groovy.json.JsonSlurper().parse(sourceLanguage, 'UTF-8')
+                def selected = shared
+                def destination = new File(destinationDir, "assets/echo_warrior/lang/${sourceLanguage.name}")
+                def localSource = rootProject.file("common/src/main/resources/assets/echo_warrior/lang/${sourceLanguage.name}")
+                def local = localSource.isFile() ? new groovy.json.JsonSlurper().parse(localSource, 'UTF-8') : [:]
+                destination.parentFile.mkdirs()
+                destination.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(selected + local)) + '\n', 'UTF-8')
+            }
+        }
+        from(new File(repositoryRoot, 'common/src/main/resources/assets/echo_warrior/textures/gui/summoner')) {
+            include '**/*.png'
+            into 'assets/echo_warrior/textures/gui/summoner'
+        }
+        from(new File(repositoryRoot, 'common/src/main/resources/assets/echo_warrior/textures/gui')) {
+            include 'knowledge/**', 'tutorial/**', 'recycler/**'
+            into 'assets/echo_warrior/textures/gui'
+        }
+        from(new File(repositoryRoot, 'common/src/main/resources/assets/echo_warrior/textures/mob_effect')) {
+            include '**/*.png'
+            exclude { details -> new File(repositoryRoot, 'versions/1.21.1/common/src/main/resources/assets/echo_warrior/textures/mob_effect/' + details.relativePath.pathString).isFile() }
+            into 'assets/echo_warrior/textures/mob_effect'
+        }
+        def metadata = ['mod_id', 'mod_name', 'mod_author', 'mod_description', 'minecraft_version',
+                        'minecraft_version_range', 'java_version', 'loader_version', 'fabric_api_version',
+                        'forge_version', 'smartbrainlib_version', 'geckolib_version']
+            .collectEntries { key -> [(key): rootProject.property(key)] } + [version: project.version]
+        inputs.properties(metadata)
+        filesMatching(['fabric.mod.json', 'META-INF/mods.toml', 'pack.mcmeta']) { expand metadata }
+    }
+
+    if (project.name != 'common') {
+        tasks.named('compileJava', JavaCompile) { source(project(':common').sourceSets.main.allJava) }
+        tasks.named('processResources', ProcessResources) { from(project(':common').sourceSets.main.resources) }
+        tasks.named('sourcesJar', Jar) { from(project(':common').sourceSets.main.allSource) }
+    }
+}
+
+tasks.register('fabricBuild') { dependsOn(':common:build', ':fabric:build') }
+tasks.register('forgeBuild') { dependsOn(':common:build', ':forge:build') }
+tasks.register('dualBuild') { dependsOn(':common:build', ':fabric:build', ':forge:build') }
+tasks.register('clean') { dependsOn(':common:clean', ':fabric:clean', ':forge:clean') }

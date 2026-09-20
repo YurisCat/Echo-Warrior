@@ -1,0 +1,9 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:single",
+      "resource": "echo_warrior:mob_effect/obsidian_wound",
+      "sprite": "echo_warrior:bleeding"
+    }
+  ]
+}

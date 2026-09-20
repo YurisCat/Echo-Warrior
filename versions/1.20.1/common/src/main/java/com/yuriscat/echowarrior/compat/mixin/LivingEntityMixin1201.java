@@ -1,0 +1,73 @@
+package com.yuriscat.echowarrior.compat.mixin;
+
+import com.yuriscat.echowarrior.compat.combat.FormationAura1201;
+import com.yuriscat.echowarrior.compat.entity.JapaneseSamuraiEchoEntity1201;
+import com.yuriscat.echowarrior.compat.item.EchoTalentSystem1201;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.boss.EnderDragonPart;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(LivingEntity.class)
+public abstract class LivingEntityMixin1201 {
+    @Inject(method = "tickDeath", at = @At("HEAD"))
+    private void echoWarrior1201$deathSoulParticles(CallbackInfo callback) {
+        LivingEntity self = (LivingEntity)(Object)this;
+        // Keep the vanilla red flash/fall. Emit before its final removal, on the server only.
+        if (self instanceof com.yuriscat.echowarrior.compat.entity.EchoWarriorEntity1201
+                && self.level() instanceof net.minecraft.server.level.ServerLevel level
+                && self.deathTime == 19 && !self.isRemoved()) {
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL,
+                    self.getX(), self.getY() + 1.0, self.getZ(), 24, 0.35, 0.7, 0.35, 0.02);
+        }
+    }
+
+    @Inject(method = "die", at = @At("TAIL"))
+    private void echoWarrior1201$afterDeath(DamageSource source, CallbackInfo ci) {
+        LivingEntity self = (LivingEntity)(Object)this;
+        if (self.level().isClientSide) return;
+        com.yuriscat.echowarrior.compat.progress.EchoExperienceSystem1201.afterDeath(self, source);
+        EchoTalentSystem1201.afterDeath(self, source);
+        if (self instanceof com.yuriscat.echowarrior.compat.entity.EchoWarriorEntity1201 echo) {
+            com.yuriscat.echowarrior.compat.binding.EchoBindingSystem1201.deactivate(echo);
+        }
+    }
+    @Inject(method = "travel", at = @At("HEAD"), cancellable = true)
+    private void echoWarrior1201$freezeSamuraiStabTarget(Vec3 input, CallbackInfo callback) {
+        LivingEntity self = (LivingEntity)(Object)this;
+        if (!self.level().isClientSide() && JapaneseSamuraiEchoEntity1201.isTemporarilyPinned(self)) {
+            self.setDeltaMovement(Vec3.ZERO);
+            callback.cancel();
+        }
+    }
+
+    @Inject(method = "doHurtTarget", at = @At("HEAD"), cancellable = true)
+    private void echoWarrior1201$blockPinnedMeleeAttack(Entity target,
+                                                         CallbackInfoReturnable<Boolean> callback) {
+        LivingEntity self = (LivingEntity)(Object)this;
+        if (JapaneseSamuraiEchoEntity1201.isTemporarilyPinned(self)) callback.setReturnValue(false);
+    }
+
+    @Inject(method = "setLastHurtMob", at = @At("HEAD"), cancellable = true)
+    private void echoWarrior1201$rememberMultipartBoss(Entity target, CallbackInfo callback) {
+        if ((Object)this instanceof Player && target instanceof EnderDragonPart dragonPart) {
+            ((LivingEntity)(Object)this).setLastHurtMob(dragonPart.parentMob);
+            callback.cancel();
+        }
+    }
+
+    @Inject(method = "getDamageAfterMagicAbsorb", at = @At("RETURN"), cancellable = true)
+    private void echoWarrior1201$applyFormationShield(DamageSource source, float damage,
+                                                       CallbackInfoReturnable<Float> callback) {
+        LivingEntity victim = (LivingEntity)(Object)this;
+        float formationAdjusted = FormationAura1201.modifyFinalIncomingDamage(victim, callback.getReturnValue());
+        callback.setReturnValue(EchoTalentSystem1201.modifyFinalIncomingDamage(victim, source, formationAdjusted));
+    }
+}

@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Prepare and validate the four CurseForge uploads for one Echo Warrior release."""
+"""Prepare and validate the six CurseForge uploads for one Echo Warrior release."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
 import sys
+import tomllib
 import zipfile
 from pathlib import Path
 
@@ -27,17 +29,26 @@ LOADERS = {
         "display_name": "Fabric",
         "game_version_name": "Fabric",
         "descriptor": "fabric.mod.json",
-        "forbidden_descriptor": "META-INF/neoforge.mods.toml",
         "dependencies": (FABRIC_API_DEPENDENCY, *COMMON_REQUIRED_DEPENDENCIES),
     },
     "neoforge": {
         "display_name": "NeoForge",
         "game_version_name": "NeoForge",
         "descriptor": "META-INF/neoforge.mods.toml",
-        "forbidden_descriptor": "fabric.mod.json",
+        "dependencies": COMMON_REQUIRED_DEPENDENCIES,
+    },
+    "forge": {
+        "display_name": "Forge",
+        "game_version_name": "Forge",
+        "descriptor": "META-INF/mods.toml",
         "dependencies": COMMON_REQUIRED_DEPENDENCIES,
     },
 }
+RELEASE_MATRIX = (
+    ("main", ".", "properties", "26.1.2", ("fabric", "neoforge")),
+    ("compat_1211", "versions/1.21.1", "compat_properties", "1.21.1", ("fabric", "neoforge")),
+    ("compat_1201", "versions/1.20.1", "legacy_properties", "1.20.1", ("fabric", "forge")),
+)
 REQUIRED_LICENSE_ENTRIES = {
     "META-INF/LICENSE_ECHO_WARRIOR",
     "META-INF/LICENSE-CODE_ECHO_WARRIOR",
@@ -111,9 +122,10 @@ def parse_boolean(value: str) -> bool:
 def validate_loader_jar(
     jar_path: Path,
     descriptor: str,
-    forbidden_descriptor: str,
     loader_name: str,
     expected_version: str,
+    expected_minecraft: str,
+    language_directory: Path = Path("common/src/main/resources/assets/echo_warrior/lang"),
 ) -> None:
     if not jar_path.is_file():
         raise ValueError(f"Expected {loader_name} release JAR was not produced: {jar_path}")
@@ -123,7 +135,13 @@ def validate_loader_jar(
     try:
         with zipfile.ZipFile(jar_path) as archive:
             entries = set(archive.namelist())
+            if descriptor not in entries:
+                raise ValueError(f"{loader_name} descriptor '{descriptor}' is missing from {jar_path}.")
             descriptor_text = archive.read(descriptor).decode("utf-8")
+            for source in language_directory.glob("*.json"):
+                name = f"assets/echo_warrior/lang/{source.name}"
+                if name not in entries or json.loads(archive.read(name)) != json.loads(source.read_text(encoding="utf-8")):
+                    raise ValueError(f"{loader_name} packaged locale does not match reviewed source: {source.name}")
     except zipfile.BadZipFile as error:
         raise ValueError(f"Invalid {loader_name} JAR: {jar_path}") from error
 
@@ -131,25 +149,44 @@ def validate_loader_jar(
         raise ValueError(
             f"{loader_name} descriptor '{descriptor}' is missing from {jar_path}."
         )
-    if forbidden_descriptor in entries:
+    foreign_descriptors = {str(loader["descriptor"]) for loader in LOADERS.values()} - {descriptor}
+    if foreign_descriptors & entries:
         raise ValueError(
             f"{loader_name} JAR unexpectedly contains the other loader descriptor "
-            f"'{forbidden_descriptor}': {jar_path}"
+            f"'{', '.join(sorted(foreign_descriptors & entries))}': {jar_path}"
         )
-    missing_license_entries = REQUIRED_LICENSE_ENTRIES - entries
+    # Legacy build keeps original filenames; both layouts must carry the same full texts.
+    license_entries = {
+        name: name if name in entries else name.replace("_ECHO_WARRIOR", "")
+        for name in REQUIRED_LICENSE_ENTRIES
+    }
+    missing_license_entries = {name for name, actual in license_entries.items() if actual not in entries}
     if missing_license_entries:
         raise ValueError(
             f"{loader_name} JAR is missing required license/credit entries: "
             f"{', '.join(sorted(missing_license_entries))}"
         )
+    with zipfile.ZipFile(jar_path) as archive:
+        for name, actual in license_entries.items():
+            source = Path(name.removeprefix("META-INF/").replace("_ECHO_WARRIOR", ""))
+            if archive.read(actual).decode("utf-8").replace("\r\n", "\n") != source.read_text(encoding="utf-8"):
+                raise ValueError(f"{loader_name} license/credit text differs from source: {actual}")
     if descriptor == "fabric.mod.json":
-        descriptor_version = str(json.loads(descriptor_text).get("version", ""))
+        metadata = json.loads(descriptor_text)
+        descriptor_version = str(metadata.get("version", ""))
+        minecraft_range = metadata.get("depends", {}).get("minecraft", "")
+        if metadata.get("id") != "echo_warrior":
+            raise ValueError(f"Wrong mod ID in {jar_path}")
     else:
-        version_match = re.search(
-            r'(?m)^\s*version\s*=\s*"([^"]+)"\s*$',
-            descriptor_text,
-        )
-        descriptor_version = version_match.group(1) if version_match else ""
+        metadata = tomllib.loads(descriptor_text)
+        own_mods = [mod for mod in metadata.get("mods", []) if mod.get("modId") == "echo_warrior"]
+        if len(own_mods) != 1:
+            raise ValueError(f"Expected exactly one Echo Warrior mod in {jar_path}")
+        descriptor_version = str(own_mods[0].get("version", ""))
+        minecraft_dependencies = [dep for dep in metadata.get("dependencies", {}).get("echo_warrior", []) if dep.get("modId") == "minecraft"]
+        minecraft_range = minecraft_dependencies[0].get("versionRange", "") if len(minecraft_dependencies) == 1 else ""
+    if not re.search(rf"(?<![\d.]){re.escape(expected_minecraft)}(?![\d.])", str(minecraft_range)):
+        raise ValueError(f"{loader_name} Minecraft dependency does not declare {expected_minecraft}: {minecraft_range}")
     if descriptor_version != expected_version:
         raise ValueError(
             f"{loader_name} descriptor version is '{descriptor_version}', "
@@ -191,6 +228,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("versions/1.21.1/gradle.properties"),
     )
     parser.add_argument("--changelog", type=Path, default=Path("CHANGELOG.md"))
+    parser.add_argument("--legacy-properties", type=Path, default=Path("versions/1.20.1/gradle.properties"))
     parser.add_argument(
         "--output-directory",
         type=Path,
@@ -210,7 +248,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--require-jars",
         action="store_true",
-        help="Fail unless all four exact version- and loader-specific JARs exist and validate.",
+        help="Fail unless all six exact version- and loader-specific JARs exist and validate.",
     )
     parser.add_argument(
         "--allow-pending-localization",
@@ -232,13 +270,11 @@ def main() -> int:
     args = build_parser().parse_args()
 
     try:
-        release_lines = (
-            ("main", Path("."), args.properties),
-            ("compat_1211", Path("versions/1.21.1"), args.compat_properties),
-        )
-        parsed_lines: list[dict[str, str | Path]] = []
-        for line_key, project_root, properties_path in release_lines:
-            properties = read_gradle_properties(properties_path)
+        parsed_lines = []
+        for line_key, project_root, argument, expected_minecraft, loaders in RELEASE_MATRIX:
+            properties = read_gradle_properties(getattr(args, argument))
+            if require_property(properties, "minecraft_version") != expected_minecraft:
+                raise ValueError(f"{line_key} must target Minecraft {expected_minecraft}")
             parsed_lines.append(
                 {
                     "key": line_key,
@@ -246,6 +282,7 @@ def main() -> int:
                     "version": require_property(properties, "mod_version"),
                     "minecraft_version": require_property(properties, "minecraft_version"),
                     "archive_name": require_property(properties, "archives_base_name"),
+                    "loaders": loaders,
                 }
             )
 
@@ -263,6 +300,8 @@ def main() -> int:
             raise ValueError("Every compatibility line must use the same archives_base_name.")
 
         version = versions.pop()
+        if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+            raise ValueError(f"Public release requires a plain x.y.z version, not '{version}'.")
         manual_release = parse_boolean(args.manual_release)
         expected_tag = args.expected_tag.strip()
         release_tag = f"v{version}"
@@ -280,12 +319,14 @@ def main() -> int:
             "version": version,
             "release_tag": release_tag,
         }
+        artifacts = []
         for line in parsed_lines:
             line_key = str(line["key"])
             project_root = Path(line["project_root"])
             minecraft_version = str(line["minecraft_version"])
             archive_name = str(line["archive_name"])
-            for loader_key, loader in LOADERS.items():
+            for loader_key in line["loaders"]:
+                loader = LOADERS[loader_key]
                 target_key = f"{line_key}_{loader_key}"
                 jar_name = f"{archive_name}-{loader_key}-{minecraft_version}-{version}.jar"
                 jar_path = project_root / loader_key / "build" / "libs" / jar_name
@@ -294,9 +335,9 @@ def main() -> int:
                     validate_loader_jar(
                         jar_path,
                         str(loader["descriptor"]),
-                        str(loader["forbidden_descriptor"]),
                         target_display_name,
                         version,
+                        minecraft_version,
                     )
 
                 display_name = (
@@ -325,6 +366,12 @@ def main() -> int:
                     json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
                     encoding="utf-8",
                 )
+                artifacts.append({
+                    "target": target_key,
+                    "jar_path": jar_path.as_posix(),
+                    "metadata_path": metadata_path.as_posix(),
+                    "sha256": hashlib.sha256(jar_path.read_bytes()).hexdigest() if args.require_jars else None,
+                })
 
                 outputs.update(
                     {
@@ -335,6 +382,9 @@ def main() -> int:
                     }
                 )
 
+        manifest_path = args.output_directory / "release-manifest.json"
+        manifest_path.write_text(json.dumps({"version": version, "artifacts": artifacts}, indent=2) + "\n", encoding="utf-8")
+        outputs["manifest_path"] = manifest_path.as_posix()
         if args.github_output:
             append_github_output(args.github_output, outputs)
 
@@ -342,7 +392,7 @@ def main() -> int:
         print(f"Release type: {args.release_type}")
         for line in parsed_lines:
             line_key = str(line["key"])
-            for loader_key in LOADERS:
+            for loader_key in line["loaders"]:
                 target_key = f"{line_key}_{loader_key}"
                 print(f"{target_key}: {outputs[f'{target_key}_jar_path']}")
                 print(f"metadata: {outputs[f'{target_key}_metadata_path']}")

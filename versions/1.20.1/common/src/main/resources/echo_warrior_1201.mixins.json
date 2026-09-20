@@ -1,0 +1,48 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.yuriscat.echowarrior.compat.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "echo_warrior_1201.refmap.json",
+  "mixins": [
+    "MinecraftServerMixin1201",
+    "ServerMenuClickMixin1201",
+    "PlayerListMixin1201",
+    "PlayerListAccessor1201",
+    "ServerGamePacketListenerMixin1201",
+    "BlockTalentMixin1201",
+    "CreeperMixin1201",
+    "ExperienceOrbTalentMixin1201",
+    "FishingHookTalentMixin1201",
+    "LivingEntityMixin1201",
+    "LivingEntityAccessoryMixin1201",
+    "LivingCombatEventsMixin1201",
+    "MerchantTalentMixin1201",
+    "PlayerTalentMixin1201",
+    "ShulkerBulletAccessor1201",
+    "ItemEntityLifetimeMixin1201",
+    "RecyclerBreakMixin1201",
+    "RecyclerExplosionMixin1201",
+    "BrushableTypeMixin1201",
+    "PlacedBlockTrackerMixin1201",
+    "GeneratedChunkMixin1201"
+  ],
+  "client": [
+    "MinecraftClientMixin1201",
+    "MouseHandlerMixin1201",
+    "ClientMenuSyncMixin1201",
+    "CreativeModeSlotWrapperAccessor1201",
+    "CreativeModeInventoryScreenInvoker1201",
+    "CreativeModeInventoryScreenMixin1201",
+    "AbstractContainerScreenMixin1201",
+    "ItemInHandRendererMixin1201",
+    "RecyclerItemRendererMixin1201",
+    "GuiMixin1201",
+    "GuiGraphicsMixin1201",
+    "GuiGraphicsInvoker1201",
+    "ClientColorsAccessor1201"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

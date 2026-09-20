@@ -17,6 +17,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin1211 {
+    @Inject(method = "tickDeath", at = @At("HEAD"))
+    private void echoWarrior1211$deathSoulParticles(CallbackInfo callback) {
+        LivingEntity self = (LivingEntity)(Object)this;
+        // Keep the vanilla red flash/fall. Emit before its final removal, on the server only.
+        if (self instanceof com.yuriscat.echowarrior.compat.entity.EchoWarriorEntity1211
+                && self.level() instanceof net.minecraft.server.level.ServerLevel level
+                && self.deathTime == 19 && !self.isRemoved()) {
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL,
+                    self.getX(), self.getY() + 1.0, self.getZ(), 24, 0.35, 0.7, 0.35, 0.02);
+        }
+    }
+
     @Inject(method = "travel", at = @At("HEAD"), cancellable = true)
     private void echoWarrior1211$freezeSamuraiStabTarget(Vec3 input, CallbackInfo callback) {
         LivingEntity self = (LivingEntity)(Object)this;

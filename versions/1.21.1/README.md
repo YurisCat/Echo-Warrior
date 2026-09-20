@@ -4,6 +4,49 @@ This directory is the isolated Minecraft 1.21.1 compatibility build. Minecraft 2
 
 Read `../../docs/VERSION_PORTING_PLAYBOOK.md` before extending or auditing this compatibility line. Current manual acceptance is tracked in `../../docs/COMPATIBILITY_1.21.1_TEST_CHECKLIST.md`.
 
+Current public candidate: `0.2.2`. Release checks and acceptance boundaries are recorded in `../../docs/releases/0.2.2.md`.
+
+## Snow-cover implementation checkpoint — 2026-09-20
+
+Battlefield generation now preserves 1–8 snow layers and their thickness, placing archaeology in the
+natural ground below them instead of clearing snow as vegetation. Solid snow blocks are not excavated.
+Only new sites change; previously removed snow is not reconstructed. This shared fix also applies to
+26.1.2 and 1.20.1. Both loader builds and the artifact baseline passed. `check-battlefield-snow.py`
+guards equal terrain policies/call sites across versions; real placement under all eight layer thicknesses
+passed on both 1.20.1 production servers. **1.21.1 in-game snow behavior was not run this task**;
+manual acceptance remains pending. No publishing or version-number change.
+
+Current local SHA-256:
+
+- Fabric: `7098b5f8780ef10dcba3c19e58ef41aa80e49ca7dcdd27a26e6df00071da838d`
+- NeoForge: `7b0fd086714ec28bb9d10bdf8bbaabb9f3b0bc88fead941a608fa958725ef2c6`
+
+## Historical departure-effect fix — 2026-09-20
+
+Actual dismissal, relic replacement, summoner destruction and successful reconstruction now call the hero's
+`dismiss()` instead of bypassing soul particles/sound with `discard()`. All five heroes additionally send
+24 SOUL particles at death tick 20, before vanilla removal; the binding still expires immediately on death.
+Vanilla mobs and silent rollback/cleanup remain unchanged. 26.1.2 is untouched, and this version retains
+its native wind/mace Guandao finisher sounds; only the 1.20.1 anvil fallback changes to a critical-hit sound.
+
+Both loader builds and the artifact baseline passed. Both isolated **development** dedicated servers ran
+`DepartureEffectsSelfTest1211` through the normal selftest command and shut down normally. It captures
+real outgoing particle packets for all five heroes across item dismissal, ID dismissal, destruction and death,
+including exact count, position, no duplicate playback and vanilla/silent negative cases.
+Logs: `run-fabric-server/logs/latest.log` and `run-neoforge-server/logs/latest.log` (11:42–11:43 local).
+Fabric still logs its existing six “No data fixer registered” messages; this is not a claim of zero ERROR logs
+or a fresh production-client/visual acceptance pass. No graphical client was launched for this targeted task.
+
+Local build hashes (same filenames/version as 0.2.1, **not** the previously published files; no upload):
+
+| Local JAR | SHA-256 |
+| --- | --- |
+| `fabric/build/libs/echo-warrior-fabric-1.21.1-0.2.1.jar` | `b37137fdfb9d149b8f16a7e2b172fac2db4732ed62764f64818afbc56f0764b1` |
+| `neoforge/build/libs/echo-warrior-neoforge-1.21.1-0.2.1.jar` | `447a3554eca50c40156aec696e522662dda10f02a6944294b973816aecb85032` |
+
+Presentation-only restoration/addition; no player wording or gameplay values changed, so no localization or
+encyclopedia change is needed. Reusable lifecycle guidance is PORT-028; visuals and sound remain on the manual checklist.
+
 Build both loader packages from the repository root:
 
 ```powershell

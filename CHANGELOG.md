@@ -4,6 +4,27 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+## 0.2.2 - 2026-09-20
+
+### Added
+
+- Added Minecraft 1.20.1 support for Fabric and Forge, including all five Echo Warriors, the summoner, relic progression and talents, accessories, archaeology, Echo Compass, tutorial, knowledge collection, and Echo Salvage Chest.
+- The 1.20.1 packages include the same translations as 26.1.2 and 1.21.1. Choose the file for your exact Minecraft version and loader; 1.20.1 uses Forge, not NeoForge.
+
+### Fixed
+
+- Battlefield sites now preserve existing snow layers and place suspicious ground beneath them on all three supported Minecraft versions. Previously removed snow is not restored.
+- Restored Echo Warrior death and dismissal particles on the older versions, including dismissal when a summoner is destroyed on 1.21.1.
+- Fixed jittering arms in 1.20.1 summoner previews, misplaced Guandao blade particles, and the Guandao Warrior's body rotation at the end of a combo.
+- Aligned 1.20.1 Aztec Warrior melee reach with the main version to prevent missed attacks at valid distances.
+- Fixed missing insertion sounds, the complete knowledge collection in the creative tab, and Echo Compass status and directional text on 1.20.1.
+
+### Notes
+
+- Minecraft 1.20.1 uses compatible vanilla sound and particle replacements where newer effects are unavailable. The Guandao combo finisher uses a critical-hit sound instead of an anvil sound.
+- Required dependencies: SmartBrainLib and GeckoLib; Fabric also requires Fabric API. Install dependency versions matching your Minecraft version and loader.
+- Back up worlds before updating. Do not open a newer Minecraft world's save in an older version.
+
 ## 0.2.1 - 2026-09-19
 
 ### Added

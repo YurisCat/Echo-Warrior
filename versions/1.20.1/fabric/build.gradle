@@ -1,0 +1,41 @@
+plugins { id 'net.fabricmc.fabric-loom-remap' }
+
+dependencies {
+    minecraft("com.mojang:minecraft:${minecraft_version}")
+    mappings(loom.officialMojangMappings())
+    modImplementation("net.fabricmc:fabric-loader:${loader_version}")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:${fabric_api_version}")
+    modImplementation("net.tslat.smartbrainlib:SmartBrainLib-fabric-${minecraft_version}:${smartbrainlib_version}")
+    modImplementation("software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}")
+    implementation('com.eliotlash.mclib:mclib:20')
+}
+
+loom {
+    mixin {
+        useLegacyMixinAp = true
+        defaultRefmapName = 'echo_warrior_1201.refmap.json'
+    }
+    mods { echo_warrior { sourceSet sourceSets.main } }
+    runs {
+        client {
+            client()
+            runDir(rootProject.file('run-fabric').absolutePath)
+            programArg '--username=Echo1201Fabric'
+            def world = providers.gradleProperty('quickPlayWorld').orNull
+            if (world) {
+                programArg '--quickPlaySingleplayer'
+                programArg world
+            }
+            if (providers.gradleProperty('autoPauseAfterQuickPlay').orNull == 'true') {
+                vmArg '-Decho_warrior.auto_pause_after_quick_play=true'
+            }
+            if (providers.gradleProperty('pauseOnJoin').orNull == 'true') {
+                vmArg '-Decho_warrior.pause_on_join=true'
+            }
+        }
+        server {
+            server()
+            runDir(rootProject.file('run-fabric-server').absolutePath)
+        }
+    }
+}

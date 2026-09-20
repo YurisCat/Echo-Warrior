@@ -338,6 +338,10 @@ function Invoke-ServerSmokeTest {
         }
         $process.WaitForExit()
         $process.Refresh()
+        $departureLog = Get-Content -LiteralPath $latestLog -Raw
+        if ($departureLog -notmatch 'DEPARTURE EFFECTS SELFTEST PASSED heroes=5 modes=item-id-destroy-death packets=24-soul once=true vanilla=unchanged') {
+            throw "$TargetLoader departure particle packet guard did not pass."
+        }
         $serverExitCode = $process.ExitCode
         if ($null -ne $serverExitCode -and $serverExitCode -ne 0) {
             throw "$TargetLoader Gradle server task exited with code $serverExitCode."

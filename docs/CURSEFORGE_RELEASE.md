@@ -1,74 +1,78 @@
-# CurseForge 四文件发布流程
+# CurseForge 六文件发布流程
 
-CurseForge 项目 ID 为 `1677436`。正式发布从同一版本、同一 Git 提交构建四个独立 JAR：Minecraft 26.1.2 Fabric、Minecraft 26.1.2 NeoForge、Minecraft 1.21.1 Fabric 和 Minecraft 1.21.1 NeoForge。依赖 JAR 始终保持外置，不打入 Echo Warrior 包内。
+项目 ID：`1677436`。从同一版本号、同一 Git 提交构建六个独立 JAR：
+
+| Minecraft | 加载器 | 构建与游戏 Java |
+| --- | --- | --- |
+| 26.1.2 | Fabric / NeoForge | 25 |
+| 1.21.1 | Fabric / NeoForge | 21 |
+| 1.20.1 | Fabric / Forge（不是 NeoForge） | Gradle 21；编译与游戏 17 |
+
+SmartBrainLib 与 GeckoLib 始终外置；Fabric 另需 Fabric API。不制作跨加载器通用单包。
 
 ## 本地发布候选
 
-发布前必须执行以下检查：
-
 ```powershell
-# Minecraft 1.21.1 / Java 21
+.\scripts\build-1.20.1.ps1 -Loader Dual -Clean
+python scripts/check-1.20.1-baseline.py
+python scripts/test_compatibility_1201_baseline.py
+python scripts/check-1.20.1-content-parity.py
+python scripts/smoke-test-1.20.1-servers.py --loader both
+
 .\scripts\build-1.21.1.ps1 -Loader Dual -Clean
 .\scripts\check-1.21.1-baseline.ps1 -SkipBuild
 .\scripts\smoke-test-1.21.1-servers.ps1 -Loader Dual -SkipBuild
 
-# Minecraft 26.1.2 / Java 25
 $env:JAVA_HOME = (Resolve-Path '.toolchains\jdk-25').Path
 $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 .\gradlew.bat clean dualBuild
 
-# 四个 JAR 与四份 CurseForge 元数据
-python .\scripts\check-localization.py --release-gate
-python .\scripts\prepare-curseforge-release.py --release-type release --require-jars
+python scripts/check-localization.py --release-gate
+python scripts/test_curseforge_release.py
+python scripts/prepare-curseforge-release.py --release-type release --require-jars
 ```
 
-客户端冒烟检查使用 `scripts/run-test-client.ps1`。每个 Minecraft 版本至少完成一次真实交互检查，其余加载器必须完成自动启动检查；脚本结束后确认没有遗留的开发客户端进程。
+客户端统一使用 `scripts/run-test-client.ps1`，串行运行；自动检查启用 `-StartupOnly` 并确认释放鼠标、关闭所有自启进程。1.20.1 用 `-Production` 检查真实发行包。每条版本线沿用已完成的针对性人工交互验收，其余加载器完成启动冒烟；不要求每次局部修复重新全量人工验收，也不把自动检查当作视觉/声音/联机签收。
 
-内部测试包、`temporary-delivery/` 文件、来源包以及工作区不干净时生成的临时候选不得上传。正式候选必须来自已经提交的发布分支。
+正式候选必须来自已提交的发布分支。内部 `-dev.N`、sources、temporary-delivery 或脏工作区临时包不得上传。公开编号采用干净的 `x.y.z`，三个 gradle.properties 必须一致。每次准备产物记录六份元数据与 SHA-256 清单。
 
-### 本地化软门禁
+## 本地化门禁
 
-`en_us` 与 `zh_cn` 是持续维护的核心语言；其他目标语言允许在日常开发和内部测试期间滞后。正式准备 CurseForge 或 Modrinth 候选时，`prepare-curseforge-release.py` 会自动执行 `scripts/check-localization.py --release-gate`，报告缺失文件、缺失键、占位符错误、主线/兼容线差异，以及源文本变化后尚未重新接受的旧翻译。
+准备脚本自动执行 `python scripts/check-localization.py --release-gate`。无效 JSON、占位符损坏、源线差异等硬错误不能放行；缺失或过期的非核心译文必须先报告作者。只有作者对当次发布明确豁免，才能使用 `--allow-pending-localization` 或工作流的同名选项，不能沿用旧授权。
 
-存在硬错误（无效 JSON、占位符损坏、两条版本线内容不一致）时不能放行。只有缺失或过期的非核心翻译时，流程暂停并由作者选择：先补翻译、暂缓发布，或明确允许本次带待处理翻译发布。作者明确放行后，本地命令增加 `--allow-pending-localization`；GitHub Actions 手动运行则打开 `allow_pending_localization`。该放行只适用于当次发布，不能沿用到未来版本。自动标签发布不接受隐式放行，待处理翻译会令工作流失败。
-
-翻译审校完成后，使用下列命令记录该语言对应当前中英文源文本。不能仅因文件存在就更新基线：
+审校完成、作者语义问题已解决，且代表界面验收完成或本次剩余风险被明确接受后，才登记：
 
 ```powershell
-python .\scripts\check-localization.py --mark-current ja_jp
-python .\scripts\check-localization.py --mark-current ru_ru
-# 所有目标语言均已审校时才使用：
-python .\scripts\check-localization.py --mark-current all
+python scripts/check-localization.py --mark-current all
+python scripts/check-localization.py --release-gate
 ```
 
-## GitHub Actions 自动发布
+0.2.2 的具体接受依据见 `docs/localization/GPT6_INDEPENDENT_REVIEW.md` 末尾。本轮沿用未改动的既有译文，不是放行已知漏译。1.20.1 没有另一套源语言目录，构建时继承主线全部 14 个语言文件；准备脚本还逐个比较六份最终 JAR 的语言内容，防止生成资源漏包。
 
-`.github/workflows/publish-curseforge.yml` 支持两种入口：
+## GitHub Actions
 
-- 推送与两个 `gradle.properties` 中共同 `mod_version` 完全一致的 `v<版本>` 标签时，自动构建并公开上传四个 Release 文件；
-- 手动运行时默认只执行四端构建、JAR/元数据校验和 GitHub Artifact 留档。只有明确打开 `publish` 才上传；`release_type` 可选择 Release、Beta 或 Alpha，`manual_release` 可让四个已审核文件等待作者稍后手动公开。
+`.github/workflows/publish-curseforge.yml` 支持：
 
-自动化按以下顺序执行：
+- 推送 `v<版本>` 标签：自动构建、校验并公开上传六个 Release 文件，**推标签就是发布操作**。
+- 手动执行：默认 `publish=false`，只构建校验并存 GitHub Artifact；显式打开 publish 才上传。`release_type` 支持 Release / Beta / Alpha。`manual_release=true` 仅暂存待公开文件。
 
-1. 在标签对应的同一提交上用 Java 21 构建 Minecraft 1.21.1 Fabric 与 NeoForge；
-2. 切换 Java 25，构建 Minecraft 26.1.2 Fabric 与 NeoForge；
-3. 要求根目录和 `versions/1.21.1/` 使用同一 `mod_version`，并要求标签严格等于 `v<版本>`；
-4. 只接受四个精确命名的正式 JAR，拒绝来源包，检查每个 JAR 只携带自己的加载器描述文件、准确的 `mod_version` 与完整许可/署名文件；
-5. 生成四份 CurseForge 元数据。Fabric 文件声明 Fabric API、SmartBrainLib 和 GeckoLib，NeoForge 文件声明 SmartBrainLib 和 GeckoLib；每份文件明确标记对应 Minecraft 版本与加载器；
-6. 将四个 JAR 和四份元数据保存为 GitHub Actions Artifact；
-7. 需要上传时依次调用 CurseForge 文件上传接口。任一步失败，工作流立即失败，不能把发布视为完成；
-8. 四个 CurseForge 文件均成功后，人工核对文件 ID，再将发布分支合并回 `main` 并推送。
+推荐先推发布分支并跑一次不上传的工作流，再在同一提交创建发布标签。CI 先安装 Java 17 工具链，再切 Java 21 构建两条兼容线，最后 Java 25 构建主线。依赖版本冻结，不顺便升级。
 
-CurseForge 的四个文件是四次独立上传，平台没有本项目可用的原子“四文件事务”。如果网络在上传之间中断，必须先查询 CurseForge 已经出现哪些文件，再决定是否补传；不得直接重新运行并制造重复文件，也不得宣称四端发布完成。
+上传前必须通过：
 
-## 正式发布检查
+1. 三条版本线版本一致、标签严格匹配、CHANGELOG 对应章节存在且非空。
+2. 六个精确命名 JAR 都存在；只携带本加载器描述文件，内部模组版本与 Minecraft 声明正确。
+3. 许可和署名全文与仓库一致。高版本使用 `*_ECHO_WARRIOR` 命名，1.20.1 使用原始文件名，两者均在 META-INF。
+4. 14 个语言资源与审校源文一致，未违反本次本地化门禁。
+5. 六份元数据准确标记 Client、Server、游戏版本、加载器和必需前置。
+6. 所有 JAR、元数据和哈希清单先保存为 Actions Artifact，再开始上传。
 
-- 根目录与 `versions/1.21.1/gradle.properties` 的 `mod_version` 完全一致；
-- `CHANGELOG.md` 存在与 `mod_version` 一致且非空的版本章节；
-- 四个 JAR 来自标签所指向的同一提交；
-- Minecraft 26.1.2 使用 Java 25，Minecraft 1.21.1 使用 Java 21；
-- 四份元数据分别声明正确的 Minecraft 版本、加载器和依赖；
-- `CURSEFORGE_API_TOKEN` 只保存在 GitHub Actions Secret；
-- 本地化门禁无硬错误；若存在待处理翻译，已经取得作者对本次发布的明确放行；
-- GitHub Actions 显示四个文件 ID 后，才合并发布分支；
-- 回复中明确说明四个 CurseForge 文件结果、GitHub 标签以及发布分支是否已经合并进 `main`。
+上传使用仓库 Secret `CURSEFORGE_API_TOKEN`，不将令牌复制到本地、日志或仓库。每份上传成功立即记录文件 ID 和链接；即使后续失败也保留响应 Artifact。POST 不自动重试：超时不表示 CF 没有收到文件，必须先查询现状。
+
+## 完成条件与部分失败
+
+CurseForge 不提供六文件原子事务。任何一步失败都不能声称完整发布，不能直接整轮重跑制造重复文件。先检查 Actions 的逐文件结果、保留响应和 CF 实际页面，再决定只补缺失项。
+
+六份均获文件 ID 后，核对 CF 每个文件的版本、加载器、Release 标记及更新日志；待审核和已公开要分别说明。只有确认六份上传成功才把发布分支合并到 main 并推送。回复提供文件结果、GitHub 标签与 main 合并状态。
+
+本流程更新不改变玩法；相应玩法修复在 CHANGELOG / PROJECT / 百科既有条目记录，不为纯发布工具另造百科内容。
