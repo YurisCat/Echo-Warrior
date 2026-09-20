@@ -4,7 +4,7 @@ This directory is the isolated Minecraft 1.21.1 compatibility build. Minecraft 2
 
 Read `../../docs/VERSION_PORTING_PLAYBOOK.md` before extending or auditing this compatibility line. Current manual acceptance is tracked in `../../docs/COMPATIBILITY_1.21.1_TEST_CHECKLIST.md`.
 
-Current public candidate: `0.2.2`. Release checks and acceptance boundaries are recorded in `../../docs/releases/0.2.2.md`.
+Current release submission: `0.2.2` (uploaded; public processing/approval pending at initial verification). Release checks, file IDs and acceptance boundaries are recorded in `../../docs/releases/0.2.2.md`.
 
 ## Snow-cover implementation checkpoint — 2026-09-20
 

@@ -3,7 +3,7 @@
 Approved targets: Fabric + Forge, Java 17 for the game and compiled classes.
 The repository Gradle Wrapper runs on Java 21; do not downgrade the mainline Java 25 toolchain.
 
-Current stage: **0.2.2 Release preparation authorized; complete production-client and server regressions passed, author reports no remaining issue in their latest spot checks**.
+Current stage: **0.2.2 Release uploaded to CurseForge; public processing/approval still pending at initial verification**. Complete production-client and server regressions passed; the author reports no remaining issue in their latest spot checks.
 All five heroes, their shared combat/talent/accessory machinery, original models/animations and the complete summoner GUI
 are connected. 43 items, three blocks, one custom block-entity type, three creative tabs and four menus are registered.
 All 14 reviewed locales, 31 converted recipes, archaeology/knowledge/recycler loot, compass models/HUD/colors and biome-tinted
