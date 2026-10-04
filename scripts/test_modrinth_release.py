@@ -191,6 +191,21 @@ class ModrinthTests(unittest.TestCase):
         self.assertEqual(len(result["missing"]), 6)
         self.assertEqual(self.api.posts, [])
 
+    def test_wrong_remote_environment_is_not_reused(self):
+        self.publish()
+        self.api.versions[0]["environment"] = "unknown"
+        with self.assertRaisesRegex(ValueError, "metadata differs"):
+            self.publish()
+        self.assertEqual(len(self.api.posts), 6)
+
+    def test_unknown_environment_in_plan_stops_before_network(self):
+        artifact=self.plan["artifacts"][0]
+        artifact["metadata"]["environment"]="unknown"
+        RELEASE.write_json(Path(artifact["metadata_path"]),artifact["metadata"])
+        with self.assertRaisesRegex(ValueError,"invalid Modrinth metadata"):
+            self.publish()
+        self.assertEqual(self.api.gets, [])
+
     def test_empty_generic_draft_accepts_first_mod_versions(self):
         self.api.project.update(project_type="project", loaders=[], game_versions=[])
         self.assertEqual(self.publish()["uploaded"], 6)

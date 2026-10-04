@@ -61,6 +61,8 @@ Custom 是前端选择项，v2 实际 ID 由名称推导，并非固定 `License
 
 此问题归类为发布平台 API 兼容问题，不改变 Minecraft 版本、加载器、资源格式或运行生命周期；记录在本发布文档，不加入 Minecraft 移植手册。独立原包恢复测试阻止错误运行、篡改文件和部分恢复。提交审核之前仍需人工复核页面、许可、素材、AI 披露及六版本状态。
 
+v2 创建版本还须显式指定 `environment=client_and_server`；省略时会继承先前版本或默认 unknown，不能只根据 CF Client/Server 标签推断已在 Modrinth 登记。脚本写入并验证该字段，25 项离线检查包含拒绝复用错误环境的版本。首批已接收文件通过作者授权的原生版本编辑界面补齐环境，不重传 JAR；后续上传直接携带此声明。官方实现见 [v2/version_creation.rs](https://github.com/modrinth/code/blob/main/apps/labrinth/src/routes/v2/version_creation.rs)。
+
 ## 官方依据
 
 - [Modrinth API 鉴权和 User-Agent](https://docs.modrinth.com/api/)

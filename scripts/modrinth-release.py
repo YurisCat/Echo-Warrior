@@ -34,7 +34,7 @@ DEPENDENCIES = {
 }
 VERSION_FIELDS = (
     "project_id", "name", "version_number", "game_versions", "loaders",
-    "version_type", "changelog", "status",
+    "version_type", "changelog", "status", "environment",
 )
 
 
@@ -116,6 +116,7 @@ def prepare_plan(
             "game_versions": [minecraft],
             "loaders": [loader],
             "version_type": metadata["releaseType"],
+            "environment": "client_and_server",
             "dependencies": [{"project_id": DEPENDENCIES[slug], "dependency_type": "required"} for slug in required],
             "featured": False,
             "status": "listed",
@@ -159,7 +160,7 @@ def verify_local_plan(plan: dict, root: Path = Path(".")) -> None:
         required = ["geckolib", "smartbrainlib"] + (["fabric-api"] if loader == "fabric" else [])
         wanted_dependencies = [{"project_id": DEPENDENCIES[slug], "dependency_type": "required"} for slug in required]
         if (payload["project_id"] != plan["project_id"] or payload["game_versions"] != [minecraft]
-                or payload["loaders"] != [loader]
+                or payload["loaders"] != [loader] or payload.get("environment") != "client_and_server"
                 or payload["version_number"] != f"{version}+mc{minecraft}-{loader}"
                 or payload["name"] != f"Echo Warrior {version} ({CF.LOADERS[loader]['display_name']} {minecraft})"
                 or payload["status"] != "listed" or payload["version_type"] not in {"release", "beta", "alpha"}
