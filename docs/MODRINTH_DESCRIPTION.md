@@ -2,6 +2,8 @@
 
 项目名：Echo Warrior。以下中英文对应同一含义；发布时保留英文正文，也可以附中文。平台披露字段仍需单独勾选 **Contains AI-generated content**。
 
+2026-10-05 实际提交审核的英文页面以作者现有 CF 正文与配图为基础，完整内容见 [MODRINTH_PAGE_EN.md](MODRINTH_PAGE_EN.md)。以下保留中英文核心说明供后续维护；实际页面已补充三个 Minecraft 版本的准确依赖表、人工署名和混合许可。平台 AI 字段已勾选，披露范围仍为辅助开发、翻译及部分页面准备。
+
 ## English summary
 
 Unearth ancient relics and summon animated warrior companions with unique skills, talents, and customizable loadouts.

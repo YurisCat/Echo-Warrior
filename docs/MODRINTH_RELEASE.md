@@ -7,11 +7,11 @@ Modrinth 与 CurseForge 共用 `.github/workflows/publish-curseforge.yml` 的一
 1. 在 https://modrinth.com/settings/pats 创建发布 Token，只授权 `PROJECT_READ`、`VERSION_READ`、`VERSION_CREATE`。日常发布不需要删除、财务、账号管理或项目修改权限。Token 到期后只需轮换 Secret。
 2. 在 https://github.com/YurisCat/Echo-Warrior/settings/secrets/actions 保存仓库 Secret `MODRINTH_API_TOKEN`。直接在 GitHub 填入值，不写入代码、本地文件、聊天或 Actions 输出。
 3. 首次通过 Modrinth 页面创建 `Echo Warrior` 项目草稿，slug 使用 `echo-warrior`，类型为 Mod。使用现有人工制作图标、宣传素材和真实游戏截图，保留署名。页面内容参考 `docs/MODRINTH_DESCRIPTION.md`，设源码链接为 `https://github.com/YurisCat/Echo-Warrior`，许可证为 Custom，说明代码与素材的混合许可。
-4. 勾选平台的 **Contains AI-generated content**，具体披露辅助开发、翻译和部分页面准备；玩法与设计、美术、模型、动画、GUI、物品图标和宣传美术按实际人工贡献署名。不能仅靠正文一句说明替代平台披露字段。
+4. 首次版本上传后，在平台 Disclosures 设置启用 **Contains AI-generated content**，具体披露辅助开发、翻译和部分页面准备；玩法与设计、美术、模型、动画、GUI、物品图标和宣传美术按实际人工贡献署名。空项目暂不开放此设置；不能仅靠正文一句说明替代平台披露字段。
 5. 获得项目稳定的八位 ID 后，在仓库 Actions **Variables** 保存 `MODRINTH_PROJECT_ID`。它不是密钥；不要填 slug 或网址。该变量启用未来 `v*` 标签的 Modrinth 自动上传。
-6. 上传六个首次版本后再通过页面提交项目审核。日常版本上传 Token 无需扩大到 `PROJECT_WRITE`；首次审核与页面修改保留为明确的作者操作。API 接受版本、项目处于审核中、公开可见分别记录，不能混为同一个结果。
+6. 上传六个首次版本、登记运行环境并完成页面、分类及披露后，再通过页面提交项目审核。日常版本上传 Token 无需扩大到 `PROJECT_WRITE`；首次审核与页面修改由作者本人或获得作者明确授权的代理通过原生界面执行。API 接受版本、项目处于审核中、公开可见分别记录，不能混为同一个结果。
 
-截至 2026-10-04：作者已保存 `MODRINTH_API_TOKEN`，Secret 名称已核对；首次项目 ID 尚未登记。不为缺失的 ID 填占位值，也不把尚未上传或审核的项目说成已上架。
+2026-10-05，作者明确授权创建项目、复用现有人工作品及 AI 披露、通过 Actions 补发六个 0.2.2 正式包并提交审核。项目 ID `La3rOItG` 已登记到仓库 Variable；[Echo Warrior](https://modrinth.com/mod/echo-warrior) 六包上传并验证成功，当前处于 **processing / Under review**，尚不能宣称审核通过。完整记录见 [0.2.2 Modrinth 首发](releases/0.2.2-modrinth.md)。
 
 2026-10-05，[GitHub Actions 只读验证](https://github.com/YurisCat/Echo-Warrior/actions/runs/37215490592)通过：保存的 Token 具有真实私有项目读取能力；11 项 CF 与 22 项 Modrinth 离线检查、本地化门禁均通过。此轮没有上传文件，VERSION_CREATE 权限仍留待首次正式发布实证。
 
@@ -19,7 +19,7 @@ Modrinth 与 CurseForge 共用 `.github/workflows/publish-curseforge.yml` 的一
 
 - 推送新的 `v<mod_version>` 标签：上传 CF；配置 `MODRINTH_PROJECT_ID` 后，同一工作流也上传 Modrinth。
 - 手动运行：默认不上传。`publish` 控制 CF，`publish_modrinth` 控制 Modrinth，两者可独立选择。
-- 首次补发现有 `0.2.2` 到 Modrinth：在包含本工作流的提交上手动运行，选择 `publish=false`、`publish_modrinth=true`。不重推 `v0.2.2`，不重复发布已有 CF 文件。
+- 常规手动发布可以选择 `publish=false`、`publish_modrinth=true`。已发布的 `0.2.2` 补发与恢复必须使用下述原包工作流；不重推 `v0.2.2`，不重复发布已有 CF 文件，也不重新构建同版本后尝试复用已有 MR 版本。
 - 2026-10-05 首发改用专用 `Publish original 0.2.2 to Modrinth` 工作流，下载 CF 正式发布运行 `35513312300` 的原六包 Artifact；`restore-published-0.2.2.py` 固定校验运行身份、源码提交及 `docs/releases/0.2.2.md` 的六个正式 SHA-256，再重新审计包内容与本地化。不重新构建已经发布的版本，不使用哈希不同的本地候选。
 - `manual_release` 只控制 CF 待公开标记，不控制 Modrinth；Modrinth 的版本使用 `listed`，项目草稿/审核状态仍由平台管理。
 - `allow_pending_localization` 仅在作者明确豁免当次发布的缺失或过期译文后开启，不能复用历史豁免。硬错误始终阻止上传。
@@ -61,7 +61,7 @@ Custom 是前端选择项，v2 实际 ID 由名称推导，并非固定 `License
 
 此问题归类为发布平台 API 兼容问题，不改变 Minecraft 版本、加载器、资源格式或运行生命周期；记录在本发布文档，不加入 Minecraft 移植手册。独立原包恢复测试阻止错误运行、篡改文件和部分恢复。提交审核之前仍需人工复核页面、许可、素材、AI 披露及六版本状态。
 
-v2 创建版本还须显式指定 `environment=client_and_server`；省略时会继承先前版本或默认 unknown，不能只根据 CF Client/Server 标签推断已在 Modrinth 登记。脚本写入并验证该字段，25 项离线检查包含拒绝复用错误环境的版本。首批已接收文件通过作者授权的原生版本编辑界面补齐环境，不重传 JAR；后续上传直接携带此声明。官方实现见 [v2/version_creation.rs](https://github.com/modrinth/code/blob/main/apps/labrinth/src/routes/v2/version_creation.rs)。
+v2 创建版本还须显式指定 `environment=client_and_server`；省略时会继承先前版本或默认 unknown，不能只根据 CF Client/Server 标签推断已在 Modrinth 登记。脚本写入并验证该字段，26 项离线检查包含本地错误环境阻止联网、拒绝复用远端错误环境的版本。首批已接收文件通过作者授权的原生版本编辑界面补齐环境，不重传 JAR；后续上传直接携带此声明。官方实现见 [v2/version_creation.rs](https://github.com/modrinth/code/blob/main/apps/labrinth/src/routes/v2/version_creation.rs)。
 
 ## 官方依据
 
