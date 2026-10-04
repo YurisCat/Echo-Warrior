@@ -20,6 +20,7 @@ Modrinth 与 CurseForge 共用 `.github/workflows/publish-curseforge.yml` 的一
 - 推送新的 `v<mod_version>` 标签：上传 CF；配置 `MODRINTH_PROJECT_ID` 后，同一工作流也上传 Modrinth。
 - 手动运行：默认不上传。`publish` 控制 CF，`publish_modrinth` 控制 Modrinth，两者可独立选择。
 - 首次补发现有 `0.2.2` 到 Modrinth：在包含本工作流的提交上手动运行，选择 `publish=false`、`publish_modrinth=true`。不重推 `v0.2.2`，不重复发布已有 CF 文件。
+- 2026-10-05 首发改用专用 `Publish original 0.2.2 to Modrinth` 工作流，下载 CF 正式发布运行 `35513312300` 的原六包 Artifact；`restore-published-0.2.2.py` 固定校验运行身份、源码提交及 `docs/releases/0.2.2.md` 的六个正式 SHA-256，再重新审计包内容与本地化。不重新构建已经发布的版本，不使用哈希不同的本地候选。
 - `manual_release` 只控制 CF 待公开标记，不控制 Modrinth；Modrinth 的版本使用 `listed`，项目草稿/审核状态仍由平台管理。
 - `allow_pending_localization` 仅在作者明确豁免当次发布的缺失或过期译文后开启，不能复用历史豁免。硬错误始终阻止上传。
 
@@ -51,6 +52,12 @@ python scripts/modrinth-release.py prepare
 - `build/modrinth/responses/` 在失败后也保存为 Actions Artifact。六个版本最后再次查询全部确认，才写 `complete.json` 和完整发布 Summary。审核状态独立说明。
 - Modrinth 部分失败后的恢复应手动选择 **CF 不上传、MR 上传**，脚本只补缺失项；不要重新跑 CF POST。CF 的部分失败继续遵循 `docs/CURSEFORGE_RELEASE.md`。
 - 两平台不提供共同原子事务；不能因一平台成功就声称两平台完成发布。初次配置不改变游戏行为、控制或平衡，因此无需修改回声档案馆。
+
+### 首次空项目的 API 兼容性
+
+2026-10-05 实测新草稿在第一次版本上传前的 v2 `project_type` 为 `project`；官方 `LegacyProject::get_project_type` 根据版本加载器推导类型，无版本时默认 `project`。预检只为无版本、无加载器、无游戏版本的 draft 放行该类型；身份、源码、许可与六个 Mod JAR 守卫仍有效。已有版本或公开状态的泛型项目一律拒绝，24 项离线 Modrinth 检查覆盖该边界。
+
+此问题归类为发布平台 API 兼容问题，不改变 Minecraft 版本、加载器、资源格式或运行生命周期；记录在本发布文档，不加入 Minecraft 移植手册。独立原包恢复测试阻止错误运行、篡改文件和部分恢复。提交审核之前仍需人工复核页面、许可、素材、AI 披露及六版本状态。
 
 ## 官方依据
 

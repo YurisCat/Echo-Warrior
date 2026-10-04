@@ -191,6 +191,19 @@ class ModrinthTests(unittest.TestCase):
         self.assertEqual(len(result["missing"]), 6)
         self.assertEqual(self.api.posts, [])
 
+    def test_empty_generic_draft_accepts_first_mod_versions(self):
+        self.api.project.update(project_type="project", loaders=[], game_versions=[])
+        self.assertEqual(self.publish()["uploaded"], 6)
+
+    def test_generic_nonempty_or_public_project_is_rejected(self):
+        for update in ({"status":"approved"}, {"loaders":["fabric"]}, {"game_versions":["1.20.1"]}):
+            with self.subTest(update=update):
+                api=FakeApi()
+                api.project.update(project_type="project", **update)
+                with self.assertRaises(ValueError):
+                    RELEASE.preflight(self.plan, api, self.root)
+                self.assertEqual(api.posts, [])
+
     def test_complete_upload_then_rerun_does_not_duplicate(self):
         first = self.publish()
         second = self.publish()

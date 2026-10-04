@@ -256,8 +256,13 @@ def preflight(plan: dict, api: Api, root: Path = Path(".")) -> dict:
     verify_local_plan(plan, root)
     destination = plan["project_id"]
     project = api.get(f"/project/{destination}")
+    remote_versions = api.get(f"/project/{destination}/version?include_changelog=true")
+    # Modrinth derives the type from uploaded loaders; a new empty draft is
+    # 'project' until its first version (LegacyProject::get_project_type).
+    empty_draft = (project.get("project_type") == "project" and project.get("status") == "draft"
+                   and not remote_versions and not project.get("loaders") and not project.get("game_versions"))
     if (project.get("id") != destination or project.get("slug") != "echo-warrior"
-            or project.get("title") != "Echo Warrior" or project.get("project_type") != "mod"
+            or project.get("title") != "Echo Warrior" or (project.get("project_type") != "mod" and not empty_draft)
             or project.get("source_url", "").rstrip("/") != "https://github.com/YurisCat/Echo-Warrior"
             or project.get("license", {}).get("id") != "LicenseRef-Custom"):
         raise ValueError("Destination must be the official Echo Warrior mod with its source link and custom license.")
@@ -278,7 +283,6 @@ def preflight(plan: dict, api: Api, root: Path = Path(".")) -> dict:
                        and all(g in v.get("game_versions", []) for g in payload["game_versions"])
                        and all(l in v.get("loaders", []) for l in payload["loaders"]) for v in versions):
                 raise ValueError(f"{artifact['target']}: no matching Modrinth version for dependency {dep['project_id']}.")
-    remote_versions = api.get(f"/project/{destination}/version?include_changelog=true")
     existing = find_existing(plan, remote_versions)
     return {"project_id": destination, "version": plan["version"], "project_status": project["status"],
             "existing": existing, "missing": [a["target"] for a in plan["artifacts"] if a["target"] not in existing]}

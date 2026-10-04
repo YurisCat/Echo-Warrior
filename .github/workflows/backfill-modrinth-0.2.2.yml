@@ -1,0 +1,54 @@
+name: Publish original 0.2.2 to Modrinth
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: release-refs/heads/main
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check localization and publishing guards
+        run: |
+          python3 scripts/check-localization.py --release-gate
+          python3 scripts/test_curseforge_release.py
+          python3 scripts/test_modrinth_release.py
+          python3 scripts/test_restore_published_release.py
+      - name: Download the original six-file CurseForge release artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/original-release
+          gh api repos/YurisCat/Echo-Warrior/actions/runs/35513312300 > build/original-release/run.json
+          gh run download 35513312300 --repo YurisCat/Echo-Warrior \
+            --name echo-warrior-0.2.2-six-file-matrix --dir build/original-release/artifact
+          python3 scripts/restore-published-0.2.2.py build/original-release/artifact build/original-release/run.json
+      - name: Prepare and audit the original release JARs
+        run: |
+          python3 scripts/prepare-curseforge-release.py --require-jars --expected-tag v0.2.2
+          python3 scripts/modrinth-release.py prepare
+      - name: Upload missing versions and verify all six remote files
+        env:
+          MODRINTH_API_TOKEN: ${{ secrets.MODRINTH_API_TOKEN }}
+        run: python3 scripts/modrinth-release.py upload
+      - name: Preserve hashes, metadata and upload receipts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: modrinth-original-0.2.2-${{ github.run_id }}
+          path: |
+            build/original-release/run.json
+            build/curseforge/*.json
+            build/modrinth/
+          if-no-files-found: ignore
+          retention-days: 90
