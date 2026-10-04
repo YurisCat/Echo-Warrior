@@ -1,21 +1,26 @@
-name: Publish CurseForge
+name: Publish CurseForge and Modrinth
 
 on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: CurseForge release channel
+        description: Release channel for the six-file matrix
         required: true
         default: release
         type: choice
         options: [release, beta, alpha]
       manual_release:
-        description: Hold all six approved files for a later manual release
+        description: Hold CurseForge files for a later manual release (CF only)
         required: true
         default: false
         type: boolean
       publish:
-        description: Actually upload all six files (leave off for a dry run)
+        description: Upload all six files to CurseForge (leave off for a dry run)
+        required: true
+        default: false
+        type: boolean
+      publish_modrinth:
+        description: Upload missing verified versions to Modrinth (requires project ID and token)
         required: true
         default: false
         type: boolean
@@ -31,13 +36,17 @@ permissions:
   contents: read
 
 concurrency:
-  group: curseforge-${{ github.ref }}
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   build-and-publish:
     name: Build and publish the six-file matrix
     runs-on: ubuntu-latest
+    env:
+      PUBLISH_CURSEFORGE: ${{ github.event_name == 'push' || inputs.publish }}
+      PUBLISH_MODRINTH: ${{ (github.event_name == 'push' && vars.MODRINTH_PROJECT_ID != '') || inputs.publish_modrinth }}
+      MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v6
 
@@ -88,6 +97,7 @@ jobs:
           EXPECTED_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
         run: |
           python3 scripts/test_curseforge_release.py
+          python3 scripts/test_modrinth_release.py
           localization_args=()
           if [ "$ALLOW_PENDING_LOCALIZATION" = "true" ]; then
             localization_args+=(--allow-pending-localization)
@@ -96,6 +106,7 @@ jobs:
             --release-type "$RELEASE_TYPE" --manual-release "$MANUAL_RELEASE" \
             --expected-tag "$EXPECTED_TAG" --require-jars \
             "${localization_args[@]}" --github-output "$GITHUB_OUTPUT"
+          python3 scripts/modrinth-release.py prepare "${localization_args[@]}"
 
       - name: Archive verified JARs and metadata
         uses: actions/upload-artifact@v7
@@ -109,11 +120,40 @@ jobs:
             ${{ steps.release.outputs.compat_1201_fabric_jar_path }}
             ${{ steps.release.outputs.compat_1201_forge_jar_path }}
             build/curseforge/*.json
+            build/modrinth/*.json
           if-no-files-found: error
           retention-days: 90
 
-      - name: Upload each verified file once and record its ID immediately
-        if: github.event_name == 'push' || inputs.publish
+      - name: Check publishing configuration before uploading to either platform
+        env:
+          CURSEFORGE_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
+          MODRINTH_API_TOKEN: ${{ secrets.MODRINTH_API_TOKEN }}
+        run: |
+          if [ "$PUBLISH_CURSEFORGE" = "true" ] && [ -z "${CURSEFORGE_API_TOKEN:-}" ]; then
+            echo "::error::Missing repository secret CURSEFORGE_API_TOKEN."
+            exit 1
+          fi
+          if [ "$PUBLISH_MODRINTH" = "true" ]; then
+            if [ -z "${MODRINTH_API_TOKEN:-}" ] || [ -z "$MODRINTH_PROJECT_ID" ]; then
+              echo "::error::Modrinth publishing requires secret MODRINTH_API_TOKEN and variable MODRINTH_PROJECT_ID."
+              exit 1
+            fi
+          fi
+
+      - name: Check Modrinth project, dependencies and existing versions without uploading
+        if: env.PUBLISH_MODRINTH == 'true'
+        env:
+          MODRINTH_API_TOKEN: ${{ secrets.MODRINTH_API_TOKEN }}
+          ALLOW_PENDING_LOCALIZATION: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_pending_localization || false }}
+        run: |
+          localization_args=()
+          if [ "$ALLOW_PENDING_LOCALIZATION" = "true" ]; then
+            localization_args+=(--allow-pending-localization)
+          fi
+          python3 scripts/modrinth-release.py preflight "${localization_args[@]}"
+
+      - name: Upload each verified CurseForge file once and record its ID immediately
+        if: env.PUBLISH_CURSEFORGE == 'true'
         env:
           CURSEFORGE_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
         run: |
@@ -147,6 +187,18 @@ jobs:
           done < build/curseforge/uploads.tsv
           echo "All six uploads accepted by CurseForge." >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Upload missing Modrinth versions once and verify every accepted file
+        if: env.PUBLISH_MODRINTH == 'true'
+        env:
+          MODRINTH_API_TOKEN: ${{ secrets.MODRINTH_API_TOKEN }}
+          ALLOW_PENDING_LOCALIZATION: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_pending_localization || false }}
+        run: |
+          localization_args=()
+          if [ "$ALLOW_PENDING_LOCALIZATION" = "true" ]; then
+            localization_args+=(--allow-pending-localization)
+          fi
+          python3 scripts/modrinth-release.py upload "${localization_args[@]}"
+
       - name: Preserve upload responses even after a partial failure
         if: always()
         uses: actions/upload-artifact@v7
@@ -156,6 +208,15 @@ jobs:
           if-no-files-found: ignore
           retention-days: 90
 
+      - name: Preserve Modrinth receipts even after a partial failure
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: modrinth-upload-responses-${{ github.run_id }}
+          path: build/modrinth/responses/
+          if-no-files-found: ignore
+          retention-days: 90
+
       - name: Record dry run
-        if: github.event_name == 'workflow_dispatch' && !inputs.publish
-        run: echo "Six release JARs verified. Dry run only; nothing uploaded to CurseForge." >> "$GITHUB_STEP_SUMMARY"
+        if: github.event_name == 'workflow_dispatch' && !inputs.publish && !inputs.publish_modrinth
+        run: echo "Six release JARs and both platforms' metadata verified. Dry run only; nothing uploaded." >> "$GITHUB_STEP_SUMMARY"

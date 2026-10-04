@@ -10,6 +10,8 @@
 
 SmartBrainLib 与 GeckoLib 始终外置；Fabric 另需 Fabric API。不制作跨加载器通用单包。
 
+同一工作流现支持 Modrinth：六份 JAR 共用一次构建及同一组 SHA-256，平台元数据分别生成。手动输入 `publish` 仍只控制 CF，`publish_modrinth` 独立控制 MR；`manual_release` 只适用于 CF。登记 `MODRINTH_PROJECT_ID` 后，未来版本标签才自动启用 MR。MR 预检在任何平台 POST 之前完成，配置或已有版本冲突会先阻止两平台上传。首次补发 MR 时关闭 CF，不重推旧标签。详见 `docs/MODRINTH_RELEASE.md`。
+
 ## 本地发布候选
 
 ```powershell
