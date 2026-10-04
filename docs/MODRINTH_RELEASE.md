@@ -13,6 +13,8 @@ Modrinth 与 CurseForge 共用 `.github/workflows/publish-curseforge.yml` 的一
 
 截至 2026-10-04：作者已保存 `MODRINTH_API_TOKEN`，Secret 名称已核对；首次项目 ID 尚未登记。不为缺失的 ID 填占位值，也不把尚未上传或审核的项目说成已上架。
 
+2026-10-05，[GitHub Actions 只读验证](https://github.com/YurisCat/Echo-Warrior/actions/runs/37215490592)通过：保存的 Token 具有真实私有项目读取能力；11 项 CF 与 22 项 Modrinth 离线检查、本地化门禁均通过。此轮没有上传文件，VERSION_CREATE 权限仍留待首次正式发布实证。
+
 ## 触发方式
 
 - 推送新的 `v<mod_version>` 标签：上传 CF；配置 `MODRINTH_PROJECT_ID` 后，同一工作流也上传 Modrinth。
