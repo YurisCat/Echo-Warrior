@@ -55,6 +55,8 @@ python scripts/modrinth-release.py prepare
 
 ### 首次空项目的 API 兼容性
 
+Custom 是前端选择项，v2 实际 ID 由名称推导，并非固定 `LicenseRef-Custom`。本项目名称设为 `Echo Warrior Mixed`，实际 ID 为 `LicenseRef-Echo-Warrior-Mixed`，URL 指向仓库 `LICENSE`；预检同时严格检查 ID 与 URL。官方实现见 [license.vue](https://github.com/modrinth/code/blob/main/apps/frontend/src/pages/%5Btype%5D/%5Bproject%5D/settings/license.vue)。
+
 2026-10-05 实测新草稿在第一次版本上传前的 v2 `project_type` 为 `project`；官方 `LegacyProject::get_project_type` 根据版本加载器推导类型，无版本时默认 `project`。预检只为无版本、无加载器、无游戏版本的 draft 放行该类型；身份、源码、许可与六个 Mod JAR 守卫仍有效。已有版本或公开状态的泛型项目一律拒绝，24 项离线 Modrinth 检查覆盖该边界。
 
 此问题归类为发布平台 API 兼容问题，不改变 Minecraft 版本、加载器、资源格式或运行生命周期；记录在本发布文档，不加入 Minecraft 移植手册。独立原包恢复测试阻止错误运行、篡改文件和部分恢复。提交审核之前仍需人工复核页面、许可、素材、AI 披露及六版本状态。

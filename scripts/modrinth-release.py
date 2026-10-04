@@ -25,6 +25,8 @@ SPEC.loader.exec_module(CF)
 
 API_URL = "https://api.modrinth.com/v2"
 USER_AGENT = "YurisCat/Echo-Warrior/release (https://github.com/YurisCat/Echo-Warrior)"
+LICENSE_ID = "LicenseRef-Echo-Warrior-Mixed"
+LICENSE_URL = "https://github.com/YurisCat/Echo-Warrior/blob/main/LICENSE"
 DEPENDENCIES = {
     "geckolib": "8BmcQJ2H",
     "smartbrainlib": "PuyPazRT",
@@ -264,7 +266,8 @@ def preflight(plan: dict, api: Api, root: Path = Path(".")) -> dict:
     if (project.get("id") != destination or project.get("slug") != "echo-warrior"
             or project.get("title") != "Echo Warrior" or (project.get("project_type") != "mod" and not empty_draft)
             or project.get("source_url", "").rstrip("/") != "https://github.com/YurisCat/Echo-Warrior"
-            or project.get("license", {}).get("id") != "LicenseRef-Custom"):
+            or project.get("license", {}).get("id") != LICENSE_ID
+            or project.get("license", {}).get("url") != LICENSE_URL):
         raise ValueError("Destination must be the official Echo Warrior mod with its source link and custom license.")
     if project.get("status") not in {"draft", "processing", "approved", "unlisted"}:
         raise ValueError("Project status does not permit this release; resolve moderation status first.")

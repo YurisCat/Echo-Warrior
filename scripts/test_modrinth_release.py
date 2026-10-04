@@ -25,7 +25,7 @@ class FakeApi:
     def __init__(self):
         self.project = {"id": PROJECT, "slug": "echo-warrior", "title": "Echo Warrior", "project_type": "mod",
                         "source_url": "https://github.com/YurisCat/Echo-Warrior", "status": "draft",
-                        "license": {"id": "LicenseRef-Custom"}}
+                        "license": {"id": RELEASE.LICENSE_ID, "url": RELEASE.LICENSE_URL}}
         self.versions = []
         self.posts = []
         self.gets = []
