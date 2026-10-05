@@ -28,7 +28,7 @@ function Copy-Node([string]$Source, [string]$Destination) {
 & $verify
 if ($Action -eq 'Run') {
     if ($RunId) { throw 'RunId is generated for a new job; supply it only for Status/Collect.' }
-    $selected = if ($Versions -eq 'All') { @('1.21.1', '1.20.1') } else { @($Versions) }
+    [string[]]$selected = if ($Versions -eq 'All') { @('1.21.1', '1.20.1') } else { @($Versions) }
     if (-not $SkipBuild) {
         foreach ($version in $selected) {
             & (Join-Path $PSScriptRoot "build-$version.ps1") -Loader Dual
