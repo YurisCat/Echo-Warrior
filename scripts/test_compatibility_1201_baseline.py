@@ -67,6 +67,26 @@ class BaselineRejectionTests(unittest.TestCase):
             entries[path] = json.dumps(mapping).encode()
         self.rejected("forge", mutate, "Missing exploration runtime mapping")
 
+    def test_missing_battlefield_removal_mapping(self):
+        def mutate(entries):
+            path = "echo_warrior_1201.refmap.json"
+            mapping = json.loads(entries[path])
+            mapping["mappings"]["com/yuriscat/echowarrior/compat/mixin/BlockBehaviourMixin1201"].pop("onRemove")
+            entries[path] = json.dumps(mapping).encode()
+        self.rejected("forge", mutate, "Missing exploration runtime mapping")
+
+    def test_missing_battlefield_removal_registration(self):
+        def mutate(entries):
+            path = "echo_warrior_1201.mixins.json"
+            mixins = json.loads(entries[path])
+            mixins["mixins"].remove("BlockBehaviourMixin1201")
+            entries[path] = json.dumps(mixins).encode()
+        self.rejected("fabric", mutate, "Unexpected server Mixin list")
+
+    def test_missing_battlefield_performance_guard(self):
+        self.rejected("fabric", lambda entries: entries.pop(
+            "com/yuriscat/echowarrior/compat/world/BattlefieldPerformanceSelfTest1201.class"), "missing")
+
     def test_missing_hero_model_class(self):
         self.rejected("fabric", lambda entries: entries.pop(
             "com/yuriscat/echowarrior/compat/client/EgyptianArcherModel1201.class"), "Missing hero class")

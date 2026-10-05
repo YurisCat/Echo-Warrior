@@ -4,9 +4,34 @@ This directory is the isolated Minecraft 1.21.1 compatibility build. Minecraft 2
 
 Read `../../docs/VERSION_PORTING_PLAYBOOK.md` before extending or auditing this compatibility line. Current manual acceptance is tracked in `../../docs/COMPATIBILITY_1.21.1_TEST_CHECKLIST.md`.
 
-Current release submission: `0.2.2` (uploaded; public processing/approval pending at initial verification). Release checks, file IDs and acceptance boundaries are recorded in `../../docs/releases/0.2.2.md`.
+Current release candidate: `0.2.3` (server-performance fix). Four-loader production-server regression passed on FOXY-NODE; final release checks, file IDs and acceptance boundaries are recorded in `../../docs/releases/0.2.3.md`. Earlier evidence remains tied to its recorded JAR hashes.
 
-## Snow-cover implementation checkpoint — 2026-09-20
+## Local battlefield performance fix — 2026-10-05
+
+Locked compass targets now use one region lookup; a 2048-block search uses at most 49 lookups,
+independent of explored-world history. Gameplay queries no longer iterate all saved regions.
+Archaeology removals use the actual server `BlockBehaviour.onRemove` callback instead of a
+once-per-second scan of all active/salvage positions. Chunk-load repair reads only registered
+positions in the supplied chunk, including sites crossing region boundaries. Save format,
+compass range, sound timing and replacement cooldowns are unchanged; restart to apply the Mixin,
+with no new world/chunks required. No wording or encyclopedia change is needed.
+
+Both loader builds and the source/JAR baseline passed. Both isolated **development** dedicated
+servers ran `BattlefieldPerformanceSelfTest1211` and shut down normally. The test rejects full Map
+iteration with 10,000 historical regions, checks 1/49 lookups and negative/boundary coordinates,
+then exercises real block replacements, stage-update negatives, salvage cleanup and chunk-load
+entry repair. Logs: `run-fabric-server/logs/latest.log` and `run-neoforge-server/logs/latest.log`
+(15:06 Asia/Shanghai); both contain `BATTLEFIELD PERFORMANCE SELFTEST PASSED`.
+Fabric retains its existing six data-fixer ERROR messages accepted by the smoke script.
+No graphical client or original reporter's pack was tested; Spark improvement in that pack is
+still pending. Classify the reusable porting omission as PORT-030. No publishing/version bump.
+
+| Local 0.2.2 JAR (not the published file) | SHA-256 |
+| --- | --- |
+| Fabric | `8c88646a9c4f70e77328d2a9af25c96b7782c700dd5fd0b97e84a379a730d1b8` |
+| NeoForge | `c7f98a9177033b095d4c20931d54bd65eb9695e1dd12c0a02dbcdffc5dcd7569` |
+
+## Historical snow-cover implementation checkpoint — 2026-09-20
 
 Battlefield generation now preserves 1–8 snow layers and their thickness, placing archaeology in the
 natural ground below them instead of clearing snow as vegetation. Solid snow blocks are not excavated.
@@ -16,7 +41,7 @@ guards equal terrain policies/call sites across versions; real placement under a
 passed on both 1.20.1 production servers. **1.21.1 in-game snow behavior was not run this task**;
 manual acceptance remains pending. No publishing or version-number change.
 
-Current local SHA-256:
+Snow checkpoint SHA-256:
 
 - Fabric: `7098b5f8780ef10dcba3c19e58ef41aa80e49ca7dcdd27a26e6df00071da838d`
 - NeoForge: `7b0fd086714ec28bb9d10bdf8bbaabb9f3b0bc88fead941a608fa958725ef2c6`

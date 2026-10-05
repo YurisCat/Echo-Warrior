@@ -4,6 +4,21 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+## 0.2.3 - 2026-10-05
+
+### Fixed
+
+- Reduced server tick load from the Echo Compass and battlefield maintenance on Minecraft 1.21.1 and 1.20.1, especially in worlds with many explored regions.
+- Compass target checks now use a direct region-index lookup. Nearby searches check at most 49 regions instead of traversing every known battlefield region.
+- Archaeology records now update when a registered suspicious block is removed. Chunk reloads reconcile only that chunk's registered positions, replacing periodic checks across all battlefield records without loading other chunks.
+- Preserved correct target and cleanup tracking at negative coordinates and across region boundaries.
+
+### Notes
+
+- Existing worlds are supported; restart the game and server after updating. No new world or new chunks are required for this fix.
+- Minecraft 26.1.2 retains its existing indexed lookups and removal notifications and receives the matching 0.2.3 version number.
+- Battlefield generation rules, compass range, sounds, and cooldowns are unchanged. Install the file for your exact Minecraft version and loader with its required dependencies.
+
 ## 0.2.2 - 2026-09-20
 
 ### Added

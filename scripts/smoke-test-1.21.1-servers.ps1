@@ -339,6 +339,9 @@ function Invoke-ServerSmokeTest {
         $process.WaitForExit()
         $process.Refresh()
         $departureLog = Get-Content -LiteralPath $latestLog -Raw
+        if ($departureLog -notmatch 'BATTLEFIELD PERFORMANCE SELFTEST PASSED regions=10000 lookup=1 search=49 removal=event reload=local') {
+            throw "$TargetLoader battlefield index and removal regression guard did not pass."
+        }
         if ($departureLog -notmatch 'DEPARTURE EFFECTS SELFTEST PASSED heroes=5 modes=item-id-destroy-death packets=24-soul once=true vanilla=unchanged') {
             throw "$TargetLoader departure particle packet guard did not pass."
         }

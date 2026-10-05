@@ -23,7 +23,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 COMPAT = ROOT / "versions" / "1.20.1"
-TEST_ROOT = ROOT / "build" / "compatibility-1.20.1-smoke"
+TEST_ROOT = Path(os.environ.get("ECHO_WARRIOR_TEST_ARTIFACT_ROOT", str(ROOT / "build"))) / "compatibility-1.20.1-smoke"
 NO_WINDOW = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
 
 
@@ -166,6 +166,7 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
                         and re.search(r"EXPLORATION SELFTEST PASSED checks=\d+ recipes=31 cultures=5 brushing=actual", text)
                         and "EXPLORATION INTEGRATION SELFTEST PASSED placement=actual safety=edited-fluid-tree-slope-unloaded compass=new-instances" in text
                         and "BATTLEFIELD SNOW SELFTEST PASSED layers=1-8 placement=actual cover=preserved solid-snow=untouched" in text
+                        and "BATTLEFIELD PERFORMANCE SELFTEST PASSED regions=10000 lookup=1 search=49 removal=event reload=local" in text
                         and 'For help, type "help"' in text):
                     assert process.stdin is not None
                     process.stdin.write("stop\n")

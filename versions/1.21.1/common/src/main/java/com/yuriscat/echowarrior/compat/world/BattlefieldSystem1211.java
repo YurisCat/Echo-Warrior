@@ -57,6 +57,7 @@ public final class BattlefieldSystem1211 {
 
     public static void noteChunk(ServerLevel level, LevelChunk chunk, boolean newlyGenerated) {
         if (!level.dimension().equals(Level.OVERWORLD) || replacementLoading) return;
+        reconcileLoadedChunk(level, chunk);
         BattlefieldSavedData1211.RegionState state = BattlefieldSavedData1211.get(level)
                 .noteNaturalChunkLoad(level, chunk.getPos(), newlyGenerated);
         if (state.status() == BattlefieldSavedData1211.Status.WAITING) {
@@ -90,7 +91,6 @@ public final class BattlefieldSystem1211 {
         tickForcedGeneration(server, level);
         if (now % 20L != 0L) return;
         BattlefieldSavedData1211 data = BattlefieldSavedData1211.get(level);
-        detectRemovedBrushables(level, data, now);
         tickReplacementGeneration(level, data, now);
         if (PENDING_REGIONS.isEmpty() || now - data.lastPlacementTick() < 600L) return;
 
@@ -352,17 +352,27 @@ public final class BattlefieldSystem1211 {
         }
     }
 
-    private static void detectRemovedBrushables(ServerLevel level, BattlefieldSavedData1211 data, long now) {
-        List<BlockPos> tracked = new ArrayList<>();
-        for (BattlefieldSavedData1211.ActiveSite site : data.activeSites()) tracked.addAll(site.brushables());
-        for (BattlefieldSavedData1211.SalvageSite site : data.salvageSites()) tracked.addAll(site.remaining());
-        for (BlockPos pos : tracked) {
-            if (!level.hasChunkAt(pos)) continue;
-            BlockState state = level.getBlockState(pos);
-            if (state.getBlock() instanceof BrushableBlock || state.is(ModTags1211.BATTLEFIELD_BRUSHABLES)) continue;
-            BattlefieldSavedData1211.RemovalResult result = data.removeBrushableAt(pos, now);
-            if (result != null) EchoCompassSystem1211.onBattlefieldBlockRemoved(level, result);
+    private static void reconcileLoadedChunk(ServerLevel level, LevelChunk chunk) {
+        BattlefieldSavedData1211 data = BattlefieldSavedData1211.get(level);
+        for (BlockPos pos : data.trackedBrushablesInChunk(chunk.getPos())) {
+            if (isBrushable(chunk.getBlockState(pos))) continue;
+            notifyBrushableRemoved(level, data, pos);
         }
+    }
+
+    /** Called only after the block type changed; brushing-stage updates preserve the site. */
+    public static void onBrushableRemoved(ServerLevel level, BlockPos pos, BlockState removed, BlockState replacement) {
+        if (!level.dimension().equals(Level.OVERWORLD) || !isBrushable(removed) || isBrushable(replacement)) return;
+        notifyBrushableRemoved(level, BattlefieldSavedData1211.get(level), pos);
+    }
+
+    private static boolean isBrushable(BlockState state) {
+        return state.getBlock() instanceof BrushableBlock || state.is(ModTags1211.BATTLEFIELD_BRUSHABLES);
+    }
+
+    private static void notifyBrushableRemoved(ServerLevel level, BattlefieldSavedData1211 data, BlockPos pos) {
+        BattlefieldSavedData1211.RemovalResult result = data.removeBrushableAt(pos, level.getGameTime());
+        if (result != null) EchoCompassSystem1211.onBattlefieldBlockRemoved(level, result);
     }
 
     private static ChunkPos chooseLoadedCandidate(ServerLevel level, long regionKey,

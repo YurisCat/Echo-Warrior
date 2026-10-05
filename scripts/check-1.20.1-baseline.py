@@ -53,6 +53,8 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
             "com/yuriscat/echowarrior/compat/EchoWarrior1201.class",
             "com/yuriscat/echowarrior/compat/entity/behavior/MeleeReachSelfTest1201.class",
             "com/yuriscat/echowarrior/compat/mixin/MinecraftServerMixin1201.class",
+            "com/yuriscat/echowarrior/compat/mixin/BlockBehaviourMixin1201.class",
+            "com/yuriscat/echowarrior/compat/world/BattlefieldPerformanceSelfTest1201.class",
             "com/yuriscat/echowarrior/compat/mixin/MinecraftClientMixin1201.class",
             "com/yuriscat/echowarrior/compat/mixin/MouseHandlerMixin1201.class",
             "com/yuriscat/echowarrior/compat/mixin/ClientMenuSyncMixin1201.class",
@@ -162,7 +164,7 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
         require(mixin["required"] and mixin["injectors"]["defaultRequire"] == 1,
                 "Missing injections must fail, not silently pass")
         require(mixin["compatibilityLevel"] == "JAVA_17", "Wrong Mixin Java level")
-        require(mixin["mixins"] == ["MinecraftServerMixin1201", "ServerMenuClickMixin1201", "PlayerListMixin1201", "PlayerListAccessor1201",
+        require(mixin["mixins"] == ["BlockBehaviourMixin1201", "MinecraftServerMixin1201", "ServerMenuClickMixin1201", "PlayerListMixin1201", "PlayerListAccessor1201",
                                     "ServerGamePacketListenerMixin1201", "BlockTalentMixin1201", "CreeperMixin1201",
                                     "ExperienceOrbTalentMixin1201", "FishingHookTalentMixin1201", "LivingEntityMixin1201",
                                     "LivingEntityAccessoryMixin1201", "LivingCombatEventsMixin1201", "MerchantTalentMixin1201",
@@ -177,6 +179,7 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
         refmap = json.loads(jar.read(mixin["refmap"]))
         require(bool(refmap.get("mappings")), f"{loader}: empty production refmap")
         for mixin_name, method in (("BrushableTypeMixin1201", "isValid"), ("PlacedBlockTrackerMixin1201", "placeBlock"),
+                                   ("BlockBehaviourMixin1201", "onRemove"),
                                    ("GuiMixin1201", "setOverlayMessage")):
             require(bool(refmap["mappings"].get(f"com/yuriscat/echowarrior/compat/mixin/{mixin_name}", {}).get(method)),
                     f"Missing exploration runtime mapping: {mixin_name}/{method}")
@@ -322,6 +325,7 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
 def main() -> int:
     import runpy
     runpy.run_path(str(ROOT / "scripts/check-battlefield-snow.py"), run_name="__main__")
+    runpy.run_path(str(ROOT / "scripts/check-battlefield-performance.py"), run_name="__main__")
     config = properties()
     for loader in ("fabric", "forge"):
         audit(loader, config)

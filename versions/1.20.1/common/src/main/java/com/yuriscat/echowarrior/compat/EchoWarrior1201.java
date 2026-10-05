@@ -46,6 +46,7 @@ public final class EchoWarrior1201 {
             com.yuriscat.echowarrior.compat.test.RecyclerSelfTest1201.run(server);
             com.yuriscat.echowarrior.compat.test.ExplorationSelfTest1201.run(server);
             com.yuriscat.echowarrior.compat.world.ExplorationIntegrationSelfTest1201.run(server);
+            com.yuriscat.echowarrior.compat.world.BattlefieldPerformanceSelfTest1201.run(server);
             com.yuriscat.echowarrior.compat.test.HeroDiskRestartSelfTest1201.prepare(server);
         }
     }

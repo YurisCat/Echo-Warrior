@@ -10,6 +10,8 @@ $compatibilityRoot = Join-Path $repositoryRoot 'versions\1.21.1'
 $propertiesPath = Join-Path $compatibilityRoot 'gradle.properties'
 & python (Join-Path $PSScriptRoot 'check-battlefield-snow.py')
 if ($LASTEXITCODE -ne 0) { throw 'Cross-version snow cover policy check failed.' }
+& python (Join-Path $PSScriptRoot 'check-battlefield-performance.py')
+if ($LASTEXITCODE -ne 0) { throw 'Battlefield performance policy check failed.' }
 
 if (-not $SkipBuild) {
     & (Join-Path $PSScriptRoot 'build-1.21.1.ps1') -Loader Dual
@@ -649,6 +651,8 @@ function Assert-Archive {
             'com/yuriscat/echowarrior/compat/item/EchoTrait1211.class',
             'com/yuriscat/echowarrior/compat/progress/EchoExperienceSystem1211.class',
             'com/yuriscat/echowarrior/compat/mixin/BlockTalentMixin1211.class',
+            'com/yuriscat/echowarrior/compat/mixin/BlockBehaviourMixin1211.class',
+            'com/yuriscat/echowarrior/compat/world/BattlefieldPerformanceSelfTest1211.class',
             'com/yuriscat/echowarrior/compat/mixin/ExperienceOrbTalentMixin1211.class',
             'com/yuriscat/echowarrior/compat/mixin/FishingHookTalentMixin1211.class',
             'com/yuriscat/echowarrior/compat/mixin/LivingEntityMixin1211.class',

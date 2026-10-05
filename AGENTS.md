@@ -20,6 +20,8 @@
 - Avoid launching a second development client when one is already running.
 - Inspect `run/logs/latest.log` and crash reports after failures.
 - Prefer automated checks and GameTests for deterministic behavior; reserve manual testing for visuals, sound, controls, and game feel.
+- Longer automated tests and server/client runs default to the owner's secondary machine `FOXY-NODE` (狐狐副机), as requested on 2026-10-05. Keep this repository as the canonical source; remote directories are isolated test snapshots, never another development source of truth.
+- Use `scripts/run-foxy-tests.ps1` for the 1.21.1/1.20.1 packaged server suites; see `docs/FOXY_TEST_NODE.md` for pinned SSH, toolchains, status and evidence retrieval. Small source checks may run locally. Do not silently fall back to long local runs if the node is unavailable.
 
 ## Compatibility porting knowledge
 

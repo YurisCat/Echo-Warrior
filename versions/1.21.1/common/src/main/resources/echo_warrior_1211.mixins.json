@@ -3,6 +3,7 @@
   "package": "com.yuriscat.echowarrior.compat.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "BlockBehaviourMixin1211",
     "BlockTalentMixin1211",
     "CreeperMixin1211",
     "ExperienceOrbTalentMixin1211",

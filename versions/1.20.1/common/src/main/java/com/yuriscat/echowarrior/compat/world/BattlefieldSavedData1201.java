@@ -110,22 +110,30 @@ public final class BattlefieldSavedData1201 extends SavedData {
 
     public RemovalResult removeBrushableAt(BlockPos pos, long now) {
         long packed = pos.asLong();
-        for (Map.Entry<Long, RegionState> entry : this.regions.entrySet()) {
-            RegionState state = entry.getValue();
-            if (state.status != Status.ACTIVE || !state.brushables.contains(packed)) continue;
-            List<Long> remaining = without(state.brushables, packed);
-            boolean relicCompleted = state.relicPos == packed;
-            if (relicCompleted) {
-                this.completedSites.add(new CompletedSite(state.centerPos, now, remaining));
-                while (this.completedSites.size() > 96) this.completedSites.remove(0);
-                entry.setValue(state.cooldown(now + 24000L));
-                scheduleReplacement(state.centerPos, now);
-            } else {
-                entry.setValue(state.withBrushables(remaining));
+        // A site's blocks can cross a region boundary, but only into an adjacent region.
+        int regionSize = REGION_CHUNKS * 16;
+        int regionX = Math.floorDiv(pos.getX(), regionSize);
+        int regionZ = Math.floorDiv(pos.getZ(), regionSize);
+        for (int x = regionX - 1; x <= regionX + 1; x++) {
+            for (int z = regionZ - 1; z <= regionZ + 1; z++) {
+                long key = ChunkPos.asLong(x, z);
+                RegionState state = this.regions.get(key);
+                if (state == null) continue;
+                if (state.status != Status.ACTIVE || !state.brushables.contains(packed)) continue;
+                List<Long> remaining = without(state.brushables, packed);
+                boolean relicCompleted = state.relicPos == packed;
+                if (relicCompleted) {
+                    this.completedSites.add(new CompletedSite(state.centerPos, now, remaining));
+                    while (this.completedSites.size() > 96) this.completedSites.remove(0);
+                    this.regions.put(key, state.cooldown(now + 24000L));
+                    scheduleReplacement(state.centerPos, now);
+                } else {
+                    this.regions.put(key, state.withBrushables(remaining));
+                }
+                setDirty();
+                return new RemovalResult(BlockPos.of(state.centerPos), pos, relicCompleted,
+                        remaining.stream().map(BlockPos::of).toList());
             }
-            setDirty();
-            return new RemovalResult(BlockPos.of(state.centerPos), pos, relicCompleted,
-                    remaining.stream().map(BlockPos::of).toList());
         }
         for (int index = 0; index < this.completedSites.size(); index++) {
             CompletedSite completed = this.completedSites.get(index);
@@ -148,10 +156,32 @@ public final class BattlefieldSavedData1201 extends SavedData {
         double maximumSqr = maximumDistance * maximumDistance;
         ActiveSite best = null;
         double bestDistance = maximumSqr;
+        int regionSize = REGION_CHUNKS * 16;
+        int originRegionX = Math.floorDiv(origin.getX(), regionSize);
+        int originRegionZ = Math.floorDiv(origin.getZ(), regionSize);
+        int regionRadius = Math.max(1, (int)Math.ceil(maximumDistance / regionSize));
+        for (int x = originRegionX - regionRadius; x <= originRegionX + regionRadius; x++) {
+            for (int z = originRegionZ - regionRadius; z <= originRegionZ + regionRadius; z++) {
+                RegionState state = this.regions.get(ChunkPos.asLong(x, z));
+                if (state == null || state.status != Status.ACTIVE) continue;
+                double distance = horizontalDistanceSqr(origin, BlockPos.of(state.centerPos));
+                if (distance <= bestDistance) {
+                    bestDistance = distance;
+                    best = state.activeSite();
+                }
+            }
+        }
+        return best;
+    }
+
+    public ActiveSite nearestKnownActive(BlockPos origin) {
+        // Admin queries are intentionally global; never turn this into a world-sized grid walk.
+        ActiveSite best = null;
+        double bestDistance = Double.MAX_VALUE;
         for (RegionState state : this.regions.values()) {
             if (state.status != Status.ACTIVE) continue;
             double distance = horizontalDistanceSqr(origin, BlockPos.of(state.centerPos));
-            if (distance <= bestDistance) {
+            if (distance < bestDistance) {
                 bestDistance = distance;
                 best = state.activeSite();
             }
@@ -159,15 +189,38 @@ public final class BattlefieldSavedData1201 extends SavedData {
         return best;
     }
 
-    public ActiveSite nearestKnownActive(BlockPos origin) {
-        return nearestActive(origin, 30_000_000.0);
+    public ActiveSite findActiveByCenter(long centerPos) {
+        int regionSize = REGION_CHUNKS * 16;
+        int regionX = Math.floorDiv(BlockPos.getX(centerPos), regionSize);
+        int regionZ = Math.floorDiv(BlockPos.getZ(centerPos), regionSize);
+        RegionState state = this.regions.get(ChunkPos.asLong(regionX, regionZ));
+        return state != null && state.status == Status.ACTIVE && state.centerPos == centerPos
+                ? state.activeSite() : null;
     }
 
-    public ActiveSite findActiveByCenter(long centerPos) {
-        for (RegionState state : this.regions.values()) {
-            if (state.status == Status.ACTIVE && state.centerPos == centerPos) return state.activeSite();
+    /** Reconcile only records in the chunk that just loaded, including boundary-spanning sites. */
+    public List<BlockPos> trackedBrushablesInChunk(ChunkPos chunk) {
+        List<BlockPos> positions = new ArrayList<>();
+        int regionX = Math.floorDiv(chunk.x, REGION_CHUNKS);
+        int regionZ = Math.floorDiv(chunk.z, REGION_CHUNKS);
+        for (int x = regionX - 1; x <= regionX + 1; x++) {
+            for (int z = regionZ - 1; z <= regionZ + 1; z++) {
+                RegionState state = this.regions.get(ChunkPos.asLong(x, z));
+                if (state != null && state.status == Status.ACTIVE) {
+                    collectInChunk(state.brushables, chunk, positions);
+                }
+            }
         }
-        return null;
+        // Completed-site history is capped at 96 entries.
+        for (CompletedSite site : this.completedSites) collectInChunk(site.remainingBrushables, chunk, positions);
+        return positions;
+    }
+
+    private static void collectInChunk(List<Long> packedPositions, ChunkPos chunk, List<BlockPos> output) {
+        for (long packed : packedPositions) {
+            if (Math.floorDiv(BlockPos.getX(packed), 16) == chunk.x
+                    && Math.floorDiv(BlockPos.getZ(packed), 16) == chunk.z) output.add(BlockPos.of(packed));
+        }
     }
 
     public SalvageSite findSalvageByCenter(long centerPos) {

@@ -552,6 +552,7 @@ public final class CompatSelfTestCommand1211 {
                     "creeper persistent target suppression");
 
             com.yuriscat.echowarrior.compat.test.DepartureEffectsSelfTest1211.run(source.getServer());
+            com.yuriscat.echowarrior.compat.world.BattlefieldPerformanceSelfTest1211.run(source.getServer());
             source.sendSuccess(() -> Component.literal("ECHO_WARRIOR_1_21_1_SELFTEST PASS"), false);
             return 1;
         } catch (RuntimeException error) {

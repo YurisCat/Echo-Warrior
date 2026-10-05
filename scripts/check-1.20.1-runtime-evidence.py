@@ -32,6 +32,7 @@ def audit(server_report: Path, clients: dict[str, Path]) -> None:
             assert "MELEE REACH SELFTEST PASSED hero=aztec" in log, "Missing custom-reach regression"
             assert "DEPARTURE EFFECTS SELFTEST PASSED heroes=5" in log, "Missing departure particle regression"
             assert "BATTLEFIELD SNOW SELFTEST PASSED layers=1-8" in log, "Missing snow-cover regression"
+            assert "BATTLEFIELD PERFORMANCE SELFTEST PASSED regions=10000 lookup=1 search=49 removal=event reload=local" in log, "Missing battlefield performance regression"
             assert "All dimensions are saved" in log, "Server did not save"
             assert not re.search(r"\[(?:[^\]\r\n]+/)?(?:ERROR|FATAL)\]", log), "Server error"
         log = (client_report.parent / "logs/latest.log").read_text(encoding="utf-8")

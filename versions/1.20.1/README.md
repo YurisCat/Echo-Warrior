@@ -3,15 +3,41 @@
 Approved targets: Fabric + Forge, Java 17 for the game and compiled classes.
 The repository Gradle Wrapper runs on Java 21; do not downgrade the mainline Java 25 toolchain.
 
-Current stage: **0.2.2 Release uploaded to CurseForge; public processing/approval still pending at initial verification**. Complete production-client and server regressions passed; the author reports no remaining issue in their latest spot checks.
+Current stage: **0.2.3 server-performance release candidate**. The 1.21.1/1.20.1 fix passed four-loader production-server regression on FOXY-NODE; final release artifacts and platform results are recorded separately.
 All five heroes, their shared combat/talent/accessory machinery, original models/animations and the complete summoner GUI
 are connected. 43 items, three blocks, one custom block-entity type, three creative tabs and four menus are registered.
 All 14 reviewed locales, 31 converted recipes, archaeology/knowledge/recycler loot, compass models/HUD/colors and biome-tinted
 brushable blocks are included. The five heroes, books and recycler have passed actual production-server checks.
 Exploration placement/safety, actual talent mining/trading, dynamic relic overlays and production-JAR clients are implemented.
-The current release evidence is in `../../docs/releases/0.2.2.md`; historical checkpoints below apply only to their recorded JAR hashes.
+The current release evidence is in `../../docs/releases/0.2.3.md`; `0.2.2.md` and the checkpoints below apply only to their recorded JAR hashes.
 Manual acceptance is tracked in `docs/COMPATIBILITY_1.20.1_TEST_CHECKLIST.md`, not inferred from automated success.
 The author approved public version `0.2.2`; `0.2.2-dev.1` was its internal test identifier.
+
+## Local battlefield performance fix — 2026-10-05
+
+The same confirmed porting omission as 1.21.1 is fixed here: locked compass targets use one region
+lookup, 2048-block searches at most 49, and actual block-removal callbacks replace the global
+once-per-second archaeology poll. Chunk-load repair checks only registered positions in that
+chunk, including cross-region sites. Negative coordinates, ordinary/remnant removal, same-block
+brushing stages and replacement with another brushable are covered. Existing save data, compass
+range, sound timing and generation/cooldown rules are preserved; restart to apply the Mixin,
+with no new world/chunks required. No wording or encyclopedia update is needed. PORT-030 records
+the reusable lesson; this is an unpublished local rebuild, with no version-number change.
+
+Both loader builds, artifact/source baseline and content parity passed. All **41** corrupted-JAR
+rejection tests passed, including missing removal-hook registration, production mapping and
+performance self-test class. Both **production** dedicated servers passed two boots, the actual
+removal Mixin and `BattlefieldPerformanceSelfTest1201`, and graceful shutdown. The performance
+test uses 10,000 historical regions and counts operations instead of asserting timing on this PC.
+Full server report (exact staged JAR hashes):
+`../../build/compatibility-1.20.1-smoke/20261005T071053Z-53532/report.json`.
+No graphical client or original reporter's pack was tested in this task; pack-specific Spark/tick
+improvement and multiplayer presentation remain on the manual checklist.
+
+| Local 0.2.2 JAR (not the published file) | SHA-256 |
+| --- | --- |
+| Fabric | `c2b288e8594e2da14fd01eb1734c58b9df8b0f1c623fda92cabca938b79d5cd2` |
+| Forge | `340d731b9a2e65b230180f7db482ad204bcf659abee9901fcca4aa818f00443e` |
 
 ## Historical inventory/HUD/snow checkpoint — 2026-09-20
 

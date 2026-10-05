@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "echo_warrior_1201.refmap.json",
   "mixins": [
+    "BlockBehaviourMixin1201",
     "MinecraftServerMixin1201",
     "ServerMenuClickMixin1201",
     "PlayerListMixin1201",
