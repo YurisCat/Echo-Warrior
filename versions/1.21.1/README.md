@@ -4,7 +4,7 @@ This directory is the isolated Minecraft 1.21.1 compatibility build. Minecraft 2
 
 Read `../../docs/VERSION_PORTING_PLAYBOOK.md` before extending or auditing this compatibility line. Current manual acceptance is tracked in `../../docs/COMPATIBILITY_1.21.1_TEST_CHECKLIST.md`.
 
-Current release candidate: `0.2.3` (server-performance fix). Four-loader production-server regression passed on FOXY-NODE; final release checks, file IDs and acceptance boundaries are recorded in `../../docs/releases/0.2.3.md`. Earlier evidence remains tied to its recorded JAR hashes.
+Current release: `0.2.3` (server-performance fix). The exact CI JARs passed four-loader production-server regression on FOXY-NODE. GitHub Release and all six CurseForge files are public; all six Modrinth versions are verified while that project remains under review. Final release checks, file IDs and acceptance boundaries are recorded in `../../docs/releases/0.2.3.md`. Earlier evidence remains tied to its recorded JAR hashes.
 
 ## Local battlefield performance fix — 2026-10-05
 

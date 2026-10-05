@@ -3,7 +3,7 @@
 Approved targets: Fabric + Forge, Java 17 for the game and compiled classes.
 The repository Gradle Wrapper runs on Java 21; do not downgrade the mainline Java 25 toolchain.
 
-Current stage: **0.2.3 server-performance release candidate**. The 1.21.1/1.20.1 fix passed four-loader production-server regression on FOXY-NODE; final release artifacts and platform results are recorded separately.
+Current stage: **0.2.3 server-performance release**. The exact CI JARs passed four-loader production-server regression on FOXY-NODE. GitHub Release and all six CurseForge files are public; all six Modrinth versions are verified while that project remains under review. Final hashes and platform results are recorded separately.
 All five heroes, their shared combat/talent/accessory machinery, original models/animations and the complete summoner GUI
 are connected. 43 items, three blocks, one custom block-entity type, three creative tabs and four menus are registered.
 All 14 reviewed locales, 31 converted recipes, archaeology/knowledge/recycler loot, compass models/HUD/colors and biome-tinted
@@ -11,7 +11,7 @@ brushable blocks are included. The five heroes, books and recycler have passed a
 Exploration placement/safety, actual talent mining/trading, dynamic relic overlays and production-JAR clients are implemented.
 The current release evidence is in `../../docs/releases/0.2.3.md`; `0.2.2.md` and the checkpoints below apply only to their recorded JAR hashes.
 Manual acceptance is tracked in `docs/COMPATIBILITY_1.20.1_TEST_CHECKLIST.md`, not inferred from automated success.
-The author approved public version `0.2.2`; `0.2.2-dev.1` was its internal test identifier.
+The author approved public version `0.2.3`; historical `0.2.2-dev.1` checkpoints below were internal test identifiers for the earlier release.
 
 ## Local battlefield performance fix — 2026-10-05
 
