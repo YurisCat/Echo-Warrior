@@ -33,6 +33,56 @@ class BaselineRejectionTests(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError, message):
                 BASELINE.audit(loader, self.config, jar_path)
 
+    def test_json_formatting_and_line_endings_are_not_resource_changes(self):
+        for loader in ("fabric", "forge"):
+            for newline in ("\n", "\r\n"):
+                with self.subTest(loader=loader, newline=repr(newline)):
+                    entries = {name: json.dumps(json.loads(payload), ensure_ascii=False, indent=2,
+                                               sort_keys=True).replace("\n", newline).encode("utf-8")
+                               if name.endswith(".json") else payload
+                               for name, payload in self.contents[loader].items()}
+                    with tempfile.TemporaryDirectory(prefix="echo1201-formatting-") as temporary:
+                        jar_path = Path(temporary) / "equivalent-copy.jar"
+                        with zipfile.ZipFile(jar_path, "w") as jar:
+                            for name, payload in entries.items():
+                                jar.writestr(name, payload)
+                        BASELINE.audit(loader, self.config, jar_path)
+
+    def test_changed_hero_geometry_is_rejected(self):
+        def mutate(entries):
+            path = "assets/echo_warrior/geo/aztec_warrior_echo.geo.json"
+            model = json.loads(entries[path])
+            model["minecraft:geometry"][0]["description"]["identifier"] = "geometry.changed"
+            entries[path] = json.dumps(model).encode()
+        self.rejected("fabric", mutate, "Missing or divergent hero resource")
+
+    def test_changed_archaeology_blockstate_is_rejected(self):
+        self.rejected("forge", lambda entries: entries.update({
+            "assets/echo_warrior/blockstates/suspicious_grass_block.json":
+            b'{"variants":{"":{"model":"minecraft:block/stone"}}}'}), "Missing archaeology resource")
+
+    def test_changed_compass_model_is_rejected(self):
+        def mutate(entries):
+            path = "assets/echo_warrior/models/item/echo_compass.json"
+            model = json.loads(entries[path])
+            model["parent"] = "minecraft:block/stone"
+            entries[path] = json.dumps(model).encode()
+        self.rejected("fabric", mutate, "Missing compass model")
+
+    def test_changed_knowledge_catalog_is_rejected(self):
+        def mutate(entries):
+            path = "data/echo_warrior/knowledge/entries.json"
+            catalog = json.loads(entries[path])
+            catalog["test_only_modified"] = True
+            entries[path] = json.dumps(catalog).encode()
+        self.rejected("forge", mutate, "Missing or divergent knowledge catalog")
+
+    def test_changed_entity_texture_bytes_are_rejected(self):
+        def mutate(entries):
+            path = next(name for name in entries if name.startswith("assets/echo_warrior/textures/entity/") and name.endswith(".png"))
+            entries[path] = b"changed" + entries[path][7:]
+        self.rejected("fabric", mutate, "Missing or divergent hero resource")
+
     def test_missing_refmap(self):
         self.rejected("forge", lambda entries: entries.pop("echo_warrior_1201.refmap.json"), "missing")
 

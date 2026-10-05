@@ -44,6 +44,14 @@ def require(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
+def resource_matches(payload: bytes, source: Path) -> bool:
+    # CI checks out LF text; a Windows source snapshot may use CRLF. JSON
+    # formatting is not gameplay data. Keep arrays/values exact and binaries
+    # byte-identical rather than accepting an arbitrary resource difference.
+    expected = source.read_bytes()
+    return json.loads(payload) == json.loads(expected) if source.suffix == ".json" else payload == expected
+
+
 def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> Path:
     jar_path = artifact(loader, config) if jar_path is None else jar_path
     with zipfile.ZipFile(jar_path) as jar:
@@ -110,7 +118,7 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
                     and model.get("textures", {}).get("layer0") == f"echo_warrior:item/{item_id}", "Wrong equipment texture binding")
             source_texture = ROOT / "common/src/main/resources" / texture_path
             require(jar.read(texture_path) == source_texture.read_bytes(), "Authored equipment texture changed")
-        # Every authored model/animation/GUI image must survive processing unchanged.
+        # Authored JSON must preserve its data; GUI/entity images preserve bytes.
         old_assets = ROOT / "versions/1.21.1/common/src/main/resources/assets/echo_warrior"
         for directory in ("geo", "animations", "textures/entity", "textures/effect", "textures/mob_effect"):
             sources = (old_assets / directory).glob("*.png") if directory == "textures/entity" else (old_assets / directory).rglob("*")
@@ -126,7 +134,7 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
                     require(path in names and json.loads(jar.read(path)) == expected,
                             "Missing or divergent Guandao root-rest conversion (only idle/walk Main rotation may differ)")
                 else:
-                    require(path in names and jar.read(path) == source.read_bytes(), f"Missing or divergent hero resource: {path}")
+                    require(path in names and resource_matches(jar.read(path), source), f"Missing or divergent hero resource: {path}")
         gui_source = ROOT / "common/src/main/resources/assets/echo_warrior/textures/gui/summoner"
         for source in gui_source.rglob("*.png"):
             path = "assets/echo_warrior/textures/gui/summoner/" + source.relative_to(gui_source).as_posix()
@@ -137,7 +145,7 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
                      "client/TutorialManualScreen1201", "test/BooksSelfTest1201", "client/BooksClientSelfTest1201", "recipe/KnowledgeFragmentCollectionRecipe1201"):
             require(f"com/yuriscat/echowarrior/compat/{part}.class" in names, f"Missing book class: {part}")
         book_catalog = "data/echo_warrior/knowledge/entries.json"
-        require(book_catalog in names and jar.read(book_catalog) == (ROOT / "versions/1.21.1/common/src/main/resources" / book_catalog).read_bytes(), "Missing or divergent knowledge catalog")
+        require(book_catalog in names and resource_matches(jar.read(book_catalog), ROOT / "versions/1.21.1/common/src/main/resources" / book_catalog), "Missing or divergent knowledge catalog")
         require("data/echo_warrior/recipes/knowledge_fragment_collection.json" in names, "Missing old-format collection recipe")
         for directory in ("knowledge", "tutorial"):
             source_dir = ROOT / f"common/src/main/resources/assets/echo_warrior/textures/gui/{directory}"
@@ -190,10 +198,10 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
         for directory in ("models/block", "blockstates", "textures/block"):
             for source in (old_assets / directory).rglob("*.json" if "textures" not in directory else "*.png"):
                 path = "assets/echo_warrior/" + source.relative_to(old_assets).as_posix()
-                require(path in names and jar.read(path) == source.read_bytes(), f"Missing archaeology resource: {path}")
+                require(path in names and resource_matches(jar.read(path), source), f"Missing archaeology resource: {path}")
         for source in (old_assets / "models/item").glob("echo_compass*.json"):
             path = "assets/echo_warrior/models/item/" + source.name
-            require(path in names and jar.read(path) == source.read_bytes(), f"Missing compass model: {path}")
+            require(path in names and resource_matches(jar.read(path), source), f"Missing compass model: {path}")
         for frame in range(32):
             path = f"assets/echo_warrior/textures/item/echo_compass/echo_compass_pointer_{frame:02d}.png"
             require(path in names, f"Missing compass pointer: {frame}")
