@@ -569,7 +569,7 @@ PORT-013 发行客户端补充：开发 classpath 通过不等于发行包通过
 
 - 双构建：`scripts/build-1.20.1.ps1 -Loader Dual`，构建 JVM 21、游戏/字节码 17。
 - JAR 基线：`python scripts/check-1.20.1-baseline.py`，检查加载器隔离、版本、许可、字节码和两种生产 refmap。
-- 守卫用例：`python scripts/test_compatibility_1201_baseline.py`，仅修改临时 JAR 副本，当前共 47 项：损坏包被拒绝（含模型/动画、语言、菜单、书本、考古移除事件、图集、映射与世界权威），等价 JSON 格式/LF/CRLF 被接受。`check-1.20.1-content-parity.py` 当前审核全部 137 个来源模块与 7 个明确 API 替代项，只证明结构没有整项遗漏。
+- 守卫用例：`python scripts/test_compatibility_1201_baseline.py`，仅修改临时 JAR 副本，当前共 47 项：损坏包被拒绝（含模型/动画、语言、菜单、书本、考古移除事件、图集、映射与世界权威），等价 JSON 格式/LF/CRLF 被接受。`check-1.20.1-content-parity.py` 当前审核全部 168 个来源模块与 19 个明确 API 替代项，只证明结构没有整项遗漏。
 - 真实发行包双专服：`python scripts/smoke-test-1.20.1-servers.py --loader both`，隔离目录/本机端口、每端两轮自测及正常关服，保存准确的 JAR 哈希与日志。
 - 存储测试：在上述专服中执行真实注册召唤器的 NBT/原版物品网络包往返、原子提交、过期修订拒绝、快照隔离、嵌套容器和测试专用 SavedData 落盘重载。遍历超出深度/节点预算时必须报告不完整，不得据此授权销毁绑定；真实销毁由独立实体/创造模式回归覆盖。
 - 世界权威测试：同一专服中执行独立的 `BindingAuthoritySelfTest1201`，覆盖八槽 CAS、旧镜像/伪造较大修订号、自动 dirty、分数燃料、实体代次与迁移快照、可见重复身份策略、已删除句柄以及真实世界 SavedData 重启恢复。重复槽位使用受控位置表、实体使用快照夹具，不冒充真实客户端点击或英灵生成测试。
