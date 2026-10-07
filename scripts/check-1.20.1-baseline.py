@@ -172,7 +172,8 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
         require(mixin["required"] and mixin["injectors"]["defaultRequire"] == 1,
                 "Missing injections must fail, not silently pass")
         require(mixin["compatibilityLevel"] == "JAVA_17", "Wrong Mixin Java level")
-        require(mixin["mixins"] == ["BlockBehaviourMixin1201", "MinecraftServerMixin1201", "ServerMenuClickMixin1201", "PlayerListMixin1201", "PlayerListAccessor1201",
+        require(mixin["mixins"] == ["EchoBindingExternalInvoker1201", "EchoGrowthAttributeMixin1201", "EchoGrowthEntityMixin1201",
+                                    "BlockBehaviourMixin1201", "MinecraftServerMixin1201", "ServerMenuClickMixin1201", "PlayerListMixin1201", "PlayerListAccessor1201",
                                     "ServerGamePacketListenerMixin1201", "BlockTalentMixin1201", "CreeperMixin1201",
                                     "ExperienceOrbTalentMixin1201", "FishingHookTalentMixin1201", "LivingEntityMixin1201",
                                     "LivingEntityAccessoryMixin1201", "LivingCombatEventsMixin1201", "MerchantTalentMixin1201",

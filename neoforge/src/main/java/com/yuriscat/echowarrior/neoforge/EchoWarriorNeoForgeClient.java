@@ -54,6 +54,7 @@ final class EchoWarriorNeoForgeClient {
 	}
 
 	static void register(IEventBus modBus, IEventBus gameBus) {
+        gameBus.addListener((net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) -> com.yuriscat.echowarrior.item.EchoProgressionConfig.resetConnection());
 		ClientPlatformServices.install(payload -> {
 			if (Minecraft.getInstance().getConnection() == null) return false;
 			ClientPacketDistributor.sendToServer(payload);
@@ -80,6 +81,7 @@ final class EchoWarriorNeoForgeClient {
 	}
 
 	private static void onClientPayloads(RegisterClientPayloadHandlersEvent event) {
+        event.register(com.yuriscat.echowarrior.network.EchoProgressionPayload.TYPE, (packet, context) -> packet.apply());
 		event.register(EchoCompassStatePayload.TYPE, (payload, context) -> EchoCompassClientState.accept(payload));
 		event.register(EchoCompassPulsePayload.TYPE, (payload, context) ->
 				EchoCompassPulseHud.pulse(payload.closeness(), payload.directional()));

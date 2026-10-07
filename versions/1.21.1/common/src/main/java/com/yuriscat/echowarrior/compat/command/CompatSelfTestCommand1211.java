@@ -163,6 +163,8 @@ public final class CompatSelfTestCommand1211 {
                             && accessoryTypes.size() == 25,
                     "complete accessory catalogue");
 
+            com.yuriscat.echowarrior.compat.item.EchoProgressionSelfTest1211.run(source.getLevel());
+            com.yuriscat.echowarrior.compat.integration.EchoExternalCompanionSelfTest1211.run(source.getServer());
             for (EchoHeroType1211 heroType : EchoHeroType1211.values()) {
                 ItemStack heroRelic = new ItemStack(relicFor(heroType));
                 require(EchoRelicState1211.ensureInitialized(heroRelic,
@@ -177,7 +179,7 @@ public final class CompatSelfTestCommand1211 {
                 ItemStack leveledRelic = new ItemStack(relicFor(heroType));
                 EchoRelicState1211.setTraitsForSelfTest(leveledRelic, 0, EchoBiomeAffinity1211.OPENLAND);
                 EchoRelicProgress1211.ProgressResult leveled = EchoRelicProgress1211.addExperience(leveledRelic, 1305);
-                require(leveled.newLevel() == EchoRelicProgress1211.MAX_LEVEL
+                require(leveled.newLevel() == 30
                                 && close(EchoRelicState1211.maximumHealth(leveledRelic), heroType.maximumHealth() * 2.0)
                                 && close(EchoRelicState1211.attackDamage(leveledRelic), heroType.attackDamage() * 2.0),
                         heroType.id() + " level 30 growth");

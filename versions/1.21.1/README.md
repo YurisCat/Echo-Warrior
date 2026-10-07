@@ -1,10 +1,28 @@
 # Echo Warrior for Minecraft 1.21.1
 
+## 2026-10-07 progression and optional TBF integration
+
+Default maximum level is now 100, configurable at startup with `config/echo_warrior-progression.json` (`schemaVersion: 1`, `maxLevel: 100`). Health and base attack keep the fixed `1 + (L - 1) / 29` multiplier; next-level XP remains `15 + 2L`. Lowering the cap preserves cultivated levels and existing XP. The salvage value remains capped at level 30.
+
+FOXY job `20261007T130957Z-66296` passed both ordinary packaged server loaders and the requested official TBF 0.2.3 integration (NeoForge). The integration keeps the existing binding/UUID/generation transaction intact, supports chest-stored summoners, and passes 100 actual TBF handler cycles with stable list/team identity. Client wheel interaction, previews and real multiplayer remain manual acceptance. Full scope, exact package hashes and collected evidence: [`../../docs/research/tbf-compat-and-growth-2026-10-07.md`](../../docs/research/tbf-compat-and-growth-2026-10-07.md). These are unsubmitted working builds; translation release checks remain pending.
+
+
 This directory is the isolated Minecraft 1.21.1 compatibility build. Minecraft 26.1.2 remains the feature-development baseline in the repository root.
 
 Read `../../docs/VERSION_PORTING_PLAYBOOK.md` before extending or auditing this compatibility line. Current manual acceptance is tracked in `../../docs/COMPATIBILITY_1.21.1_TEST_CHECKLIST.md`.
 
 Current release: `0.2.3` (server-performance fix). The exact CI JARs passed four-loader production-server regression on FOXY-NODE. GitHub Release and all six CurseForge files are public; all six Modrinth versions are verified while that project remains under review. Final release checks, file IDs and acceptance boundaries are recorded in `../../docs/releases/0.2.3.md`. Earlier evidence remains tied to its recorded JAR hashes.
+
+## Local Guandao animation fix — 2026-10-07
+
+The combo-to-idle/walk handoff now explicitly restores the root and avoids blending
+the movement controller from the action's equivalent half-turn Euler pose. Authored
+actions and combat rules are preserved. Both loader builds and artifact baselines
+passed. FOXY-NODE's Fabric client failed the new actual-processor regression before
+the fix and passed all six handoff cases afterwards. NeoForge shares the fix but
+has not received a separate graphical run in this task. See
+`../../docs/research/guandao-combo-handoff-2026-10-07.md` for evidence and remaining
+manual acceptance. This is an unpublished local fix; release 0.2.3 above is unchanged.
 
 ## Local battlefield performance fix — 2026-10-05
 

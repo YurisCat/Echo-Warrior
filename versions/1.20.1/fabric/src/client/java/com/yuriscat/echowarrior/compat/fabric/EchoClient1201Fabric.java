@@ -11,6 +11,11 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 
 public final class EchoClient1201Fabric implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        ClientPlayNetworking.registerGlobalReceiver(com.yuriscat.echowarrior.compat.network.EchoProgressionPacket1201.ID, (client, handler, buffer, sender) -> {
+            var packet = com.yuriscat.echowarrior.compat.network.EchoProgressionPacket1201.decode(buffer);
+            client.execute(packet::apply);
+        });
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> com.yuriscat.echowarrior.compat.item.EchoProgressionConfig1201.resetConnection());
         net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback.EVENT.register((graphics, partialTick) ->
                 com.yuriscat.echowarrior.compat.client.EchoCompassPulseHud1201.render(graphics));
         com.yuriscat.echowarrior.compat.client.EchoCompassClientProperties1201.register(net.fabricmc.fabric.api.object.builder.v1.client.model.FabricModelPredicateProviderRegistry::register);

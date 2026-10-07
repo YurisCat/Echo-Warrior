@@ -1,0 +1,27 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.yuriscat.echowarrior.compat.integration.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "TbfOwnershipMixin1211",
+    "TbfSnapshotMixin1211",
+    "TbfLostStateMixin1211",
+    "TbfNeoforgeRecallPetPacketMixin1211",
+    "TbfNeoforgeSummonPetPacketMixin1211",
+    "TbfNeoforgeTeleportPetToPlayerPacketMixin1211",
+    "TbfNeoforgeDirectTeleportPetToPlayerPacketMixin1211",
+    "TbfNeoforgeReleaseRecalledPetPacketMixin1211",
+    "TbfNeoforgeRevivePetPacketMixin1211",
+    "TbfNeoforgeHealPetPacketMixin1211",
+    "TbfNeoforgeDeletePetDataPacketMixin1211",
+    "TbfNeoforgeSetPriorityPacketMixin1211",
+    "TbfNeoforgeRequestPetDataPacketMixin1211",
+    "TbfNeoforgeAreaRecallPacketMixin1211",
+    "TbfUntrackingMixin1211"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "plugin": "com.yuriscat.echowarrior.compat.integration.TbfMixinPlugin1211"
+}

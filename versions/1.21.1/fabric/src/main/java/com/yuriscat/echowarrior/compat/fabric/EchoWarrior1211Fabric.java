@@ -43,6 +43,9 @@ public final class EchoWarrior1211Fabric implements ModInitializer {
     @Override
     public void onInitialize() {
         EchoBindingConfig1211.load(FabricLoader.getInstance().getConfigDir());
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
+                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(handler.player, new com.yuriscat.echowarrior.compat.network.EchoProgressionPayload1211(com.yuriscat.echowarrior.compat.item.EchoProgressionConfig1211.serverMaxLevel())));
+        net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.playS2C().register(com.yuriscat.echowarrior.compat.network.EchoProgressionPayload1211.TYPE, com.yuriscat.echowarrior.compat.network.EchoProgressionPayload1211.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(
                 CreativeSummonerInsertionPayload1211.TYPE,
                 CreativeSummonerInsertionPayload1211.STREAM_CODEC);

@@ -1109,6 +1109,17 @@ function Assert-Archive {
                 "$Loader JAR is missing the $heroId idle animation"
         }
 
+        $guandaoAnimations = Get-ArchiveEntryText $archive 'assets/echo_warrior/animations/guandao_warrior_echo.animation.json' | ConvertFrom-Json
+        $guandaoReference = Get-Content -LiteralPath (Join-Path $repositoryRoot 'common/src/main/resources/assets/echo_warrior/geckolib/animations/entity/guandao_warrior_echo.animation.json') -Raw | ConvertFrom-Json
+        foreach ($action in @('idle', 'walk')) {
+            $bones = $guandaoReference.animations."animation.guandao_warrior.$action".bones
+            if (-not $bones.PSObject.Properties['Main']) { $bones | Add-Member -NotePropertyName Main -NotePropertyValue ([pscustomobject]@{}) }
+            $bones.Main | Add-Member -NotePropertyName rotation -NotePropertyValue @(0, 0, 0) -Force
+        }
+        Assert-Condition (($guandaoAnimations | ConvertTo-Json -Depth 100 -Compress) -eq
+            ($guandaoReference | ConvertTo-Json -Depth 100 -Compress)) `
+            "$Loader Guandao must preserve authored actions and explicitly rest Main rotation in idle/walk."
+
         $romanAnimations = Get-ArchiveEntryText $archive 'assets/echo_warrior/animations/roman_legionary_echo.animation.json'
         foreach ($animationName in @(
             'animation.roman_legionary.idle',

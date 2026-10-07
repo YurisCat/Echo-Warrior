@@ -123,7 +123,7 @@
   "gui.echo_warrior.summoner.section.alert": "警戒状态",
   "gui.echo_warrior.summoner.attribute.health": "生命值：%s/%s",
   "gui.echo_warrior.summoner.attribute.health_absent": "生命值：%s/%s（未召唤）",
-  "gui.echo_warrior.summoner.attribute.level": "等级：%s/30",
+  "gui.echo_warrior.summoner.attribute.level": "等级：%s/%s",
   "gui.echo_warrior.summoner.attribute.attack": "攻击力：%s",
   "gui.echo_warrior.summoner.attribute.attack_speed": "攻击速度：%s",
   "gui.echo_warrior.summoner.attribute.armor": "护甲：%s",
@@ -147,7 +147,7 @@
   "gui.echo_warrior.summoner.state.no_relic": "需要先装入英灵遗物",
   "gui.echo_warrior.summoner.experience.title": "英灵经验",
   "gui.echo_warrior.summoner.experience.no_relic": "装入遗物后显示经验进度。",
-  "gui.echo_warrior.summoner.experience.max": "等级30 · 已达到最高等级",
+  "gui.echo_warrior.summoner.experience.max": "等级%s · 已达到最高等级",
   "gui.echo_warrior.summoner.experience.progress": "等级%s · 经验%s/%s",
   "gui.echo_warrior.summoner.fuel.title": "英灵燃料",
   "gui.echo_warrior.summoner.fuel.summon_cost": "召唤消耗：%s",
@@ -620,5 +620,7 @@
   "gui.echo_warrior.tutorial.skill.roman.endures.description.1": "举盾防御并嘲讽周围敌人。",
   "gui.echo_warrior.tutorial.skill.roman.endures.description.2": "5秒后反弹期间受到的伤害并击退敌人。",
   "gui.echo_warrior.tutorial.skill.roman.bulwark.name": "军团壁垒",
-  "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "来自身体前方的攻击和投射物伤害降低50%。"
+  "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "来自身体前方的攻击和投射物伤害降低50%。",
+  "message.echo_warrior.tbf.unavailable": "无法操作这名英灵：请检查遗物、控制权和召唤器状态。",
+  "message.echo_warrior.tbf.healing_disabled": "英灵使用自身的恢复机制，永恒伙伴治疗不适用。"
 }

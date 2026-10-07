@@ -21,7 +21,7 @@ neoForge {
 		client {
 			client()
 			gameDirectory = rootProject.file('run-neoforge')
-			programArguments.add '--username=EchoWarriorNeoForge'
+			programArguments.add '--username=EchoNeoForge'
 
 			def quickPlayWorld = providers.gradleProperty('quickPlayWorldNeoForge').orNull
 			if (quickPlayWorld) {

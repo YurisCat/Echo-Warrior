@@ -11,6 +11,7 @@ dependencies {
     modCompileOnly("net.tslat.smartbrainlib:SmartBrainLib-forge-${minecraft_version}:${smartbrainlib_version}")
     modCompileOnly("software.bernie.geckolib:geckolib-forge-${minecraft_version}:${geckolib_version}")
     compileOnly('org.spongepowered:mixin:0.8.5')
+    compileOnly('org.ow2.asm:asm-tree:9.5')
     annotationProcessor('org.spongepowered:mixin:0.8.5:processor')
 }
 

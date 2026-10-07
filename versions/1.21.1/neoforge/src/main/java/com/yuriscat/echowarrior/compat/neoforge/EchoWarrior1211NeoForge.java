@@ -50,10 +50,18 @@ import net.minecraft.server.level.ServerLevel;
 public final class EchoWarrior1211NeoForge {
     public EchoWarrior1211NeoForge(IEventBus modBus) {
         EchoBindingConfig1211.load(FMLPaths.CONFIGDIR.get());
+        net.neoforged.fml.ModList.get().getModContainerById("trulybestfriends").ifPresent(mod ->
+                com.yuriscat.echowarrior.compat.integration.TbfBridge1211.initialize(mod.getModInfo().getVersion().toString()));
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) -> { com.yuriscat.echowarrior.compat.integration.TbfBridge1211.tick(event.getServer()); });
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent event) -> com.yuriscat.echowarrior.compat.integration.TbfBridge1211.clear());
         modBus.addListener(this::registerContent);
         modBus.addListener(this::registerAttributes);
         modBus.addListener(this::addBrushableBlocks);
         modBus.addListener(this::registerPayloads);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.yuriscat.echowarrior.compat.network.EchoProgressionPayload1211(com.yuriscat.echowarrior.compat.item.EchoProgressionConfig1211.serverMaxLevel()));
+        });
         NeoForge.EVENT_BUS.addListener(this::registerCommands);
         NeoForge.EVENT_BUS.addListener(this::onLevelTick);
         NeoForge.EVENT_BUS.addListener(this::onServerTick);
@@ -73,6 +81,7 @@ public final class EchoWarrior1211NeoForge {
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
         var registrar = event.registrar("1");
+        registrar.playToClient(com.yuriscat.echowarrior.compat.network.EchoProgressionPayload1211.TYPE, com.yuriscat.echowarrior.compat.network.EchoProgressionPayload1211.STREAM_CODEC, (packet, context) -> context.enqueueWork(packet::apply));
         registrar.playToServer(
                 CreativeSummonerInsertionPayload1211.TYPE,
                 CreativeSummonerInsertionPayload1211.STREAM_CODEC,

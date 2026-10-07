@@ -19,6 +19,13 @@ public final class EchoNetworking1201Forge {
     private EchoNetworking1201Forge() {}
 
     public static void initialize() {
+        CHANNEL.messageBuilder(com.yuriscat.echowarrior.compat.network.EchoProgressionPacket1201.class, 6, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(com.yuriscat.echowarrior.compat.network.EchoProgressionPacket1201::encode).decoder(com.yuriscat.echowarrior.compat.network.EchoProgressionPacket1201::decode)
+                .consumerMainThread((packet, context) -> packet.apply()).add();
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)
+                CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new com.yuriscat.echowarrior.compat.network.EchoProgressionPacket1201(com.yuriscat.echowarrior.compat.item.EchoProgressionConfig1201.serverMaxLevel()));
+        });
         CHANNEL.messageBuilder(com.yuriscat.echowarrior.compat.network.CreativeDestructionRequest1201.class, 5, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(com.yuriscat.echowarrior.compat.network.CreativeDestructionRequest1201::encode)
                 .decoder(com.yuriscat.echowarrior.compat.network.CreativeDestructionRequest1201::decode)

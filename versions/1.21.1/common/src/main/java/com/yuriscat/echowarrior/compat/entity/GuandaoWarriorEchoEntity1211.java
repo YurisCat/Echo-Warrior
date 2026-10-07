@@ -208,6 +208,7 @@ public final class GuandaoWarriorEchoEntity1211 extends PathfinderMob
 	private boolean projectileKnockbackContext;
 	private int lastProjectileDamageTick = Integer.MIN_VALUE;
 	private int movementAnimationLastMovingTick = Integer.MIN_VALUE;
+	private int movementActionReleaseUntil = Integer.MIN_VALUE;
 	private boolean movementAnimationActive;
 
 	public GuandaoWarriorEchoEntity1211(EntityType<? extends GuandaoWarriorEchoEntity1211> type, Level level) {
@@ -1436,7 +1437,13 @@ public final class GuandaoWarriorEchoEntity1211 extends PathfinderMob
 
 	private PlayState selectMovementAnimation(AnimationState<GuandaoWarriorEchoEntity1211> test) {
 		int currentTick = test.getAnimatable().tickCount;
-		if (test.getAnimatable().getAnimationActionStateForDiagnostics() != ANIMATION_ACTION_NONE) {
+		boolean fullBodyAction = test.getAnimatable().getAnimationActionStateForDiagnostics() != ANIMATION_ACTION_NONE;
+		if (fullBodyAction) this.movementActionReleaseUntil = currentTick + 4;
+		// GeckoLib 4 shares bone snapshots across controllers. At action release, do
+		// not blend the walking layer from the combo's equivalent +/-180 degree pose.
+		// Keep the normal three-tick idle/walk transition outside this short seam.
+		test.getController().transitionLength(currentTick < this.movementActionReleaseUntil ? 0 : 3);
+		if (fullBodyAction) {
 			// Maintain a stable idle layer beneath full-body actions. Their release can
 			// then never reveal a cached walk-cycle phase for a single rendered frame.
 			this.movementAnimationActive = false;

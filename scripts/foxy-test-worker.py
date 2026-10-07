@@ -34,8 +34,16 @@ def write_json(path: Path, value: dict) -> None:
     temporary.replace(path)
 
 
-def package(destination: Path, versions: list[str]) -> None:
-    prefixes = ("common/", "fabric/", "neoforge/", "versions/", "gradle/", "scripts/")
+def package(destination: Path, versions: list[str], tbf_forge: Path | None = None,
+            tbf_neoforge: Path | None = None, tbf_only: bool = False) -> None:
+    tbf = [(version, loader, path) for version, loader, path in
+           [("1.20.1", "forge", tbf_forge), ("1.21.1", "neoforge", tbf_neoforge)] if path]
+    if tbf_only and not tbf:
+        raise RuntimeError("TBF-only testing requires at least one explicit TBF JAR")
+    for version, loader, path in tbf:
+        if version not in versions or not path.is_file() or not zipfile.is_zipfile(path):
+            raise RuntimeError(f"Invalid TBF test input for selected versions: {path}")
+    prefixes = ("common/", "fabric/", "neoforge/", "versions/", "gradle/", "scripts/", "build-logic/")
     root_files = {"AGENTS.md", "PROJECT.md", "build.gradle", "settings.gradle", "gradle.properties",
                   "gradlew", "gradlew.bat", "LICENSE", "LICENSE-CODE", "LICENSE-ASSETS.md", "NOTICE",
                   "docs/VERSION_PORTING_PLAYBOOK.md", "docs/FOXY_TEST_NODE.md"}
@@ -70,7 +78,15 @@ def package(destination: Path, versions: list[str]) -> None:
                 raise RuntimeError(f"Private path selected unexpectedly: {name}")
             files[name] = sha256(path)
             archive.write(path, name)
+        extra_mods = {}
+        for version, loader, path in tbf:
+            name = f"test-extra-mods/{version}/{loader}/{path.name}"
+            files[name] = sha256(path)
+            extra_mods[name] = files[name]
+            archive.write(path, name)
         manifest = {"created_utc": datetime.now(timezone.utc).isoformat(), "versions": versions,
+                    "tbf_versions": [version for version, _, _ in tbf], "tbf_only": tbf_only,
+                    "extra_mods": extra_mods,
                     "source_head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
                     "source_dirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT)),
                     "artifacts": artifacts, "files": files}
@@ -94,6 +110,7 @@ def execute(report_root: Path, game_root: Path, tools_root: Path) -> int:
     report = {"host": socket.gethostname(), "pid": os.getpid(), "source_root": str(ROOT),
               "source_head": manifest["source_head"], "source_dirty": manifest["source_dirty"],
               "artifacts": manifest["artifacts"], "game_root": str(game_root),
+              "extra_mods": manifest.get("extra_mods", {}),
               "started_utc": datetime.now(timezone.utc).isoformat(), "state": "running",
               "results": results, "client_tested": False, "original_modpack_reproduced": False}
     try:
@@ -106,29 +123,41 @@ def execute(report_root: Path, game_root: Path, tools_root: Path) -> int:
         env["ECHO_WARRIOR_JAVA17_HOME"] = str(tools_root / "jdk-17")
         env["ECHO_WARRIOR_JAVA21_HOME"] = str(tools_root / "jdk-21")
         env["ECHO_WARRIOR_JAVA25_HOME"] = str(tools_root / "jdk-25")
+        env["ECHO_WARRIOR_VANILLA_CACHE"] = str(tools_root / "vanilla-server-cache")
+        env["ECHO_WARRIOR_FABRIC_CACHE"] = str(tools_root / "fabric-server-cache")
+        env["ECHO_WARRIOR_LOADER_CACHE"] = str(tools_root / "loader-server-cache")
         env["ECHO_WARRIOR_TEST_ARTIFACT_ROOT"] = str(game_root)
         env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env["PATH"]
         commands = [("performance-source-guard", [sys.executable, str(ROOT / "scripts/check-battlefield-performance.py")])]
-        if "1.21.1" in manifest["versions"]:
+        if "1.21.1" in manifest["versions"] and not manifest.get("tbf_only"):
             commands.extend([
                 ("1.21.1-baseline", [r"C:\Program Files\PowerShell\7\pwsh.exe", "-NoLogo", "-NoProfile", "-File",
                                      str(ROOT / "scripts/check-1.21.1-baseline.ps1"), "-SkipBuild"]),
                 ("1.21.1-production", [sys.executable, str(ROOT / "scripts/smoke-test-1.21.1-production-servers.py")]),
             ])
-        if "1.20.1" in manifest["versions"]:
+        if "1.20.1" in manifest["versions"] and not manifest.get("tbf_only"):
             commands.extend([
                 ("1.20.1-baseline", [sys.executable, str(ROOT / "scripts/check-1.20.1-baseline.py")]),
                 ("1.20.1-content-parity", [sys.executable, str(ROOT / "scripts/check-1.20.1-content-parity.py")]),
                 ("1.20.1-baseline-negative-tests", [sys.executable, str(ROOT / "scripts/test_compatibility_1201_baseline.py")]),
                 ("1.20.1-production", [sys.executable, str(ROOT / "scripts/smoke-test-1.20.1-servers.py"), "--timeout", "600"]),
             ])
+        for version in manifest.get("tbf_versions", []):
+            script = "smoke-test-1.21.1-production-servers.py" if version == "1.21.1" else "smoke-test-1.20.1-servers.py"
+            loader = "neoforge" if version == "1.21.1" else "forge"
+            commands.append((version + "-tbf-joint", [sys.executable, str(ROOT / "scripts" / script),
+                             "--loader", loader, "--timeout", "600"]))
         for name, command in commands:
             report["current_step"] = name
             write_json(report_root / "status.json", report)
             started = datetime.now(timezone.utc)
             log = report_root / f"{name}.log"
+            step_env = env.copy()
+            if name.endswith("-tbf-joint"):
+                step_env["ECHO_WARRIOR_TEST_EXTRA_MODS"] = str(ROOT / "test-extra-mods")
+                step_env["ECHO_WARRIOR_TBF_JOINT"] = "1"
             with log.open("w", encoding="utf-8") as output:
-                result = subprocess.run(command, cwd=ROOT, env=env, stdout=output, stderr=subprocess.STDOUT,
+                result = subprocess.run(command, cwd=ROOT, env=step_env, stdout=output, stderr=subprocess.STDOUT,
                                         creationflags=NO_WINDOW)
             results.append({"step": name, "exit_code": result.returncode, "log": str(log),
                             "seconds": round((datetime.now(timezone.utc) - started).total_seconds(), 2)})
@@ -167,13 +196,16 @@ def main() -> int:
     parser.add_argument("--package", type=Path)
     parser.add_argument("--versions", nargs="+", choices=("1.21.1", "1.20.1"), default=["1.21.1", "1.20.1"])
     parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--tbf-forge", type=Path)
+    parser.add_argument("--tbf-neoforge", type=Path)
+    parser.add_argument("--tbf-only", action="store_true")
     parser.add_argument("--collect", action="store_true")
     parser.add_argument("--report-root", type=Path)
     parser.add_argument("--game-root", type=Path)
     parser.add_argument("--tools-root", type=Path, default=Path(r"D:\Tools-Terminal\EchoWarrior"))
     args = parser.parse_args()
     if args.package:
-        package(args.package, args.versions)
+        package(args.package, args.versions, args.tbf_forge, args.tbf_neoforge, args.tbf_only)
     elif args.report_root and args.game_root and args.execute:
         return execute(args.report_root, args.game_root, args.tools_root)
     elif args.report_root and args.game_root and args.collect:

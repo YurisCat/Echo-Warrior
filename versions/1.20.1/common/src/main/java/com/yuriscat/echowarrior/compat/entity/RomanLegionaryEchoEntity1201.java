@@ -463,7 +463,6 @@ public final class RomanLegionaryEchoEntity1201 extends TamableAnimal
 
     public void applyRelicState(ItemStack relic, boolean preserveHealthGain) {
         if (relic.isEmpty()) return;
-        double oldMaximum = this.getMaxHealth();
         AttributeInstance maximumHealth = this.getAttribute(Attributes.MAX_HEALTH);
         AttributeInstance attackDamage = this.getAttribute(Attributes.ATTACK_DAMAGE);
         AttributeInstance armor = this.getAttribute(Attributes.ARMOR);
@@ -472,10 +471,7 @@ public final class RomanLegionaryEchoEntity1201 extends TamableAnimal
         if (attackDamage != null) attackDamage.setBaseValue(EchoRelicState1201.attackDamage(relic));
         if (armor != null) armor.setBaseValue(EchoRelicState1201.armor(relic));
         if (movement != null) movement.setBaseValue(EchoRelicState1201.movementSpeed(relic));
-        if (preserveHealthGain) {
-            this.setHealth(Math.min(this.getMaxHealth(), this.getHealth()
-                    + (float)Math.max(0.0, this.getMaxHealth() - oldMaximum)));
-        } else if (this.getHealth() > this.getMaxHealth()) {
+        if (this.getHealth() > this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
     }

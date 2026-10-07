@@ -123,7 +123,7 @@
   "gui.echo_warrior.summoner.section.alert": "Postura",
   "gui.echo_warrior.summoner.attribute.health": "Vida: %s/%s",
   "gui.echo_warrior.summoner.attribute.health_absent": "Vida: %s/%s (ausente)",
-  "gui.echo_warrior.summoner.attribute.level": "Nível: %s/30",
+  "gui.echo_warrior.summoner.attribute.level": "Nível: %s/%s",
   "gui.echo_warrior.summoner.attribute.attack": "Dano: %s",
   "gui.echo_warrior.summoner.attribute.attack_speed": "Velocidade de ataque: %s",
   "gui.echo_warrior.summoner.attribute.armor": "Armadura: %s",
@@ -147,7 +147,7 @@
   "gui.echo_warrior.summoner.state.no_relic": "Insira uma relíquia primeiro",
   "gui.echo_warrior.summoner.experience.title": "XP do Eco",
   "gui.echo_warrior.summoner.experience.no_relic": "Insira uma relíquia para ver o XP.",
-  "gui.echo_warrior.summoner.experience.max": "Nível 30 · Nível máximo",
+  "gui.echo_warrior.summoner.experience.max": "Nível %s · Nível máximo",
   "gui.echo_warrior.summoner.experience.progress": "Nível %s · XP %s/%s",
   "gui.echo_warrior.summoner.fuel.title": "Combustível de Eco",
   "gui.echo_warrior.summoner.fuel.summon_cost": "Invocação: %s",
@@ -620,5 +620,7 @@
   "gui.echo_warrior.tutorial.skill.roman.endures.description.1": "Ergue o escudo e provoca os inimigos próximos.",
   "gui.echo_warrior.tutorial.skill.roman.endures.description.2": "Após 5 segundos, devolve o dano sofrido durante a defesa e repele os inimigos.",
   "gui.echo_warrior.tutorial.skill.roman.bulwark.name": "Baluarte Legionário",
-  "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "Dano de ataques e projéteis vindos da frente do legionário é reduzido em 50%."
+  "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "Dano de ataques e projéteis vindos da frente do legionário é reduzido em 50%.",
+  "message.echo_warrior.tbf.healing_disabled": "Ecos usam seu próprio sistema de recuperação. A cura do TBF não está disponível.",
+  "message.echo_warrior.tbf.unavailable": "Não é possível controlar este Eco. Verifique a relíquia, a permissão de controle e o Invocador."
 }

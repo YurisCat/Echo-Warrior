@@ -11,6 +11,11 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 public final class EchoNetworking1201Fabric {
     private EchoNetworking1201Fabric() {}
     public static void initialize() {
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            var buffer = PacketByteBufs.create();
+            new com.yuriscat.echowarrior.compat.network.EchoProgressionPacket1201(com.yuriscat.echowarrior.compat.item.EchoProgressionConfig1201.serverMaxLevel()).encode(buffer);
+            ServerPlayNetworking.send(handler.player, com.yuriscat.echowarrior.compat.network.EchoProgressionPacket1201.ID, buffer);
+        });
         ServerPlayNetworking.registerGlobalReceiver(InventoryNetwork1201.CREATIVE_DESTROY, (server, player, handler, buffer, sender) -> {
             var request = com.yuriscat.echowarrior.compat.network.CreativeDestructionRequest1201.decode(buffer);
             server.execute(() -> {

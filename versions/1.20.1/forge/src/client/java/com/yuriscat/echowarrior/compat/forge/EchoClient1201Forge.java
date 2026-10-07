@@ -19,6 +19,7 @@ public final class EchoClient1201Forge {
         event.registerEntityRenderer(com.yuriscat.echowarrior.compat.ModContent1201.EGYPTIAN_ARCHER_ARROW, com.yuriscat.echowarrior.compat.client.EgyptianArcherArrowRenderer1201::new);
     }
     @SubscribeEvent public static void initialize(FMLClientSetupEvent event) {
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut logout) -> com.yuriscat.echowarrior.compat.item.EchoProgressionConfig1201.resetConnection());
         // ForgeGui overrides Gui.render without calling super: a vanilla render Mixin never runs here.
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(EchoClient1201Forge::renderHud);
         event.enqueueWork(() -> {

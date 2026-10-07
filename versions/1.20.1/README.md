@@ -1,5 +1,12 @@
 # Minecraft 1.20.1 compatibility line
 
+## 2026-10-07 progression and optional TBF integration
+
+Default maximum level is now 100, configurable at startup with `config/echo_warrior-progression.json` (`schemaVersion: 1`, `maxLevel: 100`). Health and base attack keep the fixed `1 + (L - 1) / 29` multiplier; next-level XP remains `15 + 2L`. Lowering the cap preserves cultivated levels and existing XP. The salvage value remains capped at level 30.
+
+FOXY job `20261007T130957Z-66296` passed both ordinary packaged server loaders and the requested official TBF 0.2.3 integration (Forge). The integration keeps the existing binding/UUID/generation transaction intact, supports chest-stored summoners, and passes 100 actual TBF handler cycles with stable list/team identity. Client wheel interaction, previews and real multiplayer remain manual acceptance. Full scope, exact package hashes and collected evidence: [`../../docs/research/tbf-compat-and-growth-2026-10-07.md`](../../docs/research/tbf-compat-and-growth-2026-10-07.md). These are unsubmitted working builds; translation release checks remain pending.
+
+
 Approved targets: Fabric + Forge, Java 17 for the game and compiled classes.
 The repository Gradle Wrapper runs on Java 21; do not downgrade the mainline Java 25 toolchain.
 

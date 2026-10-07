@@ -580,8 +580,8 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
             if (!active) {
                 lines.add(Component.translatable("gui.echo_warrior.summoner.experience.no_relic")
                         .withStyle(ChatFormatting.GRAY));
-            } else if (this.menu.relicLevel() >= 30) {
-                lines.add(Component.translatable("gui.echo_warrior.summoner.experience.max")
+            } else if (this.menu.relicLevel() >= com.yuriscat.echowarrior.compat.item.EchoRelicProgress1211.maxLevel()) {
+                lines.add(Component.translatable("gui.echo_warrior.summoner.experience.max", this.menu.relicLevel())
                         .withStyle(ChatFormatting.GRAY));
             } else {
                 lines.add(Component.translatable("gui.echo_warrior.summoner.experience.progress",
@@ -674,7 +674,7 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
                                 ? "gui.echo_warrior.summoner.attribute.health"
                                 : "gui.echo_warrior.summoner.attribute.health_absent",
                         this.menu.spiritHealth(), this.menu.spiritMaximumHealth()),
-                Component.translatable("gui.echo_warrior.summoner.attribute.level", this.menu.relicLevel()),
+                Component.translatable("gui.echo_warrior.summoner.attribute.level", this.menu.relicLevel(), com.yuriscat.echowarrior.compat.item.EchoRelicProgress1211.maxLevel()),
                 Component.translatable("gui.echo_warrior.summoner.attribute.attack",
                         formatTenths(this.menu.spiritAttackDamage())),
                 Component.translatable("gui.echo_warrior.summoner.attribute.attack_speed",

@@ -4,6 +4,9 @@ param(
     [ValidateSet('All', '1.21.1', '1.20.1')][string]$Versions = 'All',
     [ValidatePattern('^[0-9]{8}T[0-9]{6}Z-[0-9]+$')][string]$RunId,
     [switch]$SkipBuild,
+    [string]$TbfForgeJar,
+    [string]$TbfNeoForgeJar,
+    [switch]$TbfOnly,
     [string]$ControllerWorkspace = 'D:\AI-Workshop\60_Infrastructure\desktop-ms-xamanfjjoqzl'
 )
 $ErrorActionPreference = 'Stop'
@@ -49,7 +52,11 @@ $python = 'C:\Program Files\Python314\python.exe'
 if ($Action -eq 'Run') {
     New-Item -ItemType Directory -Path $local | Out-Null
     $package = Join-Path $local 'source.zip'
-    & python (Join-Path $PSScriptRoot 'foxy-test-worker.py') --package $package --versions @selected
+    $optional = @()
+    if ($TbfForgeJar) { $optional += @('--tbf-forge', (Resolve-Path -LiteralPath $TbfForgeJar).Path) }
+    if ($TbfNeoForgeJar) { $optional += @('--tbf-neoforge', (Resolve-Path -LiteralPath $TbfNeoForgeJar).Path) }
+    if ($TbfOnly) { $optional += '--tbf-only' }
+    & python (Join-Path $PSScriptRoot 'foxy-test-worker.py') --package $package --versions @selected @optional
     if ($LASTEXITCODE -ne 0) { throw 'Source snapshot packaging failed' }
     $hash = (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant()
     $incoming = "D:\Download-Terminal\Incoming\EchoWarrior\$RunId.zip"

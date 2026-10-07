@@ -48,3 +48,14 @@ Collect 仅取回本轮状态、输入清单、步骤日志、服务端日志/�
 当前入口支持 1.21.1/1.20.1 两条兼容线。26.1.2 长测试使用相同固定 SSH 和独立快照，设置任务的 Java 25 后调用仓库 Wrapper 和既有测试脚本；不要用 Java 17，也不要引入全局 Gradle。运行 1.20.1 Gradle 构建时显式传入 `-Dorg.gradle.java.installations.paths=D:\Tools-Terminal\EchoWarrior\jdk-17,D:\Tools-Terminal\EchoWarrior\jdk-21`，让 Java 21 上的 Wrapper 发现 Java 17 编译/运行工具链。
 
 需要实际客户端时先读节点 `GUI.md`，通过现有 `invoke-desktop-gui.ps1` 在已登录且解锁的 FOXY 会话执行 `scripts/run-test-client.ps1`，检查已有客户端并串行运行。普通 SSH 验收只证明无界面测试可运行；画面、声音、控制、真实多人和第三方整合包仍需相应实机验收。
+
+## 可选联装测试与官方服务端缓存（2026-10-07）
+
+- 工作进程把 `ECHO_WARRIOR_VANILLA_CACHE` 指向节点工具目录的 `vanilla-server-cache`。只缓存 1.20.1/1.21.1 官方服务端 bundle，使用 Mojang 对象 SHA-1 校验后复制到 Fabric 安装器路径；不复用世界、模组或玩家数据。用于避免官方 CDN 下载超时掩盖运行测试。
+- 两条 production smoke 脚本支持 `ECHO_WARRIOR_TEST_EXTRA_MODS=<目录>`，按 `<目录>/<MC版本>/<加载器>/*.jar` 加入可选测试依赖，所有 JAR 均写入测试报告哈希；与已有文件重名即失败。
+- 联装 TBF 时同时设置 `ECHO_WARRIOR_TBF_JOINT=1`，强制要求适配层启用及真实 TBF handler 自测通过，不能把“禁用适配也正常启动”计为兼容成功。仍通过同一副机串行测试工作流，不与普通回归或图形客户端抢占节点。
+
+- `-TbfForgeJar <jar> -TbfNeoForgeJar <jar>` 可把明确指定的官方包加入源码快照并核对哈希；默认先做无 TBF 回归，再做两个指定加载器的联装。`-TbfOnly` 仅补跑联合测试，不能宣称包含未执行的无 TBF 检查。
+- 可选 `fabric-server-cache/<MC>/<loader版本>` 与 `loader-server-cache/<MC>/<加载器>/<版本>` 仅含先前成功官方安装的公共库、启动 JAR/参数文件及 SHA-256 清单，逐文件复核后复制到新实例；无玩家、模组或世界数据。节点工作进程自动传入相应缓存目录。缓存来源为 2026-10-05 的 1.20.1 成功实例和 `20261007T112007Z-27188` 的 1.21.1 成功实例。
+
+- Fabric 通用启动器也可作为 SHA-256 清单中的根目录 JAR 复用；2026-10-07 追加来自成功快照 `20261007T123558Z-43952` 的 `fabric-server-<MC>-0.19.5-1.1.1.jar`。1.20.1 SHA-256 `084080ff36433a56fb26b90e8e5392d6daf4883586ec7198179476a0e184b6a7`；1.21.1 `e25c50698e0c05f07c230fe05c663022c9a675fbca15b81a5d49cac81ca6689c`。

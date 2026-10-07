@@ -51,6 +51,12 @@ def install(loader: str, run_dir: Path, values: dict[str, str], java: str) -> li
     if loader == "fabric":
         return helpers.install(loader, run_dir, values, java)
     version = values["neoforge_version"]
+    if helpers.seed_loader_cache(run_dir, values["minecraft_version"], loader, version):
+        args = run_dir / "libraries/net/neoforged/neoforge" / version / (
+            "win_args.txt" if os.name == "nt" else "unix_args.txt")
+        if not args.is_file():
+            raise RuntimeError(f"Cached NeoForge installation is incomplete: {args}")
+        return [f"@{args}", "nogui"]
     installer = helpers.download(
         f"https://maven.neoforged.net/releases/net/neoforged/neoforge/{version}/neoforge-{version}-installer.jar",
         f"neoforge-{version}-installer.jar",
@@ -76,7 +82,7 @@ def run_once(java: str, arguments: list[str], run_dir: Path, timeout: int) -> di
     command_sent = False
     try:
         with log.open("w", encoding="utf-8") as output:
-            process = subprocess.Popen([java, "-Xms512M", "-Xmx2G", *arguments], cwd=run_dir,
+            process = subprocess.Popen([java, "-Xms512M", "-Xmx2G", *helpers.joint_test_flags(), *arguments], cwd=run_dir,
                                        stdin=subprocess.PIPE, stdout=output, stderr=subprocess.STDOUT,
                                        text=True, encoding="utf-8", creationflags=helpers.NO_WINDOW)
             while time.monotonic() - started < timeout:
@@ -97,6 +103,8 @@ def run_once(java: str, arguments: list[str], run_dir: Path, timeout: int) -> di
                     if process.wait(timeout=60) != 0:
                         raise RuntimeError(f"Server shutdown failed: {log}")
                     final = log.read_text(encoding="utf-8", errors="replace")
+                    if helpers.joint_test_flags() and "[TbfJointSelfTest] PASS" not in final:
+                        raise RuntimeError(f"Installed TBF joint-test acceptance missing: {log}")
                     if "Stopping server" not in final or "All dimensions are saved" not in final:
                         raise RuntimeError(f"Normal save/shutdown markers missing: {log}")
                     # Same narrow exclusions as the existing 1.21.1 development smoke.

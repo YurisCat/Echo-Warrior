@@ -35,8 +35,8 @@ public final class EchoRelicItem1201 extends Item {
     public void appendHoverText(ItemStack stack, net.minecraft.world.level.Level context, List<Component> tooltip, TooltipFlag flag) {
         int level = EchoRelicProgress1201.level(stack);
         tooltip.add(Component.translatable("tooltip.echo_warrior.relic.level",
-                level, EchoRelicProgress1201.MAX_LEVEL).withStyle(ChatFormatting.AQUA));
-        if (level >= EchoRelicProgress1201.MAX_LEVEL) {
+                level, EchoRelicProgress1201.maxLevel()).withStyle(ChatFormatting.AQUA));
+        if (level >= EchoRelicProgress1201.maxLevel()) {
             tooltip.add(Component.translatable("tooltip.echo_warrior.relic.experience.max")
                     .withStyle(ChatFormatting.GRAY));
         } else {

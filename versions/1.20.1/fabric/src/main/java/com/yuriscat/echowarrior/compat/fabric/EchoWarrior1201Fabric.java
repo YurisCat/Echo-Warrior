@@ -9,6 +9,10 @@ import net.minecraft.core.registries.BuiltInRegistries;
 public final class EchoWarrior1201Fabric implements ModInitializer {
     @Override
     public void onInitialize() {
+        net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("trulybestfriends").ifPresent(mod ->
+                com.yuriscat.echowarrior.compat.integration.TbfBridge1201.initialize(mod.getMetadata().getVersion().getFriendlyString()));
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(com.yuriscat.echowarrior.compat.integration.TbfBridge1201::tick);
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(server -> com.yuriscat.echowarrior.compat.integration.TbfBridge1201.clear());
         ModContent1201.blocks().forEach((id, block) -> Registry.register(BuiltInRegistries.BLOCK, id, block));
         ModContent1201.RECYCLER_CHEST = net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder.create(
                 com.yuriscat.echowarrior.compat.block.entity.RecyclerChestBlockEntity1201::new, ModContent1201.ECHO_RECYCLER).build();

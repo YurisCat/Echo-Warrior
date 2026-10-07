@@ -123,7 +123,7 @@
   "gui.echo_warrior.summoner.section.alert": "Режим боя",
   "gui.echo_warrior.summoner.attribute.health": "Здоровье: %s/%s",
   "gui.echo_warrior.summoner.attribute.health_absent": "Здоровье: %s/%s (не призван)",
-  "gui.echo_warrior.summoner.attribute.level": "Уровень: %s/30",
+  "gui.echo_warrior.summoner.attribute.level": "Уровень: %s/%s",
   "gui.echo_warrior.summoner.attribute.attack": "Урон: %s",
   "gui.echo_warrior.summoner.attribute.attack_speed": "Скорость атаки: %s",
   "gui.echo_warrior.summoner.attribute.armor": "Броня: %s",
@@ -147,7 +147,7 @@
   "gui.echo_warrior.summoner.state.no_relic": "Сначала установите реликвию",
   "gui.echo_warrior.summoner.experience.title": "Опыт отголоска",
   "gui.echo_warrior.summoner.experience.no_relic": "Установите реликвию, чтобы увидеть опыт.",
-  "gui.echo_warrior.summoner.experience.max": "Уровень 30 · Максимум",
+  "gui.echo_warrior.summoner.experience.max": "Уровень %s · Максимум",
   "gui.echo_warrior.summoner.experience.progress": "Уровень %s · Опыт %s/%s",
   "gui.echo_warrior.summoner.fuel.title": "Топливо отголосков",
   "gui.echo_warrior.summoner.fuel.summon_cost": "Призыв: %s",
@@ -620,5 +620,7 @@
   "gui.echo_warrior.tutorial.skill.roman.endures.description.1": "Поднимает щит и провоцирует ближайших врагов.",
   "gui.echo_warrior.tutorial.skill.roman.endures.description.2": "Через 5 секунд возвращает урон, полученный во время защиты, и отбрасывает врагов.",
   "gui.echo_warrior.tutorial.skill.roman.bulwark.name": "Оплот легионера",
-  "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "Урон от атак и снарядов спереди снижается на 50%."
+  "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "Урон от атак и снарядов спереди снижается на 50%.",
+  "message.echo_warrior.tbf.healing_disabled": "У отголосков своя система восстановления. Лечение через TBF недоступно.",
+  "message.echo_warrior.tbf.unavailable": "Нельзя управлять этим отголоском. Проверьте реликвию, права управления и устройство призыва."
 }

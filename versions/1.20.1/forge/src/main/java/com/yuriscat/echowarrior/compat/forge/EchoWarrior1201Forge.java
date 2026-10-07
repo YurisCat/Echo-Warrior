@@ -10,6 +10,10 @@ import net.minecraftforge.registries.RegisterEvent;
 @Mod(EchoWarrior1201.MOD_ID)
 public final class EchoWarrior1201Forge {
     public EchoWarrior1201Forge() {
+        net.minecraftforge.fml.ModList.get().getModContainerById("trulybestfriends").ifPresent(mod ->
+                com.yuriscat.echowarrior.compat.integration.TbfBridge1201.initialize(mod.getModInfo().getVersion().toString()));
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.TickEvent.ServerTickEvent event) -> { if (event.phase == net.minecraftforge.event.TickEvent.Phase.END) com.yuriscat.echowarrior.compat.integration.TbfBridge1201.tick(event.getServer()); });
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStoppedEvent event) -> com.yuriscat.echowarrior.compat.integration.TbfBridge1201.clear());
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::register);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::attributes);
         com.yuriscat.echowarrior.compat.binding.EchoBindingConfig1201.load(net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get());

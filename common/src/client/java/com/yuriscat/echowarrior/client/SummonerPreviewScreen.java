@@ -512,7 +512,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		);
 		if (active) {
 			int needed = this.menu.relicExperienceNeeded();
-			int experienceWidth = this.menu.relicLevel() >= 30
+			int experienceWidth = this.menu.relicLevel() >= com.yuriscat.echowarrior.item.EchoRelicProgress.maxLevel()
 					? 160
 					: needed <= 0 ? 0 : Math.clamp(Math.round(this.menu.relicExperience() * 160.0F / needed), 0, 160);
 			if (experienceWidth > 0) {
@@ -697,7 +697,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 						? "gui.echo_warrior.summoner.attribute.health"
 						: "gui.echo_warrior.summoner.attribute.health_absent",
 						decimal(this.menu.spiritHealth()), decimal(this.menu.spiritMaximumHealth())),
-				Component.translatable("gui.echo_warrior.summoner.attribute.level", this.menu.relicLevel()),
+				Component.translatable("gui.echo_warrior.summoner.attribute.level", this.menu.relicLevel(), com.yuriscat.echowarrior.item.EchoRelicProgress.maxLevel()),
 				Component.translatable("gui.echo_warrior.summoner.attribute.attack", decimal(this.menu.spiritAttackDamage())),
 				Component.translatable("gui.echo_warrior.summoner.attribute.attack_speed", this.menu.spiritAttackSpeed() + "%"),
 				Component.translatable("gui.echo_warrior.summoner.attribute.armor", decimal(this.menu.spiritArmor())),
@@ -806,10 +806,10 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				showTooltip(graphics, mouseX, mouseY,
 						Component.translatable("gui.echo_warrior.summoner.experience.title"),
 						Component.translatable("gui.echo_warrior.summoner.experience.no_relic"));
-			} else if (this.menu.relicLevel() >= 30) {
+			} else if (this.menu.relicLevel() >= com.yuriscat.echowarrior.item.EchoRelicProgress.maxLevel()) {
 				showTooltip(graphics, mouseX, mouseY,
 						Component.translatable("gui.echo_warrior.summoner.experience.title"),
-						Component.translatable("gui.echo_warrior.summoner.experience.max"));
+						Component.translatable("gui.echo_warrior.summoner.experience.max", this.menu.relicLevel()));
 			} else {
 				showTooltip(
 						graphics,

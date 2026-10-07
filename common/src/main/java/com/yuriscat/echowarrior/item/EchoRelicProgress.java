@@ -5,22 +5,26 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 
 public final class EchoRelicProgress {
-	public static final int MAX_LEVEL = 30;
+	public static int maxLevel() { return EchoProgressionConfig.maxLevel(); }
 	private static final String LEVEL_KEY = "EchoWarriorLevel";
 	private static final String EXPERIENCE_KEY = "EchoWarriorExperience";
 
 	private EchoRelicProgress() {
 	}
 
-	public static int level(ItemStack relic) {
+	public static int storedLevel(ItemStack relic) {
 		int stored = relic.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY)
 				.copyTag()
 				.getIntOr(LEVEL_KEY, 1);
-		return Math.clamp(stored, 1, MAX_LEVEL);
+		return Math.max(1, stored);
 	}
 
+    public static int level(ItemStack relic) {
+        return Math.min(storedLevel(relic), maxLevel());
+    }
+
 	public static int experience(ItemStack relic) {
-		if (level(relic) >= MAX_LEVEL) {
+		if (level(relic) >= maxLevel()) {
 			return 0;
 		}
 		int stored = relic.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY)
@@ -30,7 +34,7 @@ public final class EchoRelicProgress {
 	}
 
 	public static int experienceNeeded(int level) {
-		return level >= MAX_LEVEL ? 0 : 15 + 2 * Math.clamp(level, 1, MAX_LEVEL);
+		return level >= maxLevel() ? 0 : 15 + 2 * Math.clamp(level, 1, maxLevel());
 	}
 
 	public static double maximumHealth(EchoHeroType heroType, int level) {
@@ -42,20 +46,20 @@ public final class EchoRelicProgress {
 	}
 
 	private static double growthMultiplier(int level) {
-		int clamped = Math.clamp(level, 1, MAX_LEVEL);
-		return 1.0 + (clamped - 1.0) / (MAX_LEVEL - 1.0);
+		int clamped = Math.clamp(level, 1, maxLevel());
+		return 1.0 + (clamped - 1.0) / 29.0;
 	}
 
 	public static ProgressResult addExperience(ItemStack relic, int amount) {
 		int oldLevel = level(relic);
 		int oldExperience = experience(relic);
-		if (amount <= 0 || oldLevel >= MAX_LEVEL) {
+		if (amount <= 0 || oldLevel >= maxLevel()) {
 			return new ProgressResult(oldLevel, oldLevel, oldExperience, oldExperience, 0);
 		}
 
 		int newLevel = oldLevel;
-		int newExperience = oldExperience + amount;
-		while (newLevel < MAX_LEVEL) {
+		long newExperience = (long) oldExperience + amount;
+		while (newLevel < maxLevel()) {
 			int needed = experienceNeeded(newLevel);
 			if (newExperience < needed) {
 				break;
@@ -63,18 +67,18 @@ public final class EchoRelicProgress {
 			newExperience -= needed;
 			newLevel++;
 		}
-		if (newLevel >= MAX_LEVEL) {
-			newLevel = MAX_LEVEL;
+		if (newLevel >= maxLevel()) {
+			newLevel = maxLevel();
 			newExperience = 0;
 		}
 
 		int finalLevel = newLevel;
-		int finalExperience = newExperience;
+		int finalExperience = (int) newExperience;
 		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> {
 			tag.putInt(LEVEL_KEY, finalLevel);
 			tag.putInt(EXPERIENCE_KEY, finalExperience);
 		});
-		return new ProgressResult(oldLevel, newLevel, oldExperience, newExperience, newLevel - oldLevel);
+		return new ProgressResult(oldLevel, newLevel, oldExperience, finalExperience, newLevel - oldLevel);
 	}
 
 	public record ProgressResult(

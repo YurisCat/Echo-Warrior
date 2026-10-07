@@ -77,16 +77,73 @@ def free_port() -> int:
         return listener.getsockname()[1]
 
 
+def seed_loader_cache(run_dir: Path, mc: str, loader: str, version: str) -> bool:
+    import json
+    cache_root = os.environ.get("ECHO_WARRIOR_LOADER_CACHE")
+    if not cache_root:
+        return False
+    cache = Path(cache_root) / mc / loader / version
+    manifest = cache / "sha256.json"
+    if not manifest.is_file():
+        return False
+    for name, digest in json.loads(manifest.read_text()).items():
+        relative = Path(name)
+        if relative.is_absolute() or ".." in relative.parts or relative.parts[0] != "libraries":
+            raise RuntimeError(f"Unsafe loader cache path: {name}")
+        if sha256(cache / relative) != digest:
+            raise RuntimeError(f"Official loader cache hash mismatch: {name}")
+        target = run_dir / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(cache / relative, target)
+    return True
+
+
 def install(loader: str, run_dir: Path, values: dict[str, str], java: str) -> list[str]:
     mc = values["minecraft_version"]
     if loader == "fabric":
+        cache_root = os.environ.get("ECHO_WARRIOR_FABRIC_CACHE")
+        if cache_root:
+            import json
+            cache = Path(cache_root) / mc / values["loader_version"]
+            manifest = cache / "sha256.json"
+            if manifest.is_file():
+                for name, digest in json.loads(manifest.read_text()).items():
+                    relative = Path(name)
+                    if relative.is_absolute() or ".." in relative.parts or relative.suffix != ".jar":
+                        raise RuntimeError(f"Unsafe public dependency cache path: {name}")
+                    if sha256(cache / relative) != digest:
+                        raise RuntimeError(f"Fabric dependency cache hash mismatch: {name}")
+                    target = run_dir / relative
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(cache / relative, target)
+        # Only official vanilla bundles may seed the installer's normal download location.
+        hashes = {"1.20.1": "84194a2f286ef7c14ed7ce0090dba59902951553",
+                  "1.21.1": "59353fb40c36d304f2035d51e7d6e6baa98dc05c"}
+        if os.environ.get("ECHO_WARRIOR_VANILLA_CACHE"):
+            cached = Path(os.environ["ECHO_WARRIOR_VANILLA_CACHE"]) / f"{mc}-server.jar"
+            if cached.is_file():
+                with cached.open("rb") as stream:
+                    if hashlib.file_digest(stream, "sha1").hexdigest() != hashes[mc]:
+                        raise RuntimeError(f"Official vanilla cache hash mismatch: {cached}")
+                target = run_dir / ".fabric/server" / cached.name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(cached, target)
         installer = "1.1.1"
-        launcher = download(
-            f"https://meta.fabricmc.net/v2/versions/loader/{mc}/{values['loader_version']}/{installer}/server/jar",
-            f"fabric-server-{mc}-{values['loader_version']}-{installer}.jar",
-        )
+        launcher_name = f"fabric-server-{mc}-{values['loader_version']}-{installer}.jar"
+        launcher = run_dir / launcher_name
+        if not launcher.is_file():
+            launcher = download(
+                f"https://meta.fabricmc.net/v2/versions/loader/{mc}/{values['loader_version']}/{installer}/server/jar",
+                launcher_name,
+            )
         return ["-jar", str(launcher), "nogui"]
     forge_version = f"{mc}-{values['forge_version']}"
+    if seed_loader_cache(run_dir, mc, loader, values["forge_version"]):
+        args = run_dir / "libraries/net/minecraftforge/forge" / forge_version / (
+            "win_args.txt" if os.name == "nt" else "unix_args.txt")
+        if not args.is_file():
+            raise RuntimeError(f"Cached Forge installation is incomplete: {args}")
+        return [f"@{args}", "nogui"]
     installer = download(
         f"https://maven.minecraftforge.net/net/minecraftforge/forge/{forge_version}/forge-{forge_version}-installer.jar",
         f"forge-{forge_version}-installer.jar",
@@ -129,7 +186,18 @@ def stage_mods(loader: str, run_dir: Path, values: dict[str, str]) -> dict[str, 
                              f"fabric-api-{api}.jar"))
     for url, filename in dependencies:
         shutil.copy2(download(url, filename), mod_dir / filename)
+    if os.environ.get("ECHO_WARRIOR_TEST_EXTRA_MODS"):
+        extra = Path(os.environ["ECHO_WARRIOR_TEST_EXTRA_MODS"]) / mc / loader
+        for source in sorted(extra.glob("*.jar")):
+            target = mod_dir / source.name
+            if target.exists():
+                raise RuntimeError(f"Extra test mod collides with a required artifact: {source}")
+            shutil.copy2(source, target)
     return {path.name: sha256(path) for path in sorted(mod_dir.glob("*.jar"))}
+
+
+def joint_test_flags() -> list[str]:
+    return ["-DechoWarrior.tbfRequired=true"] if os.environ.get("ECHO_WARRIOR_TBF_JOINT") == "1" else []
 
 
 def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeout: int) -> None:
@@ -139,7 +207,7 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
     try:
         with console_log.open("w", encoding="utf-8") as output:
             process = subprocess.Popen(
-                [java, "-Xms512M", "-Xmx2G", "-Decho_warrior.compat_bootstrap_test=true",
+                [java, "-Xms512M", "-Xmx2G", *joint_test_flags(), "-Decho_warrior.compat_bootstrap_test=true",
                  f"-Decho_warrior.compat_storage_expected_boot={attempt}", *arguments],
                 cwd=run_dir, stdin=subprocess.PIPE, stdout=output, stderr=subprocess.STDOUT,
                 text=True, encoding="utf-8", creationflags=NO_WINDOW,
@@ -174,6 +242,8 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
                     if process.wait(timeout=60) != 0:
                         raise RuntimeError(f"Server shutdown failed: {console_log}")
                     final = console_log.read_text(encoding="utf-8", errors="replace")
+                    if joint_test_flags() and "[TbfJointSelfTest] PASS" not in final:
+                        raise RuntimeError(f"Installed TBF joint-test acceptance missing: {console_log}")
                     if "Stopping server" not in final or "All dimensions are saved" not in final:
                         raise RuntimeError(f"Normal save/shutdown markers missing: {console_log}")
                     if ("Failed: " in final or "Exception in server tick loop" in final

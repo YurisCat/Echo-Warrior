@@ -42,9 +42,9 @@ public class EchoRelicItem extends Item {
 	) {
 		int level = EchoRelicProgress.level(stack);
 		builder.accept(Component.translatable(
-				"tooltip.echo_warrior.relic.level", level, EchoRelicProgress.MAX_LEVEL
+				"tooltip.echo_warrior.relic.level", level, EchoRelicProgress.maxLevel()
 		).withStyle(ChatFormatting.AQUA));
-		if (level >= EchoRelicProgress.MAX_LEVEL) {
+		if (level >= EchoRelicProgress.maxLevel()) {
 			builder.accept(Component.translatable("tooltip.echo_warrior.relic.experience.max")
 					.withStyle(ChatFormatting.GRAY));
 		} else {

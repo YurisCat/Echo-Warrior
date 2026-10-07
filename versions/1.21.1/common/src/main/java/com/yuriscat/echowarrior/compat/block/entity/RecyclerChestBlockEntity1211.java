@@ -278,7 +278,7 @@ public final class RecyclerChestBlockEntity1211 extends ChestBlockEntity {
         if (stack.is(ModContent1211.KNOWLEDGE_FRAGMENT_COLLECTION)
                 && KnowledgeStackData1211.totalCount(stack) <= 0) return null;
         if (stack.is(ModTags1211.RECYCLER_RELIC)) {
-            int level = EchoRelicProgress1211.level(stack);
+            int level = Math.min(30, EchoRelicProgress1211.storedLevel(stack));
             return new InputProfile(2 + level / 5, 0.25 + 0.02 * (level - 1), 0.0025 + 0.001 * (level - 1));
         }
         if (stack.is(ModTags1211.RECYCLER_ACCESSORY_RARE)) return new InputProfile(2, 0.20, 0.0);

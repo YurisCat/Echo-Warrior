@@ -39,6 +39,8 @@ import net.minecraft.client.gui.screens.Screen;
 public final class EchoWarrior1211FabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        ClientPlayNetworking.registerGlobalReceiver(com.yuriscat.echowarrior.compat.network.EchoProgressionPayload1211.TYPE, (packet, context) -> context.client().execute(packet::apply));
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> com.yuriscat.echowarrior.compat.item.EchoProgressionConfig1211.resetConnection());
         CreativeSummonerInsertionSender1211.setSender((slot, carried) ->
                 ClientPlayNetworking.send(new CreativeSummonerInsertionPayload1211(slot, carried)));
         CreativeSummonerDestructionSender1211.setSender(summonerIds ->

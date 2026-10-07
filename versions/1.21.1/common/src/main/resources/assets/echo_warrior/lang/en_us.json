@@ -123,7 +123,7 @@
   "gui.echo_warrior.summoner.section.alert": "Alert",
   "gui.echo_warrior.summoner.attribute.health": "Health: %s/%s",
   "gui.echo_warrior.summoner.attribute.health_absent": "Health: %s/%s (Away)",
-  "gui.echo_warrior.summoner.attribute.level": "Level: %s/30",
+  "gui.echo_warrior.summoner.attribute.level": "Level: %s/%s",
   "gui.echo_warrior.summoner.attribute.attack": "Damage: %s",
   "gui.echo_warrior.summoner.attribute.attack_speed": "Attack Speed: %s",
   "gui.echo_warrior.summoner.attribute.armor": "Armor: %s",
@@ -147,7 +147,7 @@
   "gui.echo_warrior.summoner.state.no_relic": "Insert a relic first",
   "gui.echo_warrior.summoner.experience.title": "Echo XP",
   "gui.echo_warrior.summoner.experience.no_relic": "Insert a relic to view XP.",
-  "gui.echo_warrior.summoner.experience.max": "Level 30 · Max level",
+  "gui.echo_warrior.summoner.experience.max": "Level %s · Max level",
   "gui.echo_warrior.summoner.experience.progress": "Level %s · XP %s/%s",
   "gui.echo_warrior.summoner.fuel.title": "Echo Fuel",
   "gui.echo_warrior.summoner.fuel.summon_cost": "Summon: %s",
@@ -620,5 +620,7 @@
   "gui.echo_warrior.tutorial.skill.roman.endures.description.1": "Raises the shield and taunts nearby enemies.",
   "gui.echo_warrior.tutorial.skill.roman.endures.description.2": "After 5 seconds, returns damage taken during the defense and knocks enemies back.",
   "gui.echo_warrior.tutorial.skill.roman.bulwark.name": "Legionary Bulwark",
-  "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "Attack and projectile damage from in front of the legionary is reduced by 50%."
+  "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "Attack and projectile damage from in front of the legionary is reduced by 50%.",
+  "message.echo_warrior.tbf.unavailable": "This Echo is unavailable. Check its relic, controller, and summoner.",
+  "message.echo_warrior.tbf.healing_disabled": "Echoes use their own recovery. TBF healing is unavailable."
 }

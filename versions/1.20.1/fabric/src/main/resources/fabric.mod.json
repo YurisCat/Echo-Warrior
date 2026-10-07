@@ -11,7 +11,7 @@
     "main": ["com.yuriscat.echowarrior.compat.fabric.EchoWarrior1201Fabric"],
     "client": ["com.yuriscat.echowarrior.compat.fabric.EchoClient1201Fabric"]
   },
-  "mixins": ["echo_warrior_1201.mixins.json"],
+  "mixins": ["echo_warrior_1201.mixins.json", "echo_warrior_tbf_fabric_1201.mixins.json"],
   "depends": {
     "fabricloader": ">=${loader_version}",
     "minecraft": "${minecraft_version}",

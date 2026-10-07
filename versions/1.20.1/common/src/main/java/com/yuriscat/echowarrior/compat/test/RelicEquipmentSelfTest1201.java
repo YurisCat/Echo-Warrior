@@ -25,6 +25,7 @@ public final class RelicEquipmentSelfTest1201 {
 
     public static void run(MinecraftServer server) {
         checks = 0;
+        EchoProgressionSelfTest1201.run(server.overworld());
         check(ModContent1201.items().size() == 43, "43 complete registered items including exploration");
         ModContent1201.items().forEach((id, item) -> check(BuiltInRegistries.ITEM.get(id) == item, "registered " + id));
         for (String id : new String[]{"echo_warrior", "echo_warrior_accessories", "echo_warrior_knowledge"}) {
@@ -63,9 +64,9 @@ public final class RelicEquipmentSelfTest1201 {
             EchoRelicState1201.consumeShieldCharge(relic, 600);
             check(EchoRelicState1201.shieldCharges(relic, 699) == 2 && EchoRelicState1201.shieldCharges(relic, 700) == 3, "charge boundary");
             var progress = EchoRelicProgress1201.addExperience(relic, 1304);
-            check(progress.newLevel() == 29 && EchoRelicProgress1201.experience(relic) == 72, "1304 XP just below level cap");
+            check(progress.newLevel() == 29 && EchoRelicProgress1201.experience(relic) == 72, "1304 XP just below level 30");
             EchoRelicProgress1201.addExperience(relic, 1);
-            check(EchoRelicProgress1201.level(relic) == 30 && EchoRelicProgress1201.experience(relic) == 0, "1305 XP level cap");
+            check(EchoRelicProgress1201.level(relic) == 30 && EchoRelicProgress1201.experience(relic) == 0, "1305 XP level 30");
             check(EchoRelicProgress1201.maximumHealth(hero, 30) == hero.maximumHealth() * 2
                     && EchoRelicProgress1201.attackDamage(hero, 30) == hero.attackDamage() * 2, "growth endpoints");
             ItemStack loaded = ItemStack.of(relic.save(new CompoundTag()).copy());
@@ -78,7 +79,7 @@ public final class RelicEquipmentSelfTest1201 {
         }
         ItemStack overflow = relic(EchoHeroType1201.ROMAN_LEGIONARY);
         EchoRelicProgress1201.addExperience(overflow, 16);
-        check(EchoRelicProgress1201.addExperience(overflow, Integer.MAX_VALUE).newLevel() == 30, "large XP addition cannot overflow");
+        check(EchoRelicProgress1201.addExperience(overflow, Integer.MAX_VALUE).newLevel() == EchoRelicProgress1201.maxLevel(), "large XP addition cannot overflow");
         ItemStack archer = relic(EchoHeroType1201.EGYPTIAN_ARCHER);
         EchoRelicState1201.ensureInitialized(archer, random, 500);
         check(EchoRelicState1201.egyptianArrowMode(archer) == EchoRelicState1201.EgyptianArrowMode.OFF, "arrows default off");

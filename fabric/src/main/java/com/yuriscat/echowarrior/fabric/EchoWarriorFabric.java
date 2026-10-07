@@ -72,6 +72,9 @@ public final class EchoWarriorFabric implements ModInitializer {
 	}
 
 	private static void registerNetworking() {
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
+                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(handler.getPlayer(), new com.yuriscat.echowarrior.network.EchoProgressionPayload(com.yuriscat.echowarrior.item.EchoProgressionConfig.serverMaxLevel())));
+        net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.clientboundPlay().register(com.yuriscat.echowarrior.network.EchoProgressionPayload.TYPE, com.yuriscat.echowarrior.network.EchoProgressionPayload.STREAM_CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(EchoCompassStatePayload.TYPE, EchoCompassStatePayload.STREAM_CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(EchoCompassPulsePayload.TYPE, EchoCompassPulsePayload.STREAM_CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(EchoCompassMessagePayload.TYPE, EchoCompassMessagePayload.STREAM_CODEC);

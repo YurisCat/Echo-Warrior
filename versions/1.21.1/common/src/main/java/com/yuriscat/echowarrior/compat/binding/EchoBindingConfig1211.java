@@ -22,6 +22,7 @@ public final class EchoBindingConfig1211 {
     }
 
     public static void load(Path configDirectory) {
+        com.yuriscat.echowarrior.compat.item.EchoProgressionConfig1211.load(configDirectory);
         Path path = configDirectory.resolve("echo_warrior-bindings.json");
         try {
             if (Files.exists(path)) {

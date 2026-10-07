@@ -123,7 +123,7 @@
   "gui.echo_warrior.summoner.section.alert": "Actitud",
   "gui.echo_warrior.summoner.attribute.health": "Salud: %s/%s",
   "gui.echo_warrior.summoner.attribute.health_absent": "Salud: %s/%s (ausente)",
-  "gui.echo_warrior.summoner.attribute.level": "Nivel: %s/30",
+  "gui.echo_warrior.summoner.attribute.level": "Nivel: %s/%s",
   "gui.echo_warrior.summoner.attribute.attack": "Daño: %s",
   "gui.echo_warrior.summoner.attribute.attack_speed": "Velocidad de ataque: %s",
   "gui.echo_warrior.summoner.attribute.armor": "Armadura: %s",
@@ -147,7 +147,7 @@
   "gui.echo_warrior.summoner.state.no_relic": "Inserta primero una reliquia",
   "gui.echo_warrior.summoner.experience.title": "Experiencia del Eco",
   "gui.echo_warrior.summoner.experience.no_relic": "Inserta una reliquia para ver la experiencia.",
-  "gui.echo_warrior.summoner.experience.max": "Nivel 30 · Nivel máximo",
+  "gui.echo_warrior.summoner.experience.max": "Nivel %s · Nivel máximo",
   "gui.echo_warrior.summoner.experience.progress": "Nivel %s · EXP %s/%s",
   "gui.echo_warrior.summoner.fuel.title": "Combustible de eco",
   "gui.echo_warrior.summoner.fuel.summon_cost": "Invocación: %s",
@@ -620,5 +620,7 @@
   "gui.echo_warrior.tutorial.skill.roman.endures.description.1": "Alza el escudo y provoca a los enemigos cercanos.",
   "gui.echo_warrior.tutorial.skill.roman.endures.description.2": "Tras 5 segundos, devuelve el daño recibido durante la defensa y repele a los enemigos.",
   "gui.echo_warrior.tutorial.skill.roman.bulwark.name": "Baluarte legionario",
-  "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "Reduce un 50 % el daño de ataques y proyectiles que llegan desde delante del legionario."
+  "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "Reduce un 50 % el daño de ataques y proyectiles que llegan desde delante del legionario.",
+  "message.echo_warrior.tbf.healing_disabled": "Los Ecos usan su propio sistema de recuperación. La curación de TBF no está disponible.",
+  "message.echo_warrior.tbf.unavailable": "No se puede controlar este Eco. Comprueba la reliquia, los permisos de control y el invocador."
 }

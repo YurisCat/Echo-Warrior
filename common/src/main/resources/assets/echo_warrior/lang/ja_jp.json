@@ -123,7 +123,7 @@
   "gui.echo_warrior.summoner.section.alert": "警戒モード",
   "gui.echo_warrior.summoner.attribute.health": "体力：%s/%s",
   "gui.echo_warrior.summoner.attribute.health_absent": "体力：%s/%s（未召喚）",
-  "gui.echo_warrior.summoner.attribute.level": "レベル：%s/30",
+  "gui.echo_warrior.summoner.attribute.level": "レベル：%s/%s",
   "gui.echo_warrior.summoner.attribute.attack": "攻撃力：%s",
   "gui.echo_warrior.summoner.attribute.attack_speed": "攻撃速度：%s",
   "gui.echo_warrior.summoner.attribute.armor": "防御力：%s",
@@ -147,7 +147,7 @@
   "gui.echo_warrior.summoner.state.no_relic": "先に遺物を入れてください",
   "gui.echo_warrior.summoner.experience.title": "エコーの経験値",
   "gui.echo_warrior.summoner.experience.no_relic": "遺物を入れると経験値を表示します。",
-  "gui.echo_warrior.summoner.experience.max": "レベル30 · 最大レベル",
+  "gui.echo_warrior.summoner.experience.max": "レベル%s · 最大レベル",
   "gui.echo_warrior.summoner.experience.progress": "レベル%s · 経験値%s/%s",
   "gui.echo_warrior.summoner.fuel.title": "エコー燃料",
   "gui.echo_warrior.summoner.fuel.summon_cost": "召喚：%s",
@@ -620,5 +620,7 @@
   "gui.echo_warrior.tutorial.skill.roman.endures.description.1": "盾を構え、近くの敵を挑発する。",
   "gui.echo_warrior.tutorial.skill.roman.endures.description.2": "5秒後、防御中に受けたダメージを返し、敵をノックバックさせる。",
   "gui.echo_warrior.tutorial.skill.roman.bulwark.name": "軍団兵の防壁",
-  "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "正面から受ける攻撃と飛び道具のダメージを50%軽減する。"
+  "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "正面から受ける攻撃と飛び道具のダメージを50%軽減する。",
+  "message.echo_warrior.tbf.healing_disabled": "エコーは独自の仕組みで回復するため、TBFの治療は利用できません。",
+  "message.echo_warrior.tbf.unavailable": "このエコーは操作できません。遺物、操作権限、召喚器の状態を確認してください。"
 }

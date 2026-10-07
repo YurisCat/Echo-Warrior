@@ -11,7 +11,13 @@ ADAPTERS = {
     "ClientScreenHooks": ("EchoClient1201Fabric", "EchoClient1201Forge"),
     "CreativeSummonerDestructionPayload": ("CreativeDestructionRequest",),
     "CreativeSummonerInsertionPayload": ("CreativeInsertRequest", "CreativeInsertReply"),
+    "EchoProgressionPayload": ("EchoProgressionPacket",),
 }
+for packet in ("RecallPet", "SummonPet", "TeleportPetToPlayer", "DirectTeleportPetToPlayer",
+               "ReleaseRecalledPet", "RevivePet", "HealPet", "DeletePetData",
+               "SetPriority", "RequestPetData", "AreaRecall"):
+    ADAPTERS[f"TbfNeoforge{packet}PacketMixin"] = (
+        f"TbfForge{packet}PacketMixin", f"TbfFabric{packet}PacketMixin")
 
 
 def audit() -> None:

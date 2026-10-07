@@ -1,0 +1,27 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.yuriscat.echowarrior.compat.integration.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "TbfOwnershipMixin1201",
+    "TbfSnapshotMixin1201",
+    "TbfLostStateMixin1201",
+    "TbfFabricRecallPetPacketMixin1201",
+    "TbfFabricSummonPetPacketMixin1201",
+    "TbfFabricTeleportPetToPlayerPacketMixin1201",
+    "TbfFabricDirectTeleportPetToPlayerPacketMixin1201",
+    "TbfFabricReleaseRecalledPetPacketMixin1201",
+    "TbfFabricRevivePetPacketMixin1201",
+    "TbfFabricHealPetPacketMixin1201",
+    "TbfFabricDeletePetDataPacketMixin1201",
+    "TbfFabricSetPriorityPacketMixin1201",
+    "TbfFabricRequestPetDataPacketMixin1201",
+    "TbfFabricAreaRecallPacketMixin1201",
+    "TbfUntrackingMixin1201"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "plugin": "com.yuriscat.echowarrior.compat.integration.TbfMixinPlugin1201"
+}

@@ -383,6 +383,7 @@ public final class AutomatedTestPauseController1211 {
     }
 
     private static void finish(Minecraft client) {
+        GuandaoPresentationClientSelfTest1211.run(client);
         EchoWarrior1211.LOGGER.info(
                 "Automated creative summoner test passed for relic/accessory synchronization, active-echo Shift+left deletion, and carried-summoner catalog deletion.");
         client.setScreen(new PauseScreen(true));

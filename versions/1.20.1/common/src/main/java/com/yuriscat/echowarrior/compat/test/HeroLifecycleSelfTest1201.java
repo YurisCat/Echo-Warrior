@@ -27,6 +27,7 @@ public final class HeroLifecycleSelfTest1201 {
 
     public static void run(MinecraftServer server) {
         DepartureEffectsSelfTest1201.run(server);
+        com.yuriscat.echowarrior.compat.integration.EchoExternalCompanionSelfTest1201.run(server);
         checks = 0;
         ServerLevel level = server.overworld();
         ServerPlayer player = new ServerPlayer(server, level, new GameProfile(UUID.randomUUID(), "HeroLifecycleTest"));

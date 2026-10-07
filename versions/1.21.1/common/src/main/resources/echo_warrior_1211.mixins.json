@@ -3,6 +3,9 @@
   "package": "com.yuriscat.echowarrior.compat.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "EchoBindingExternalInvoker1211",
+    "EchoGrowthAttributeMixin1211",
+    "EchoGrowthEntityMixin1211",
     "BlockBehaviourMixin1211",
     "BlockTalentMixin1211",
     "CreeperMixin1211",

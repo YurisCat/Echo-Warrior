@@ -276,6 +276,13 @@
               "lerp_mode": "catmullrom"
             }
           }
+        },
+        "Main": {
+          "rotation": [
+            0,
+            0,
+            0
+          ]
         }
       }
     },
@@ -915,7 +922,12 @@
               },
               "lerp_mode": "catmullrom"
             }
-          }
+          },
+          "rotation": [
+            0,
+            0,
+            0
+          ]
         },
         "Weapon": {
           "rotation": {

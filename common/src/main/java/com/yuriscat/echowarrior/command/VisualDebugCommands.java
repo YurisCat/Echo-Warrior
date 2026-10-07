@@ -59,6 +59,10 @@ public final class VisualDebugCommands {
 						.then(recyclerEffectCommand("failure", RecyclerChestBlockEntity.EffectTier.FAILURE)));
 		dispatcher.register(Commands.literal("echo_warrior")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+				.then(Commands.literal("progression_selftest").executes(context -> {
+                    com.yuriscat.echowarrior.item.EchoProgressionSelfTest.run(context.getSource().getLevel());
+                    return 1;
+                }))
 				.then(Commands.literal("visual")
 						.then(Commands.literal("status").executes(context -> executeStatus(context.getSource())))
 						.then(Commands.literal("samurai_afterimage_neutral")

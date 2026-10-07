@@ -52,6 +52,8 @@ import java.util.List;
 public final class EchoWarriorFabricClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
+        ClientPlayNetworking.registerGlobalReceiver(com.yuriscat.echowarrior.network.EchoProgressionPayload.TYPE, (packet, context) -> context.client().execute(packet::apply));
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> com.yuriscat.echowarrior.item.EchoProgressionConfig.resetConnection());
 		ClientPlatformServices.install(payload -> {
 			if (!ClientPlayNetworking.canSend(payload.type())) return false;
 			ClientPlayNetworking.send(payload);

@@ -19,7 +19,7 @@ tasks.register('generateLegacyGuandaoAnimation') {
         ['idle', 'walk'].each { name ->
             def bones = content.animations["animation.guandao_warrior.${name}"].bones
             if (!bones.containsKey('Main')) bones.Main = [:]
-            if (bones.Main.containsKey('rotation'))
+            if (bones.Main.containsKey('rotation') && bones.Main.rotation != [0, 0, 0])
                 throw new GradleException("Guandao ${name} now authors Main rotation; review legacy root-rest conversion")
             bones.Main.rotation = [0, 0, 0]
         }

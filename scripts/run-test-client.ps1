@@ -105,6 +105,16 @@ else {
     }
 }
 
+$clientBuildPath = Join-Path $clientProjectDirectory 'build.gradle'
+$clientBuild = Get-Content -LiteralPath $clientBuildPath -Raw
+$configuredUsername = [regex]::Match($clientBuild, "--username=([^']+)'")
+if (-not $configuredUsername.Success -or $configuredUsername.Groups[1].Value -cne $clientUsername) {
+    throw "Client username differs between the launcher and $clientBuildPath."
+}
+if ($clientUsername -notmatch '^[A-Za-z0-9_]{1,16}$') {
+    throw "Client username '$clientUsername' violates the Minecraft login protocol limit."
+}
+
 $javaExecutable = Join-Path $jdkRoot 'bin\java.exe'
 if (-not (Test-Path -LiteralPath $javaExecutable)) {
     throw "Project Java runtime is missing: $javaExecutable"
@@ -336,6 +346,13 @@ try {
 
     $finalLog = Get-Content -LiteralPath $latestLog -Raw
     if ($null -eq $finalLog) { $finalLog = '' }
+    if ($expectsQuickPlayWorld -and $TargetVersion -in @('Current', '1.21.1') -and
+        $finalLog -notmatch 'GUANDAO PRESENTATION SELFTEST PASSED processor=geckolib5? root=idle-walk packet-order=three') {
+        throw "$TargetVersion Guandao animation handoff checkpoint is missing."
+    }
+    if ($expectsQuickPlayWorld -and $TargetVersion -eq 'Current' -and $finalLog -notmatch '\[EchoProgressionSelfTest\] PASS') {
+        throw 'Mainline progression runtime checkpoint is missing.'
+    }
     if ($TargetVersion -eq '1.20.1' -and $expectsQuickPlayWorld) {
         if ($finalLog -notmatch 'Client smoke test requesting normal shutdown' -or
             $finalLog -notmatch 'Summoner item model and texture resolved' -or

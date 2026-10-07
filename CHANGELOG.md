@@ -4,6 +4,33 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+## 0.2.4 - 2026-10-07
+
+### Added
+
+- Raised the default Echo level cap from 30 to 100. Configure `maxLevel` in `config/echo_warrior-progression.json` and restart the game or server to change it; supported values are 1 through 1,000,000, including 1,000 and 5,000.
+- Added optional Truly Best Friends Forever 0.2.3 integration for Minecraft 1.20.1 Forge and 1.21.1 NeoForge. Manage your Echoes through its list, teams, and summon wheel, including when their summoners are stored in chests.
+- Echoes keep one stable companion entry across dismissals and new summons. Recalling an active Echo preserves its health and costs no new summon fuel; summoning a dismissed or defeated Echo follows Echo Warrior's normal fuel and full-health rules.
+
+### Changed
+
+- Health and base attack continue growing beyond level 30 using the same formula: `1 + (level - 1) / 29` times their level-1 values. Level 30 keeps its previous strength; level 100 reaches approximately 4.414 times base values. Other attributes do not directly scale with level.
+- Experience requirements continue at `15 + 2 × current level`: 1,305 total XP from level 1 to 30 and 11,385 from level 1 to 100. Lowering the configured cap preserves previously earned levels and within-level XP; no new overflow XP accumulates while capped.
+- Growth settings synchronize from the server. High-level attributes and summoner-menu values support values beyond the previous limits. Relic salvage rewards remain capped at their level-30 value.
+
+### Fixed
+
+- Fixed the Chinese Guandao Warrior's brief whole-body spin after finishing its four-hit combo on Minecraft 1.21.1. The existing 1.20.1 correction is retained; the 26.1.2 animation path was checked separately.
+- Reapplying relic attributes on Minecraft 1.20.1 and 1.21.1 no longer grants unintended healing when the maximum health increases.
+- TBF untracking removes only the companion entry, without restoring an extra Echo from an old entity snapshot. TBF healing is unavailable for Echoes and displays an explanation; other pets keep TBF's normal behavior.
+
+### Notes
+
+- Existing worlds and cultivated relics are supported. Restart after updating; no new world or chunks are required. Multiplayer uses the server's level cap.
+- TBF remains optional and is not bundled. The two integrations above were tested with the author's official 0.2.3 files. No TBF compatibility is claimed for other Minecraft/loader combinations.
+- Moving a relic into a different summoner creates a new companion entry. Unidentified legacy lost entries are not automatically merged and can be untracked manually.
+- Updated all shipped translations for the new compatibility messages and configurable level display.
+
 ## 0.2.3 - 2026-10-05
 
 ### Fixed

@@ -42,6 +42,7 @@ final class EchoWarrior1211NeoForgeClient {
     }
 
     static void register(IEventBus modBus, IEventBus gameBus) {
+        gameBus.addListener((net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) -> com.yuriscat.echowarrior.compat.item.EchoProgressionConfig1211.resetConnection());
         modBus.addListener(EchoWarrior1211NeoForgeClient::onClientSetup);
         modBus.addListener(EchoWarrior1211NeoForgeClient::registerRenderers);
         modBus.addListener(EchoWarrior1211NeoForgeClient::registerScreens);

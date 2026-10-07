@@ -53,6 +53,10 @@ public final class EchoWarriorNeoForge {
 		modBus.addListener(this::registerContent);
 		modBus.addListener(this::registerAttributes);
 		modBus.addListener(this::registerPayloads);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.yuriscat.echowarrior.network.EchoProgressionPayload(com.yuriscat.echowarrior.item.EchoProgressionConfig.serverMaxLevel()));
+        });
 		modBus.addListener(this::addBrushableBlocks);
 		modBus.addListener(this::commonSetup);
 		NeoForgeEventRegistrar.register(NeoForge.EVENT_BUS);
@@ -98,6 +102,7 @@ public final class EchoWarriorNeoForge {
 
 	private void registerPayloads(RegisterPayloadHandlersEvent event) {
 		var registrar = event.registrar("1");
+        registrar.playToClient(com.yuriscat.echowarrior.network.EchoProgressionPayload.TYPE, com.yuriscat.echowarrior.network.EchoProgressionPayload.STREAM_CODEC);
 		registrar.playToClient(EchoCompassStatePayload.TYPE, EchoCompassStatePayload.STREAM_CODEC);
 		registrar.playToClient(EchoCompassPulsePayload.TYPE, EchoCompassPulsePayload.STREAM_CODEC);
 		registrar.playToClient(EchoCompassMessagePayload.TYPE, EchoCompassMessagePayload.STREAM_CODEC);
