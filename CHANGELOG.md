@@ -4,18 +4,22 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+## 0.2.6 - 2026-10-10
+
 ### Changed
 
-- Truly Best Friends Forever integration now attempts to enable on version 0.2.3 and later when the required interfaces pass startup checks, instead of requiring an exact version allowlist. Interface mismatches disable the adapter with a diagnostic log message.
+- Truly Best Friends Forever integration now checks versions 0.2.3 and later automatically instead of requiring each version to be added to an allowlist. The adapter enables when its required interfaces are compatible; otherwise, it stays disabled and explains why in the log.
 
 ### Fixed
 
-- Protected Echo companion entries from TBF's optional missing-pet cleanup, including when the Echo namespace is added to its presence-probe whitelist. Ordinary pets retain TBF's cleanup behavior.
-- Guarded the additional owner-aware snapshot restoration entry point introduced by newer TBF versions and adopted their ownership tag writer. Echo identity, summoner binding, fuel costs and summon transactions remain unchanged.
+- Protected Echo companion entries and team slots from the optional missing-pet cleanup in newer TBF versions. Ordinary pets keep TBF's normal cleanup behavior.
+- Updated compatibility with TBF's newer ownership and snapshot-restoration interfaces, preventing an extra Echo from being restored from a companion-list snapshot.
 
-### Verification
+### Notes
 
-- Packaged server integration tests passed with official TBF 0.2.3 and 0.2.4.1 on Minecraft 1.20.1 Forge and 1.21.1 NeoForge. Passing startup API checks is not a claim that every future TBF version has been tested. Restart after updating; no new world or chunks are required.
+- Verified official TBF 0.2.3 and 0.2.4.1 packages on Minecraft 1.20.1 Forge and 1.21.1 NeoForge. TBF 0.2.4.1 also passed client checks for previews, list recall and summoning, teams, the summon wheel, chest-stored summoners, and untracking.
+- TBF remains optional and is not bundled. Passing startup checks does not guarantee compatibility with every future TBF release; no new TBF support is claimed for other Minecraft/loader combinations.
+- Echo growth, summoner bindings, fuel costs and saved data are unchanged. Existing worlds are supported; restart the game and server after updating. No new world or chunks are required.
 
 ## 0.2.5 - 2026-10-10
 
