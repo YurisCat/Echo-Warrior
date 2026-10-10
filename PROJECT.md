@@ -502,9 +502,12 @@ Fabric 使用 `run/saves/CATTEST`；NeoForge 使用 `run-neoforge/saves/CATTEST_
 - 用户指定后续稍长时间的测试优先在狐狐副机 `FOXY-NODE` 执行。当前仓库仍是唯一源码根；副机 `D:\Workspace-Terminal\EchoWarrior\<RunId>` 只保存当前工作区（含未提交修复）的隔离测试快照，不能变成另一条开发主线。短小源码检查可以本地执行；副机不可用时先报告原因，不自动把长测试转回主机。
 - 使用已有基础设施工作区的固定公钥 SSH/SCP 与主机/账户/SID 核验，不传认证文件、Git 用户配置、Gradle 用户配置、私人人工素材或玩家世界。专用便携 Java 17、21、25 位于 `D:\Tools-Terminal\EchoWarrior\jdk-<版本>`，只按任务配置进程环境，不改系统默认 Java。
 - `scripts/run-foxy-tests.ps1` 默认先用当前仓库 Wrapper 构建 1.21.1 与 1.20.1，再打包当前文件和四个发行 JAR，以 SHA-256 核对传输和逐文件输入，在副机后台串行执行源码守卫、JAR 基线及真实发行包专服自测。`-SkipBuild` 仅用于已经构建并核验的当前产物；每次分配新 RunId，不覆盖既有任务。`-Action Status` 查询进度，`-Action Collect` 核验并取回诊断证据。
+- 通用第三方复现可使用 `-ExtraModsDirectory` 指定按 MC/加载器分组的正式依赖包，`-ExtraModsOnly` 只执行联装；已发布原包可通过 `-SkipBuild -ArtifactRoot` 选择，保持本地构建产物不变。1.20.1 的 `-JointForgeVersion` 只改变本轮隔离测试加载器。输入和产物逐文件核验、无依赖与有依赖结果分开记录；详细参数及官方安装缓存规则见 `docs/FOXY_TEST_NODE.md`。
+- 1.20.1 原整合包客户端测试可显式复制 config/defaultconfigs/datapacks、固定原包基础依赖和测试堆内存，所有输入记录 SHA-256，缺失依赖不回退下载。2026-10-10 已用官方 CurseForge 导入的分享包复现 Apothic 1.3.7 构造 owner 冲突；当前候选通过可选兼容层将联装时的英灵成长初始化移至 Mob 构造尾部，无 Apothic 时保留原入口。成长数值、存档与网络不变，不需要更新百科/语言或新世界。验证边界和原包其他自测失败见 `docs/research/apothic-pack-reproduction-2026-10-10.md`，可复用规则见 PORT-034；尚未发布。
 - 1.21.1 新增 `scripts/smoke-test-1.21.1-production-servers.py`，覆盖 Fabric/NeoForge 正式映射与 Mixin，服务端准备完成后通过标准输入执行 `echo_warrior_compat selftest`，要求一万条遗迹的 1/49 查询上限、真实方块移除和局部重载标记，再正常保存退出。1.20.1 继续复用既有 Fabric/Forge 发行包双次启动/磁盘重启自测。所有服务仅绑定回环地址，测试世界位于副机独立 `D:\Games-Terminal\EchoWarrior\<RunId>`；报告位于 `D:\Artifacts-Terminal\Reports\EchoWarrior\<RunId>`，不会改写 CATTEST。
 - 测试节点有 Java 25 可供主线后续测试；当前自动派发入口覆盖两条兼容线，26.1.2 的长测试仍需通过固定 SSH 在独立快照使用对应既有脚本。图形客户端须遵循副机 GUI 桥和单客户端约束；无界面检查不签收画面、声音、多人整合包或反馈者原始 Spark 场景。详细操作见 `docs/FOXY_TEST_NODE.md`。纯测试工作流变更无需同步百科或语言文件。
-- 跨平台验收 JSON 资源比较完整数据树，兼容 CI 的 LF 和 Windows 检出的 CRLF；二进制图片及实际 JAR 的哈希仍逐字节核对。1.20.1 资源等价/损坏包守卫增至 47 项，见移植手册 PORT-031。此项只修正发布校验误报，不改资源或玩法。
+- 跨平台验收 JSON 资源比较完整数据树，兼容 CI 的 LF 和 Windows 检出的 CRLF；二进制图片及实际 JAR 的哈希仍逐字节核对。1.20.1 资源等价/损坏包守卫现为 52 项（含 Apothic 选择插件、兼容入口和回收箱客户端自测缺失拒绝），见移植手册 PORT-031/034。此项只调整校验，不改资源或玩法。
+- 1.20.1 回收箱渲染自测按材质通道严格要求本体 72 顶点，附加阴影另计，避免 ShadowDrop 的合法额外通道造成误报；客户端另经真实使用/点击包检查 27 格菜单、存取守恒、箱盖开合和现场恢复。可选系统属性 `echo_warrior.recycler_screenshots` 保存实际游戏帧供目视验收。实际渲染器与玩法未改变，无需更新百科或语言。复测及门禁边界见 `docs/research/recycler-render-selftest-2026-10-10.md`。
 
 ### 5.5 召唤器 GUI 与容器交互
 

@@ -87,6 +87,7 @@ public final class AutomatedTestController1201 {
                 && BooksClientSelfTest1201.tick(client)
                 && ExplorationClientSelfTest1201.tick(client)
                 && CompassHudClientSelfTest1201.tick(client)
+                && RecyclerClientSelfTest1201.tick(client)
                 && System.nanoTime() - pausedAt >= 12_000_000_000L) {
             if (restoredProtection == null) {
                 var server = client.getSingleplayerServer();

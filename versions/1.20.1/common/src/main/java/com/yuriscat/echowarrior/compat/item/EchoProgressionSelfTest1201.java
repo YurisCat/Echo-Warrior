@@ -45,6 +45,17 @@ public final class EchoProgressionSelfTest1201 {
                     check(Math.abs(EchoRelicProgress1201.attackDamage(type, value) / damage - (1 + (value - 1) / 29.0)) < 1e-8, "damage curve");
                 }
             }
+            // Real transformed constructors must initialize both attributes for every hero.
+            for (var type : java.util.List.of(ModContent1201.ROMAN_LEGIONARY_ECHO,
+                    ModContent1201.AZTEC_WARRIOR_ECHO, ModContent1201.EGYPTIAN_ARCHER_ECHO,
+                    ModContent1201.GUANDAO_WARRIOR_ECHO, ModContent1201.JAPANESE_SAMURAI_ECHO)) {
+                var hero = type.create(level);
+                check(hero != null, "registered hero factory: " + type);
+                hero.getAttribute(Attributes.MAX_HEALTH).setBaseValue(10000);
+                hero.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(5000);
+                check(hero.getMaxHealth() == 10000 && hero.getAttributeValue(Attributes.ATTACK_DAMAGE) == 5000,
+                        "constructor growth range: " + type);
+            }
             var entity = ModContent1201.ROMAN_LEGIONARY_ECHO.create(level);
             check(entity != null, "registered entity factory");
             entity.getAttribute(Attributes.MAX_HEALTH).setBaseValue(10000);

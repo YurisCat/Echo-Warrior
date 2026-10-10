@@ -44,11 +44,21 @@ public final class ExplorationClientSelfTest1201 {
         ModEffects1201.effects().forEach((id, effect) -> check(client.getMobEffectTextures().get(effect).contents().name().equals(id),
                 "registered effect sprite is stitched: " + id));
         var recycler = new ItemStack(ModContent1201.ECHO_RECYCLER_ITEM);
-        var vertices = new CountingVertices();
+        // Additional GUI passes (for example item shadows) are not chest geometry.
+        // Keep the exact geometry assertion on the material used by our renderer.
+        var passes = new java.util.LinkedHashMap<RenderType, CountingVertices>();
         client.getItemRenderer().render(recycler, ItemDisplayContext.GUI, false, new PoseStack(),
-                type -> vertices, LightTexture.FULL_BRIGHT, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
+                type -> passes.computeIfAbsent(type, ignored -> new CountingVertices()),
+                LightTexture.FULL_BRIGHT, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
                 client.getItemRenderer().getModel(recycler, client.level, client.player, 0));
-        check(vertices.count == 72, "recycler item renders bottom, lid and latch: " + vertices.count);
+        var primary = RenderType.entityCutout(Sheets.CHEST_SHEET);
+        int primaryVertices = passes.containsKey(primary) ? passes.get(primary).count : 0;
+        int auxiliaryVertices = passes.entrySet().stream().filter(entry -> entry.getKey() != primary)
+                .mapToInt(entry -> entry.getValue().count).sum();
+        EchoWarrior1201.LOGGER.info("[Compat1201] RECYCLER RENDER PASSES primary={} auxiliary={} passes={}",
+                primaryVertices, auxiliaryVertices,
+                passes.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue().count).toList());
+        check(primaryVertices == 72, "recycler item renders bottom, lid and latch in its material pass: " + primaryVertices);
         var brushable = new net.minecraft.world.level.block.entity.BrushableBlockEntity(playerPos,
                 ModContent1201.SUSPICIOUS_GRASS_BLOCK.defaultBlockState());
         check(client.getBlockEntityRenderDispatcher().getRenderer(brushable) != null, "vanilla brushing renderer registered");

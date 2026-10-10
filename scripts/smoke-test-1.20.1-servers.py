@@ -33,6 +33,22 @@ def config_values() -> dict[str, str]:
                 if "=" in line and not line.startswith("#"))
 
 
+def seed_forge_vanilla(run_dir: Path, mc: str) -> None:
+    """Reuse only the SHA-1-verified official bundle at Forge's download path."""
+    if not os.environ.get("ECHO_WARRIOR_VANILLA_CACHE"):
+        return
+    cached = Path(os.environ["ECHO_WARRIOR_VANILLA_CACHE"]) / f"{mc}-server.jar"
+    if not cached.is_file():
+        return
+    expected = {"1.20.1": "84194a2f286ef7c14ed7ce0090dba59902951553"}
+    with cached.open("rb") as stream:
+        if hashlib.file_digest(stream, "sha1").hexdigest() != expected[mc]:
+            raise RuntimeError(f"Official vanilla cache hash mismatch: {cached}")
+    target = run_dir / "libraries/net/minecraft/server" / mc / f"server-{mc}.jar"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(cached, target)
+
+
 def java17() -> str:
     candidates = [
         Path(os.environ["ECHO_WARRIOR_JAVA17_HOME"]) / "bin" / "java.exe"
@@ -149,6 +165,7 @@ def install(loader: str, run_dir: Path, values: dict[str, str], java: str) -> li
         f"forge-{forge_version}-installer.jar",
     )
     # The installer, libraries and world live only in this fresh test directory.
+    seed_forge_vanilla(run_dir, mc)
     install_log = run_dir / "installer.log"
     with install_log.open("w", encoding="utf-8") as output:
         result = subprocess.run([java, "-jar", str(installer), "--installServer"], cwd=run_dir,
@@ -161,6 +178,16 @@ def install(loader: str, run_dir: Path, values: dict[str, str], java: str) -> li
     if not args_file.is_file():
         raise RuntimeError(f"Forge installer did not create {args_file}")
     return [f"@{args_file}", "nogui"]
+
+
+def required_dependency_source(url: str, filename: str) -> Path:
+    override = os.environ.get("ECHO_WARRIOR_TEST_REQUIRED_MODS")
+    if override:
+        source = Path(override) / filename
+        if not source.is_file() or not zipfile.is_zipfile(source):
+            raise RuntimeError(f"Explicit reported-pack dependency is missing or invalid: {source}")
+        return source
+    return download(url, filename)
 
 
 def stage_mods(loader: str, run_dir: Path, values: dict[str, str]) -> dict[str, str]:
@@ -185,7 +212,7 @@ def stage_mods(loader: str, run_dir: Path, values: dict[str, str]) -> dict[str, 
         dependencies.append((f"https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/{api}/fabric-api-{api}.jar",
                              f"fabric-api-{api}.jar"))
     for url, filename in dependencies:
-        shutil.copy2(download(url, filename), mod_dir / filename)
+        shutil.copy2(required_dependency_source(url, filename), mod_dir / filename)
     if os.environ.get("ECHO_WARRIOR_TEST_EXTRA_MODS"):
         extra = Path(os.environ["ECHO_WARRIOR_TEST_EXTRA_MODS"]) / mc / loader
         for source in sorted(extra.glob("*.jar")):
@@ -273,15 +300,20 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--loader", choices=("both", "fabric", "forge"), default="both")
     parser.add_argument("--timeout", type=int, default=240)
+    parser.add_argument("--forge-version", help="Isolated runtime loader override; does not change project build settings")
     args = parser.parse_args()
     subprocess.run([sys.executable, str(ROOT / "scripts" / "check-1.20.1-baseline.py")], check=True)
     values = config_values()
+    if args.forge_version:
+        if not re.fullmatch(r"\d+\.\d+\.\d+", args.forge_version) or args.loader != "forge":
+            parser.error("--forge-version requires --loader forge and a numeric major.minor.patch")
+        values["forge_version"] = args.forge_version
     java = java17()
     run_root = TEST_ROOT / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + f"-{os.getpid()}")
     run_root.mkdir(parents=True, exist_ok=False)
     results = {}
     report = {"stage": "full-content-and-disk-restart", "java": java, "version": values["mod_version"],
-              "results": results, "client_tested": False}
+              "results": results, "client_tested": False, "forge_version": values["forge_version"]}
     try:
         for loader in (("fabric", "forge") if args.loader == "both" else (args.loader,)):
             run_dir = run_root / loader

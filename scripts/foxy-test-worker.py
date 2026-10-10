@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import socket
 import subprocess
 import sys
@@ -34,8 +35,37 @@ def write_json(path: Path, value: dict) -> None:
     temporary.replace(path)
 
 
+def extra_mod_inputs(directory: Path | None, versions: list[str]) -> list[tuple[str, str, Path]]:
+    if directory is None:
+        return []
+    if not directory.is_dir():
+        raise ValueError(f"Extra mod directory does not exist: {directory}")
+    result = []
+    for path in sorted(directory.rglob("*.jar")):
+        parts = path.relative_to(directory).parts
+        if (len(parts) != 3 or parts[0] not in versions
+                or parts[1] not in (("fabric", "neoforge") if parts[0] == "1.21.1" else ("fabric", "forge"))
+                or not zipfile.is_zipfile(path)):
+            raise ValueError(f"Expected a valid JAR at <selected Minecraft version>/<loader>/<file>.jar: {path}")
+        result.append((parts[0], parts[1], path))
+    if not result:
+        raise ValueError(f"No extra mod JARs found: {directory}")
+    return result
+
+
 def package(destination: Path, versions: list[str], tbf_forge: Path | None = None,
-            tbf_neoforge: Path | None = None, tbf_only: bool = False) -> None:
+            tbf_neoforge: Path | None = None, tbf_only: bool = False,
+            extra_directory: Path | None = None, extra_only: bool = False,
+            artifact_root: Path | None = None, joint_forge_version: str | None = None) -> None:
+    joint = extra_mod_inputs(extra_directory, versions)
+    if extra_only and not joint:
+        raise ValueError("Extra-mods-only testing requires explicit extra mod JARs")
+    if joint and (tbf_forge or tbf_neoforge or tbf_only):
+        raise ValueError("Run generic extra mods and the specialized TBF suite as separate jobs")
+    if joint_forge_version and (not re.fullmatch(r"\d+\.\d+\.\d+", joint_forge_version)
+                               or not any(v == "1.20.1" and l == "forge" for v, l, _ in joint)):
+        raise ValueError("A joint Forge override requires a 1.20.1/forge extra-mod test")
+    artifact_root = artifact_root or ROOT
     tbf = [(version, loader, path) for version, loader, path in
            [("1.20.1", "forge", tbf_forge), ("1.21.1", "neoforge", tbf_neoforge)] if path]
     if tbf_only and not tbf:
@@ -58,20 +88,22 @@ def package(destination: Path, versions: list[str], tbf_forge: Path | None = Non
         "scripts/check-battlefield-performance.py", "scripts/smoke-test-1.21.1-production-servers.py",
         "scripts/foxy-test-worker.py", "scripts/run-foxy-tests.ps1", "docs/FOXY_TEST_NODE.md"})
     artifacts = {}
+    artifact_paths = {}
     for version in versions:
         props = dict(line.split("=", 1) for line in (ROOT / "versions" / version / "gradle.properties").read_text().splitlines()
                      if "=" in line and not line.startswith("#"))
         for loader in (("fabric", "neoforge") if version == "1.21.1" else ("fabric", "forge")):
             name = f"versions/{version}/{loader}/build/libs/{props['archives_base_name']}-{loader}-{version}-{props['mod_version']}.jar"
-            if not (ROOT / name).is_file():
+            if not (artifact_root / name).is_file():
                 raise RuntimeError(f"Build the selected artifact first: {name}")
             selected.add(name)
-            artifacts[name] = sha256(ROOT / name)
+            artifact_paths[name] = artifact_root / name
+            artifacts[name] = sha256(artifact_paths[name])
     files = {}
     destination.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
         for name in sorted(selected):
-            path = ROOT / name
+            path = artifact_paths.get(name, ROOT / name)
             if not path.is_file():
                 continue  # A tracked deletion stays deleted in this fresh snapshot.
             if any(part in {".git", ".ssh", ".codex", ".agents", "human-work", "saves"} for part in Path(name).parts):
@@ -79,13 +111,17 @@ def package(destination: Path, versions: list[str], tbf_forge: Path | None = Non
             files[name] = sha256(path)
             archive.write(path, name)
         extra_mods = {}
-        for version, loader, path in tbf:
+        for version, loader, path in tbf + joint:
             name = f"test-extra-mods/{version}/{loader}/{path.name}"
+            if name in files:
+                raise ValueError(f"Duplicate extra mod archive path: {name}")
             files[name] = sha256(path)
             extra_mods[name] = files[name]
             archive.write(path, name)
         manifest = {"created_utc": datetime.now(timezone.utc).isoformat(), "versions": versions,
                     "tbf_versions": [version for version, _, _ in tbf], "tbf_only": tbf_only,
+                    "joint_loaders": sorted({(version, loader) for version, loader, _ in joint}),
+                    "extra_mods_only": extra_only, "joint_forge_version": joint_forge_version,
                     "extra_mods": extra_mods,
                     "source_head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
                     "source_dirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT)),
@@ -120,6 +156,9 @@ def execute(report_root: Path, game_root: Path, tools_root: Path) -> int:
                 raise RuntimeError(f"Transferred source/artifact hash mismatch: {name}")
         report["verified_files"] = len(manifest["files"])
         env = os.environ.copy()
+        # Only explicitly packaged dependencies may participate in a joint run.
+        env.pop("ECHO_WARRIOR_TEST_EXTRA_MODS", None)
+        env.pop("ECHO_WARRIOR_TBF_JOINT", None)
         env["ECHO_WARRIOR_JAVA17_HOME"] = str(tools_root / "jdk-17")
         env["ECHO_WARRIOR_JAVA21_HOME"] = str(tools_root / "jdk-21")
         env["ECHO_WARRIOR_JAVA25_HOME"] = str(tools_root / "jdk-25")
@@ -129,13 +168,13 @@ def execute(report_root: Path, game_root: Path, tools_root: Path) -> int:
         env["ECHO_WARRIOR_TEST_ARTIFACT_ROOT"] = str(game_root)
         env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env["PATH"]
         commands = [("performance-source-guard", [sys.executable, str(ROOT / "scripts/check-battlefield-performance.py")])]
-        if "1.21.1" in manifest["versions"] and not manifest.get("tbf_only"):
+        if "1.21.1" in manifest["versions"] and not (manifest.get("tbf_only") or manifest.get("extra_mods_only")):
             commands.extend([
                 ("1.21.1-baseline", [r"C:\Program Files\PowerShell\7\pwsh.exe", "-NoLogo", "-NoProfile", "-File",
                                      str(ROOT / "scripts/check-1.21.1-baseline.ps1"), "-SkipBuild"]),
                 ("1.21.1-production", [sys.executable, str(ROOT / "scripts/smoke-test-1.21.1-production-servers.py")]),
             ])
-        if "1.20.1" in manifest["versions"] and not manifest.get("tbf_only"):
+        if "1.20.1" in manifest["versions"] and not (manifest.get("tbf_only") or manifest.get("extra_mods_only")):
             commands.extend([
                 ("1.20.1-baseline", [sys.executable, str(ROOT / "scripts/check-1.20.1-baseline.py")]),
                 ("1.20.1-content-parity", [sys.executable, str(ROOT / "scripts/check-1.20.1-content-parity.py")]),
@@ -147,6 +186,12 @@ def execute(report_root: Path, game_root: Path, tools_root: Path) -> int:
             loader = "neoforge" if version == "1.21.1" else "forge"
             commands.append((version + "-tbf-joint", [sys.executable, str(ROOT / "scripts" / script),
                              "--loader", loader, "--timeout", "600"]))
+        for version, loader in manifest.get("joint_loaders", []):
+            script = "smoke-test-1.21.1-production-servers.py" if version == "1.21.1" else "smoke-test-1.20.1-servers.py"
+            command = [sys.executable, str(ROOT / "scripts" / script), "--loader", loader, "--timeout", "600"]
+            if version == "1.20.1" and loader == "forge" and manifest.get("joint_forge_version"):
+                command += ["--forge-version", manifest["joint_forge_version"]]
+            commands.append((f"{version}-{loader}-extra-mods", command))
         for name, command in commands:
             report["current_step"] = name
             write_json(report_root / "status.json", report)
@@ -156,6 +201,9 @@ def execute(report_root: Path, game_root: Path, tools_root: Path) -> int:
             if name.endswith("-tbf-joint"):
                 step_env["ECHO_WARRIOR_TEST_EXTRA_MODS"] = str(ROOT / "test-extra-mods")
                 step_env["ECHO_WARRIOR_TBF_JOINT"] = "1"
+            elif name.endswith("-extra-mods"):
+                step_env["ECHO_WARRIOR_TEST_EXTRA_MODS"] = str(ROOT / "test-extra-mods")
+                step_env.pop("ECHO_WARRIOR_TBF_JOINT", None)
             with log.open("w", encoding="utf-8") as output:
                 result = subprocess.run(command, cwd=ROOT, env=step_env, stdout=output, stderr=subprocess.STDOUT,
                                         creationflags=NO_WINDOW)
@@ -199,13 +247,18 @@ def main() -> int:
     parser.add_argument("--tbf-forge", type=Path)
     parser.add_argument("--tbf-neoforge", type=Path)
     parser.add_argument("--tbf-only", action="store_true")
+    parser.add_argument("--extra-mods", type=Path)
+    parser.add_argument("--extra-mods-only", action="store_true")
+    parser.add_argument("--artifact-root", type=Path)
+    parser.add_argument("--joint-forge-version")
     parser.add_argument("--collect", action="store_true")
     parser.add_argument("--report-root", type=Path)
     parser.add_argument("--game-root", type=Path)
     parser.add_argument("--tools-root", type=Path, default=Path(r"D:\Tools-Terminal\EchoWarrior"))
     args = parser.parse_args()
     if args.package:
-        package(args.package, args.versions, args.tbf_forge, args.tbf_neoforge, args.tbf_only)
+        package(args.package, args.versions, args.tbf_forge, args.tbf_neoforge, args.tbf_only,
+                args.extra_mods, args.extra_mods_only, args.artifact_root, args.joint_forge_version)
     elif args.report_root and args.game_root and args.execute:
         return execute(args.report_root, args.game_root, args.tools_root)
     elif args.report_root and args.game_root and args.collect:

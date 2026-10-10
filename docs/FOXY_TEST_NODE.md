@@ -49,6 +49,10 @@ Collect 仅取回本轮状态、输入清单、步骤日志、服务端日志/�
 
 需要实际客户端时先读节点 `GUI.md`，通过现有 `invoke-desktop-gui.ps1` 在已登录且解锁的 FOXY 会话执行 `scripts/run-test-client.ps1`，检查已有客户端并串行运行。普通 SSH 验收只证明无界面测试可运行；画面、声音、控制、真实多人和第三方整合包仍需相应实机验收。
 
+1.20.1 正式客户端可通过 `run-test-client.ps1 -Production -ProductionForgeVersion <版本>` 指定隔离实例的 Forge 版本，仍要求 `-TargetVersion 1.20.1 -Loader Forge -StartupOnly`。可选依赖沿用 `ECHO_WARRIOR_TEST_EXTRA_MODS` 并写入产物哈希；`ECHO_WARRIOR_TEST_ARTIFACT_ROOT` 指向已正常保存退出的专服证据/测试世界根。新客户端从该测试世界复制独立 CATTEST，不复用玩家存档，不修改 Gradle 的构建版本。
+
+整合包复现可设置 `ECHO_WARRIOR_TEST_PROFILE_OVERRIDES=<导入实例>`，只复制 `config`、`defaultconfigs`、`datapacks` 并记录启动前 SHA-256，不导入玩家世界、mods 或启动凭据，不覆盖既有文件。`ECHO_WARRIOR_TEST_REQUIRED_MODS=<原包mods目录>` 要求 GeckoLib/SBL 等基础依赖直接来自该目录；缺文件/损坏即失败，不能静默替换为 Maven 同名包。`ECHO_WARRIOR_TEST_CLIENT_HEAP_MIB` 可为大型包指定 1024～16384 MiB（默认 3072）。这些输入只影响测试实例。第三方首次入服界面需要实际处理，超时不算崩溃复现；大包中某项自测断言不适用时保留失败，不放宽整个 ERROR 日志过滤。
+
 ## 可选联装测试与官方服务端缓存（2026-10-07）
 
 - 工作进程把 `ECHO_WARRIOR_VANILLA_CACHE` 指向节点工具目录的 `vanilla-server-cache`。只缓存 1.20.1/1.21.1 官方服务端 bundle，使用 Mojang 对象 SHA-1 校验后复制到 Fabric 安装器路径；不复用世界、模组或玩家数据。用于避免官方 CDN 下载超时掩盖运行测试。
@@ -56,6 +60,18 @@ Collect 仅取回本轮状态、输入清单、步骤日志、服务端日志/�
 - 联装 TBF 时同时设置 `ECHO_WARRIOR_TBF_JOINT=1`，强制要求适配层启用及真实 TBF handler 自测通过，不能把“禁用适配也正常启动”计为兼容成功。仍通过同一副机串行测试工作流，不与普通回归或图形客户端抢占节点。
 
 - `-TbfForgeJar <jar> -TbfNeoForgeJar <jar>` 可把明确指定的官方包加入源码快照并核对哈希；默认先做无 TBF 回归，再做两个指定加载器的联装。`-TbfOnly` 仅补跑联合测试，不能宣称包含未执行的无 TBF 检查。
+- 通用联装使用 `-ExtraModsDirectory <目录>`，只接受 `<目录>/<选定MC版本>/<合法加载器>/*.jar`，全部随快照核对哈希；默认先跑无额外模组套件，再逐个运行有依赖输入的加载器。`-ExtraModsOnly` 仅跑所选联装，不代表无模组回归通过；通用联装与专用 TBF 模式分开派发。`-SkipBuild -ArtifactRoot <目录>` 可从同样的 `versions/<MC>/<loader>/build/libs/` 层级读取已发布原包，不覆盖本地构建产物；证据以实际包哈希为准，不把当前源码 HEAD 等同于外部原包源码。`-JointForgeVersion 47.4.20` 只覆盖 1.20.1 Forge 联装实例的加载器，不修改项目构建版本。输入校验与损坏缓存拒绝由 `scripts/test_foxy_joint_inputs.py` 覆盖。
+- 2026-10-08 首次使用新的 Forge 版本时，安装器的 Mojang 下载停留在零字节；1.20.1 测试脚本现会把已核验官方 SHA-1 的原版服务端缓存复制到 Forge 的正常下载路径。仍由正式安装器安装库文件，不把缓存命中当作 Minecraft 已启动或联装已通过。
 - 可选 `fabric-server-cache/<MC>/<loader版本>` 与 `loader-server-cache/<MC>/<加载器>/<版本>` 仅含先前成功官方安装的公共库、启动 JAR/参数文件及 SHA-256 清单，逐文件复核后复制到新实例；无玩家、模组或世界数据。节点工作进程自动传入相应缓存目录。缓存来源为 2026-10-05 的 1.20.1 成功实例和 `20261007T112007Z-27188` 的 1.21.1 成功实例。
 
 - Fabric 通用启动器也可作为 SHA-256 清单中的根目录 JAR 复用；2026-10-07 追加来自成功快照 `20261007T123558Z-43952` 的 `fabric-server-<MC>-0.19.5-1.1.1.jar`。1.20.1 SHA-256 `084080ff36433a56fb26b90e8e5392d6daf4883586ec7198179476a0e184b6a7`；1.21.1 `e25c50698e0c05f07c230fe05c663022c9a675fbca15b81a5d49cac81ca6689c`。
+
+## Windows 控制台收尾修复（2026-10-07）
+
+本轮三个 cmd /c exit -1 遗留错误窗口，发生时间与自动客户端通过检查点后强制收尾一致。原启动器将 conhost.exe / OpenConsole.exe 也纳入按 PID 大小强制结束的集合；这是控制台关闭顺序风险，不应据此认定 Windows DLL 文件损坏。Win32 层实际失败的 DLL/句柄没有进一步跟踪。
+
+自动 StartupOnly 路径改为 -NoNewWindow，沿用启动器控制台，保留标准输出/错误日志。清理遍历继续经过控制台节点寻找真实子进程，但不强制终止控制台宿主；宿主由 Windows 回收。手动客户端路径不变。scripts/test-client-console-cleanup.ps1 校验宿主排除、宿主下子进程保留、其他进程排除、空根拒绝认领、自动路径保留控制台及日志重定向。
+
+FOXY Session 1 / Windows PowerShell 5.1 下，使用新的独立 CMD-CLEANUP-e85a67eb 世界进行 1.21.1 Fabric 启动、检查点和收尾回归，全部通过，未留新 cmd/Java 或错误窗口。之前的发布测试和证据不修改；当前只补签控制台收尾这一范围，没有据此扩展到其他游戏。
+
+基础设施记录：D:\AI-Workshop\60_Infrastructure\desktop-ms-xamanfjjoqzl\operations\2026-10-07-cmd-startup-errors\README.md。微软说明控制台连接尚未完成就关闭时可出现 0xc0000142：https://learn.microsoft.com/en-us/windows/console/creating-a-pseudoconsole-session 。

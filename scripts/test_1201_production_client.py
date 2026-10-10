@@ -27,12 +27,42 @@ class ProductionPreparationTests(unittest.TestCase):
         }
         tree = ast.parse(SOURCE.read_text(encoding="utf-8"))
         tree.body = [node for node in tree.body if isinstance(node, ast.FunctionDef)
-                     and node.name in ("download_file", "quote_java_argument")]
+                     and node.name in ("download_file", "quote_java_argument", "stage_profile_overrides")]
         exec(compile(tree, str(SOURCE), "exec"), self.context)
         self.download = self.context["download_file"]
         self.target = self.root / "out" / "client.jar"
         self.data = b"official pinned bytes"
         self.digest = hashlib.sha1(self.data).hexdigest()
+
+    def test_profile_overrides_copy_and_hash_without_mods_or_saves(self):
+        source = self.root / "profile"
+        for relative in ("config/echo.json", "defaultconfigs/server.toml", "datapacks/pack.zip",
+                         "mods/unselected.jar", "saves/private/level.dat"):
+            path = source / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(relative.encode())
+        run = self.root / "run"
+        result = self.context["stage_profile_overrides"](source, run)
+        self.assertEqual(set(result), {"config/echo.json", "defaultconfigs/server.toml", "datapacks/pack.zip"})
+        for relative, digest in result.items():
+            self.assertEqual((run / relative).read_bytes(), relative.encode())
+            self.assertEqual(digest, hashlib.sha256(relative.encode()).hexdigest())
+        self.assertFalse((run / "mods").exists())
+        self.assertFalse((run / "saves").exists())
+
+    def test_profile_overrides_do_not_overwrite_existing_configuration(self):
+        source = self.root / "profile"
+        (source / "config").mkdir(parents=True)
+        (source / "config/new.txt").write_text("new")
+        run = self.root / "run"
+        (run / "config").mkdir(parents=True)
+        (run / "config/existing.txt").write_text("keep")
+        with self.assertRaises(FileExistsError):
+            self.context["stage_profile_overrides"](source, run)
+        self.assertEqual((run / "config/existing.txt").read_text(), "keep")
+
+    def test_profile_overrides_are_optional(self):
+        self.assertEqual(self.context["stage_profile_overrides"](None, self.root / "run"), {})
 
     def download_target(self):
         return self.download("https://example.invalid/client.jar", self.target, {}, sha1=self.digest)

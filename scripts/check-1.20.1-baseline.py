@@ -67,6 +67,7 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
             "com/yuriscat/echowarrior/compat/mixin/MouseHandlerMixin1201.class",
             "com/yuriscat/echowarrior/compat/mixin/ClientMenuSyncMixin1201.class",
             "com/yuriscat/echowarrior/compat/client/AutomatedTestController1201.class",
+            "com/yuriscat/echowarrior/compat/client/RecyclerClientSelfTest1201.class",
             "com/yuriscat/echowarrior/compat/client/NetworkClientSelfTest1201.class",
             "com/yuriscat/echowarrior/compat/client/MenuClientSelfTest1201.class",
             "com/yuriscat/echowarrior/compat/test/JoinPausePolicy1201.class",
@@ -172,7 +173,13 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
         require(mixin["required"] and mixin["injectors"]["defaultRequire"] == 1,
                 "Missing injections must fail, not silently pass")
         require(mixin["compatibilityLevel"] == "JAVA_17", "Wrong Mixin Java level")
+        require(mixin.get("plugin") == "com.yuriscat.echowarrior.compat.integration.GrowthMixinPlugin1201",
+                "Missing conditional growth Mixin selector")
+        for part in ("integration/GrowthMixinPlugin1201", "mixin/ApothicGrowthEntityMixin1201"):
+            require(f"com/yuriscat/echowarrior/compat/{part}.class" in names,
+                    f"Missing Apothic growth compatibility class: {part}")
         require(mixin["mixins"] == ["EchoBindingExternalInvoker1201", "EchoGrowthAttributeMixin1201", "EchoGrowthEntityMixin1201",
+                                    "ApothicGrowthEntityMixin1201",
                                     "BlockBehaviourMixin1201", "MinecraftServerMixin1201", "ServerMenuClickMixin1201", "PlayerListMixin1201", "PlayerListAccessor1201",
                                     "ServerGamePacketListenerMixin1201", "BlockTalentMixin1201", "CreeperMixin1201",
                                     "ExperienceOrbTalentMixin1201", "FishingHookTalentMixin1201", "LivingEntityMixin1201",

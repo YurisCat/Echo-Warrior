@@ -14,6 +14,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -145,15 +146,46 @@ def quote_java_argument(argument: str) -> str:
     return '"' + argument.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
+def stage_profile_overrides(profile: Path | None, run: Path) -> dict[str, str]:
+    """Copy explicit pack configuration/data, recording the exact pre-launch inputs."""
+    if profile is None:
+        return {}
+    profile = profile.resolve(strict=True)
+    hashes = {}
+    for folder in ("config", "defaultconfigs", "datapacks"):
+        source = profile / folder
+        if not source.exists():
+            continue
+        if source.is_symlink() or not source.is_dir():
+            raise ValueError(f"Expected an ordinary profile directory: {source}")
+        for path in source.rglob("*"):
+            if path.is_symlink() or not path.resolve().is_relative_to(profile):
+                raise ValueError(f"Profile input escapes its directory: {path}")
+            if path.is_file():
+                hashes[path.relative_to(profile).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+        shutil.copytree(source, run / folder)
+    return hashes
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--loader", choices=("fabric", "forge"), required=True)
+    parser.add_argument("--forge-version", help="Isolated production-client loader override")
     args = parser.parse_args()
     values, java = server.config_values(), server.java17()
+    if args.forge_version:
+        if args.loader != "forge" or not re.fullmatch(r"\d+\.\d+\.\d+", args.forge_version):
+            parser.error("--forge-version requires --loader forge and a numeric major.minor.patch")
+        values["forge_version"] = args.forge_version
     runtime, version, assets = prepare_runtime(args.loader, values, java)
     run = TEST_ROOT / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + f"-{os.getpid()}") / args.loader
     run.mkdir(parents=True, exist_ok=False)
     artifacts = server.stage_mods(args.loader, run, values)
+    profile_path = os.environ.get("ECHO_WARRIOR_TEST_PROFILE_OVERRIDES")
+    profile_files = stage_profile_overrides(Path(profile_path) if profile_path else None, run)
+    heap_mib = int(os.environ.get("ECHO_WARRIOR_TEST_CLIENT_HEAP_MIB", "3072"))
+    if not 1024 <= heap_mib <= 16384:
+        raise ValueError("Test client heap must be between 1024 and 16384 MiB")
     for report_path in sorted(server.TEST_ROOT.glob("*/report.json"), reverse=True):
         report = json.loads(report_path.read_text())
         source = report_path.parent / args.loader / "bootstrap-test-world"
@@ -168,7 +200,7 @@ def main() -> None:
     command = launch_command.get_minecraft_command(version, runtime, {
         "username": "Echo1201" + args.loader.title(), "uuid": "00000000000000000000000000001201", "token": "0",
         "executablePath": java, "gameDirectory": str(run), "quickPlaySingleplayer": "CATTEST",
-        "jvmArguments": ["-Xms512M", "-Xmx3G", "-Decho_warrior.auto_pause_after_quick_play=true"],
+        "jvmArguments": ["-Xms512M", f"-Xmx{heap_mib}M", "-Decho_warrior.auto_pause_after_quick_play=true"],
         "launcherName": "EchoWarrior-local-production-test", "launcherVersion": "1",
     })
     command[command.index("--assetsDir") + 1] = str(assets)
@@ -185,7 +217,8 @@ def main() -> None:
     arguments.write_text("\n".join(quote_java_argument(arg) for arg in command[1:]), encoding="utf-8")
     descriptor = {"java": java, "argument_file": str(arguments), "run_directory": str(run),
                   "loader": args.loader, "profile": version, "artifacts": artifacts,
-                  "source_world_report": str(report_path), "production": True}
+                  "source_world_report": str(report_path), "production": True,
+                  "profile_files": profile_files, "heap_mib": heap_mib}
     (run / "launch.json").write_text(json.dumps(descriptor, indent=2), encoding="utf-8")
     output = TEST_ROOT / ("latest-" + args.loader + "-launch.json")
     output.write_text(json.dumps(descriptor, indent=2), encoding="utf-8")

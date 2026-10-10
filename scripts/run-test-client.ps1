@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string]$TestWorldName = 'CATTEST',
     [ValidateSet('Current', '1.21.1', '1.20.1')]
@@ -9,6 +9,8 @@ param(
     [switch]$StartupOnly,
     [switch]$PauseOnJoin,
     [switch]$Production,
+    [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+$')]
+    [string]$ProductionForgeVersion,
     [ValidateRange(30, 300)]
     [int]$TimeoutSeconds = 120
 )
@@ -16,6 +18,9 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($Production -and ($TargetVersion -ne '1.20.1' -or -not $StartupOnly -or $PauseOnJoin)) {
     throw 'Production currently requires 1.20.1 StartupOnly; it never replaces the manual development shortcut.'
+}
+if ($ProductionForgeVersion -and (-not $Production -or $Loader -ne 'Forge')) {
+    throw 'ProductionForgeVersion requires an isolated Forge production-client run.'
 }
 if ($PauseOnJoin -and $TargetVersion -ne '1.20.1') {
     throw 'PauseOnJoin currently supports the isolated 1.20.1 client only.'
@@ -42,7 +47,12 @@ function Get-DescendantProcessIds {
             }
         }
     }
-    return @($known | Where-Object { $_ -ne $RootProcessId })
+    # Console hosts manage their own lifetime. Killing one while a cmd/Java child
+    # is attaching can cause STATUS_DLL_INIT_FAILED and leave a system error dialog.
+    # They remain in the traversal so their descendants can still be discovered.
+    $consoleIds = @($all | Where-Object { $_.Name -in @('conhost.exe', 'OpenConsole.exe') } |
+        ForEach-Object { [int]$_.ProcessId })
+    return @($known | Where-Object { $_ -ne $RootProcessId -and $_ -notin $consoleIds })
 }
 
 if (($TargetVersion -eq '1.20.1' -and $Loader -eq 'NeoForge') -or
@@ -151,7 +161,9 @@ if ($allRunningClients.Count -gt 0) {
 
 $productionLaunch = $null
 if ($Production) {
-    & python (Join-Path $PSScriptRoot 'prepare-1.20.1-production-client.py') --loader $Loader.ToLowerInvariant()
+    $prepareArguments = @('--loader', $Loader.ToLowerInvariant())
+    if ($ProductionForgeVersion) { $prepareArguments += @('--forge-version', $ProductionForgeVersion) }
+    & python (Join-Path $PSScriptRoot 'prepare-1.20.1-production-client.py') @prepareArguments
     if ($LASTEXITCODE -ne 0) { throw 'Production client preparation failed.' }
     $descriptorPath = Join-Path $projectRoot "build\compatibility-1.20.1-production-client\latest-$($Loader.ToLowerInvariant())-launch.json"
     $productionLaunch = Get-Content -LiteralPath $descriptorPath -Raw | ConvertFrom-Json
@@ -253,10 +265,11 @@ if ($Production) {
     Write-Host 'Testing production JARs in an isolated installed client (no development classpath).'
 }
 try {
+    # Retain the launcher console until cleanup finishes; stdout/stderr stay redirected.
     $gradleProcess = Start-Process -FilePath $launchExecutable `
         -ArgumentList $launchArguments `
         -WorkingDirectory $(if ($Production) { $runDirectory } else { $projectRoot }) `
-        -WindowStyle Hidden `
+        -NoNewWindow `
         -RedirectStandardOutput $stdoutPath `
         -RedirectStandardError $stderrPath `
         -PassThru
@@ -358,6 +371,7 @@ try {
             $finalLog -notmatch 'Summoner item model and texture resolved' -or
             $finalLog -notmatch 'All 43 registered item models, textures and names resolved' -or
             $finalLog -notmatch 'EXPLORATION CLIENT SELFTEST PASSED compass=overrides-and-tint grass=biome recycler=72-vertices-and-atlas brushing=renderer' -or
+            $finalLog -notmatch 'RECYCLER CLIENT SELFTEST PASSED menu=27-slots deposit=3-diamonds withdraw=conserved lid=open-close fixture=restored' -or
             $finalLog -notmatch 'NETWORK CLIENT SELFTEST PASSED mode=survival' -or
             $finalLog -notmatch 'NETWORK CLIENT SELFTEST PASSED mode=creative' -or
             $finalLog -notmatch 'MENU CLIENT SELFTEST PASSED mode=survival[^\r\n]*relic=preserved accessory=conserved' -or

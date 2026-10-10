@@ -4,6 +4,18 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+## 0.2.5 - 2026-10-10
+
+### Fixed
+
+- Fixed a Minecraft 1.20.1 Forge crash that could occur when previewing or summoning an Echo in modpacks containing Apothic Attributes.
+
+### Notes
+
+- Verified with Apothic Attributes 1.3.7 and Placebo 8.6.3 on Forge 47.4.20, including the reported modpack. Apothic Attributes remains optional and is not bundled.
+- Existing worlds and cultivated relics are supported. Growth formulas, fuel costs and saved data are unchanged. Restart the game and server after updating; no new world or chunks are required.
+- Minecraft 1.21.1 and 26.1.2 receive the matching 0.2.5 version number with no gameplay changes. Install the file for your exact Minecraft version and loader.
+
 ## 0.2.4 - 2026-10-07
 
 ### Added

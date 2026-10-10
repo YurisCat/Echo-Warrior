@@ -7,6 +7,10 @@ param(
     [string]$TbfForgeJar,
     [string]$TbfNeoForgeJar,
     [switch]$TbfOnly,
+    [string]$ExtraModsDirectory,
+    [switch]$ExtraModsOnly,
+    [string]$ArtifactRoot,
+    [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+$')][string]$JointForgeVersion,
     [string]$ControllerWorkspace = 'D:\AI-Workshop\60_Infrastructure\desktop-ms-xamanfjjoqzl'
 )
 $ErrorActionPreference = 'Stop'
@@ -31,6 +35,7 @@ function Copy-Node([string]$Source, [string]$Destination) {
 & $verify
 if ($Action -eq 'Run') {
     if ($RunId) { throw 'RunId is generated for a new job; supply it only for Status/Collect.' }
+    if ($ArtifactRoot -and -not $SkipBuild) { throw 'ArtifactRoot requires -SkipBuild; explicit release artifacts must not be replaced by a rebuild.' }
     [string[]]$selected = if ($Versions -eq 'All') { @('1.21.1', '1.20.1') } else { @($Versions) }
     if (-not $SkipBuild) {
         foreach ($version in $selected) {
@@ -56,6 +61,12 @@ if ($Action -eq 'Run') {
     if ($TbfForgeJar) { $optional += @('--tbf-forge', (Resolve-Path -LiteralPath $TbfForgeJar).Path) }
     if ($TbfNeoForgeJar) { $optional += @('--tbf-neoforge', (Resolve-Path -LiteralPath $TbfNeoForgeJar).Path) }
     if ($TbfOnly) { $optional += '--tbf-only' }
+    if ($ExtraModsDirectory) { $optional += @('--extra-mods', (Resolve-Path -LiteralPath $ExtraModsDirectory).Path) }
+    if ($ExtraModsOnly) { $optional += '--extra-mods-only' }
+    if ($ArtifactRoot) {
+        $optional += @('--artifact-root', (Resolve-Path -LiteralPath $ArtifactRoot).Path)
+    }
+    if ($JointForgeVersion) { $optional += @('--joint-forge-version', $JointForgeVersion) }
     & python (Join-Path $PSScriptRoot 'foxy-test-worker.py') --package $package --versions @selected @optional
     if ($LASTEXITCODE -ne 0) { throw 'Source snapshot packaging failed' }
     $hash = (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant()

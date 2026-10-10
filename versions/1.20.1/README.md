@@ -1,5 +1,25 @@
 # Minecraft 1.20.1 compatibility line
 
+## 2026-10-10 optional Apothic constructor compatibility
+
+The reported 0.2.4 owner exception was reproduced with the CurseForge shared profile
+and Apothic Attributes 1.3.7 enabled. The candidate selects a later Mob constructor
+boundary only when Apothic's owner interface is present; the original no-Apothic path,
+growth calculations, saves and networking are preserved. Restart is required; a new
+world is not. Five actual client hero previews/summons pass in the failing pack.
+FOXY job `20261010T034819Z-79120` passes ordinary Fabric/Forge and
+Forge + Apothic + TBF, each with two production-server boots and disk reload.
+All six boots pass the five-hero growth checks; both joint boots pass 100 actual
+TBF handler cycles. Artifact/source checks and 51 negative/equivalence tests pass.
+The separate recycler count failure was subsequently traced to the test combining
+ShadowDrop's 72 shadow vertices with 72 model vertices. Per-material counting and
+real chest-menu/deposit/withdrawal/lid checks now pass with and without ShadowDrop;
+other mods' existing resource errors still prevent a zero-error full-pack claim.
+Current candidate hashes and client evidence:
+[`../../docs/research/recycler-render-selftest-2026-10-10.md`](../../docs/research/recycler-render-selftest-2026-10-10.md).
+Earlier Apothic inputs and server evidence:
+[`../../docs/research/apothic-pack-reproduction-2026-10-10.md`](../../docs/research/apothic-pack-reproduction-2026-10-10.md).
+
 ## 2026-10-07 progression and optional TBF integration
 
 Default maximum level is now 100, configurable at startup with `config/echo_warrior-progression.json` (`schemaVersion: 1`, `maxLevel: 100`). Health and base attack keep the fixed `1 + (L - 1) / 29` multiplier; next-level XP remains `15 + 2L`. Lowering the cap preserves cultivated levels and existing XP. The salvage value remains capped at level 30.

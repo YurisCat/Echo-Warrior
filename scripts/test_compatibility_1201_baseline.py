@@ -86,6 +86,36 @@ class BaselineRejectionTests(unittest.TestCase):
     def test_missing_refmap(self):
         self.rejected("forge", lambda entries: entries.pop("echo_warrior_1201.refmap.json"), "missing")
 
+    def test_missing_recycler_client_interaction_guard(self):
+        self.rejected("forge", lambda entries: entries.pop(
+            "com/yuriscat/echowarrior/compat/client/RecyclerClientSelfTest1201.class"), "missing")
+
+    def test_missing_growth_selector(self):
+        def mutate(entries):
+            path = "echo_warrior_1201.mixins.json"
+            config = json.loads(entries[path])
+            config.pop("plugin")
+            entries[path] = json.dumps(config).encode()
+        self.rejected("forge", mutate, "Missing conditional growth Mixin selector")
+
+    def test_missing_apothic_growth_class(self):
+        self.rejected("forge", lambda entries: entries.pop(
+            "com/yuriscat/echowarrior/compat/mixin/ApothicGrowthEntityMixin1201.class"),
+            "Missing Apothic growth compatibility class")
+
+    def test_missing_growth_selector_class(self):
+        self.rejected("fabric", lambda entries: entries.pop(
+            "com/yuriscat/echowarrior/compat/integration/GrowthMixinPlugin1201.class"),
+            "Missing Apothic growth compatibility class")
+
+    def test_missing_apothic_growth_registration(self):
+        def mutate(entries):
+            path = "echo_warrior_1201.mixins.json"
+            config = json.loads(entries[path])
+            config["mixins"].remove("ApothicGrowthEntityMixin1201")
+            entries[path] = json.dumps(config).encode()
+        self.rejected("forge", mutate, "Unexpected server Mixin list")
+
     def test_missing_bleeding_effect_sprite(self):
         self.rejected("fabric", lambda entries: entries.pop("assets/minecraft/atlases/mob_effects.json"), "Missing bleeding effect atlas alias")
 
