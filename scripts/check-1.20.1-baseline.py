@@ -56,6 +56,17 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
     jar_path = artifact(loader, config) if jar_path is None else jar_path
     with zipfile.ZipFile(jar_path) as jar:
         names = set(jar.namelist())
+        tbf_config = f"echo_warrior_tbf_{loader}_1201.mixins.json"
+        require(tbf_config in names, "Missing optional TBF Mixin configuration")
+        expected_tbf = json.loads((COMPAT / loader / "src/main/resources" / tbf_config).read_text(encoding="utf-8"))
+        if loader == "fabric":
+            expected_tbf["refmap"] = "echo_warrior_1201.refmap.json"  # Added by Loom during production remapping.
+        require(json.loads(jar.read(tbf_config)) == expected_tbf,
+                "Divergent optional TBF Mixin configuration")
+        for module in ("TbfApiTypes1201", "TbfCompatibility1201", "TbfMixinPlugin1201",
+                       "mixin/TbfPresenceProbeMixin1201", "mixin/TbfSnapshotOwnerMixin1201"):
+            require(f"com/yuriscat/echowarrior/compat/integration/{module}.class" in names,
+                    f"Missing TBF compatibility guard: {module}")
         required = {
             "pack.mcmeta", "echo_warrior_1201.mixins.json", "echo_warrior_1201.refmap.json",
             "com/yuriscat/echowarrior/compat/EchoWarrior1201.class",

@@ -63,7 +63,8 @@ def package(destination: Path, versions: list[str], tbf_forge: Path | None = Non
     if joint and (tbf_forge or tbf_neoforge or tbf_only):
         raise ValueError("Run generic extra mods and the specialized TBF suite as separate jobs")
     if joint_forge_version and (not re.fullmatch(r"\d+\.\d+\.\d+", joint_forge_version)
-                               or not any(v == "1.20.1" and l == "forge" for v, l, _ in joint)):
+                               or not (any(v == "1.20.1" and l == "forge" for v, l, _ in joint)
+                                       or (tbf_forge and "1.20.1" in versions))):
         raise ValueError("A joint Forge override requires a 1.20.1/forge extra-mod test")
     artifact_root = artifact_root or ROOT
     tbf = [(version, loader, path) for version, loader, path in
@@ -131,6 +132,14 @@ def package(destination: Path, versions: list[str], tbf_forge: Path | None = Non
                       "files": len(files), "bytes": destination.stat().st_size, "artifacts": artifacts}, indent=2))
 
 
+def joint_server_command(version: str, loader: str, forge_version: str | None) -> list[str]:
+    script = "smoke-test-1.21.1-production-servers.py" if version == "1.21.1" else "smoke-test-1.20.1-servers.py"
+    command = [sys.executable, str(ROOT / "scripts" / script), "--loader", loader, "--timeout", "600"]
+    if version == "1.20.1" and loader == "forge" and forge_version:
+        command += ["--forge-version", forge_version]
+    return command
+
+
 def execute(report_root: Path, game_root: Path, tools_root: Path) -> int:
     if socket.gethostname().upper() != "FOXY-NODE":
         raise RuntimeError("This worker must execute on the verified FOXY-NODE")
@@ -182,15 +191,11 @@ def execute(report_root: Path, game_root: Path, tools_root: Path) -> int:
                 ("1.20.1-production", [sys.executable, str(ROOT / "scripts/smoke-test-1.20.1-servers.py"), "--timeout", "600"]),
             ])
         for version in manifest.get("tbf_versions", []):
-            script = "smoke-test-1.21.1-production-servers.py" if version == "1.21.1" else "smoke-test-1.20.1-servers.py"
             loader = "neoforge" if version == "1.21.1" else "forge"
-            commands.append((version + "-tbf-joint", [sys.executable, str(ROOT / "scripts" / script),
-                             "--loader", loader, "--timeout", "600"]))
+            commands.append((version + "-tbf-joint",
+                             joint_server_command(version, loader, manifest.get("joint_forge_version"))))
         for version, loader in manifest.get("joint_loaders", []):
-            script = "smoke-test-1.21.1-production-servers.py" if version == "1.21.1" else "smoke-test-1.20.1-servers.py"
-            command = [sys.executable, str(ROOT / "scripts" / script), "--loader", loader, "--timeout", "600"]
-            if version == "1.20.1" and loader == "forge" and manifest.get("joint_forge_version"):
-                command += ["--forge-version", manifest["joint_forge_version"]]
+            command = joint_server_command(version, loader, manifest.get("joint_forge_version"))
             commands.append((f"{version}-{loader}-extra-mods", command))
         for name, command in commands:
             report["current_step"] = name

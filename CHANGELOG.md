@@ -4,6 +4,19 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+### Changed
+
+- Truly Best Friends Forever integration now attempts to enable on version 0.2.3 and later when the required interfaces pass startup checks, instead of requiring an exact version allowlist. Interface mismatches disable the adapter with a diagnostic log message.
+
+### Fixed
+
+- Protected Echo companion entries from TBF's optional missing-pet cleanup, including when the Echo namespace is added to its presence-probe whitelist. Ordinary pets retain TBF's cleanup behavior.
+- Guarded the additional owner-aware snapshot restoration entry point introduced by newer TBF versions and adopted their ownership tag writer. Echo identity, summoner binding, fuel costs and summon transactions remain unchanged.
+
+### Verification
+
+- Packaged server integration tests passed with official TBF 0.2.3 and 0.2.4.1 on Minecraft 1.20.1 Forge and 1.21.1 NeoForge. Passing startup API checks is not a claim that every future TBF version has been tested. Restart after updating; no new world or chunks are required.
+
 ## 0.2.5 - 2026-10-10
 
 ### Fixed

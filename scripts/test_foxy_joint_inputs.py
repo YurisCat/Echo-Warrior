@@ -78,6 +78,20 @@ class JointInputsTest(unittest.TestCase):
             worker.package(self.root / "output.zip", ["1.21.1"],
                            extra_directory=self.root, joint_forge_version="47.4.20")
 
+    def test_tbf_forge_override_reaches_packaging_after_input_validation(self):
+        path = self.jar("trulybestfriends.jar")
+        # The explicit TBF input is valid; stop before packaging this repository.
+        with patch.object(worker.subprocess, "check_output", side_effect=RuntimeError("packaging reached")):
+            with self.assertRaisesRegex(RuntimeError, "packaging reached"):
+                worker.package(self.root / "output.zip", ["1.20.1"],
+                               tbf_forge=path, joint_forge_version="47.4.20")
+
+    def test_tbf_override_is_only_forwarded_to_forge_1201(self):
+        self.assertEqual(worker.joint_server_command("1.20.1", "forge", "47.4.20")[-2:],
+                         ["--forge-version", "47.4.20"])
+        self.assertNotIn("--forge-version", worker.joint_server_command("1.21.1", "neoforge", "47.4.20"))
+        self.assertNotIn("--forge-version", worker.joint_server_command("1.20.1", "fabric", "47.4.20"))
+
     def test_forge_cache_rejects_corrupted_bundle_before_staging(self):
         (self.root / "1.20.1-server.jar").write_bytes(b"corrupted download")
         run = self.root / "run"

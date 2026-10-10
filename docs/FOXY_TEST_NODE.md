@@ -60,6 +60,7 @@ Collect 仅取回本轮状态、输入清单、步骤日志、服务端日志/�
 - 联装 TBF 时同时设置 `ECHO_WARRIOR_TBF_JOINT=1`，强制要求适配层启用及真实 TBF handler 自测通过，不能把“禁用适配也正常启动”计为兼容成功。仍通过同一副机串行测试工作流，不与普通回归或图形客户端抢占节点。
 
 - `-TbfForgeJar <jar> -TbfNeoForgeJar <jar>` 可把明确指定的官方包加入源码快照并核对哈希；默认先做无 TBF 回归，再做两个指定加载器的联装。`-TbfOnly` 仅补跑联合测试，不能宣称包含未执行的无 TBF 检查。
+- TBF 专用联装也支持 `-JointForgeVersion 47.4.20`，只覆盖 1.20.1 Forge 的联装实例，满足新版第三方包的加载器要求；基础回归仍使用项目固定加载器。参数必须伴随明确的 Forge 第三方输入，输入校验与命令传递由 `test_foxy_joint_inputs.py` 覆盖。
 - 通用联装使用 `-ExtraModsDirectory <目录>`，只接受 `<目录>/<选定MC版本>/<合法加载器>/*.jar`，全部随快照核对哈希；默认先跑无额外模组套件，再逐个运行有依赖输入的加载器。`-ExtraModsOnly` 仅跑所选联装，不代表无模组回归通过；通用联装与专用 TBF 模式分开派发。`-SkipBuild -ArtifactRoot <目录>` 可从同样的 `versions/<MC>/<loader>/build/libs/` 层级读取已发布原包，不覆盖本地构建产物；证据以实际包哈希为准，不把当前源码 HEAD 等同于外部原包源码。`-JointForgeVersion 47.4.20` 只覆盖 1.20.1 Forge 联装实例的加载器，不修改项目构建版本。输入校验与损坏缓存拒绝由 `scripts/test_foxy_joint_inputs.py` 覆盖。
 - 2026-10-08 首次使用新的 Forge 版本时，安装器的 Mojang 下载停留在零字节；1.20.1 测试脚本现会把已核验官方 SHA-1 的原版服务端缓存复制到 Forge 的正常下载路径。仍由正式安装器安装库文件，不把缓存命中当作 Minecraft 已启动或联装已通过。
 - 可选 `fabric-server-cache/<MC>/<loader版本>` 与 `loader-server-cache/<MC>/<加载器>/<版本>` 仅含先前成功官方安装的公共库、启动 JAR/参数文件及 SHA-256 清单，逐文件复核后复制到新实例；无玩家、模组或世界数据。节点工作进程自动传入相应缓存目录。缓存来源为 2026-10-05 的 1.20.1 成功实例和 `20261007T112007Z-27188` 的 1.21.1 成功实例。

@@ -35,9 +35,14 @@ public final class TbfBridge1201 {
 
     private TbfBridge1201() {}
     public static void initialize(String version) {
-        enabled = TbfMixinPlugin1201.compatible() && ("0.2.3".equals(version) || "0.2.2".equals(version));
-        if (enabled) LOG.info("[TBF compatibility] enabled for {}", version);
-        else LOG.warn("[TBF compatibility] unsupported version {}; adapter disabled", version);
+        var api = TbfMixinPlugin1201.api();
+        boolean legacyFabric = api.context().equals("Lcom/whidte/trulybestfriends/network/PacketContext;");
+        boolean eligible = TbfCompatibility1201.versionSupported(version, legacyFabric);
+        enabled = eligible && api.compatible();
+        if (enabled) LOG.info("[TBF compatibility] enabled for {} after API checks (presence probe: {}, owner-hint restore: {})",
+                version, api.presenceProbe(), api.ownerHintRestore());
+        else LOG.warn("[TBF compatibility] adapter disabled for {}: {}", version,
+                eligible ? api.reason() : "version is below 0.2.3 or unparseable");
     }
     public static boolean enabled() { return enabled; }
     public static void clear() { LAST_SENT.clear(); LAST_TOGGLE.clear(); SCANNED.clear(); }
@@ -284,7 +289,8 @@ public final class TbfBridge1201 {
         nbt.putUUID("UUID", id);
         nbt.putUUID(MARKER, binding.summonerId());
         nbt.putString("EchoWarriorExternalRelic", EchoRelicState1201.relicId(binding.relic()));
-        nbt.putString("OwnerUUID", player.getUUID().toString());
+        if (TbfMixinPlugin1201.api().ownerTag()) call("TbfOwnerTag", "write", nbt, player.getUUID());
+        else nbt.putString("OwnerUUID", player.getUUID().toString());
         nbt.putString("Dimension", binding.active() ? binding.snapshot().dimension() : player.serverLevel().dimension().location().toString());
         nbt.putBoolean("Recalled", !binding.active());
         nbt.putBoolean("Lost", false);

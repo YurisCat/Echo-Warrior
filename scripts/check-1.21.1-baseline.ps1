@@ -578,6 +578,19 @@ function Assert-Archive {
     Assert-Condition (Test-Path -LiteralPath $Path -PathType Leaf) "$Loader JAR was not built: $Path"
     $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $Path).Path)
     try {
+        foreach ($module in @('TbfApiTypes1211', 'TbfCompatibility1211', 'TbfMixinPlugin1211',
+                'mixin/TbfPresenceProbeMixin1211', 'mixin/TbfSnapshotOwnerMixin1211')) {
+            Assert-Condition ($null -ne $archive.GetEntry("com/yuriscat/echowarrior/compat/integration/$module.class")) `
+                "$Loader JAR is missing TBF compatibility guard $module"
+        }
+        if ($Loader -eq 'NeoForge') {
+            $tbfConfig = Get-ArchiveEntryText $archive 'echo_warrior_tbf_neoforge_1211.mixins.json' | ConvertFrom-Json
+            Assert-Condition ($tbfConfig.plugin -eq 'com.yuriscat.echowarrior.compat.integration.TbfMixinPlugin1211') `
+                'TBF API-check plugin is missing.'
+            foreach ($guard in @('TbfPresenceProbeMixin1211', 'TbfSnapshotOwnerMixin1211')) {
+                Assert-Condition ($tbfConfig.mixins -contains $guard) "TBF optional guard registration is missing: $guard"
+            }
+        }
         $nestedCompatMixinClasses = @($archive.Entries | Where-Object {
             $_.FullName -like 'com/yuriscat/echowarrior/compat/mixin/*$*.class'
         })

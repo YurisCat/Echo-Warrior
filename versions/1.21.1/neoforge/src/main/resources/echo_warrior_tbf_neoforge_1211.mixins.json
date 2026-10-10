@@ -18,7 +18,9 @@
     "TbfNeoforgeSetPriorityPacketMixin1211",
     "TbfNeoforgeRequestPetDataPacketMixin1211",
     "TbfNeoforgeAreaRecallPacketMixin1211",
-    "TbfUntrackingMixin1211"
+    "TbfUntrackingMixin1211",
+    "TbfPresenceProbeMixin1211",
+    "TbfSnapshotOwnerMixin1211"
   ],
   "injectors": {
     "defaultRequire": 1

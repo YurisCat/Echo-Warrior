@@ -18,7 +18,9 @@
     "TbfFabricSetPriorityPacketMixin1201",
     "TbfFabricRequestPetDataPacketMixin1201",
     "TbfFabricAreaRecallPacketMixin1201",
-    "TbfUntrackingMixin1201"
+    "TbfUntrackingMixin1201",
+    "TbfPresenceProbeMixin1201",
+    "TbfSnapshotOwnerMixin1201"
   ],
   "injectors": {
     "defaultRequire": 1

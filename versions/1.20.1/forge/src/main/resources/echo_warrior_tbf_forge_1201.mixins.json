@@ -18,7 +18,9 @@
     "TbfForgeSetPriorityPacketMixin1201",
     "TbfForgeRequestPetDataPacketMixin1201",
     "TbfForgeAreaRecallPacketMixin1201",
-    "TbfUntrackingMixin1201"
+    "TbfUntrackingMixin1201",
+    "TbfPresenceProbeMixin1201",
+    "TbfSnapshotOwnerMixin1201"
   ],
   "injectors": {
     "defaultRequire": 1

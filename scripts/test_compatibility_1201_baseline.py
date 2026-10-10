@@ -86,6 +86,22 @@ class BaselineRejectionTests(unittest.TestCase):
     def test_missing_refmap(self):
         self.rejected("forge", lambda entries: entries.pop("echo_warrior_1201.refmap.json"), "missing")
 
+    def test_missing_tbf_presence_guard(self):
+        self.rejected("forge", lambda entries: entries.pop(
+            "com/yuriscat/echowarrior/compat/integration/mixin/TbfPresenceProbeMixin1201.class"), "Missing TBF")
+
+    def test_missing_tbf_api_contract(self):
+        self.rejected("fabric", lambda entries: entries.pop(
+            "com/yuriscat/echowarrior/compat/integration/TbfCompatibility1201.class"), "Missing TBF")
+
+    def test_removed_tbf_owner_restore_registration(self):
+        def mutate(entries):
+            path = "echo_warrior_tbf_forge_1201.mixins.json"
+            config = json.loads(entries[path])
+            config["mixins"].remove("TbfSnapshotOwnerMixin1201")
+            entries[path] = json.dumps(config).encode()
+        self.rejected("forge", mutate, "Divergent optional TBF")
+
     def test_missing_recycler_client_interaction_guard(self):
         self.rejected("forge", lambda entries: entries.pop(
             "com/yuriscat/echowarrior/compat/client/RecyclerClientSelfTest1201.class"), "missing")

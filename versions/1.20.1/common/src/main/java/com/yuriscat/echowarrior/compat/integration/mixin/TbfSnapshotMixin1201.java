@@ -15,7 +15,9 @@ import java.util.UUID;
 @Pseudo
 @Mixin(targets = "com.whidte.trulybestfriends.network.PetEntitySnapshot", remap = false)
 public abstract class TbfSnapshotMixin1201 {
-    @Inject(method = "restore", at = @At("HEAD"), cancellable = true)
+    @Inject(target = @Desc(value = "restore",
+            args = {CompoundTag.class, UUID.class, ServerLevel.class}, ret = Entity.class),
+            at = @At("HEAD"), cancellable = true)
     private static void echoWarrior$rejectGenericRestore(CompoundTag snapshot, UUID expected, ServerLevel level,
             CallbackInfoReturnable<Entity> callback) {
         if (TbfBridge1201.enabled() && (snapshot.hasUUID(TbfBridge1201.MARKER)
