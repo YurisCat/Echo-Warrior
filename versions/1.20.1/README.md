@@ -3,7 +3,7 @@
 ## 2026-10-10 optional Apothic constructor compatibility
 
 The reported 0.2.4 owner exception was reproduced with the CurseForge shared profile
-and Apothic Attributes 1.3.7 enabled. The candidate selects a later Mob constructor
+and Apothic Attributes 1.3.7 enabled. Release 0.2.5 selects a later Mob constructor
 boundary only when Apothic's owner interface is present; the original no-Apothic path,
 growth calculations, saves and networking are preserved. Restart is required; a new
 world is not. Five actual client hero previews/summons pass in the failing pack.
@@ -15,7 +15,7 @@ The separate recycler count failure was subsequently traced to the test combinin
 ShadowDrop's 72 shadow vertices with 72 model vertices. Per-material counting and
 real chest-menu/deposit/withdrawal/lid checks now pass with and without ShadowDrop;
 other mods' existing resource errors still prevent a zero-error full-pack claim.
-Current candidate hashes and client evidence:
+Pre-release diagnostic hashes and client evidence:
 [`../../docs/research/recycler-render-selftest-2026-10-10.md`](../../docs/research/recycler-render-selftest-2026-10-10.md).
 Earlier Apothic inputs and server evidence:
 [`../../docs/research/apothic-pack-reproduction-2026-10-10.md`](../../docs/research/apothic-pack-reproduction-2026-10-10.md).
@@ -30,15 +30,15 @@ FOXY job `20261007T130957Z-66296` passed both ordinary packaged server loaders a
 Approved targets: Fabric + Forge, Java 17 for the game and compiled classes.
 The repository Gradle Wrapper runs on Java 21; do not downgrade the mainline Java 25 toolchain.
 
-Current stage: **0.2.3 server-performance release**. The exact CI JARs passed four-loader production-server regression on FOXY-NODE. GitHub Release and all six CurseForge files are public; all six Modrinth versions are verified while that project remains under review. Final hashes and platform results are recorded separately.
+Current stage: **0.2.5 Apothic compatibility release**. The exact CI JARs passed ordinary Fabric/Forge and Apothic + TBF production-server regression on FOXY-NODE, each with two boots and disk reload. Both production clients were verified; the reported pack's unrelated third-party resource errors remain documented separately. GitHub Release and all six CurseForge files are public; all six Modrinth versions are uploaded and verified while that project remains under review.
 All five heroes, their shared combat/talent/accessory machinery, original models/animations and the complete summoner GUI
 are connected. 43 items, three blocks, one custom block-entity type, three creative tabs and four menus are registered.
 All 14 reviewed locales, 31 converted recipes, archaeology/knowledge/recycler loot, compass models/HUD/colors and biome-tinted
 brushable blocks are included. The five heroes, books and recycler have passed actual production-server checks.
 Exploration placement/safety, actual talent mining/trading, dynamic relic overlays and production-JAR clients are implemented.
-The current release evidence is in `../../docs/releases/0.2.3.md`; `0.2.2.md` and the checkpoints below apply only to their recorded JAR hashes.
+The current release evidence is in `../../docs/releases/0.2.5.md`; older release records and the checkpoints below apply only to their recorded JAR hashes.
 Manual acceptance is tracked in `docs/COMPATIBILITY_1.20.1_TEST_CHECKLIST.md`, not inferred from automated success.
-The author approved public version `0.2.3`; historical `0.2.2-dev.1` checkpoints below were internal test identifiers for the earlier release.
+The author approved public version `0.2.5`; historical `0.2.2-dev.1` checkpoints below were internal test identifiers for the earlier release.
 
 ## Local battlefield performance fix — 2026-10-05
 
