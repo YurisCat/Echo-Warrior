@@ -171,6 +171,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--loader", choices=("fabric", "forge"), required=True)
     parser.add_argument("--forge-version", help="Isolated production-client loader override")
+    parser.add_argument("--pause-on-join", action="store_true",
+                        help="Pause for interactive acceptance instead of running the auto-close smoke suite")
     args = parser.parse_args()
     values, java = server.config_values(), server.java17()
     if args.forge_version:
@@ -200,7 +202,9 @@ def main() -> None:
     command = launch_command.get_minecraft_command(version, runtime, {
         "username": "Echo1201" + args.loader.title(), "uuid": "00000000000000000000000000001201", "token": "0",
         "executablePath": java, "gameDirectory": str(run), "quickPlaySingleplayer": "CATTEST",
-        "jvmArguments": ["-Xms512M", f"-Xmx{heap_mib}M", "-Decho_warrior.auto_pause_after_quick_play=true"],
+        "jvmArguments": ["-Xms512M", f"-Xmx{heap_mib}M",
+                        "-Decho_warrior.pause_on_join=true" if args.pause_on_join
+                        else "-Decho_warrior.auto_pause_after_quick_play=true"],
         "launcherName": "EchoWarrior-local-production-test", "launcherVersion": "1",
     })
     command[command.index("--assetsDir") + 1] = str(assets)
@@ -218,6 +222,7 @@ def main() -> None:
     descriptor = {"java": java, "argument_file": str(arguments), "run_directory": str(run),
                   "loader": args.loader, "profile": version, "artifacts": artifacts,
                   "source_world_report": str(report_path), "production": True,
+                  "interactive_acceptance": args.pause_on_join,
                   "profile_files": profile_files, "heap_mib": heap_mib}
     (run / "launch.json").write_text(json.dumps(descriptor, indent=2), encoding="utf-8")
     output = TEST_ROOT / ("latest-" + args.loader + "-launch.json")

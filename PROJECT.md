@@ -502,6 +502,7 @@ Fabric 使用 `run/saves/CATTEST`；NeoForge 使用 `run-neoforge/saves/CATTEST_
 #### 5.4.2 狐狐副机作为长期测试节点（2026-10-05）
 
 - 用户指定后续稍长时间的测试优先在狐狐副机 `FOXY-NODE` 执行。当前仓库仍是唯一源码根；副机 `D:\Workspace-Terminal\EchoWarrior\<RunId>` 只保存当前工作区（含未提交修复）的隔离测试快照，不能变成另一条开发主线。短小源码检查可以本地执行；副机不可用时先报告原因，不自动把长测试转回主机。
+- 1.20.1 正式客户端交互验收可使用 `run-test-client.ps1 -Production -PauseOnJoin`，与自动 `-StartupOnly` 二选一；实际操作后从游戏内保存退出。2026-10-10 已在副机完成 TBF 0.2.4.1 的 Forge 1.20.1 正式候选包及 NeoForge 1.21.1 同源开发客户端列表、预览、收放、箱中轮盘召回与取消追踪检查。两端无 ERROR/FATAL，正常退出；不扩大为多人、整合包或声音验收。证据与测试包装器误报边界见 `docs/research/tbf-forward-compatibility-2026-10-10.md`，工具参数见 `docs/FOXY_TEST_NODE.md`。
 - 使用已有基础设施工作区的固定公钥 SSH/SCP 与主机/账户/SID 核验，不传认证文件、Git 用户配置、Gradle 用户配置、私人人工素材或玩家世界。专用便携 Java 17、21、25 位于 `D:\Tools-Terminal\EchoWarrior\jdk-<版本>`，只按任务配置进程环境，不改系统默认 Java。
 - `scripts/run-foxy-tests.ps1` 默认先用当前仓库 Wrapper 构建 1.21.1 与 1.20.1，再打包当前文件和四个发行 JAR，以 SHA-256 核对传输和逐文件输入，在副机后台串行执行源码守卫、JAR 基线及真实发行包专服自测。`-SkipBuild` 仅用于已经构建并核验的当前产物；每次分配新 RunId，不覆盖既有任务。`-Action Status` 查询进度，`-Action Collect` 核验并取回诊断证据。
 - 通用第三方复现可使用 `-ExtraModsDirectory` 指定按 MC/加载器分组的正式依赖包，`-ExtraModsOnly` 只执行联装；已发布原包可通过 `-SkipBuild -ArtifactRoot` 选择，保持本地构建产物不变。1.20.1 的 `-JointForgeVersion` 只改变本轮隔离测试加载器。输入和产物逐文件核验、无依赖与有依赖结果分开记录；详细参数及官方安装缓存规则见 `docs/FOXY_TEST_NODE.md`。

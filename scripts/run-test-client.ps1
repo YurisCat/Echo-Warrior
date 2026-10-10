@@ -16,8 +16,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-if ($Production -and ($TargetVersion -ne '1.20.1' -or -not $StartupOnly -or $PauseOnJoin)) {
-    throw 'Production currently requires 1.20.1 StartupOnly; it never replaces the manual development shortcut.'
+if ($Production -and ($TargetVersion -ne '1.20.1' -or ($StartupOnly -eq $PauseOnJoin))) {
+    throw 'Production requires 1.20.1 and exactly one of StartupOnly or PauseOnJoin.'
 }
 if ($ProductionForgeVersion -and (-not $Production -or $Loader -ne 'Forge')) {
     throw 'ProductionForgeVersion requires an isolated Forge production-client run.'
@@ -163,6 +163,7 @@ $productionLaunch = $null
 if ($Production) {
     $prepareArguments = @('--loader', $Loader.ToLowerInvariant())
     if ($ProductionForgeVersion) { $prepareArguments += @('--forge-version', $ProductionForgeVersion) }
+    if ($PauseOnJoin) { $prepareArguments += '--pause-on-join' }
     & python (Join-Path $PSScriptRoot 'prepare-1.20.1-production-client.py') @prepareArguments
     if ($LASTEXITCODE -ne 0) { throw 'Production client preparation failed.' }
     $descriptorPath = Join-Path $projectRoot "build\compatibility-1.20.1-production-client\latest-$($Loader.ToLowerInvariant())-launch.json"
@@ -237,9 +238,14 @@ if (-not $StartupOnly) {
             -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $focusScript, '-ProjectRoot', $buildRoot) `
             -WindowStyle Hidden
     }
-    Push-Location $projectRoot
+    Push-Location $(if ($Production) { $runDirectory } else { $projectRoot })
     try {
-        & (Join-Path $projectRoot 'gradlew.bat') @gradleArguments
+        if ($Production) {
+            Write-Host 'Opening the isolated production client for interactive acceptance; close it through the game when finished.'
+            & $productionLaunch.java "@$($productionLaunch.argument_file)"
+        } else {
+            & (Join-Path $projectRoot 'gradlew.bat') @gradleArguments
+        }
         exit $LASTEXITCODE
     } finally {
         Pop-Location

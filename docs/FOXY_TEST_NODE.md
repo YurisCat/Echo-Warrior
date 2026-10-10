@@ -49,7 +49,9 @@ Collect 仅取回本轮状态、输入清单、步骤日志、服务端日志/�
 
 需要实际客户端时先读节点 `GUI.md`，通过现有 `invoke-desktop-gui.ps1` 在已登录且解锁的 FOXY 会话执行 `scripts/run-test-client.ps1`，检查已有客户端并串行运行。普通 SSH 验收只证明无界面测试可运行；画面、声音、控制、真实多人和第三方整合包仍需相应实机验收。
 
-1.20.1 正式客户端可通过 `run-test-client.ps1 -Production -ProductionForgeVersion <版本>` 指定隔离实例的 Forge 版本，仍要求 `-TargetVersion 1.20.1 -Loader Forge -StartupOnly`。可选依赖沿用 `ECHO_WARRIOR_TEST_EXTRA_MODS` 并写入产物哈希；`ECHO_WARRIOR_TEST_ARTIFACT_ROOT` 指向已正常保存退出的专服证据/测试世界根。新客户端从该测试世界复制独立 CATTEST，不复用玩家存档，不修改 Gradle 的构建版本。
+1.20.1 正式客户端可通过 `run-test-client.ps1 -TargetVersion 1.20.1 -Loader Forge -Production -ProductionForgeVersion <版本>` 指定隔离实例的 Forge 版本。必须二选一：`-StartupOnly` 执行自动检查并退出；`-PauseOnJoin` 仅在入世后暂停，供实际点击界面验收，完成后从游戏内保存退出。手动模式不自动运行全套客户端自测，不能只凭成功启动登记通过。可选依赖沿用 `ECHO_WARRIOR_TEST_EXTRA_MODS` 并写入产物哈希；`ECHO_WARRIOR_TEST_ARTIFACT_ROOT` 指向已正常保存退出的专服证据/测试世界根。新客户端从该测试世界复制独立 CATTEST，不复用玩家存档，不修改 Gradle 的构建版本。
+
+图形验收的外层 PowerShell 包装器应分别重定向标准输出和标准错误，并检查子进程退出码；不要在 Windows PowerShell 5.1 的 `ErrorActionPreference=Stop` 下把原生进程的标准错误提示直接合并到错误流。2026-10-10 Forge 游戏正常保存退出后，临时包装器误把 `Picked up JAVA_TOOL_OPTIONS` 记为任务失败；原记录保留，游戏结果以截图、游戏日志和归属进程退出核验为准，不能覆盖失败状态冒充包装器通过。
 
 整合包复现可设置 `ECHO_WARRIOR_TEST_PROFILE_OVERRIDES=<导入实例>`，只复制 `config`、`defaultconfigs`、`datapacks` 并记录启动前 SHA-256，不导入玩家世界、mods 或启动凭据，不覆盖既有文件。`ECHO_WARRIOR_TEST_REQUIRED_MODS=<原包mods目录>` 要求 GeckoLib/SBL 等基础依赖直接来自该目录；缺文件/损坏即失败，不能静默替换为 Maven 同名包。`ECHO_WARRIOR_TEST_CLIENT_HEAP_MIB` 可为大型包指定 1024～16384 MiB（默认 3072）。这些输入只影响测试实例。第三方首次入服界面需要实际处理，超时不算崩溃复现；大包中某项自测断言不适用时保留失败，不放宽整个 ERROR 日志过滤。
 
