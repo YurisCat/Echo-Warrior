@@ -57,6 +57,11 @@ public final class TbfCompatibility1201 {
             method(root, "getCompatOwnerUUID", "(" + entity + ")" + UUID);
             method(root, "tryForceLoadPet", "(" + entity + player + level + ")" + object("trulybestfriends$LoadResult"));
             method(root, "deletePetData", "(" + player + UUID + ")Z");
+            String commandSource = type(types, "commandSource");
+            ClassNode commands = required(source, "command.ModCommands");
+            method(commands, "loadPet", "(" + commandSource + player + entity + "Z)I");
+            method(commands, "reportLoadResult", "(" + commandSource + entity
+                    + object("trulybestfriends$LoadResult") + "Ljava/lang/String;Ljava/lang/String;Z)I");
             ClassNode result = required(source, "trulybestfriends$LoadResult");
             for (String value : new String[]{"OK", "NOT_A_PET"}) field(result, value, object("trulybestfriends$LoadResult"), true);
 

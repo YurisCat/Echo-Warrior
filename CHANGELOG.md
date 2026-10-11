@@ -4,6 +4,11 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+### Fixed
+
+- Restored manual tracking of Echoes after untracking them in Truly Best Friends Forever: right-click your active Echo with TBF's configured registration item (a feather by default), or use `/tbf load` with its existing operator requirement.
+- Manual registration restores the stable companion entry without changing the Echo's owner, entity identity, health or fuel. TBF's item-consumption settings and ordinary-pet behavior are preserved.
+
 ## 0.2.6 - 2026-10-10
 
 ### Changed

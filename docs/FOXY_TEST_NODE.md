@@ -45,7 +45,7 @@ Collect 仅取回本轮状态、输入清单、步骤日志、服务端日志/�
 
 ## 主线与图形测试
 
-当前入口支持 1.21.1/1.20.1 两条兼容线。26.1.2 长测试使用相同固定 SSH 和独立快照，设置任务的 Java 25 后调用仓库 Wrapper 和既有测试脚本；不要用 Java 17，也不要引入全局 Gradle。运行 1.20.1 Gradle 构建时显式传入 `-Dorg.gradle.java.installations.paths=D:\Tools-Terminal\EchoWarrior\jdk-17,D:\Tools-Terminal\EchoWarrior\jdk-21`，让 Java 21 上的 Wrapper 发现 Java 17 编译/运行工具链。
+当前入口支持 1.21.1/1.20.1 两条兼容线。26.1.2 长测试使用相同固定 SSH 和独立快照，设置任务的 Java 25 后调用仓库 Wrapper 和既有测试脚本；不要用 Java 17，也不要引入全局 Gradle。运行 1.20.1 Gradle 构建时显式传入 `-Porg.gradle.java.installations.paths=D:\Tools-Terminal\EchoWarrior\jdk-17,D:\Tools-Terminal\EchoWarrior\jdk-21`，让 Java 21 上的 Wrapper 发现 Java 17 编译/运行工具链。2026-10-11 实测只在 `JAVA_TOOL_OPTIONS` 中设置同名 `-D` 系统属性不足以让 Gradle 9.5.1 发现节点 JDK 17；改用上述 Gradle 项目属性后，Minecraft 编译产物生成正常启动。
 
 需要实际客户端时先读节点 `GUI.md`，通过现有 `invoke-desktop-gui.ps1` 在已登录且解锁的 FOXY 会话执行 `scripts/run-test-client.ps1`，检查已有客户端并串行运行。普通 SSH 验收只证明无界面测试可运行；画面、声音、控制、真实多人和第三方整合包仍需相应实机验收。
 

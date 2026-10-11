@@ -64,7 +64,7 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
         require(json.loads(jar.read(tbf_config)) == expected_tbf,
                 "Divergent optional TBF Mixin configuration")
         for module in ("TbfApiTypes1201", "TbfCompatibility1201", "TbfMixinPlugin1201",
-                       "mixin/TbfPresenceProbeMixin1201", "mixin/TbfSnapshotOwnerMixin1201"):
+                       "mixin/TbfManualTrackingMixin1201", "mixin/TbfPresenceProbeMixin1201", "mixin/TbfSnapshotOwnerMixin1201"):
             require(f"com/yuriscat/echowarrior/compat/integration/{module}.class" in names,
                     f"Missing TBF compatibility guard: {module}")
         required = {

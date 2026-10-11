@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "TbfOwnershipMixin1201",
+    "TbfManualTrackingMixin1201",
     "TbfSnapshotMixin1201",
     "TbfLostStateMixin1201",
     "TbfFabricRecallPetPacketMixin1201",

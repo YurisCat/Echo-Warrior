@@ -90,6 +90,18 @@ class BaselineRejectionTests(unittest.TestCase):
         self.rejected("forge", lambda entries: entries.pop(
             "com/yuriscat/echowarrior/compat/integration/mixin/TbfPresenceProbeMixin1201.class"), "Missing TBF")
 
+    def test_missing_tbf_manual_tracking_guard(self):
+        self.rejected("forge", lambda entries: entries.pop(
+            "com/yuriscat/echowarrior/compat/integration/mixin/TbfManualTrackingMixin1201.class"), "Missing TBF")
+
+    def test_removed_tbf_manual_tracking_registration(self):
+        def mutate(entries):
+            path = "echo_warrior_tbf_forge_1201.mixins.json"
+            config = json.loads(entries[path])
+            config["mixins"].remove("TbfManualTrackingMixin1201")
+            entries[path] = json.dumps(config).encode()
+        self.rejected("forge", mutate, "Divergent optional TBF")
+
     def test_missing_tbf_api_contract(self):
         self.rejected("fabric", lambda entries: entries.pop(
             "com/yuriscat/echowarrior/compat/integration/TbfCompatibility1201.class"), "Missing TBF")

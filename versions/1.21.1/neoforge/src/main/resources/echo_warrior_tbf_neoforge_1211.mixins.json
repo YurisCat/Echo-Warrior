@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "TbfOwnershipMixin1211",
+    "TbfManualTrackingMixin1211",
     "TbfSnapshotMixin1211",
     "TbfLostStateMixin1211",
     "TbfNeoforgeRecallPetPacketMixin1211",
