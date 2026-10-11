@@ -6,4 +6,5 @@ final class TbfApiTypes1211 {
     net.minecraft.server.level.ServerPlayer player;
     net.minecraft.server.level.ServerLevel level;
     net.minecraft.nbt.CompoundTag nbt;
+    net.minecraft.commands.CommandSourceStack commandSource;
 }

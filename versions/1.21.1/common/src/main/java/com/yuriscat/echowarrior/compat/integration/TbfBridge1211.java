@@ -202,6 +202,14 @@ public final class TbfBridge1211 {
         removeMirror(player, id);
         LAST_SENT.computeIfAbsent(player.getUUID(), ignored -> new HashMap<>()).remove(id);
     }
+    /** Called only by TBF's explicit item/command entry; its caller retains item cost and OP checks. */
+    public static Integer manualTrack(net.minecraft.commands.CommandSourceStack source, ServerPlayer player,
+            Entity entity, boolean informAdmins) {
+        Object result = forceTrack(entity, player);
+        if (result == null) return null; // Ordinary pets must keep TBF's own validation and save path.
+        return (Integer)call("command.ModCommands", "reportLoadResult", source, entity, result,
+                "trulybestfriends.load.success", "trulybestfriends.load.not_a_pet", informAdmins);
+    }
     public static Object forceTrack(Entity entity, ServerPlayer player) {
         if (!enabled || !(entity instanceof EchoWarriorEntity1211 echo)) return null;
         UUID summoner = echo.getSummonerId();

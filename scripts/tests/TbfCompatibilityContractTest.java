@@ -27,6 +27,15 @@ public final class TbfCompatibilityContractTest {
             Map<String, ClassNode> nodes = read(Path.of(argument));
             check(accept(nodes), "actual package " + argument);
             Map<String, ClassNode> changed = copy(nodes);
+            changed.get(ROOT + "command.ModCommands").methods.removeIf(m -> m.name.equals("loadPet"));
+            check(!accept(changed), "missing shared manual tracking entry");
+            changed = copy(nodes);
+            find(changed, "command.ModCommands", "reportLoadResult").desc = "()I";
+            check(!accept(changed), "manual result reporting signature changed");
+            changed = copy(nodes);
+            find(changed, "command.ModCommands", "loadPet").access &= ~Opcodes.ACC_STATIC;
+            check(!accept(changed), "manual tracking became an instance method");
+            changed = copy(nodes);
             changed.get(ROOT + "network.SummonPetPacket").methods.removeIf(m -> m.name.equals("handle"));
             check(!accept(changed), "missing handler");
             changed = copy(nodes);
@@ -80,6 +89,7 @@ public final class TbfCompatibilityContractTest {
         return descriptor.replace("net/minecraft/world/entity/Entity", "test/mapped/Entity")
                 .replace("net/minecraft/server/level/ServerPlayer", "test/mapped/Player")
                 .replace("net/minecraft/server/level/ServerLevel", "test/mapped/Level")
+                .replace("net/minecraft/commands/CommandSourceStack", "test/mapped/CommandSource")
                 .replace("net/minecraft/nbt/CompoundTag", "test/mapped/Tag");
     }
     private static void version(String version, boolean expected) {
@@ -120,6 +130,7 @@ public final class TbfCompatibilityContractTest {
         types.fields.add(new FieldNode(0, "player", "Lnet/minecraft/server/level/ServerPlayer;", null, null));
         types.fields.add(new FieldNode(0, "level", "Lnet/minecraft/server/level/ServerLevel;", null, null));
         types.fields.add(new FieldNode(0, "nbt", "Lnet/minecraft/nbt/CompoundTag;", null, null));
+        types.fields.add(new FieldNode(0, "commandSource", "Lnet/minecraft/commands/CommandSourceStack;", null, null));
         return types;
     }
     private static void check(boolean value, String message) {

@@ -94,6 +94,8 @@ public final class TbfJointSelfTest1211 {
             var team = (CompoundTag)TbfBridge1211.call("network.PetTeamData", "teamData", directory);
             check(!((List<?>)TbfBridge1211.call("network.PetTeamData", "memberUuids", team, color)).contains(id), "untracking also cleaned team");
 
+            verifyManualTracking(server, player, binding, id, context, directory);
+
             // Ordinary pet dispatch must still reach the original TBF handler.
             UUID ordinary = UUID.randomUUID();
             Path ordinaryFile = directory.resolve(ordinary+".nbt");
@@ -119,6 +121,137 @@ public final class TbfJointSelfTest1211 {
             catch (ReflectiveOperationException e) { throw new IllegalStateException(e); }
         }
     }
+
+    private static void verifyManualTracking(MinecraftServer server, ServerPlayer player,
+            EchoBindingSavedData1211.Binding binding, UUID id, Object context, Path directory)
+            throws ReflectiveOperationException, java.io.IOException {
+        Class<?> config = Class.forName(ROOT + "Config");
+        Field itemSetting = config.getField("manualRegisterItem");
+        Field consumeSetting = config.getField("consumeManualRegisterItem");
+        Field countSetting = config.getField("manualRegisterItemConsumeCount");
+        Object oldItem = itemSetting.get(null), oldConsume = consumeSetting.get(null), oldCount = countSetting.get(null);
+        var hand = net.minecraft.world.InteractionHand.MAIN_HAND;
+        var oldHand = player.getItemInHand(hand).copy();
+        boolean oldCreative = player.getAbilities().instabuild;
+        var echo = EchoBindingSystem1211.findLoaded(server, binding.spiritId());
+        var fixture = (com.yuriscat.echowarrior.compat.entity.RomanLegionaryEchoEntity1211)echo;
+        var live = echo.livingEntity();
+        var oldPosition = live.position();
+        float oldYaw = player.getYRot(), oldPitch = player.getXRot();
+        UUID physicalId = live.getUUID();
+        long generation = binding.generation();
+        int fuel = binding.fuel();
+        float health = live.getHealth();
+        Path file = directory.resolve(id + ".nbt");
+        ServerPlayer intruder = new ServerPlayer(server, player.serverLevel(), new com.mojang.authlib.GameProfile(UUID.randomUUID(), "TbfOtherOwner"), net.minecraft.server.level.ClientInformation.createDefault());
+        var outgoing = new ArrayList<Packet<?>>();
+        intruder.connection = new Recorder(server, new RecordingConnection(outgoing), intruder, outgoing);
+        var wolf = net.minecraft.world.entity.EntityType.WOLF.create(player.serverLevel());
+        check(wolf != null, "manual ordinary wolf fixture");
+        wolf.setOwnerUUID(player.getUUID());
+        wolf.moveTo(player.getX(), player.getY(), player.getZ(), 0, 0);
+        Map<UUID, ServerPlayer> lookup = playerLookup(server);
+        check(!lookup.containsKey(player.getUUID()), "manual fixture lookup is isolated");
+        lookup.put(player.getUUID(), player);
+        try {
+            itemSetting.set(null, "minecraft:feather");
+            consumeSetting.set(null, true);
+            countSetting.set(null, 2);
+            player.getAbilities().instabuild = false;
+            check(!player.createCommandSourceStack().hasPermission(2), "feather owner is genuinely non-OP");
+            packet("DeletePetDataPacket", context, id);
+            player.setItemInHand(hand, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.FEATHER, 1));
+            interact(player, live);
+            check(!Files.exists(file) && player.getItemInHand(hand).getCount() == 1, "insufficient feathers do not unmute or consume");
+            player.setItemInHand(hand, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STICK, 4));
+            interact(player, live);
+            check(!Files.exists(file) && player.getItemInHand(hand).getCount() == 4, "unconfigured item is ignored");
+            player.setItemInHand(hand, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.FEATHER, 4));
+            interact(player, live);
+            check(Files.isRegularFile(file) && player.getItemInHand(hand).getCount() == 2, "non-OP feather restores stable entry and consumes configured cost once");
+            interact(player, live);
+            check(player.getItemInHand(hand).isEmpty(), "repeat interaction follows the same per-use item cost");
+            check(read(file).getUUID("UUID").equals(id) && !Files.exists(directory.resolve(physicalId + ".nbt")), "manual tracking never creates physical-UUID entry");
+            packet("DeletePetDataPacket", context, id);
+            TbfBridge1211.refresh(player, true);
+            check(!Files.exists(file), "automatic refresh still respects untracking");
+            check(TbfBridge1211.call("trulybestfriends", "getCompatOwnerUUID", live) == null, "automatic owner/death capture remains excluded");
+            player.setItemInHand(hand, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.FEATHER, 3));
+            fixture.setBindingGenerationForTest(generation + 1);
+            check(echo.getBindingGeneration() != binding.generation(), "manual stale fixture actually differs from authority");
+            interact(player, live);
+            check(!Files.exists(file) && player.getItemInHand(hand).getCount() == 3, "stale incarnation cannot unmute or consume");
+            fixture.setBindingGenerationForTest(generation);
+            intruder.setItemInHand(hand, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.FEATHER, 3));
+            interact(intruder, live);
+            check(!Files.exists(file) && intruder.getItemInHand(hand).getCount() == 3, "foreign feather cannot claim Echo or spend items");
+            Path foreignDirectory = (Path)TbfBridge1211.call("network.PetIOUtil", "getOwnerDir", intruder);
+            check(!Files.exists(foreignDirectory.resolve(id + ".nbt")), "no foreign companion entry");
+            consumeSetting.set(null, false);
+            interact(player, live);
+            check(Files.exists(file) && player.getItemInHand(hand).getCount() == 3, "disabled consumption setting is preserved");
+            packet("DeletePetDataPacket", context, id);
+            live.moveTo(player.getX(), player.getY(), player.getZ() + 2, 0, 0);
+            player.setYRot(0); player.setXRot(0);
+            var source = player.createCommandSourceStack().withSuppressedOutput();
+            var dispatcher = server.getCommands().getDispatcher();
+            var load = dispatcher.getRoot().getChild("tbf").getChild("load");
+            check(!load.canUse(source.withPermission(0)) && load.canUse(source.withPermission(2)), "ordinary load retains OP command requirement");
+            check(executeLoad(server, source.withPermission(2)) == 1 && Files.exists(file), "actual ordinary load command restores aimed Echo");
+            packet("DeletePetDataPacket", context, id);
+            intruder.moveTo(player.getX(), player.getY(), player.getZ(), 0, 0);
+            check(executeLoad(server, intruder.createCommandSourceStack().withPermission(2).withSuppressedOutput()) == 0
+                    && !Files.exists(file), "even an OP cannot transfer Echo control through ordinary load");
+            interact(player, live);
+            check(Files.isRegularFile(file), "owner can retrack after rejected foreign load");
+            check(binding.active() && physicalId.equals(binding.spiritId()) && binding.generation() == generation
+                    && binding.fuel() == fuel && live.getHealth() == health, "manual tracking preserves incarnation, life and fuel");
+            try (var files = Files.list(directory)) {
+                check(files.filter(p -> p.toString().endsWith(".nbt") && !p.getFileName().toString().equals("team.nbt"))
+                        .filter(p -> read(p).hasUUID(TbfBridge1211.MARKER)).count() == 1, "one logical entry after all manual paths");
+            }
+            consumeSetting.set(null, true);
+            player.setItemInHand(hand, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.FEATHER, 3));
+            interact(player, wolf);
+            check(Files.isRegularFile(directory.resolve(wolf.getUUID() + ".nbt"))
+                    && player.getItemInHand(hand).getCount() == 1, "ordinary wolf still uses TBF registration and item consumption");
+            org.slf4j.LoggerFactory.getLogger("echo_warrior").info("[TbfJointSelfTest] PASS manual retracking: non-OP feather, configured consumption, OP load command, foreign/stale denial, stable entry, ordinary wolf");
+        } finally {
+            fixture.setBindingGenerationForTest(generation);
+            live.moveTo(oldPosition.x, oldPosition.y, oldPosition.z, live.getYRot(), live.getXRot());
+            player.setYRot(oldYaw); player.setXRot(oldPitch);
+            player.setItemInHand(hand, oldHand);
+            player.getAbilities().instabuild = oldCreative;
+            itemSetting.set(null, oldItem); consumeSetting.set(null, oldConsume); countSetting.set(null, oldCount);
+            if (Files.isRegularFile(directory.resolve(wolf.getUUID() + ".nbt")))
+                TbfBridge1211.call("trulybestfriends", "deletePetData", player, wolf.getUUID());
+            wolf.discard();
+            lookup.remove(player.getUUID());
+        }
+    }
+    private static int executeLoad(MinecraftServer server, net.minecraft.commands.CommandSourceStack source) {
+        try { return server.getCommands().getDispatcher().execute("tbf load", source); }
+        catch (com.mojang.brigadier.exceptions.CommandSyntaxException error) { throw new IllegalStateException("TBF command dispatch failed", error); }
+    }
+    private static void interact(ServerPlayer player, net.minecraft.world.entity.Entity target) throws ReflectiveOperationException {
+        Class<?> event = Class.forName("net.neoforged.neoforge.event.entity.player.PlayerInteractEvent$EntityInteract");
+        Object interaction = event.getConstructor(net.minecraft.world.entity.player.Player.class,
+                net.minecraft.world.InteractionHand.class, net.minecraft.world.entity.Entity.class)
+                .newInstance(player, net.minecraft.world.InteractionHand.MAIN_HAND, target);
+        TbfBridge1211.call("command.ModCommands", "onEntityInteract", interaction);
+    }
+    private static Map<UUID, ServerPlayer> playerLookup(MinecraftServer server) throws ReflectiveOperationException {
+        for (Field field : net.minecraft.server.players.PlayerList.class.getDeclaredFields()) {
+            if (field.getGenericType() instanceof ParameterizedType generic && generic.getRawType() == Map.class
+                    && Arrays.equals(generic.getActualTypeArguments(), new Type[]{UUID.class, ServerPlayer.class})) {
+                field.setAccessible(true);
+                @SuppressWarnings("unchecked") Map<UUID, ServerPlayer> players = (Map<UUID, ServerPlayer>)field.get(server.getPlayerList());
+                return players;
+            }
+        }
+        throw new NoSuchFieldException("isolated player UUID lookup");
+    }
+
     private static void verifyPresenceProbe(MinecraftServer server, ServerPlayer player,
             EchoBindingSavedData1211.Binding binding, UUID id, Object context, Path directory, String color)
             throws ReflectiveOperationException, java.io.IOException {
