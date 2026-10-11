@@ -4,10 +4,17 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+## 0.2.7 - 2026-10-11
+
 ### Fixed
 
 - Restored manual tracking of Echoes after untracking them in Truly Best Friends Forever: right-click your active Echo with TBF's configured registration item (a feather by default), or use `/tbf load` with its existing operator requirement.
 - Manual registration restores the stable companion entry without changing the Echo's owner, entity identity, health or fuel. TBF's item-consumption settings and ordinary-pet behavior are preserved.
+
+### Notes
+
+- Applies to the optional TBF integration on Minecraft 1.20.1 Forge and 1.21.1 NeoForge. Verified with official TBF 0.2.3 and 0.2.4.1 packages, plus client checks for untracking, both registration methods, team assignment, recall and wheel summoning.
+- TBF remains optional and is not bundled. Restart the game and server after updating; existing worlds do not require a reset or new chunks.
 
 ## 0.2.6 - 2026-10-10
 
