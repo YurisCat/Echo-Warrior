@@ -46,6 +46,7 @@ final class NeoForgeEventRegistrar {
 		eventBus.addListener(NeoForgeEventRegistrar::onServerTick);
 		eventBus.addListener(NeoForgeEventRegistrar::onLevelTick);
 		eventBus.addListener(NeoForgeEventRegistrar::onServerStopped);
+        eventBus.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent event) -> BattlefieldSystem.clear());
 		eventBus.addListener(NeoForgeEventRegistrar::onPlayerLogin);
 		eventBus.addListener(NeoForgeEventRegistrar::onPlayerLogout);
 		eventBus.addListener(NeoForgeEventRegistrar::onIncomingDamage);

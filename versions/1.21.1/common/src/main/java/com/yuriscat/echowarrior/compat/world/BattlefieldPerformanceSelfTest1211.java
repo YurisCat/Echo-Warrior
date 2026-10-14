@@ -24,8 +24,12 @@ public final class BattlefieldPerformanceSelfTest1211 {
 
     public static void run(MinecraftServer server) {
         ServerLevel level = server.overworld();
+        BattlefieldChunkPreparationSelfTest1211.run();
         checkIndexBounds(level);
+        checkReplacementPersistence(level);
+        BattlefieldSpacingSelfTest1211.run(level);
         checkRemovalEvents(level);
+        BattlefieldGenerationSelfTest1211.arm();
         EchoWarrior1211.LOGGER.info("[Compat1211] BATTLEFIELD PERFORMANCE SELFTEST PASSED regions=10000 lookup=1 search=49 removal=event reload=local");
     }
 
@@ -70,6 +74,39 @@ public final class BattlefieldPerformanceSelfTest1211 {
         BlockPos farCenter = new BlockPos(1600008, 100, 1600008);
         data.activate(distant.key(), farCenter, farCenter, "roman", List.of(farCenter));
         require(data.nearestKnownActive(center).center().equals(farCenter), "admin locate remains unbounded");
+    }
+
+    private static void checkReplacementPersistence(ServerLevel level) {
+        BattlefieldSavedData1211 data = new BattlefieldSavedData1211();
+        BlockPos first = new BlockPos(-769, 64, -769);
+        BlockPos second = new BlockPos(7000, 64, 7000);
+        for (BlockPos origin : List.of(first, second)) {
+            var region = data.prepareForcedRegion(level, new ChunkPos(origin));
+            data.activate(region.key(), origin, origin, "roman", List.of(origin));
+            data.removeBrushableAt(origin, 10);
+        }
+        var originalJob = data.nextReadyReplacement(10);
+        require(originalJob.originCenter() == first.asLong(), "oldest replacement starts first");
+        data.retryReplacement(first.asLong(), 1210);
+        require(data.nextReadyReplacement(10).originCenter() == second.asLong(), "dormant head cannot starve next ready job");
+        try {
+            var tag = data.save(new net.minecraft.nbt.CompoundTag(), level.registryAccess());
+            var load = BattlefieldSavedData1211.class.getDeclaredMethod("load", net.minecraft.nbt.CompoundTag.class,
+                    net.minecraft.core.HolderLookup.Provider.class);
+            load.setAccessible(true);
+            var restored = (BattlefieldSavedData1211)load.invoke(null, tag, level.registryAccess());
+            require(restored.replacementJobCount() == 2, "old-format save retains both jobs");
+            restored.completeReplacement(second.asLong());
+            require(restored.nextReadyReplacement(1209) == null, "retry delay survives save/load");
+            var retried = restored.nextReadyReplacement(1210);
+            require(retried.originCenter() == first.asLong() && retried.seed() == originalJob.seed()
+                    && retried.attempts() == originalJob.attempts() + 1, "origin, deterministic seed and attempt survive restart");
+            restored.completeReplacement(first.asLong());
+            restored.completeReplacement(first.asLong());
+            require(restored.replacementJobCount() == 0, "completion is idempotent after restart");
+        } catch (ReflectiveOperationException error) {
+            throw new IllegalStateException("Cannot round-trip replacement save", error);
+        }
     }
 
     private static void checkRemovalEvents(ServerLevel level) {

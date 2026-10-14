@@ -80,9 +80,11 @@ def run_once(java: str, arguments: list[str], run_dir: Path, timeout: int) -> di
     process = None
     started = time.monotonic()
     command_sent = False
+    fixture_requested = False
+    fixture_probe_at = 0.0
     try:
         with log.open("w", encoding="utf-8") as output:
-            process = subprocess.Popen([java, "-Xms512M", "-Xmx2G", *helpers.joint_test_flags(), *arguments], cwd=run_dir,
+            process = subprocess.Popen([java, "-Xms512M", "-Xmx2G", "-Decho_warrior.battlefield_generation_test=true", *helpers.joint_test_flags(), *arguments], cwd=run_dir,
                                        stdin=subprocess.PIPE, stdout=output, stderr=subprocess.STDOUT,
                                        text=True, encoding="utf-8", creationflags=helpers.NO_WINDOW)
             while time.monotonic() - started < timeout:
@@ -91,14 +93,29 @@ def run_once(java: str, arguments: list[str], run_dir: Path, timeout: int) -> di
                     raise RuntimeError(f"Server exited before acceptance: {log}")
                 if "ECHO_WARRIOR_1_21_1_SELFTEST FAIL" in text or "Exception in server tick loop" in text:
                     raise RuntimeError(f"Server self-test failed: {log}")
-                if not command_sent and re.search(r"Done \([0-9.]+s\)!", text):
+                if not fixture_requested and re.search(r"Done \([0-9.]+s\)!", text):
+                    # The existing companion transaction fixture lives in chunk (2, 2).
+                    # A random spawn need not make its entities visible yet. Wait for a real
+                    # marker lookup under our own test-only force-load, not an arbitrary sleep.
+                    process.stdin.write('forceload add 32 32 47 47\n'
+                                        'summon minecraft:marker 40.5 96 40.5 {Tags:["echo_warrior_selftest_ready"]}\n')
+                    process.stdin.flush()
+                    fixture_requested = True
+                if fixture_requested and not command_sent and time.monotonic() >= fixture_probe_at:
+                    process.stdin.write('execute if entity @e[tag=echo_warrior_selftest_ready] run say ECHO_TEST_FIXTURE_READY\n')
+                    process.stdin.flush()
+                    fixture_probe_at = time.monotonic() + 1.0
+                if not command_sent and "[Server] ECHO_TEST_FIXTURE_READY" in text:
+                    process.stdin.write("kill @e[tag=echo_warrior_selftest_ready]\n")
                     process.stdin.write("echo_warrior_compat selftest\n")
                     process.stdin.flush()
                     command_sent = True
-                if command_sent and SUCCESS in text and PERFORMANCE in text:
+                if (command_sent and SUCCESS in text and PERFORMANCE in text
+                        and "BATTLEFIELD GENERATION SELFTEST PASSED" in text
+                        and "BATTLEFIELD SPACING SELFTEST PASSED" in text):
                     if "DEPARTURE EFFECTS SELFTEST PASSED heroes=5" not in text:
                         raise RuntimeError(f"Departure regression guard missing: {log}")
-                    process.stdin.write("stop\n")
+                    process.stdin.write("forceload remove 32 32 47 47\nstop\n")
                     process.stdin.flush()
                     if process.wait(timeout=60) != 0:
                         raise RuntimeError(f"Server shutdown failed: {log}")

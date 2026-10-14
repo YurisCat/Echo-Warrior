@@ -133,6 +133,7 @@ public final class EchoWarrior1211Fabric implements ModInitializer {
         });
         LootTableEvents.MODIFY.register((key, tableBuilder, source, registries) ->
                 com.yuriscat.echowarrior.compat.knowledge.KnowledgeLootSystem1211.modify(key, tableBuilder::withPool));
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> com.yuriscat.echowarrior.compat.world.BattlefieldSystem1211.clear());
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
             CreativeSummonerDestroyTracker1211.clearAll();
             EchoBindingSystem1211.onServerStopped();

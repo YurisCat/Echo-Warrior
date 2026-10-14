@@ -45,7 +45,8 @@ final class FabricEventRegistrar {
 			EchoAccessorySystem.tickLevel(level);
 			EchoTalentSystem.tickLevel(level);
 		});
-		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> BattlefieldSystem.clear());
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			CreativeSummonerDestroyTracker.clearAll();
 			EchoBindingSystem.onServerStopped();
 			EchoAuraAuditSystem.clear();

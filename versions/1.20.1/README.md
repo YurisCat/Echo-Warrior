@@ -1,5 +1,18 @@
 # Minecraft 1.20.1 compatibility line
 
+## Local battlefield generation fix — 2026-10-13
+
+Replacement and admin generation now prepare one bounded chunk footprint across ticks,
+poll ready FULL chunks without waiting, and release their own temporary tickets on completion,
+timeout, failure and shutdown. Natural placement only reads ready chunks. Existing replacement
+jobs retain their origin, seed, attempt count and retry time across save/load. Both production
+server boots require actual remote placement, actual chunk unload and crowded-area backoff.
+
+This is an unpublished candidate. Package hashes, FOXY results and the separate 1.21.1 player-pack
+measurement are recorded in
+[`battlefield-generation-fix-2026-10-13.md`](../../docs/research/battlefield-generation-fix-2026-10-13.md).
+That player-pack measurement is not a reproduction of the unprovided 1.20.1 reporter's pack.
+
 ## 2026-10-10 optional Apothic constructor compatibility
 
 The reported 0.2.4 owner exception was reproduced with the CurseForge shared profile

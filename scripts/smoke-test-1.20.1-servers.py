@@ -234,7 +234,7 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
     try:
         with console_log.open("w", encoding="utf-8") as output:
             process = subprocess.Popen(
-                [java, "-Xms512M", "-Xmx2G", *joint_test_flags(), "-Decho_warrior.compat_bootstrap_test=true",
+                [java, "-Xms512M", "-Xmx2G", *joint_test_flags(), "-Decho_warrior.compat_bootstrap_test=true", "-Decho_warrior.battlefield_generation_test=true",
                  f"-Decho_warrior.compat_storage_expected_boot={attempt}", *arguments],
                 cwd=run_dir, stdin=subprocess.PIPE, stdout=output, stderr=subprocess.STDOUT,
                 text=True, encoding="utf-8", creationflags=NO_WINDOW,
@@ -261,6 +261,8 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
                         and re.search(r"EXPLORATION SELFTEST PASSED checks=\d+ recipes=31 cultures=5 brushing=actual", text)
                         and "EXPLORATION INTEGRATION SELFTEST PASSED placement=actual safety=edited-fluid-tree-slope-unloaded compass=new-instances" in text
                         and "BATTLEFIELD SNOW SELFTEST PASSED layers=1-8 placement=actual cover=preserved solid-snow=untouched" in text
+                        and "BATTLEFIELD SPACING SELFTEST PASSED" in text
+                        and "BATTLEFIELD GENERATION SELFTEST PASSED" in text
                         and "BATTLEFIELD PERFORMANCE SELFTEST PASSED regions=10000 lookup=1 search=49 removal=event reload=local" in text
                         and 'For help, type "help"' in text):
                     assert process.stdin is not None

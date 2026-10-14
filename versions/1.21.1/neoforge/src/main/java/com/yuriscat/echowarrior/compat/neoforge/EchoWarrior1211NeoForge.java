@@ -54,6 +54,7 @@ public final class EchoWarrior1211NeoForge {
                 com.yuriscat.echowarrior.compat.integration.TbfBridge1211.initialize(mod.getModInfo().getVersion().toString()));
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) -> { com.yuriscat.echowarrior.compat.integration.TbfBridge1211.tick(event.getServer()); });
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent event) -> com.yuriscat.echowarrior.compat.integration.TbfBridge1211.clear());
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent event) -> com.yuriscat.echowarrior.compat.world.BattlefieldSystem1211.clear());
         modBus.addListener(this::registerContent);
         modBus.addListener(this::registerAttributes);
         modBus.addListener(this::addBrushableBlocks);

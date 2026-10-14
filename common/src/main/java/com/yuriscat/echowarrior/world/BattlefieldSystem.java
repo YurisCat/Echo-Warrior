@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
@@ -47,16 +48,21 @@ public final class BattlefieldSystem {
 	private static final Map<Long, LongSet> LOADED_REGION_CHUNKS = new HashMap<>();
 	private static final Map<UUID, ForcedGenerationJob> FORCED_JOBS = new HashMap<>();
 	private static int pendingCursor;
-	private static boolean forceGenerationLoading;
+	// FULL chunks only, no block/entity ticking. Timeout is a fallback for abnormal teardown.
+	private static final TicketType GENERATION_TICKET = new TicketType(620L, TicketType.FLAG_LOADING);
+	private static GenerationAttempt activeAttempt;
 
 	private BattlefieldSystem() {
 	}
 
 	public static void initialize() {
+		BattlefieldGenerationSelfTest.arm();
 	}
 
 	public static void noteChunk(ServerLevel level, LevelChunk chunk, boolean newlyGenerated) {
-		if (!level.dimension().equals(Level.OVERWORLD) || forceGenerationLoading) return;
+		if (!level.dimension().equals(Level.OVERWORLD)) return;
+		// Suppress only our own temporary loads, never unrelated exploration during an async attempt.
+		if (activeAttempt != null && activeAttempt.chunks.owns(chunk.getPos().pack())) return;
 		BattlefieldSavedData.RegionState state = BattlefieldSavedData.get(level)
 				.noteNaturalChunkLoad(level, chunk.getPos(), newlyGenerated);
 		if (state.status() == BattlefieldSavedData.Status.WAITING) {
@@ -68,29 +74,38 @@ public final class BattlefieldSystem {
 
 	public static void forgetChunk(ServerLevel level, LevelChunk chunk) {
 		if (!level.dimension().equals(Level.OVERWORLD)) return;
-		ChunkPos chunkPos = chunk.getPos();
-		long regionKey = ChunkPos.pack(
-				Math.floorDiv(chunkPos.x(), BattlefieldSavedData.REGION_CHUNKS),
-				Math.floorDiv(chunkPos.z(), BattlefieldSavedData.REGION_CHUNKS));
+		ChunkPos pos = chunk.getPos();
+		long regionKey = ChunkPos.pack(Math.floorDiv(pos.x(), BattlefieldSavedData.REGION_CHUNKS),
+				Math.floorDiv(pos.z(), BattlefieldSavedData.REGION_CHUNKS));
 		LongSet loaded = LOADED_REGION_CHUNKS.get(regionKey);
 		if (loaded == null) return;
-		loaded.remove(chunkPos.pack());
-		if (loaded.isEmpty()) LOADED_REGION_CHUNKS.remove(regionKey);
+		loaded.remove(pos.pack());
+		if (loaded.isEmpty()) {
+			LOADED_REGION_CHUNKS.remove(regionKey);
+			PENDING_REGIONS.remove(regionKey);
+		}
 	}
 
 	public static void markPlayerModified(ServerLevel level, BlockPos pos) {
-		PlatformServices.markPlayerModified(level.getChunkAt(pos));
+		LevelChunk chunk = level.getChunkSource().getChunkNow(Math.floorDiv(pos.getX(), 16), Math.floorDiv(pos.getZ(), 16));
+		if (chunk != null) PlatformServices.markPlayerModified(chunk);
 	}
 
 	public static void tick(MinecraftServer server) {
+		BattlefieldGenerationSelfTest.tick(server);
 		ServerLevel level = server.getLevel(Level.OVERWORLD);
 		if (level == null) return;
-		tickForcedGeneration(server, level);
-		tickReplacementGeneration(level);
-		if (PENDING_REGIONS.isEmpty() || level.getGameTime() % 20L != 0L) return;
-		BattlefieldSavedData data = BattlefieldSavedData.get(level);
 		long now = level.getGameTime();
-		if (now - data.lastPlacementTick() < 600L) return;
+		if (activeAttempt != null) {
+			tickPreparedGeneration(server, level, now);
+			return;
+		}
+		tickForcedGeneration(server, level);
+		if (activeAttempt != null) return;
+		if (now % 20L != 0L) return;
+		BattlefieldSavedData data = BattlefieldSavedData.get(level);
+		tickReplacementGeneration(level, data, now);
+		if (activeAttempt != null || PENDING_REGIONS.isEmpty() || now - data.lastPlacementTick() < 600L) return;
 
 		long[] queued = PENDING_REGIONS.toLongArray();
 		int checks = Math.min(8, queued.length);
@@ -104,111 +119,148 @@ public final class BattlefieldSystem {
 				continue;
 			}
 			if (now < state.readyAt()) continue;
-			ChunkPos candidateChunk = chooseLoadedCandidate(level, key, state, now);
-			if (candidateChunk == null) continue;
-			Placement placement = findAndPlace(level, data, state, candidateChunk);
-			if (placement != null) {
-				data.activate(key, placement.center, placement.relic, placement.culture.id(), placement.brushables);
-				data.markPlaced(now);
-				PENDING_REGIONS.remove(key);
-				LOADED_REGION_CHUNKS.remove(key);
-				EchoWarrior.LOGGER.info("Generated battlefield ruin at {} with guaranteed relic block at {}.",
-						placement.center, placement.relic);
-				break;
+			ChunkPos candidate = chooseLoadedCandidate(level, key, state, now);
+			if (candidate == null) continue;
+			Placement placement = findAndPlace(level, data, state, candidate);
+			if (placement == null) {
+				data.defer(key, now + 200L);
+				continue;
 			}
-			data.defer(key, now + 200L);
+			data.activate(key, placement.center, placement.relic, placement.culture.id(), placement.brushables);
+			data.markPlaced(now);
+			PENDING_REGIONS.remove(key);
+			LOADED_REGION_CHUNKS.remove(key);
+			EchoWarrior.LOGGER.info("Generated battlefield ruin at {} with guaranteed relic block at {}.",
+					placement.center, placement.relic);
+			break;
 		}
 	}
 
 	public static void clear() {
+		if (activeAttempt != null) {
+			activeAttempt.chunks.close();
+			activeAttempt = null;
+		}
 		PENDING_REGIONS.clear();
 		LOADED_REGION_CHUNKS.clear();
 		FORCED_JOBS.clear();
 		pendingCursor = 0;
-		forceGenerationLoading = false;
 	}
 
-	private static void tickReplacementGeneration(ServerLevel level) {
-		long now = level.getGameTime();
-		if (now % 20L != 0L) return;
-		BattlefieldSavedData data = BattlefieldSavedData.get(level);
+	private static void tickReplacementGeneration(ServerLevel level, BattlefieldSavedData data, long now) {
 		BattlefieldSavedData.ReplacementJob job = data.nextReadyReplacement(now);
 		if (job == null || now - data.lastPlacementTick() < 600L) return;
-
-		Placement placement;
-		forceGenerationLoading = true;
-		try {
-			placement = tryReplacementAttempt(level, data, job);
-		} finally {
-			forceGenerationLoading = false;
-		}
-		if (placement == null) {
-			int nextAttempt = job.attempts() + 1;
-			long retryDelay = nextAttempt % 8 == 0 ? 200L : 20L;
-			data.retryReplacement(job.originCenter(), now + retryDelay);
-			return;
-		}
-
-		ChunkPos centerChunk = new ChunkPos(
-				Math.floorDiv(placement.center.getX(), 16),
-				Math.floorDiv(placement.center.getZ(), 16));
-		BattlefieldSavedData.RegionState prepared = data.prepareReplacementRegion(level, centerChunk);
-		if (prepared == null) {
-			data.retryReplacement(job.originCenter(), now + 20L);
-			return;
-		}
-		data.activate(prepared.key(), placement.center, placement.relic, placement.culture.id(), placement.brushables);
-		data.markPlaced(now);
-		data.completeReplacement(job.originCenter());
-		PENDING_REGIONS.remove(prepared.key());
-		LOADED_REGION_CHUNKS.remove(prepared.key());
-		EchoWarrior.LOGGER.info("Generated replacement battlefield ruin at {} for completed site {}; guaranteed relic block at {}.",
-				placement.center, BlockPos.of(job.originCenter()), placement.relic);
-	}
-
-	private static Placement tryReplacementAttempt(
-			ServerLevel level,
-			BattlefieldSavedData data,
-			BattlefieldSavedData.ReplacementJob job
-	) {
 		BlockPos origin = BlockPos.of(job.originCenter());
+		// This bounded region lookup needs no chunks. Crowded old worlds can keep their jobs dormant.
+		if (!hasReplacementRegion(data, origin)) {
+			data.retryReplacement(job.originCenter(), now + 1200L);
+			return;
+		}
 		ReplacementDistance distance = replacementDistance(job.attempts());
-		long attemptSeed = job.seed() ^ (long)job.attempts() * 0x9E3779B97F4A7C15L;
-		RandomSource random = RandomSource.create(attemptSeed);
+		RandomSource random = RandomSource.create(job.seed() ^ (long)job.attempts() * 0x9E3779B97F4A7C15L);
 		double angle = random.nextDouble() * Math.PI * 2.0;
-		double targetDistance = distance.minimum
-				+ random.nextDouble() * (distance.maximum - distance.minimum);
+		double targetDistance = distance.minimum + random.nextDouble() * (distance.maximum - distance.minimum);
 		int targetX = origin.getX() + (int)Math.round(Math.cos(angle) * targetDistance);
 		int targetZ = origin.getZ() + (int)Math.round(Math.sin(angle) * targetDistance);
-		ChunkPos candidateChunk = new ChunkPos(Math.floorDiv(targetX, 16), Math.floorDiv(targetZ, 16));
+		ChunkPos candidate = new ChunkPos(Math.floorDiv(targetX, 16), Math.floorDiv(targetZ, 16));
+		if (regionKey(candidate) == regionKey(new ChunkPos(Math.floorDiv(origin.getX(), 16), Math.floorDiv(origin.getZ(), 16))) || !data.canUseReplacementRegion(candidate)) {
+			retryReplacement(data, job, now);
+			return;
+		}
+		activeAttempt = new GenerationAttempt(level, candidate, origin, distance.minimum, distance.maximum,
+				random, job, null, now);
+	}
 
-		int originRegionX = Math.floorDiv(Math.floorDiv(origin.getX(), 16), BattlefieldSavedData.REGION_CHUNKS);
-		int originRegionZ = Math.floorDiv(Math.floorDiv(origin.getZ(), 16), BattlefieldSavedData.REGION_CHUNKS);
-		int candidateRegionX = Math.floorDiv(candidateChunk.x(), BattlefieldSavedData.REGION_CHUNKS);
-		int candidateRegionZ = Math.floorDiv(candidateChunk.z(), BattlefieldSavedData.REGION_CHUNKS);
-		if (originRegionX == candidateRegionX && originRegionZ == candidateRegionZ
-				|| !data.canUseReplacementRegion(candidateChunk)) return null;
+	private static long regionKey(ChunkPos chunk) {
+		return ChunkPos.pack(Math.floorDiv(chunk.x(), BattlefieldSavedData.REGION_CHUNKS),
+				Math.floorDiv(chunk.z(), BattlefieldSavedData.REGION_CHUNKS));
+	}
 
-		level.getChunk(candidateChunk.x(), candidateChunk.z());
-		double minimumSqr = (double)distance.minimum * distance.minimum;
-		double maximumSqr = (double)distance.maximum * distance.maximum;
+	private static boolean hasReplacementRegion(BattlefieldSavedData data, BlockPos origin) {
+		int size = BattlefieldSavedData.REGION_CHUNKS * 16;
+		// Include the candidate chunk's local offset and rounding at the outer search boundary.
+		int reach = REPLACEMENT_FALLBACK_MAX_DISTANCE + 32;
+		long originRegion = regionKey(new ChunkPos(Math.floorDiv(origin.getX(), 16), Math.floorDiv(origin.getZ(), 16)));
+		for (int rx = Math.floorDiv(origin.getX() - reach, size); rx <= Math.floorDiv(origin.getX() + reach, size); rx++) {
+			for (int rz = Math.floorDiv(origin.getZ() - reach, size); rz <= Math.floorDiv(origin.getZ() + reach, size); rz++) {
+				if (ChunkPos.pack(rx, rz) != originRegion && data.canUseReplacementRegion(
+						new ChunkPos(rx * BattlefieldSavedData.REGION_CHUNKS, rz * BattlefieldSavedData.REGION_CHUNKS))) return true;
+			}
+		}
+		return false;
+	}
+
+	private static void retryReplacement(BattlefieldSavedData data, BattlefieldSavedData.ReplacementJob job, long now) {
+		// Persist the same job and seed. Failed terrain searches become less frequent, capped at ten seconds.
+		long delay = Math.min(200L, 40L << Math.min(3, job.attempts() / 8));
+		data.retryReplacement(job.originCenter(), now + delay);
+	}
+
+	private static void tickPreparedGeneration(MinecraftServer server, ServerLevel level, long now) {
+		GenerationAttempt attempt = activeAttempt;
+		if (attempt.level != level) {
+			clear();
+			return;
+		}
+		boolean finished = false;
+		try {
+			BattlefieldChunkPreparation.State state = attempt.chunks.tick(now);
+			if (state == BattlefieldChunkPreparation.State.WAITING) return;
+			finished = true;
+			BattlefieldSavedData data = BattlefieldSavedData.get(level);
+			Placement placement = state == BattlefieldChunkPreparation.State.READY
+					? tryPreparedAttempt(level, data, attempt) : null;
+			if (attempt.replacement != null) {
+				finishReplacement(level, data, attempt.replacement, placement, now);
+			} else {
+				finishForcedAttempt(server, level, data, attempt.forced, placement);
+			}
+		} catch (RuntimeException | Error failure) {
+			finished = true;
+			throw failure;
+		} finally {
+			if (finished) {
+				attempt.chunks.close();
+				activeAttempt = null;
+			}
+		}
+	}
+
+	private static Placement tryPreparedAttempt(ServerLevel level, BattlefieldSavedData data, GenerationAttempt attempt) {
+		BattlefieldSavedData.RegionState region = data.region(regionKey(attempt.candidate));
+		if (attempt.replacement != null ? !data.canUseReplacementRegion(attempt.candidate)
+				: region != null && region.status() == BattlefieldSavedData.Status.ACTIVE) return null;
+		RandomSource random = attempt.random;
 		for (int localAttempt = 0; localAttempt < 8; localAttempt++) {
-			int x = candidateChunk.getMinBlockX() + 2 + random.nextInt(12);
-			int z = candidateChunk.getMinBlockZ() + 2 + random.nextInt(12);
-			BlockPos horizontal = new BlockPos(x, origin.getY(), z);
-			double actualDistance = horizontalDistanceSqr(origin, horizontal);
-			if (actualDistance < minimumSqr || actualDistance > maximumSqr) continue;
+			int x = attempt.candidate.getMinBlockX() + 2 + random.nextInt(12);
+			int z = attempt.candidate.getMinBlockZ() + 2 + random.nextInt(12);
+			double distance = horizontalDistanceSqr(attempt.origin, new BlockPos(x, attempt.origin.getY(), z));
+			if (distance < attempt.minimumSqr || distance > attempt.maximumSqr) continue;
 			int radius = 7 + random.nextInt(4);
 			int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
 			BlockPos center = new BlockPos(x, surface, z);
-			if (!level.getBiome(center).is(ModTags.HAS_BATTLEFIELD_RUIN)
-					|| !data.isFarEnoughFromKnownSites(center, 512.0)) continue;
-			loadSiteChunks(level, x, z, radius);
 			if (!isSafeSite(level, data, center, radius)) continue;
 			Placement placement = placeSite(level, center, radius, random);
 			if (placement != null) return placement;
 		}
 		return null;
+	}
+
+	private static void finishReplacement(ServerLevel level, BattlefieldSavedData data,
+										BattlefieldSavedData.ReplacementJob job, Placement placement, long now) {
+		if (placement == null) {
+			retryReplacement(data, job, now);
+			return;
+		}
+		BattlefieldSavedData.RegionState prepared = data.prepareReplacementRegion(level, new ChunkPos(Math.floorDiv(placement.center.getX(), 16), Math.floorDiv(placement.center.getZ(), 16)));
+		data.activate(prepared.key(), placement.center, placement.relic, placement.culture.id(), placement.brushables);
+		data.markPlaced(now);
+		data.completeReplacement(job.originCenter());
+		PENDING_REGIONS.remove(prepared.key());
+		LOADED_REGION_CHUNKS.remove(prepared.key());
+		EchoWarrior.LOGGER.info(
+				"Generated replacement battlefield ruin at {} for completed site {}; guaranteed relic block at {}.",
+				placement.center, BlockPos.of(job.originCenter()), placement.relic);
 	}
 
 	private static ReplacementDistance replacementDistance(int attempts) {
@@ -224,39 +276,13 @@ public final class BattlefieldSystem {
 		return new ReplacementDistance(REPLACEMENT_NORMAL_MIN_DISTANCE, REPLACEMENT_FALLBACK_MAX_DISTANCE);
 	}
 
-	private static ChunkPos chooseLoadedCandidate(
-			ServerLevel level,
-			long regionKey,
-			BattlefieldSavedData.RegionState state,
-			long now
-	) {
-		LongSet loaded = LOADED_REGION_CHUNKS.get(regionKey);
-		if (loaded == null || loaded.isEmpty()) {
-			ChunkPos saved = ChunkPos.unpack(state.candidateChunk());
-			return level.hasChunk(saved.x(), saved.z()) ? saved : null;
-		}
-
-		long[] candidates = loaded.toLongArray();
-		int start = Math.floorMod(Long.hashCode(state.seed() ^ Math.floorDiv(now, 200L)), candidates.length);
-		for (int offset = 0; offset < candidates.length; offset++) {
-			ChunkPos candidate = ChunkPos.unpack(candidates[(start + offset) % candidates.length]);
-			if (level.hasChunk(candidate.x(), candidate.z())) return candidate;
-		}
-		return null;
-	}
-
 	/** Starts a bounded, tick-spread admin generation job without leaving chunks force-loaded. */
-	public static boolean requestForceGeneration(
-			ServerLevel level,
-			ServerPlayer requester,
-			int requested,
-			int maximumDistance
-	) {
+	public static boolean requestForceGeneration(ServerLevel level, ServerPlayer requester,
+												int requested, int maximumDistance) {
 		if (!level.dimension().equals(Level.OVERWORLD) || FORCED_JOBS.containsKey(requester.getUUID())) return false;
 		BlockPos origin = requester.blockPosition();
-		List<RegionCandidate> regions = forcedRegionCandidates(origin, maximumDistance);
-		FORCED_JOBS.put(requester.getUUID(), new ForcedGenerationJob(
-				requester.getUUID(), origin, requested, maximumDistance, regions));
+		FORCED_JOBS.put(requester.getUUID(), new ForcedGenerationJob(requester.getUUID(), origin, requested,
+				maximumDistance, forcedRegionCandidates(origin, maximumDistance)));
 		return true;
 	}
 
@@ -281,85 +307,52 @@ public final class BattlefieldSystem {
 	}
 
 	private static void tickForcedGeneration(MinecraftServer server, ServerLevel level) {
-		if (FORCED_JOBS.isEmpty() || level.getGameTime() % 5L != 0L) return;
+		if (FORCED_JOBS.isEmpty() || level.getGameTime() % 20L != 0L) return;
 		ForcedGenerationJob job = FORCED_JOBS.values().iterator().next();
 		BattlefieldSavedData data = BattlefieldSavedData.get(level);
-		while (job.regionIndex < job.regions.size()) {
-			RegionCandidate candidate = job.regions.get(job.regionIndex);
-			long key = ChunkPos.pack(candidate.regionX, candidate.regionZ);
-			BattlefieldSavedData.RegionState existing = data.region(key);
-			if (existing != null && existing.status() == BattlefieldSavedData.Status.ACTIVE) {
-				job.nextRegion();
-				continue;
-			}
-			if (job.attemptInRegion == 0) job.attemptedRegions++;
-			Placement placement;
-		forceGenerationLoading = true;
-		try {
-			placement = tryForcedAttempt(level, data, candidate, job);
-		} finally {
-			forceGenerationLoading = false;
-		}
-			job.attemptInRegion++;
-			if (placement != null) {
-				activateForcedPlacement(level, data, placement);
-				job.generated.add(placement.center);
-				job.nextRegion();
-				EchoWarrior.LOGGER.info("Force-generated battlefield ruin at {} with guaranteed relic block at {}.",
-						placement.center, placement.relic);
-				ServerPlayer requester = server.getPlayerList().getPlayer(job.requester);
-				if (requester != null) requester.sendSystemMessage(Component.literal("战场遗迹生成进度："
-						+ job.generated.size() + "/" + job.requested + "，中心 " + placement.center.toShortString() + "。"));
-			}
-			if (job.generated.size() >= job.requested) {
-				finishForcedGeneration(server, job);
-				return;
-			}
-			if (placement == null && job.attemptInRegion >= FORCED_ATTEMPTS_PER_REGION) job.nextRegion();
+		if (job.regionIndex >= job.regions.size()) {
+			finishForcedGeneration(server, job);
 			return;
 		}
-		finishForcedGeneration(server, job);
-	}
-
-	private static Placement tryForcedAttempt(
-			ServerLevel level,
-			BattlefieldSavedData data,
-			RegionCandidate region,
-			ForcedGenerationJob job
-	) {
-		int firstChunkX = region.regionX * BattlefieldSavedData.REGION_CHUNKS;
-		int firstChunkZ = region.regionZ * BattlefieldSavedData.REGION_CHUNKS;
-		long seed = level.getSeed() ^ ChunkPos.pack(region.regionX, region.regionZ)
+		RegionCandidate candidate = job.regions.get(job.regionIndex);
+		BattlefieldSavedData.RegionState existing = data.region(ChunkPos.pack(candidate.regionX, candidate.regionZ));
+		if (existing != null && existing.status() == BattlefieldSavedData.Status.ACTIVE) {
+			job.nextRegion();
+			return;
+		}
+		if (job.attemptInRegion == 0) job.attemptedRegions++;
+		long seed = level.getSeed() ^ ChunkPos.pack(candidate.regionX, candidate.regionZ)
 				^ job.origin.asLong() ^ (long)job.attemptInRegion * 0x9E3779B97F4A7C15L;
 		RandomSource random = RandomSource.create(seed);
-		int chunkX = firstChunkX + random.nextInt(BattlefieldSavedData.REGION_CHUNKS);
-		int chunkZ = firstChunkZ + random.nextInt(BattlefieldSavedData.REGION_CHUNKS);
-		level.getChunk(chunkX, chunkZ);
-		for (int localAttempt = 0; localAttempt < 8; localAttempt++) {
-			int x = chunkX * 16 + 2 + random.nextInt(12);
-			int z = chunkZ * 16 + 2 + random.nextInt(12);
-			if (horizontalDistanceSqr(job.origin, new BlockPos(x, job.origin.getY(), z))
-					> (double)job.maximumDistance * job.maximumDistance) continue;
-			int radius = 7 + random.nextInt(4);
-			int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-			BlockPos center = new BlockPos(x, surface, z);
-			if (!level.getBiome(center).is(ModTags.HAS_BATTLEFIELD_RUIN)
-					|| !data.isFarEnoughFromKnownSites(center, 512.0)) continue;
-			loadSiteChunks(level, x, z, radius);
-			if (!isSafeSite(level, data, center, radius)) continue;
-			Placement placement = placeSite(level, center, radius, random);
-			if (placement != null) return placement;
-		}
-		return null;
+		ChunkPos chunk = new ChunkPos(candidate.regionX * BattlefieldSavedData.REGION_CHUNKS
+				+ random.nextInt(BattlefieldSavedData.REGION_CHUNKS),
+				candidate.regionZ * BattlefieldSavedData.REGION_CHUNKS + random.nextInt(BattlefieldSavedData.REGION_CHUNKS));
+		activeAttempt = new GenerationAttempt(level, chunk, job.origin, 0, job.maximumDistance,
+				random, null, job, level.getGameTime());
 	}
 
-	private static void activateForcedPlacement(
-			ServerLevel level,
-			BattlefieldSavedData data,
-			Placement placement
-	) {
-		ChunkPos centerChunk = new ChunkPos(
-				Math.floorDiv(placement.center.getX(), 16),
+	private static void finishForcedAttempt(MinecraftServer server, ServerLevel level, BattlefieldSavedData data,
+											ForcedGenerationJob job, Placement placement) {
+		job.attemptInRegion++;
+		if (placement != null) {
+			activateForcedPlacement(level, data, placement);
+			job.generated.add(placement.center);
+			job.nextRegion();
+			EchoWarrior.LOGGER.info(
+					"Force-generated battlefield ruin at {} with guaranteed relic block at {}.",
+					placement.center, placement.relic);
+			ServerPlayer requester = server.getPlayerList().getPlayer(job.requester);
+			if (requester != null) requester.sendSystemMessage(Component.literal("战场遗迹生成进度："
+					+ job.generated.size() + "/" + job.requested + "，中心 " + placement.center.toShortString() + "。"));
+		} else if (job.attemptInRegion >= FORCED_ATTEMPTS_PER_REGION) {
+			job.nextRegion();
+		}
+		if (job.generated.size() >= job.requested || job.regionIndex >= job.regions.size()) finishForcedGeneration(server, job);
+	}
+
+	private static void activateForcedPlacement(ServerLevel level, BattlefieldSavedData data,
+												Placement placement) {
+		ChunkPos centerChunk = new ChunkPos(Math.floorDiv(placement.center.getX(), 16),
 				Math.floorDiv(placement.center.getZ(), 16));
 		BattlefieldSavedData.RegionState prepared = data.prepareForcedRegion(level, centerChunk);
 		data.activate(prepared.key(), placement.center, placement.relic, placement.culture.id(), placement.brushables);
@@ -377,26 +370,33 @@ public final class BattlefieldSystem {
 				+ (job.generated.size() < job.requested ? " 未满足的数量没有绕过安全检查。" : ""));
 		ServerPlayer requester = server.getPlayerList().getPlayer(job.requester);
 		if (requester != null) requester.sendSystemMessage(message);
-		EchoWarrior.LOGGER.info("Battlefield generation job completed: {}/{} sites across {} checked regions.",
+		EchoWarrior.LOGGER.info("battlefield generation job completed: {}/{} sites across {} checked regions.",
 				job.generated.size(), job.requested, job.attemptedRegions);
 	}
 
-	private static void loadSiteChunks(ServerLevel level, int x, int z, int radius) {
-		int minChunkX = Math.floorDiv(x - radius - 1, 16);
-		int maxChunkX = Math.floorDiv(x + radius + 1, 16);
-		int minChunkZ = Math.floorDiv(z - radius - 1, 16);
-		int maxChunkZ = Math.floorDiv(z + radius + 1, 16);
-		for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-			for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) level.getChunk(chunkX, chunkZ);
+
+
+
+
+	private static ChunkPos chooseLoadedCandidate(ServerLevel level, long regionKey,
+												BattlefieldSavedData.RegionState state, long now) {
+		LongSet loaded = LOADED_REGION_CHUNKS.get(regionKey);
+		if (loaded == null || loaded.isEmpty()) {
+			ChunkPos saved = ChunkPos.unpack(state.candidateChunk());
+			return level.getChunkSource().getChunkNow(saved.x(), saved.z()) != null ? saved : null;
 		}
+		long[] candidates = loaded.toLongArray();
+		int start = Math.floorMod(Long.hashCode(state.seed() ^ Math.floorDiv(now, 200L)), candidates.length);
+		for (int offset = 0; offset < candidates.length; offset++) {
+			ChunkPos candidate = ChunkPos.unpack(candidates[(start + offset) % candidates.length]);
+			if (level.getChunkSource().getChunkNow(candidate.x(), candidate.z()) != null) return candidate;
+		}
+		return null;
 	}
 
-	private static Placement findAndPlace(
-			ServerLevel level,
-			BattlefieldSavedData data,
-			BattlefieldSavedData.RegionState state,
-			ChunkPos chunk
-	) {
+	private static Placement findAndPlace(ServerLevel level, BattlefieldSavedData data,
+										BattlefieldSavedData.RegionState state, ChunkPos chunk) {
+		if (level.getChunkSource().getChunkNow(chunk.x(), chunk.z()) == null) return null;
 		RandomSource random = RandomSource.create(state.seed() ^ chunk.pack() ^ level.getGameTime());
 		for (int attempt = 0; attempt < 8; attempt++) {
 			int x = chunk.getMinBlockX() + 2 + random.nextInt(12);
@@ -405,25 +405,25 @@ public final class BattlefieldSystem {
 			BlockPos center = new BlockPos(x, surface, z);
 			int radius = 7 + random.nextInt(4);
 			if (!isSafeSite(level, data, center, radius)) continue;
-			Placement placed = placeSite(level, center, radius, random);
-			if (placed != null) return placed;
+			Placement placement = placeSite(level, center, radius, random);
+			if (placement != null) return placement;
 		}
 		return null;
 	}
 
 	private static boolean isSafeSite(ServerLevel level, BattlefieldSavedData data, BlockPos center, int radius) {
-		if (!level.getBiome(center).is(ModTags.HAS_BATTLEFIELD_RUIN)
-				|| !data.isFarEnoughFromKnownSites(center, 512.0)) return false;
 		int minChunkX = Math.floorDiv(center.getX() - radius - 1, 16);
 		int maxChunkX = Math.floorDiv(center.getX() + radius + 1, 16);
 		int minChunkZ = Math.floorDiv(center.getZ() - radius - 1, 16);
 		int maxChunkZ = Math.floorDiv(center.getZ() + radius + 1, 16);
 		for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
 			for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-				if (!level.hasChunk(chunkX, chunkZ)) return false;
-				if (PlatformServices.isPlayerModified(level.getChunk(chunkX, chunkZ))) return false;
+				LevelChunk loaded = level.getChunkSource().getChunkNow(chunkX, chunkZ);
+				if (loaded == null || PlatformServices.isPlayerModified(loaded)) return false;
 			}
 		}
+		if (!level.getBiome(center).is(ModTags.HAS_BATTLEFIELD_RUIN)
+				|| !data.isFarEnoughFromKnownSites(center, 512.0)) return false;
 		if (level.structureManager().hasAnyStructureAt(center)
 				|| level.structureManager().hasAnyStructureAt(center.offset(radius, 0, radius))
 				|| level.structureManager().hasAnyStructureAt(center.offset(-radius, 0, -radius))) return false;
@@ -532,10 +532,56 @@ public final class BattlefieldSystem {
 		return dx * dx + dz * dz;
 	}
 
-	private record RegionCandidate(int regionX, int regionZ, double distanceSqr) {
+	private static final class GenerationAttempt {
+		private final ServerLevel level;
+		private final ChunkPos candidate;
+		private final BlockPos origin;
+		private final double minimumSqr;
+		private final double maximumSqr;
+		private final RandomSource random;
+		private final BattlefieldSavedData.ReplacementJob replacement;
+		private final ForcedGenerationJob forced;
+		private final BattlefieldChunkPreparation chunks;
+
+		private GenerationAttempt(ServerLevel level, ChunkPos candidate, BlockPos origin, int minimum, int maximum,
+								RandomSource random, BattlefieldSavedData.ReplacementJob replacement,
+								ForcedGenerationJob forced, long now) {
+			this.level = level;
+			this.candidate = candidate;
+			this.origin = origin;
+			this.minimumSqr = (double)minimum * minimum;
+			this.maximumSqr = (double)maximum * maximum;
+			this.random = random;
+			this.replacement = replacement;
+			this.forced = forced;
+			List<Long> footprint = new ArrayList<>();
+			footprint.add(candidate.pack());
+			for (int dx = -1; dx <= 1; dx++) {
+				for (int dz = -1; dz <= 1; dz++) {
+					if (dx != 0 || dz != 0) footprint.add(ChunkPos.pack(candidate.x() + dx, candidate.z() + dz));
+				}
+			}
+			this.chunks = new BattlefieldChunkPreparation(new BattlefieldChunkPreparation.Backend() {
+				public void retain(long packed) {
+					ChunkPos chunk = ChunkPos.unpack(packed);
+					level.getChunkSource().addTicketWithRadius(GENERATION_TICKET, chunk, 0);
+				}
+				public boolean ready(long packed) {
+					ChunkPos chunk = ChunkPos.unpack(packed);
+					return level.getChunkSource().getChunkNow(chunk.x(), chunk.z()) != null;
+				}
+				public void release(long packed) {
+					ChunkPos chunk = ChunkPos.unpack(packed);
+					level.getChunkSource().removeTicketWithRadius(GENERATION_TICKET, chunk, 0);
+				}
+			}, footprint, now);
+		}
 	}
 
 	private record ReplacementDistance(int minimum, int maximum) {
+	}
+
+	private record RegionCandidate(int regionX, int regionZ, double distanceSqr) {
 	}
 
 	private static final class ForcedGenerationJob {
@@ -549,13 +595,8 @@ public final class BattlefieldSystem {
 		private int attemptInRegion;
 		private int attemptedRegions;
 
-		private ForcedGenerationJob(
-				UUID requester,
-				BlockPos origin,
-				int requested,
-				int maximumDistance,
-				List<RegionCandidate> regions
-		) {
+		private ForcedGenerationJob(UUID requester, BlockPos origin, int requested, int maximumDistance,
+									List<RegionCandidate> regions) {
 			this.requester = requester;
 			this.origin = origin;
 			this.requested = requested;
@@ -569,6 +610,7 @@ public final class BattlefieldSystem {
 		}
 	}
 
-	private record Placement(BlockPos center, BlockPos relic, BattlefieldCulture culture, List<BlockPos> brushables) {
+	private record Placement(BlockPos center, BlockPos relic, BattlefieldCulture culture,
+							List<BlockPos> brushables) {
 	}
 }
