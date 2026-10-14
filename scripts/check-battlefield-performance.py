@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def method(source: str, name: str) -> str:
-    matches = list(re.finditer(r"(?:public|private)\s+(?:static\s+)?[^\n{]+\b" + name + r"\([^;]*?\)\s*\{", source))
+    matches = list(re.finditer(r"^[ \t]+(?:(?:public|private)\s+)?(?:static\s+)?[^\n{]+\b" + name + r"\([^;]*?\)\s*\{", source, re.M))
     assert matches, f"Missing method: {name}"
     match = matches[-1]
     start = match.end()
@@ -62,6 +62,51 @@ def audit() -> None:
         compass = (java / f"EchoCompassSystem{suffix}.java").read_text(encoding="utf-8")
         assert not re.search(r"\.(?:getChunk\w*|hasChunk\w*|requestForceGeneration)\(", compass), f"{version}: compass accesses chunks"
         assert "SEARCH_INTERVAL = 40L" in compass, f"{version}: compass search frequency changed"
+        system = (java / f"BattlefieldSystem{suffix}.java").read_text(encoding="utf-8")
+        assert not re.search(r"\.(?:getChunk|getChunkAt|getChunkFuture|hasChunk|hasChunkAt|join|managedBlock)\(",
+                             system), f"{version}: blocking or holder-only chunk access returned"
+        assert "getChunkNow(" in method(system, "isSafeSite"), f"{version}: safety reads need ready FULL chunks"
+        safety = method(system, "isSafeSite")
+        assert safety.index("getChunkNow(") < safety.index("getBiome("), f"{version}: readiness must precede biome reads"
+        assert "data.isFarEnoughFromKnownSites(center, 512.0)" in safety, f"{version}: all placement paths need the same spacing gate"
+        assert system.count("placeSite(level,") == 2, f"{version}: review every production placement entry"
+        for caller in ("tryPreparedAttempt", "findAndPlace"):
+            body = method(system, caller)
+            assert body.index("isSafeSite(") < body.index("placeSite("), f"{version}/{caller}: shared gate bypassed"
+        assert "activeAttempt.chunks.close()" in method(system, "clear"), f"{version}: shutdown must release tickets"
+        progress = method(system, "tickPreparedGeneration")
+        assert "State.WAITING" in progress and "finally" in progress and "attempt.chunks.close()" in progress
+        assert "level.getChunkSource().getChunkNow(chunk.x" in system, f"{version}: readiness backend must not load"
+        assert "new GenerationAttempt(" in method(system, "tickReplacementGeneration")
+        assert "new GenerationAttempt(" in method(system, "tickForcedGeneration"), f"{version}: admin must share bounded preparation"
+        assert "data.retryReplacement(job.originCenter(), now + 1200L)" in system, f"{version}: crowded jobs must be retained with backoff"
+        assert "getChunk" not in method(system, "hasReplacementRegion"), f"{version}: crowded-area preflight must be metadata only"
+        lease = (java / f"BattlefieldChunkPreparation{suffix}.java").read_text(encoding="utf-8")
+        normalized = lease.replace("compat.", "").replace(suffix, "") if suffix else lease
+        reference = (ROOT / "common/src/main/java/com/yuriscat/echowarrior/world/BattlefieldChunkPreparation.java").read_text(encoding="utf-8")
+        assert normalized == reference, f"{version}: lease engine drifted across versions"
+        assert "targets.size() > 9" in lease and "REQUEST_INTERVAL = 10" in lease and "TIMEOUT = 600" in lease
+        test = (java / f"BattlefieldChunkPreparationSelfTest{suffix}.java").read_text(encoding="utf-8")
+        assert "failRetain" in test and "backend.loaded.remove(4L)" in test and "Set.of(999L)" in test
+        acceptance = (java / f"BattlefieldGenerationSelfTest{suffix}.java").read_text(encoding="utf-8")
+        assert "getChunkNow" in acceptance and "fixture.removeBrushableAt" in acceptance
+        assert "fixture.replacementJobCount() == 1" in acceptance and "dormant.attempts() == 1" in acceptance
+        assert f"BattlefieldGenerationSelfTest{suffix}.tick(server)" in system
+        assert "TicketType.FORCED" not in system, f"{version}: generation must not share another owner's ticket type"
+        print(f"PASS {version}: bounded chunk preparation, nonblocking reads, retry preservation, cleanup and regression coverage")
+
+    for base, fabric, neo, system in (
+        (ROOT, "fabric/src/main/java/com/yuriscat/echowarrior/fabric/FabricEventRegistrar.java",
+         "neoforge/src/main/java/com/yuriscat/echowarrior/neoforge/NeoForgeEventRegistrar.java", "BattlefieldSystem"),
+        (ROOT / "versions/1.21.1", "fabric/src/main/java/com/yuriscat/echowarrior/compat/fabric/EchoWarrior1211Fabric.java",
+         "neoforge/src/main/java/com/yuriscat/echowarrior/compat/neoforge/EchoWarrior1211NeoForge.java", "BattlefieldSystem1211"),
+    ):
+        assert re.search(r"SERVER_STOPPING\.register\(server -> [\w.]*" + system + r"\.clear\(\)\)",
+                         (base / fabric).read_text(encoding="utf-8"))
+        assert re.search(r"ServerStoppingEvent event\) -> [\w.]*" + system + r"\.clear\(\)",
+                         (base / neo).read_text(encoding="utf-8"))
+    stop = (ROOT / "versions/1.20.1/common/src/main/java/com/yuriscat/echowarrior/compat/mixin/MinecraftServerMixin1201.java").read_text(encoding="utf-8")
+    assert '@Inject(method = "stopServer", at = @At("HEAD"))' in stop and "BattlefieldSystem1201.clear();" in stop
 
 
 if __name__ == "__main__":

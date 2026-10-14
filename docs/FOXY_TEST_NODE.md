@@ -41,11 +41,19 @@
 
 成功必须同时满足步骤退出 0、真实运行日志的性能守卫和完整自测标记、正常保存退出；仅有 `status.json` 或静态源码检查不足以确认修复。性能守卫验证一万条历史区域下锁定查询 1 次、2048 格搜索至多 49 次，以及真实方块移除/属性变更、清场与本区块重载修复。它不衡量反馈者整合包的实际 TPS 改善。
 
+2026-10-13 起，兼容线 production smoke 还通过明确的 JVM 测试开关要求 `BATTLEFIELD GENERATION SELFTEST PASSED`：在隔离世界中跨真实 tick 完成一次远处补位、读取实际可疑方块、确认临时区块随后卸载，并验证周围区域全占用时只退避而不丢弃任务。同步自测另检查区块预算、超时/取消清理、旧格式队列往返及重试公平性。1.21.1 的既有召唤事务夹具要先等待专用 marker 在 `(2, 2)` 区块进入实际实体可见状态，不能仅凭服务器打印 `Done` 就假设同步加载过的区块已经可以查询刚创建的实体；测试结束撤销该夹具加载票。
+
+2026-10-14 增加 `BATTLEFIELD SPACING SELFTEST PASSED` 门禁：在跨负/正坐标考古区域的安全平坦夹具中验证 511 格拒绝、512 格允许。它检查所有生产放置入口共用的最终距离保护；既有单处地形自测不足以发现自然生成入口漏掉全局间距。
+
 Collect 仅取回本轮状态、输入清单、步骤日志、服务端日志/崩溃报告和结果 JSON，不取回世界或配置。证据 ZIP 再次比较 SHA-256。首次真实结果记录在 `docs/FOXY_TEST_2026-10-05.md`。
 
 ## 主线与图形测试
 
 当前入口支持 1.21.1/1.20.1 两条兼容线。26.1.2 长测试使用相同固定 SSH 和独立快照，设置任务的 Java 25 后调用仓库 Wrapper 和既有测试脚本；不要用 Java 17，也不要引入全局 Gradle。运行 1.20.1 Gradle 构建时显式传入 `-Porg.gradle.java.installations.paths=D:\Tools-Terminal\EchoWarrior\jdk-17,D:\Tools-Terminal\EchoWarrior\jdk-21`，让 Java 21 上的 Wrapper 发现 Java 17 编译/运行工具链。2026-10-11 实测只在 `JAVA_TOOL_OPTIONS` 中设置同名 `-D` 系统属性不足以让 Gradle 9.5.1 发现节点 JDK 17；改用上述 Gradle 项目属性后，Minecraft 编译产物生成正常启动。
+
+26.1.2 的生成专项入口为 `scripts/smoke-test-battlefield-mainline.py`。向 `--input` 提供官方安装器准备的 `fabric/`、`neoforge/` 运行时、候选与依赖 JAR，以及逐文件 SHA-256 的 `inputs.json`；另外显式提供 `--games`、`--reports`、节点 Java 25 的 `--java` 和统一 `active-test.lock` 的 `--lock`。脚本只允许 FOXY-NODE、验证输入后创建全新平坦测试世界，串行运行两种发行包并等待真实生成验收及正常保存。准备公共库可以在控制端完成，不在长测期间占用节点做安装或另一轮游戏测试。输入、旧包驻留对照、原存档重启和新地形探索分别记录，不能合并成未经验证的“所有场景通过”。
+
+主线平坦夹具必须提供带 `layers`、`biome` 的完整 `generator-settings`；空对象会记录 `No key layers in MapLike[{}]`，即使默认回退后生成自测通过也不能忽略该错误。主线同样要求距离边界标记，保留失败夹具的日志后在全新世界复查。
 
 需要实际客户端时先读节点 `GUI.md`，通过现有 `invoke-desktop-gui.ps1` 在已登录且解锁的 FOXY 会话执行 `scripts/run-test-client.ps1`，检查已有客户端并串行运行。普通 SSH 验收只证明无界面测试可运行；画面、声音、控制、真实多人和第三方整合包仍需相应实机验收。
 
@@ -54,6 +62,10 @@ Collect 仅取回本轮状态、输入清单、步骤日志、服务端日志/�
 图形验收的外层 PowerShell 包装器应分别重定向标准输出和标准错误，并检查子进程退出码；不要在 Windows PowerShell 5.1 的 `ErrorActionPreference=Stop` 下把原生进程的标准错误提示直接合并到错误流。2026-10-10 Forge 游戏正常保存退出后，临时包装器误把 `Picked up JAVA_TOOL_OPTIONS` 记为任务失败；原记录保留，游戏结果以截图、游戏日志和归属进程退出核验为准，不能覆盖失败状态冒充包装器通过。
 
 整合包复现可设置 `ECHO_WARRIOR_TEST_PROFILE_OVERRIDES=<导入实例>`，只复制 `config`、`defaultconfigs`、`datapacks` 并记录启动前 SHA-256，不导入玩家世界、mods 或启动凭据，不覆盖既有文件。`ECHO_WARRIOR_TEST_REQUIRED_MODS=<原包mods目录>` 要求 GeckoLib/SBL 等基础依赖直接来自该目录；缺文件/损坏即失败，不能静默替换为 Maven 同名包。`ECHO_WARRIOR_TEST_CLIENT_HEAP_MIB` 可为大型包指定 1024～16384 MiB（默认 3072）。这些输入只影响测试实例。第三方首次入服界面需要实际处理，超时不算崩溃复现；大包中某项自测断言不适用时保留失败，不放宽整个 ERROR 日志过滤。
+
+2026-10-13 的明确指定分享包复现使用 `run-test-client.ps1 -TargetVersion 1.21.1 -Loader NeoForge -Production -PreparedProductionLaunch <隔离实例/launch.json> -RequireExistingWorld`。此入口仅供手动/外部诊断控制，不接受 `StartupOnly` 或 `PauseOnJoin`，不会把启动登记为自测通过。描述文件须与参数文件同处实例目录，记录 production、Minecraft/加载器、固定测试用户名、所选 Java 21 路径、参数文件 SHA-256 及非空模组哈希清单；启动前复核文件和单客户端约束。运行时由官方安装器准备，不使用开发映射替代正式 JAR。
+
+本次用户明确要求继续复现其提供的整合包，因故障状态在分享包所附世界的补位队列中，诊断工具将该世界复制到全新节点实例的 `saves/CATTEST`，保留原 ZIP 和启动前逐文件哈希；这是本次指定反馈材料的隔离诊断，不改变默认打包脚本排除玩家世界的规则。对照世界再次从原 ZIP 复制，仅移除原有三条 `ReplacementJobs`，其余 NBT 原始字节不变；不得将对照文件当作玩家修复包。工具、平台差异、采样干扰和结果见 `docs/research/memory-reproduction-2026-10-13.md`。
 
 ## 可选联装测试与官方服务端缓存（2026-10-07）
 

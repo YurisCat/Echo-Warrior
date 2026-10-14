@@ -1,5 +1,17 @@
 # Echo Warrior for Minecraft 1.21.1
 
+## Local battlefield generation fix — 2026-10-13
+
+Replacement and admin generation now prepare one bounded chunk footprint across ticks,
+poll ready FULL chunks without waiting, and release their own temporary tickets on completion,
+timeout, failure and shutdown. Natural placement only reads ready chunks. Failed replacements
+back off while preserving the existing save format and pending work. The production suite now
+requires actual remote placement and unload acceptance in addition to the existing self-tests.
+
+This is an unpublished candidate. Exact JARs, original-pack measurements, retained failures and
+acceptance limits are recorded in
+[`battlefield-generation-fix-2026-10-13.md`](../../docs/research/battlefield-generation-fix-2026-10-13.md).
+
 ## 2026-10-07 progression and optional TBF integration
 
 Default maximum level is now 100, configurable at startup with `config/echo_warrior-progression.json` (`schemaVersion: 1`, `maxLevel: 100`). Health and base attack keep the fixed `1 + (L - 1) / 29` multiplier; next-level XP remains `15 + 2L`. Lowering the cap preserves cultivated levels and existing XP. The salvage value remains capped at level 30.

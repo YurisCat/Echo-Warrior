@@ -9,6 +9,7 @@ param(
     [switch]$StartupOnly,
     [switch]$PauseOnJoin,
     [switch]$Production,
+    [string]$PreparedProductionLaunch,
     [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+$')]
     [string]$ProductionForgeVersion,
     [ValidateRange(30, 300)]
@@ -16,7 +17,12 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-if ($Production -and ($TargetVersion -ne '1.20.1' -or ($StartupOnly -eq $PauseOnJoin))) {
+if ($PreparedProductionLaunch -and (-not $Production -or $TargetVersion -ne '1.21.1' -or
+        $Loader -ne 'NeoForge' -or $StartupOnly -or $PauseOnJoin)) {
+    throw 'PreparedProductionLaunch requires a manual 1.21.1 NeoForge Production run.'
+}
+if ($Production -and -not $PreparedProductionLaunch -and
+        ($TargetVersion -ne '1.20.1' -or ($StartupOnly -eq $PauseOnJoin))) {
     throw 'Production requires 1.20.1 and exactly one of StartupOnly or PauseOnJoin.'
 }
 if ($ProductionForgeVersion -and (-not $Production -or $Loader -ne 'Forge')) {
@@ -161,13 +167,50 @@ if ($allRunningClients.Count -gt 0) {
 
 $productionLaunch = $null
 if ($Production) {
-    $prepareArguments = @('--loader', $Loader.ToLowerInvariant())
-    if ($ProductionForgeVersion) { $prepareArguments += @('--forge-version', $ProductionForgeVersion) }
-    if ($PauseOnJoin) { $prepareArguments += '--pause-on-join' }
-    & python (Join-Path $PSScriptRoot 'prepare-1.20.1-production-client.py') @prepareArguments
-    if ($LASTEXITCODE -ne 0) { throw 'Production client preparation failed.' }
-    $descriptorPath = Join-Path $projectRoot "build\compatibility-1.20.1-production-client\latest-$($Loader.ToLowerInvariant())-launch.json"
+    if ($PreparedProductionLaunch) {
+        $descriptorPath = (Resolve-Path -LiteralPath $PreparedProductionLaunch).Path
+    } else {
+        $prepareArguments = @('--loader', $Loader.ToLowerInvariant())
+        if ($ProductionForgeVersion) { $prepareArguments += @('--forge-version', $ProductionForgeVersion) }
+        if ($PauseOnJoin) { $prepareArguments += '--pause-on-join' }
+        & python (Join-Path $PSScriptRoot 'prepare-1.20.1-production-client.py') @prepareArguments
+        if ($LASTEXITCODE -ne 0) { throw 'Production client preparation failed.' }
+        $descriptorPath = Join-Path $projectRoot "build\compatibility-1.20.1-production-client\latest-$($Loader.ToLowerInvariant())-launch.json"
+    }
     $productionLaunch = Get-Content -LiteralPath $descriptorPath -Raw | ConvertFrom-Json
+    if ($PreparedProductionLaunch) {
+        if ($productionLaunch.production -ne $true -or $productionLaunch.loader -ne 'neoforge' -or
+                $productionLaunch.minecraft -ne '1.21.1' -or $productionLaunch.username -cne $clientUsername) {
+            throw 'Prepared descriptor must identify a production 1.21.1 NeoForge test client.'
+        }
+        if ((Resolve-Path -LiteralPath $productionLaunch.java).Path -ne
+                (Resolve-Path -LiteralPath $javaExecutable).Path) {
+            throw 'Prepared production client must use the selected Java 21 runtime.'
+        }
+        $preparedRoot = (Resolve-Path -LiteralPath $productionLaunch.run_directory).Path
+        $preparedArguments = (Resolve-Path -LiteralPath $productionLaunch.argument_file).Path
+        if ((Split-Path -Parent $preparedArguments) -ne $preparedRoot -or
+                (Split-Path -Parent $descriptorPath) -ne $preparedRoot) {
+            throw 'Prepared argument file and descriptor must be inside the isolated instance.'
+        }
+        if ((Get-FileHash -LiteralPath $preparedArguments -Algorithm SHA256).Hash -ne
+                $productionLaunch.argument_sha256) {
+            throw 'Prepared production arguments changed after staging.'
+        }
+        if (@($productionLaunch.artifacts.PSObject.Properties).Count -eq 0) {
+            throw 'Prepared production launch must record its mod hashes.'
+        }
+        foreach ($artifactName in $productionLaunch.artifacts.PSObject.Properties.Name) {
+            if ([IO.Path]::GetFileName($artifactName) -cne $artifactName -or
+                    $artifactName -notlike '*.jar') { throw 'Unsafe production artifact name.' }
+        }
+        $preparedModNames = @($productionLaunch.artifacts.PSObject.Properties.Name | Sort-Object)
+        $actualModNames = @(Get-ChildItem -LiteralPath (Join-Path $preparedRoot 'mods') -File -Filter '*.jar' |
+            Select-Object -ExpandProperty Name | Sort-Object)
+        if (@(Compare-Object $preparedModNames $actualModNames).Count -ne 0) {
+            throw 'Prepared production mod list changed after staging.'
+        }
+    }
     $runDirectory = $productionLaunch.run_directory
     $escapedRunDirectory = [regex]::Escape($runDirectory)
     $escapedClientProjectDirectory = $escapedRunDirectory

@@ -4,6 +4,21 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+## 0.2.8 - 2026-10-14
+
+### Fixed
+
+- Fixed a source of server stuttering during battlefield generation and replacement, especially when exploring new terrain. These tasks no longer block the server tick while waiting for chunks to load or generate.
+- Battlefield replacements and administrator generation requests now prepare chunks gradually and check terrain only when the required chunks are ready. Failed attempts retry less often, and temporary chunk tickets are released when an attempt finishes, times out, or the server stops.
+- Natural battlefield generation now checks only ready chunks without requesting neighboring chunks. Empty queues for unloaded areas are removed.
+- Restored the intended minimum distance of 512 blocks between active battlefield centers for natural generation on Minecraft 1.20.1 and 1.21.1. Existing battlefields are preserved.
+
+### Notes
+
+- Applies to all six packages across Minecraft 26.1.2, 1.21.1, and 1.20.1. New battlefields may take longer to appear while chunks are being prepared or unsuitable positions are retried.
+- Existing worlds and pending replacement tasks are supported. Restart the game and server after updating; no world reset is needed.
+- This update addresses a confirmed chunk-waiting performance issue. Reports of memory usage continuing to grow are still under investigation; this is not a claim that every memory or GC issue has been resolved.
+
 ## 0.2.7 - 2026-10-11
 
 ### Fixed
