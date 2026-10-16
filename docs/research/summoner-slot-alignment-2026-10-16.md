@@ -48,3 +48,7 @@ Fabric 的图形客户端没有在本轮单独运行；不能将共享代码与�
 - 服务端证据：`build/foxy-tests/20261016T075035Z-41616/evidence.zip`，SHA-256 `d917f5ac8b5c3cc060f22a213afb7117d0ab1439b35175f496efeeba08491739`。
 - GUI 节点证据：`build/slot-ui-2026-10-16/gui-evidence.zip`，SHA-256 `18ab244794f877e3841bd6afe741c4a952cefd1f7d92033b94dfc86fb6cc3b9c`。取回后与节点逐字节核验。
 - 相对已发布 0.2.8 的 class 差异仅涉及两个召唤器类及其内部类，另有既知的 Forge 网络类编译字节差异，其 `javap -c -p` 指令列表完全一致。对照保存在 `artifact-diff.json`。属性成长 Mixin 不在改动范围内。
+
+## 后续正式发布
+
+作者随后授权以 0.2.9 发布。上文仍保留功能候选阶段的真实版本与哈希；固定提交构建的六个正式包、CI 原包复验、GitHub Release 和 CF/MR 回执另见 [0.2.9 发布记录](../releases/0.2.9.md)，不混用两阶段产物。

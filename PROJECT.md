@@ -642,7 +642,7 @@ mod-project/
 
 ## 7. 正式发布与许可
 
-- 2026-10-16，作者授权以 **0.2.9** 发布饰品槽对齐修复至 GitHub、CurseForge 和 Modrinth。1.20.1/1.21.1 右三格的物品、高亮、点击与空槽说明恢复原稿坐标；26.1.2 同步版本号。三平台共用 `CHANGELOG.md` 的英文 CL；不改变 GUI 贴图、玩法或存档，不包含待原始日志的 Mixin 崩溃反馈。候选实机记录见 `docs/research/summoner-slot-alignment-2026-10-16.md`，正式包、回执与验收进度见 `docs/releases/0.2.9.md`。
+- 2026-10-16，作者授权的饰品槽对齐修复 **0.2.9** 已发布 GitHub Release，CurseForge 六文件已接收、公开状态待核对；Modrinth 六版本上传及哈希/元数据验证通过，项目仍为 `processing / Under review`。固定标签源码 `c50093be93622c7ce1a73440da9c01dce480ab32`；六个正式包与 CI 演练逐字节一致，四个兼容加载器的狐狸节点原包复验、六次专服启动和存档重启通过。1.20.1 Forge / 1.21.1 NeoForge 相同代码候选已通过 GUI 2/3/4 实机操作与高亮像素检查；Fabric 图形客户端未在本轮单独运行。右三格物品、高亮、点击及空槽说明恢复原稿坐标，26.1.2 仅同步版本号。三平台共用 CL，本地化门禁 0 错误/0 待处理；不改变 GUI 贴图、玩法或存档，不包含待原始日志的 Mixin 崩溃反馈。实机记录见 `docs/research/summoner-slot-alignment-2026-10-16.md`，完整回执与验收边界见 `docs/releases/0.2.9.md`。
 
 - 2026-10-14，作者授权的遗迹生成性能修复 **0.2.8** 已发布 GitHub Release，CurseForge 六文件已接收、公开状态待核对；Modrinth 六版本上传与哈希/元数据验证通过，项目仍为 `processing / Under review`。固定标签源码 `a7272fe176fd41a9244cff9ef51acad7ec096a47`；六个正式包与 CI 演练及狐狸节点八次专服启动复验原包逐字节一致。本地化门禁 0 错误/0 待处理，三平台共用 CL。修复分阶段区块准备、失败退避、临时 ticket 清理及兼容线自然生成间距；既有遗迹和任务保留，不宣称全部内存问题已解决。完整回执、验收边界与状态见 `docs/releases/0.2.8.md`。
 
