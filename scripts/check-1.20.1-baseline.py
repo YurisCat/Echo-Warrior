@@ -351,6 +351,7 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
 
 def main() -> int:
     import runpy
+    runpy.run_path(str(ROOT / "scripts/check-summoner-slot-layout.py"), run_name="__main__")
     runpy.run_path(str(ROOT / "scripts/check-battlefield-snow.py"), run_name="__main__")
     runpy.run_path(str(ROOT / "scripts/check-battlefield-performance.py"), run_name="__main__")
     config = properties()

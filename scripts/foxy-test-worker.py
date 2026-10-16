@@ -86,6 +86,7 @@ def package(destination: Path, versions: list[str], tbf_forge: Path | None = Non
     selected.update(name for name in new_files if name.startswith(("common/src/", "versions/"))
                     and Path(name).suffix in (".java", ".json", ".gradle", ".properties"))
     selected.update(name for name in new_files if name in {
+        "scripts/check-summoner-slot-layout.py",
         "scripts/check-battlefield-performance.py", "scripts/smoke-test-1.21.1-production-servers.py",
         "scripts/foxy-test-worker.py", "scripts/run-foxy-tests.ps1", "docs/FOXY_TEST_NODE.md"})
     artifacts = {}

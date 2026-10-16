@@ -8,6 +8,8 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $compatibilityRoot = Join-Path $repositoryRoot 'versions\1.21.1'
 $propertiesPath = Join-Path $compatibilityRoot 'gradle.properties'
+& python (Join-Path $PSScriptRoot 'check-summoner-slot-layout.py')
+if ($LASTEXITCODE -ne 0) { throw 'Cross-version summoner slot layout check failed.' }
 & python (Join-Path $PSScriptRoot 'check-battlefield-snow.py')
 if ($LASTEXITCODE -ne 0) { throw 'Cross-version snow cover policy check failed.' }
 & python (Join-Path $PSScriptRoot 'check-battlefield-performance.py')
