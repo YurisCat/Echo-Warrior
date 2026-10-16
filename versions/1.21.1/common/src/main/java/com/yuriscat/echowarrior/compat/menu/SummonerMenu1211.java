@@ -50,6 +50,8 @@ public final class SummonerMenu1211 extends AbstractContainerMenu {
     public static final int ACTION_STALE_STATE = 14;
     private static final int PLAYER_SLOT_START = CUSTOM_SLOT_COUNT;
     private static final int PLAYER_SLOT_END = PLAYER_SLOT_START + Inventory.INVENTORY_SIZE;
+    // The authored GUI has a 28-pixel step between the third and fourth slots.
+    private static final int[] MODULE_SLOT_X = {8, 37, 66, 94, 123, 152};
 
     private final Player owner;
     private final int sourceInventorySlot;
@@ -117,7 +119,7 @@ public final class SummonerMenu1211 extends AbstractContainerMenu {
 
         for (int index = 0; index < MODULE_SLOT_COUNT; index++) {
             int accessorySlot = index;
-            this.addSlot(new Slot(this.summonerContainer, index, 8 + index * 29, 94) {
+            this.addSlot(new Slot(this.summonerContainer, index, MODULE_SLOT_X[index], 94) {
                 @Override public boolean mayPlace(ItemStack stack) {
                     return EchoSummonerAccessory1211.canInstall(
                             stack, SummonerMenu1211.this.sourceStack(), accessorySlot,

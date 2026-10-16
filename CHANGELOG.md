@@ -4,6 +4,19 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+## 0.2.9 - 2026-10-16
+
+### Fixed
+
+- Aligned the three rightmost accessory slots in the Echo Summoner on Minecraft 1.20.1 and 1.21.1. Item icons, hover highlights and click areas now match the slot artwork.
+- Empty accessory slot tooltips now follow the actual slot positions.
+
+### Notes
+
+- Verified in-game at GUI scales 2, 3 and 4. No textures or gameplay values were changed.
+- Minecraft 26.1.2 receives the matching version number; its accessory slots were already aligned.
+- Existing worlds and installed accessories are supported. Restart the game and server after updating; no world reset is needed.
+
 ## 0.2.8 - 2026-10-14
 
 ### Fixed

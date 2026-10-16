@@ -46,6 +46,8 @@ public final class SummonerMenu1201 extends AbstractContainerMenu {
     public static final int ACTION_FUEL_SOUL_SAND = 12;
     public static final int ACTION_LIMIT_REACHED = 13;
     public static final int ACTION_STALE_STATE = 14;
+    // The authored GUI has a 28-pixel step between the third and fourth slots.
+    private static final int[] MODULE_SLOT_X = {8, 37, 66, 94, 123, 152};
     private int actionSequence;
     private final DataSlot spiritPresent = DataSlot.standalone();
     private final DataSlot actionFeedback = DataSlot.standalone();
@@ -89,7 +91,9 @@ public final class SummonerMenu1201 extends AbstractContainerMenu {
         owner = inventory.player;
         sourceIndex.set(sourceSlot);
         summonerId = sourceSlot < 0 ? null : SummonerData1201.summonerId(inventory.getItem(sourceSlot));
-        for (int index = 0; index < 6; index++) addSlot(new AccessorySlot(contents, index, 8 + index * 29, 94));
+        for (int index = 0; index < MODULE_SLOT_COUNT; index++) {
+            addSlot(new AccessorySlot(contents, index, MODULE_SLOT_X[index], 94));
+        }
         addSlot(new FuelSlot(contents));
         addSlot(new RelicSlot(contents));
         for (int row = 0; row < 3; row++) for (int column = 0; column < 9; column++) {

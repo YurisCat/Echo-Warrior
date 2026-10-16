@@ -16,6 +16,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -38,7 +39,6 @@ public final class SummonerScreen1201 extends AbstractContainerScreen<SummonerMe
     private static final int SKILL_STEP = 22;
     private static final int[] ATTRIBUTE_ICON_X = {61, 134, 61, 116, 61, 116, 61, 116};
     private static final int[] ATTRIBUTE_ICON_Y = {19, 19, 32, 32, 45, 45, 58, 58};
-    private static final int[] MODULE_SLOT_X = {8, 37, 66, 95, 124, 153};
 
     private static final ResourceLocation BACKGROUND = icon("summoner_screen.png");
     private static final ResourceLocation MODE_DEFAULT = icon("widgets/mode_default.png");
@@ -629,8 +629,9 @@ public final class SummonerScreen1201 extends AbstractContainerScreen<SummonerMe
             return;
         }
         for (int index = 0; index < SummonerMenu1201.MODULE_SLOT_COUNT; index++) {
-            if (this.menu.getSlot(index).getItem().isEmpty()
-                    && this.isHovering(MODULE_SLOT_X[index], 94, 16, 16, mouseX, mouseY)) {
+            Slot slot = this.menu.getSlot(index);
+            if (!slot.hasItem()
+                    && this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
                 graphics.renderComponentTooltip(this.font, List.of(
                         Component.translatable("gui.echo_warrior.summoner.accessory.title")
                                 .withStyle(ChatFormatting.GOLD),
