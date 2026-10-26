@@ -1,5 +1,25 @@
 # Minecraft 1.20.1 compatibility line
 
+## Growth attribute compatibility candidate — 2026-10-26
+
+The growth sanitizer now wraps the existing operation instead of exclusively
+redirecting it, preserving LOL-new's own attribute handling. Forge embeds
+MixinExtras 0.4.1 through JarJar; the required Fabric Loader supplies its runtime.
+Growth formulas, instance flags, cache invalidation, Apothic constructor selection,
+saves and networking remain unchanged. Restart is required; no new world is needed.
+This fix ships in 0.2.10; final artifacts and portal status are recorded in
+[`0.2.10.md`](../../docs/releases/0.2.10.md). Candidate hashes, production-server/client
+results and acceptance limits are maintained in
+[`lolmod-growth-redirect-crash-2026-10-26.md`](../../docs/research/lolmod-growth-redirect-crash-2026-10-26.md).
+Source changes start from the pushed checkpoint `940ec13`.
+FOXY-NODE passed two server boots in each of five configurations and three
+production-client automatic suites on the final artifacts. The original full
+modpack and human multiplayer/visual acceptance remain outside this result.
+
+## Archaeology candidate — 2026-10-26
+
+Suspicious red sand now generates on red-sand terrain, uses the existing archaeology loot pools, and returns to red sand after brushing. Both Fabric and Forge packaged server suites pass, including two boots per loader. Modern Lootr integration is limited to the verified 1.21.1 API; it is not silently copied into this line. Restart is required; existing worlds remain usable and only newly generated ruins gain red sand. These local candidates are not a published release. Exact hashes, retained failures and manual acceptance: [archaeology report](../../docs/research/archaeology-lootr-red-sand-2026-10-26.md).
+
 ## Local battlefield generation fix — 2026-10-13
 
 Replacement and admin generation now prepare one bounded chunk footprint across ticks,

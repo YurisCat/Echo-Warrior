@@ -47,7 +47,7 @@ def run(args):
     lease.write(f"battlefield-mainline pid={os.getpid()} source={Path(__file__).resolve()}")
     lease.flush()
     try:
-        for loader in ("fabric", "neoforge"):
+        for loader in (("fabric", "neoforge") if args.loader == "both" else (args.loader,)):
             game = args.games / loader
             shutil.copytree(args.input / loader, game)
             (game / "eula.txt").write_text("eula=true\n", encoding="utf-8")
@@ -81,7 +81,8 @@ def run(args):
                             raise RuntimeError(f"{loader}: exited before acceptance; inspect {log}")
                         if "Exception in server tick loop" in text or "Encountered an unexpected exception" in text:
                             raise RuntimeError(f"{loader}: runtime failure; inspect {log}")
-                        if MARKER in text and "BATTLEFIELD SPACING SELFTEST PASSED" in text:
+                        if (MARKER in text and "BATTLEFIELD SPACING SELFTEST PASSED" in text
+                                and "RED SAND SELFTEST PASSED" in text):
                             process.stdin.write("stop\n")
                             process.stdin.flush()
                             if process.wait(timeout=60) != 0:
@@ -146,4 +147,5 @@ if __name__ == "__main__":
     parser.add_argument("--java", type=Path, required=True)
     parser.add_argument("--lock", type=Path, required=True)
     parser.add_argument("--timeout", type=int, default=600)
+    parser.add_argument("--loader", choices=("both", "fabric", "neoforge"), default="both")
     run(parser.parse_args())

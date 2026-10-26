@@ -75,6 +75,7 @@ public final class EchoWarrior1211Fabric implements ModInitializer {
                 ModContent1211.TUTORIAL_MANUAL_MENU);
         ((FabricBlockEntityType)BlockEntityType.BRUSHABLE_BLOCK).addSupportedBlock(ModContent1211.SUSPICIOUS_GRASS_BLOCK);
         ((FabricBlockEntityType)BlockEntityType.BRUSHABLE_BLOCK).addSupportedBlock(ModContent1211.SUSPICIOUS_DIRT);
+        ((FabricBlockEntityType)BlockEntityType.BRUSHABLE_BLOCK).addSupportedBlock(ModContent1211.SUSPICIOUS_RED_SAND);
         Registry.register(BuiltInRegistries.RECIPE_SERIALIZER,
                 ModContent1211.id(ModContent1211.CRAFT_LEGACY_REPAIR_RECIPE_ID),
                 ModContent1211.CRAFT_LEGACY_REPAIR_SERIALIZER);

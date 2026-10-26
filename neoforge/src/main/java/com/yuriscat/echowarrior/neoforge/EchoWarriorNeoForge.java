@@ -121,7 +121,7 @@ public final class EchoWarriorNeoForge {
 		event.modify(
 				BlockEntityType.BRUSHABLE_BLOCK,
 				ModBlocks.SUSPICIOUS_GRASS_BLOCK,
-				ModBlocks.SUSPICIOUS_DIRT
+				ModBlocks.SUSPICIOUS_DIRT, ModBlocks.SUSPICIOUS_RED_SAND
 		);
 	}
 

@@ -26,7 +26,7 @@ public final class RelicEquipmentSelfTest1201 {
     public static void run(MinecraftServer server) {
         checks = 0;
         EchoProgressionSelfTest1201.run(server.overworld());
-        check(ModContent1201.items().size() == 43, "43 complete registered items including exploration");
+        check(ModContent1201.items().size() == 44, "44 complete registered items including exploration");
         ModContent1201.items().forEach((id, item) -> check(BuiltInRegistries.ITEM.get(id) == item, "registered " + id));
         for (String id : new String[]{"echo_warrior", "echo_warrior_accessories", "echo_warrior_knowledge"}) {
             check(BuiltInRegistries.CREATIVE_MODE_TAB.containsKey(new net.minecraft.resources.ResourceLocation("echo_warrior", id)), "creative tab " + id);

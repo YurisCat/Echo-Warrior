@@ -71,7 +71,7 @@ public final class CompatSelfTestCommand1211 {
         UUID testSummonerId = null;
         UUID testCreeperId = null;
         try {
-            require(ModContent1211.items().size() == 43, "complete item catalogue");
+            require(ModContent1211.items().size() == 44, "complete item catalogue");
             ModContent1211.items().forEach((id, item) ->
                     require(id.equals(BuiltInRegistries.ITEM.getKey(item)), "item registry id " + id));
             require(ModContent1211.items().containsValue(ModContent1211.ECHO_COMPASS)
@@ -83,7 +83,7 @@ public final class CompatSelfTestCommand1211 {
                             && ModContent1211.items().containsValue(ModContent1211.SUSPICIOUS_GRASS_BLOCK_ITEM)
                             && ModContent1211.items().containsValue(ModContent1211.SUSPICIOUS_DIRT_ITEM),
                     "recycler and suspicious block items");
-            require(ModContent1211.blocks().size() == 3, "complete block catalogue");
+            require(ModContent1211.blocks().size() == 4, "complete block catalogue");
             ModContent1211.blocks().forEach((id, block) ->
                     require(id.equals(BuiltInRegistries.BLOCK.getKey(block)), "block registry id " + id));
             require(ModContent1211.blockEntityTypes().size() == 1

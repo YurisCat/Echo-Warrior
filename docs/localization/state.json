@@ -1,11 +1,12 @@
 {
   "accepted": {
     "es_ar": {
-      "accepted_on": "2026-10-07",
+      "accepted_on": "2026-10-26",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "block.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "block.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "command.echo_warrior.binding.no_relic": "0135693ba2bedd6df7aab5f4492710ee158d1f2dba0aeebeb62048b50a88fe9a",
         "container.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "death.attack.armor_piercing_arrow": "658898851b95462515ec63503bc5f1719bda04ee3bf51096816cef2ba122c079",
@@ -428,6 +429,7 @@
         "item.echo_warrior.suspicious_block.tooltip": "4ac380839f7bbde6228e15010a8fdc19d0877c87cc528fbe4a922786f6e6348d",
         "item.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "item.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "item.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "item.echo_warrior.test_echo_summoner": "5b9295b634614d63dd2afd5d60dedff994ea36c388fca0974a546935346b5dc8",
         "item.echo_warrior.test_echo_summoner.bound": "843fb595ad1c04fc4b15109a7d8398d92bb91658a2ece4be946ed989d62fcecf",
         "item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo": "7327af7d73a9414b84bac8bed9c95035b413981e99e612d7b6c0169915080f24",
@@ -630,11 +632,12 @@
       }
     },
     "es_cl": {
-      "accepted_on": "2026-10-07",
+      "accepted_on": "2026-10-26",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "block.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "block.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "command.echo_warrior.binding.no_relic": "0135693ba2bedd6df7aab5f4492710ee158d1f2dba0aeebeb62048b50a88fe9a",
         "container.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "death.attack.armor_piercing_arrow": "658898851b95462515ec63503bc5f1719bda04ee3bf51096816cef2ba122c079",
@@ -1057,6 +1060,7 @@
         "item.echo_warrior.suspicious_block.tooltip": "4ac380839f7bbde6228e15010a8fdc19d0877c87cc528fbe4a922786f6e6348d",
         "item.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "item.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "item.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "item.echo_warrior.test_echo_summoner": "5b9295b634614d63dd2afd5d60dedff994ea36c388fca0974a546935346b5dc8",
         "item.echo_warrior.test_echo_summoner.bound": "843fb595ad1c04fc4b15109a7d8398d92bb91658a2ece4be946ed989d62fcecf",
         "item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo": "7327af7d73a9414b84bac8bed9c95035b413981e99e612d7b6c0169915080f24",
@@ -1259,11 +1263,12 @@
       }
     },
     "es_ec": {
-      "accepted_on": "2026-10-07",
+      "accepted_on": "2026-10-26",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "block.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "block.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "command.echo_warrior.binding.no_relic": "0135693ba2bedd6df7aab5f4492710ee158d1f2dba0aeebeb62048b50a88fe9a",
         "container.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "death.attack.armor_piercing_arrow": "658898851b95462515ec63503bc5f1719bda04ee3bf51096816cef2ba122c079",
@@ -1686,6 +1691,7 @@
         "item.echo_warrior.suspicious_block.tooltip": "4ac380839f7bbde6228e15010a8fdc19d0877c87cc528fbe4a922786f6e6348d",
         "item.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "item.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "item.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "item.echo_warrior.test_echo_summoner": "5b9295b634614d63dd2afd5d60dedff994ea36c388fca0974a546935346b5dc8",
         "item.echo_warrior.test_echo_summoner.bound": "843fb595ad1c04fc4b15109a7d8398d92bb91658a2ece4be946ed989d62fcecf",
         "item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo": "7327af7d73a9414b84bac8bed9c95035b413981e99e612d7b6c0169915080f24",
@@ -1888,11 +1894,12 @@
       }
     },
     "es_es": {
-      "accepted_on": "2026-10-07",
+      "accepted_on": "2026-10-26",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "block.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "block.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "command.echo_warrior.binding.no_relic": "0135693ba2bedd6df7aab5f4492710ee158d1f2dba0aeebeb62048b50a88fe9a",
         "container.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "death.attack.armor_piercing_arrow": "658898851b95462515ec63503bc5f1719bda04ee3bf51096816cef2ba122c079",
@@ -2315,6 +2322,7 @@
         "item.echo_warrior.suspicious_block.tooltip": "4ac380839f7bbde6228e15010a8fdc19d0877c87cc528fbe4a922786f6e6348d",
         "item.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "item.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "item.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "item.echo_warrior.test_echo_summoner": "5b9295b634614d63dd2afd5d60dedff994ea36c388fca0974a546935346b5dc8",
         "item.echo_warrior.test_echo_summoner.bound": "843fb595ad1c04fc4b15109a7d8398d92bb91658a2ece4be946ed989d62fcecf",
         "item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo": "7327af7d73a9414b84bac8bed9c95035b413981e99e612d7b6c0169915080f24",
@@ -2517,11 +2525,12 @@
       }
     },
     "es_mx": {
-      "accepted_on": "2026-10-07",
+      "accepted_on": "2026-10-26",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "block.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "block.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "command.echo_warrior.binding.no_relic": "0135693ba2bedd6df7aab5f4492710ee158d1f2dba0aeebeb62048b50a88fe9a",
         "container.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "death.attack.armor_piercing_arrow": "658898851b95462515ec63503bc5f1719bda04ee3bf51096816cef2ba122c079",
@@ -2944,6 +2953,7 @@
         "item.echo_warrior.suspicious_block.tooltip": "4ac380839f7bbde6228e15010a8fdc19d0877c87cc528fbe4a922786f6e6348d",
         "item.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "item.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "item.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "item.echo_warrior.test_echo_summoner": "5b9295b634614d63dd2afd5d60dedff994ea36c388fca0974a546935346b5dc8",
         "item.echo_warrior.test_echo_summoner.bound": "843fb595ad1c04fc4b15109a7d8398d92bb91658a2ece4be946ed989d62fcecf",
         "item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo": "7327af7d73a9414b84bac8bed9c95035b413981e99e612d7b6c0169915080f24",
@@ -3146,11 +3156,12 @@
       }
     },
     "es_uy": {
-      "accepted_on": "2026-10-07",
+      "accepted_on": "2026-10-26",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "block.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "block.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "command.echo_warrior.binding.no_relic": "0135693ba2bedd6df7aab5f4492710ee158d1f2dba0aeebeb62048b50a88fe9a",
         "container.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "death.attack.armor_piercing_arrow": "658898851b95462515ec63503bc5f1719bda04ee3bf51096816cef2ba122c079",
@@ -3573,6 +3584,7 @@
         "item.echo_warrior.suspicious_block.tooltip": "4ac380839f7bbde6228e15010a8fdc19d0877c87cc528fbe4a922786f6e6348d",
         "item.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "item.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "item.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "item.echo_warrior.test_echo_summoner": "5b9295b634614d63dd2afd5d60dedff994ea36c388fca0974a546935346b5dc8",
         "item.echo_warrior.test_echo_summoner.bound": "843fb595ad1c04fc4b15109a7d8398d92bb91658a2ece4be946ed989d62fcecf",
         "item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo": "7327af7d73a9414b84bac8bed9c95035b413981e99e612d7b6c0169915080f24",
@@ -3775,11 +3787,12 @@
       }
     },
     "es_ve": {
-      "accepted_on": "2026-10-07",
+      "accepted_on": "2026-10-26",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "block.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "block.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "command.echo_warrior.binding.no_relic": "0135693ba2bedd6df7aab5f4492710ee158d1f2dba0aeebeb62048b50a88fe9a",
         "container.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "death.attack.armor_piercing_arrow": "658898851b95462515ec63503bc5f1719bda04ee3bf51096816cef2ba122c079",
@@ -4202,6 +4215,7 @@
         "item.echo_warrior.suspicious_block.tooltip": "4ac380839f7bbde6228e15010a8fdc19d0877c87cc528fbe4a922786f6e6348d",
         "item.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "item.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "item.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "item.echo_warrior.test_echo_summoner": "5b9295b634614d63dd2afd5d60dedff994ea36c388fca0974a546935346b5dc8",
         "item.echo_warrior.test_echo_summoner.bound": "843fb595ad1c04fc4b15109a7d8398d92bb91658a2ece4be946ed989d62fcecf",
         "item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo": "7327af7d73a9414b84bac8bed9c95035b413981e99e612d7b6c0169915080f24",
@@ -4404,11 +4418,12 @@
       }
     },
     "ja_jp": {
-      "accepted_on": "2026-10-07",
+      "accepted_on": "2026-10-26",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "block.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "block.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "command.echo_warrior.binding.no_relic": "0135693ba2bedd6df7aab5f4492710ee158d1f2dba0aeebeb62048b50a88fe9a",
         "container.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "death.attack.armor_piercing_arrow": "658898851b95462515ec63503bc5f1719bda04ee3bf51096816cef2ba122c079",
@@ -4831,6 +4846,7 @@
         "item.echo_warrior.suspicious_block.tooltip": "4ac380839f7bbde6228e15010a8fdc19d0877c87cc528fbe4a922786f6e6348d",
         "item.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "item.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "item.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "item.echo_warrior.test_echo_summoner": "5b9295b634614d63dd2afd5d60dedff994ea36c388fca0974a546935346b5dc8",
         "item.echo_warrior.test_echo_summoner.bound": "843fb595ad1c04fc4b15109a7d8398d92bb91658a2ece4be946ed989d62fcecf",
         "item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo": "7327af7d73a9414b84bac8bed9c95035b413981e99e612d7b6c0169915080f24",
@@ -5033,11 +5049,12 @@
       }
     },
     "pt_br": {
-      "accepted_on": "2026-10-07",
+      "accepted_on": "2026-10-26",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "block.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "block.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "command.echo_warrior.binding.no_relic": "0135693ba2bedd6df7aab5f4492710ee158d1f2dba0aeebeb62048b50a88fe9a",
         "container.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "death.attack.armor_piercing_arrow": "658898851b95462515ec63503bc5f1719bda04ee3bf51096816cef2ba122c079",
@@ -5460,6 +5477,7 @@
         "item.echo_warrior.suspicious_block.tooltip": "4ac380839f7bbde6228e15010a8fdc19d0877c87cc528fbe4a922786f6e6348d",
         "item.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "item.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "item.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "item.echo_warrior.test_echo_summoner": "5b9295b634614d63dd2afd5d60dedff994ea36c388fca0974a546935346b5dc8",
         "item.echo_warrior.test_echo_summoner.bound": "843fb595ad1c04fc4b15109a7d8398d92bb91658a2ece4be946ed989d62fcecf",
         "item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo": "7327af7d73a9414b84bac8bed9c95035b413981e99e612d7b6c0169915080f24",
@@ -5662,11 +5680,12 @@
       }
     },
     "ru_ru": {
-      "accepted_on": "2026-10-07",
+      "accepted_on": "2026-10-26",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "block.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "block.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "command.echo_warrior.binding.no_relic": "0135693ba2bedd6df7aab5f4492710ee158d1f2dba0aeebeb62048b50a88fe9a",
         "container.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "death.attack.armor_piercing_arrow": "658898851b95462515ec63503bc5f1719bda04ee3bf51096816cef2ba122c079",
@@ -6089,6 +6108,7 @@
         "item.echo_warrior.suspicious_block.tooltip": "4ac380839f7bbde6228e15010a8fdc19d0877c87cc528fbe4a922786f6e6348d",
         "item.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "item.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "item.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "item.echo_warrior.test_echo_summoner": "5b9295b634614d63dd2afd5d60dedff994ea36c388fca0974a546935346b5dc8",
         "item.echo_warrior.test_echo_summoner.bound": "843fb595ad1c04fc4b15109a7d8398d92bb91658a2ece4be946ed989d62fcecf",
         "item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo": "7327af7d73a9414b84bac8bed9c95035b413981e99e612d7b6c0169915080f24",
@@ -6291,11 +6311,12 @@
       }
     },
     "zh_hk": {
-      "accepted_on": "2026-10-07",
+      "accepted_on": "2026-10-26",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "block.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "block.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "command.echo_warrior.binding.no_relic": "0135693ba2bedd6df7aab5f4492710ee158d1f2dba0aeebeb62048b50a88fe9a",
         "container.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "death.attack.armor_piercing_arrow": "658898851b95462515ec63503bc5f1719bda04ee3bf51096816cef2ba122c079",
@@ -6718,6 +6739,7 @@
         "item.echo_warrior.suspicious_block.tooltip": "4ac380839f7bbde6228e15010a8fdc19d0877c87cc528fbe4a922786f6e6348d",
         "item.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "item.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "item.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "item.echo_warrior.test_echo_summoner": "5b9295b634614d63dd2afd5d60dedff994ea36c388fca0974a546935346b5dc8",
         "item.echo_warrior.test_echo_summoner.bound": "843fb595ad1c04fc4b15109a7d8398d92bb91658a2ece4be946ed989d62fcecf",
         "item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo": "7327af7d73a9414b84bac8bed9c95035b413981e99e612d7b6c0169915080f24",
@@ -6920,11 +6942,12 @@
       }
     },
     "zh_tw": {
-      "accepted_on": "2026-10-07",
+      "accepted_on": "2026-10-26",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "block.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "block.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "command.echo_warrior.binding.no_relic": "0135693ba2bedd6df7aab5f4492710ee158d1f2dba0aeebeb62048b50a88fe9a",
         "container.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "death.attack.armor_piercing_arrow": "658898851b95462515ec63503bc5f1719bda04ee3bf51096816cef2ba122c079",
@@ -7347,6 +7370,7 @@
         "item.echo_warrior.suspicious_block.tooltip": "4ac380839f7bbde6228e15010a8fdc19d0877c87cc528fbe4a922786f6e6348d",
         "item.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
         "item.echo_warrior.suspicious_grass_block": "d3d4e56ad6a90e9b8205e726c0b2fba5d989031afd08c9c422b5b5661e4ea7f1",
+        "item.echo_warrior.suspicious_red_sand": "028a5686e67276248de93b9ef799914574fe35cca75f0e3642be86ba762ed031",
         "item.echo_warrior.test_echo_summoner": "5b9295b634614d63dd2afd5d60dedff994ea36c388fca0974a546935346b5dc8",
         "item.echo_warrior.test_echo_summoner.bound": "843fb595ad1c04fc4b15109a7d8398d92bb91658a2ece4be946ed989d62fcecf",
         "item.echo_warrior.test_echo_summoner.tooltip.detail.current_echo": "7327af7d73a9414b84bac8bed9c95035b413981e99e612d7b6c0169915080f24",

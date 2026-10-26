@@ -12,6 +12,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BrushableBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -52,6 +53,12 @@ public final class ModBlocks {
 					.sound(SoundType.ROOTED_DIRT)
 					.noLootTable()
 					.pushReaction(PushReaction.DESTROY)
+	);
+	public static final Block SUSPICIOUS_RED_SAND = register(
+			"suspicious_red_sand",
+			properties -> new BrushableBlock(Blocks.RED_SAND, SoundEvents.BRUSH_SAND,
+					SoundEvents.BRUSH_SAND_COMPLETED, properties),
+			BlockBehaviour.Properties.ofFullCopy(Blocks.SUSPICIOUS_SAND).mapColor(MapColor.COLOR_ORANGE)
 	);
 	public static final RecyclerChestBlock ECHO_RECYCLER = registerRecycler(
 			"echo_recycler",

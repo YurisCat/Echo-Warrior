@@ -67,6 +67,8 @@ public final class AutomatedTestController1201 {
                 String texture = itemModel.getParticleIcon().contents().name().toString();
                 boolean exploration = item == ModContent1201.ECHO_COMPASS
                         ? texture.equals("echo_warrior:item/echo_compass/echo_compass_background")
+                        : item == ModContent1201.SUSPICIOUS_RED_SAND_ITEM
+                            ? texture.equals("echo_warrior:block/suspicious_red_sand_c05_s0")
                         : (item == ModContent1201.SUSPICIOUS_GRASS_BLOCK_ITEM || item == ModContent1201.SUSPICIOUS_DIRT_ITEM)
                             && !texture.equals("minecraft:missingno");
                 if (itemModel == client.getModelManager().getMissingModel()

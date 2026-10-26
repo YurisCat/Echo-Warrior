@@ -140,7 +140,7 @@ public final class EchoWarrior1211NeoForge {
 
     private void addBrushableBlocks(BlockEntityTypeAddBlocksEvent event) {
         event.modify(net.minecraft.world.level.block.entity.BlockEntityType.BRUSHABLE_BLOCK,
-                ModContent1211.SUSPICIOUS_GRASS_BLOCK, ModContent1211.SUSPICIOUS_DIRT);
+                ModContent1211.SUSPICIOUS_GRASS_BLOCK, ModContent1211.SUSPICIOUS_DIRT, ModContent1211.SUSPICIOUS_RED_SAND);
     }
 
     private void registerCommands(RegisterCommandsEvent event) {

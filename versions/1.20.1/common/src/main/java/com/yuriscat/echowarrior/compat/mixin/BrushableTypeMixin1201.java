@@ -13,7 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class BrushableTypeMixin1201 {
     @Inject(method = "isValid", at = @At("HEAD"), cancellable = true)
     private void echoWarrior$acceptStableBrushables(BlockState state, CallbackInfoReturnable<Boolean> callback) {
-        if ((Object)this == BlockEntityType.BRUSHABLE_BLOCK && state.getBlock() instanceof StableBrushableBlock1201) {
+        if ((Object)this == BlockEntityType.BRUSHABLE_BLOCK && (state.getBlock() instanceof StableBrushableBlock1201
+                || state.is(com.yuriscat.echowarrior.compat.ModContent1201.SUSPICIOUS_RED_SAND))) {
             callback.setReturnValue(true);
         }
     }

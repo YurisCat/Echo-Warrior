@@ -16,7 +16,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- * Builds the deterministic visual variants for Echo Warrior's brushable grass and dirt.
+ * Builds deterministic variants for Echo Warrior's brushable grass, dirt and red sand.
  *
  * Usage:
  *   java GenerateSuspiciousBlockTextures.java <minecraft-client.jar> <mark-directory> <resource-root>
@@ -58,6 +58,7 @@ public final class GenerateSuspiciousBlockTextures {
 		List<BufferedImage> marks = readMarks(markDirectory);
 		try (ZipFile zip = new ZipFile(clientJar.toFile())) {
 			BufferedImage dirt = readTexture(zip, "dirt");
+			BufferedImage redSand = readTexture(zip, "red_sand");
 			BufferedImage grassTop = readTexture(zip, "grass_block_top");
 			BufferedImage grassSide = readTexture(zip, "grass_block_side");
 			BufferedImage grassSideOverlay = readTexture(zip, "grass_block_side_overlay");
@@ -87,6 +88,9 @@ public final class GenerateSuspiciousBlockTextures {
 								wearStages[0], Surface.GRASS_SIDE), textureOutput.resolve(
 								"suspicious_grass_block_side_overlay_" + suffix + ".png"));
 						writeDirtModel(blockModelOutput, suffix);
+						write(compose(redSand, marks.get(first), marks.get(second), wear,
+								wearStages[0], Surface.DIRT), textureOutput.resolve("suspicious_red_sand_" + suffix + ".png"));
+						writeCubeModel(blockModelOutput, "suspicious_red_sand", suffix);
 						writeGrassModel(blockModelOutput, suffix);
 					}
 					combination++;
@@ -101,6 +105,8 @@ public final class GenerateSuspiciousBlockTextures {
 		writeBlockstate(blockstateOutput, "suspicious_grass_block");
 		writeItemModel(itemModelOutput, "suspicious_dirt");
 		writeItemModel(itemModelOutput, "suspicious_grass_block");
+		writeBlockstate(blockstateOutput, "suspicious_red_sand");
+		writeItemModel(itemModelOutput, "suspicious_red_sand");
 	}
 
 	private static List<BufferedImage> readMarks(Path directory) throws IOException {
@@ -239,15 +245,19 @@ public final class GenerateSuspiciousBlockTextures {
 	}
 
 	private static void writeDirtModel(Path output, String suffix) throws IOException {
+		writeCubeModel(output, "suspicious_dirt", suffix);
+	}
+
+	private static void writeCubeModel(Path output, String blockName, String suffix) throws IOException {
 		String json = """
 				{
 				  "parent": "minecraft:block/cube_all",
 				  "textures": {
-				    "all": "echo_warrior:block/suspicious_dirt_%s"
+				    "all": "echo_warrior:block/%s_%s"
 				  }
 				}
-				""".formatted(suffix);
-		writeText(output.resolve("suspicious_dirt_" + suffix + ".json"), json);
+				""".formatted(blockName, suffix);
+		writeText(output.resolve(blockName + "_" + suffix + ".json"), json);
 	}
 
 	private static void writeGrassModel(Path output, String suffix) throws IOException {
@@ -300,13 +310,13 @@ public final class GenerateSuspiciousBlockTextures {
 
 	private static boolean isGeneratedTexture(Path path) {
 		String name = path.getFileName().toString();
-		return name.matches("suspicious_dirt_(?:[0-3]|c\\d{2}(?:_r\\d)?_s\\d)\\.png")
+		return name.matches("suspicious_(?:dirt|red_sand)_(?:[0-3]|c\\d{2}(?:_r\\d)?_s\\d)\\.png")
 				|| name.matches("suspicious_grass_block_(?:top|side|side_overlay)_(?:[0-3]|c\\d{2}(?:_r\\d)?_s\\d)\\.png");
 	}
 
 	private static boolean isGeneratedBlockModel(Path path) {
 		String name = path.getFileName().toString();
-		return name.matches("suspicious_(?:dirt|grass_block)_(?:[0-3]|c\\d{2}(?:_r\\d)?_s\\d)\\.json");
+		return name.matches("suspicious_(?:dirt|grass_block|red_sand)_(?:[0-3]|c\\d{2}(?:_r\\d)?_s\\d)\\.json");
 	}
 
 	private static void cleanGeneratedFiles(Path directory, Predicate<Path> predicate) throws IOException {

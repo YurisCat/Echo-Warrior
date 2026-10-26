@@ -29,7 +29,8 @@
     ]
   },
   "mixins": [
-    "echo_warrior_1211.mixins.json"
+    "echo_warrior_1211.mixins.json",
+    "echo_warrior_lootr_1211.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",

@@ -5,6 +5,10 @@ import com.yuriscat.echowarrior.compat.EchoHeroType1201;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.RangedAttribute;
+import java.util.UUID;
 
 /** Runs against registered game items and the real transformed attribute classes. */
 public final class EchoProgressionSelfTest1201 {
@@ -55,6 +59,12 @@ public final class EchoProgressionSelfTest1201 {
                 hero.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(5000);
                 check(hero.getMaxHealth() == 10000 && hero.getAttributeValue(Attributes.ATTACK_DAMAGE) == 5000,
                         "constructor growth range: " + type);
+                var bonus = new AttributeModifier(UUID.randomUUID(), "echo_growth_regression",
+                        0.5, AttributeModifier.Operation.MULTIPLY_TOTAL);
+                hero.getAttribute(Attributes.MAX_HEALTH).addTransientModifier(bonus);
+                check(hero.getMaxHealth() == 15000, "hero modifier above cap: " + type);
+                hero.getAttribute(Attributes.MAX_HEALTH).removeModifier(bonus.getId());
+                check(hero.getMaxHealth() == 10000, "hero modifier removal refreshes cache: " + type);
             }
             var entity = ModContent1201.ROMAN_LEGIONARY_ECHO.create(level);
             check(entity != null, "registered entity factory");
@@ -72,9 +82,74 @@ public final class EchoProgressionSelfTest1201 {
             var ordinary = new net.minecraft.world.entity.ai.attributes.AttributeInstance(Attributes.MAX_HEALTH, ignored -> {});
             ordinary.setBaseValue(10000);
             check(ordinary.getValue() == 1024, "ordinary mob range unchanged");
+            verifyAttributeComposition();
             org.slf4j.LoggerFactory.getLogger("echo_warrior").info("[EchoProgressionSelfTest] PASS cap, save preservation, XP overflow, five hero curves and isolated attribute range");
         } finally { EchoProgressionConfig1201.receiveServerMaximum(original); }
     }
+
+    /** Exercise the transformed class, including the real optional LOL Redirect. */
+    private static void verifyAttributeComposition() {
+        var attribute = new CountingAttribute();
+        var instance = new AttributeInstance(attribute, ignored -> {});
+        instance.setBaseValue(2000);
+        check(instance.getValue() == 1024 && attribute.calls == 1, "ordinary sanitization exactly once");
+        check(instance.getValue() == 1024 && attribute.calls == 1, "ordinary value remains cached");
+        ((EchoGrowthAttribute1201) instance).echoWarrior$enableGrowthRange();
+        check(instance.getValue() == 2000 && attribute.calls == 2, "growth enable invalidates cached clamp");
+        check(instance.getValue() == 2000 && attribute.calls == 2, "growth value remains cached");
+        var addition = new AttributeModifier(UUID.randomUUID(), "echo_test_add", 100, AttributeModifier.Operation.ADDITION);
+        var base = new AttributeModifier(UUID.randomUUID(), "echo_test_base", 0.5, AttributeModifier.Operation.MULTIPLY_BASE);
+        var total = new AttributeModifier(UUID.randomUUID(), "echo_test_total", 0.25, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        instance.addTransientModifier(addition);
+        instance.addTransientModifier(base);
+        instance.addTransientModifier(total);
+        check(instance.getValue() == 3937.5 && attribute.calls == 3, "all modifier operations before growth clamp");
+        instance.removeModifier(addition.getId());
+        check(instance.getValue() == 3750 && attribute.calls == 4, "modifier removal invalidates growth cache");
+        instance.removeModifier(base.getId());
+        instance.removeModifier(total.getId());
+        // Preserve the attribute's own treatment of lower bounds and non-finite input.
+        for (double input : new double[]{-10, 0, 20, 1024, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
+            double expected = attribute.sanitizeValue(input);
+            int calls = attribute.calls;
+            instance.setBaseValue(input);
+            check(Double.compare(instance.getValue(), expected) == 0 && attribute.calls == calls + 1,
+                    "original sanitization retained: " + input);
+        }
+        boolean lol = false;
+        try {
+            Class.forName("com.lolmod.LOLMod", false, EchoProgressionSelfTest1201.class.getClassLoader());
+            lol = true;
+        } catch (ClassNotFoundException absent) { /* Ordinary Fabric/Forge baseline. */ }
+        check(!Boolean.getBoolean("echoWarrior.lolRequired") || lol, "requested LOL runtime is present");
+        var ordinary = new AttributeInstance(Attributes.MAX_HEALTH, ignored -> {});
+        ordinary.setBaseValue(10000);
+        // This fixture uses LOL's verified modifier-name contract; it is never
+        // installed on a gameplay entity or used as the compatibility fix.
+        var lolModifier = new AttributeModifier(UUID.randomUUID(), "lolmod_echo_regression",
+                0.5, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        ordinary.addTransientModifier(lolModifier);
+        check(ordinary.getValue() == (lol ? 15000 : 1024), "ordinary instance preserves optional LOL overflow");
+        ordinary.removeModifier(lolModifier.getId());
+        check(ordinary.getValue() == 1024, "removing LOL modifier restores ordinary clamp");
+        ((EchoGrowthAttribute1201) ordinary).echoWarrior$enableGrowthRange();
+        ordinary.addTransientModifier(lolModifier);
+        check(ordinary.getValue() == 15000, "growth and LOL modifier do not apply multiplier twice");
+        ordinary.removeModifier(lolModifier.getId());
+        check(ordinary.getValue() == 10000, "growth survives LOL modifier removal");
+        org.slf4j.LoggerFactory.getLogger("echo_warrior").info(
+                "GROWTH ATTRIBUTE SELFTEST PASSED sanitize=once cache=checked modifiers=all bounds=preserved lol={}", lol);
+    }
+
+    private static final class CountingAttribute extends RangedAttribute {
+        private int calls;
+        private CountingAttribute() { super("echo_test.growth", 20, 0, 1024); }
+        @Override public double sanitizeValue(double value) {
+            this.calls++;
+            return super.sanitizeValue(value);
+        }
+    }
+
     private static void check(boolean condition, String message) {
         if (!condition) throw new IllegalStateException("Echo progression: " + message);
     }

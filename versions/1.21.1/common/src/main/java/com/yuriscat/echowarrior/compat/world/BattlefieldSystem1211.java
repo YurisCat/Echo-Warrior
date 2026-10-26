@@ -379,6 +379,7 @@ public final class BattlefieldSystem1211 {
     private static void reconcileLoadedChunk(ServerLevel level, LevelChunk chunk) {
         BattlefieldSavedData1211 data = BattlefieldSavedData1211.get(level);
         for (BlockPos pos : data.trackedBrushablesInChunk(chunk.getPos())) {
+            com.yuriscat.echowarrior.compat.integration.LootrArchaeology1211.restoreTrackedBlock(level, chunk, pos);
             if (isBrushable(chunk.getBlockState(pos))) continue;
             notifyBrushableRemoved(level, data, pos);
         }
@@ -528,6 +529,7 @@ public final class BattlefieldSystem1211 {
 
     private static Block suspiciousFor(BlockState floor) {
         if (floor.is(Blocks.GRASS_BLOCK)) return ModContent1211.SUSPICIOUS_GRASS_BLOCK;
+        if (floor.is(Blocks.RED_SAND)) return ModContent1211.SUSPICIOUS_RED_SAND;
         if (floor.is(BlockTags.SAND)) return Blocks.SUSPICIOUS_SAND;
         if (floor.is(Blocks.GRAVEL)) return Blocks.SUSPICIOUS_GRAVEL;
         return ModContent1211.SUSPICIOUS_DIRT;

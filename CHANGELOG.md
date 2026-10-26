@@ -4,6 +4,26 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+## 0.2.10 - 2026-10-26
+
+### Added
+
+- Added Suspicious Red Sand for battlefields generated on red sand across all supported Minecraft versions. Brushing it restores red sand instead of ordinary sand.
+- Updated all shipped translations for the new red-sand block and item.
+
+### Fixed
+
+- Fixed a Minecraft 1.20.1 startup crash when Echo Warrior and LOL-new both modify attribute handling, including the tested combination with Apothic Attributes. Echo growth and LOL-new's own attribute handling are preserved.
+- Fixed battlefield suspicious sand and gravel remaining as Echo Compass targets after rewards were collected with Lootr on Minecraft 1.21.1 Fabric and NeoForge. Battlefield archaeology follows Echo Warrior's shared, one-time reward rules; other Lootr containers and unrelated archaeology keep their normal behavior.
+- Existing battlefield blocks converted by Lootr are reconciled when their chunks load. Completed rewards release the old compass target without dropping another reward; unfinished blocks retain their loot table and seed and return to shared archaeology.
+
+### Notes
+
+- Lootr integration was verified with 1.21.1-1.11.38.127. The attribute fix was verified with LOL-new 1.0.6, both with and without Apothic Attributes 1.3.7 / Placebo 8.6.3, on Forge 47.4.26. These mods remain optional and are not bundled.
+- Partial brushing progress on old Lootr battlefield blocks resets when they return to shared archaeology. Existing personal Lootr inventory records are not deleted.
+- Existing worlds are supported. Red sand applies to newly generated battlefields, including replacements; existing ordinary-sand battlefields are not repainted. No world reset or new chunks are required.
+- Restart the game and server after updating. Echo growth formulas, experience, fuel costs and summoner save data are unchanged.
+
 ## 0.2.9 - 2026-10-16
 
 ### Fixed

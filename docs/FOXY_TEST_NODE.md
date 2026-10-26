@@ -37,7 +37,7 @@
 
 每次 RunId 新建测试实例，通过本机 WMI 创建独立隐藏 Python 工作进程并写 `launch.json`/`status.json`，避免普通 SSH 子进程随连接结束被清理；不增加计划任务或修改 SSH 服务。测试串行执行，全节点使用专用 `active-test.lock` 防止重叠。只停止本轮创建的 Java 子进程，不按进程名结束其他客户端。异常断电/手动结束工作进程后如留有锁，先核验锁内 PID、源目录、报告及相关 Java 子进程，确认该任务已停止后才移除该精确锁文件，不自动清锁。
 
-1.21.1 执行源码守卫、双端 JAR 基线、Fabric 和 NeoForge 发行包专服自测；直接从官方仓库安装固定加载器及依赖。无需 GUI 或 RCON。1.20.1 另执行内容对齐、47 项资源等价/损坏包守卫，以及 Fabric/Forge 各两次启动的存档重启回归。JSON 资源按完整数据树比较，避免 CI 的 LF 与 Windows 源码 CRLF 被误报；PNG 和发布 JAR 哈希仍按字节严格核对。仅回环地址开服，EULA 沿用 `PROJECT.md` 5.4.1 的隔离自动测试授权。
+1.21.1 执行源码守卫、双端 JAR 基线、Fabric 和 NeoForge 发行包专服自测；直接从官方仓库安装固定加载器及依赖。无需 GUI 或 RCON。1.20.1 另执行内容对齐、64 项资源等价/损坏包守卫，以及 Fabric/Forge 各两次启动的存档重启回归。JSON 资源按完整数据树比较，避免 CI 的 LF 与 Windows 源码 CRLF 被误报；PNG 和发布 JAR 哈希仍按字节严格核对。仅回环地址开服，EULA 沿用 `PROJECT.md` 5.4.1 的隔离自动测试授权。
 
 成功必须同时满足步骤退出 0、真实运行日志的性能守卫和完整自测标记、正常保存退出；仅有 `status.json` 或静态源码检查不足以确认修复。性能守卫验证一万条历史区域下锁定查询 1 次、2048 格搜索至多 49 次，以及真实方块移除/属性变更、清场与本区块重载修复。它不衡量反馈者整合包的实际 TPS 改善。
 
@@ -52,6 +52,8 @@ Collect 仅取回本轮状态、输入清单、步骤日志、服务端日志/�
 当前入口支持 1.21.1/1.20.1 两条兼容线。26.1.2 长测试使用相同固定 SSH 和独立快照，设置任务的 Java 25 后调用仓库 Wrapper 和既有测试脚本；不要用 Java 17，也不要引入全局 Gradle。运行 1.20.1 Gradle 构建时显式传入 `-Porg.gradle.java.installations.paths=D:\Tools-Terminal\EchoWarrior\jdk-17,D:\Tools-Terminal\EchoWarrior\jdk-21`，让 Java 21 上的 Wrapper 发现 Java 17 编译/运行工具链。2026-10-11 实测只在 `JAVA_TOOL_OPTIONS` 中设置同名 `-D` 系统属性不足以让 Gradle 9.5.1 发现节点 JDK 17；改用上述 Gradle 项目属性后，Minecraft 编译产物生成正常启动。
 
 26.1.2 的生成专项入口为 `scripts/smoke-test-battlefield-mainline.py`。向 `--input` 提供官方安装器准备的 `fabric/`、`neoforge/` 运行时、候选与依赖 JAR，以及逐文件 SHA-256 的 `inputs.json`；另外显式提供 `--games`、`--reports`、节点 Java 25 的 `--java` 和统一 `active-test.lock` 的 `--lock`。脚本只允许 FOXY-NODE、验证输入后创建全新平坦测试世界，串行运行两种发行包并等待真实生成验收及正常保存。准备公共库可以在控制端完成，不在长测期间占用节点做安装或另一轮游戏测试。输入、旧包驻留对照、原存档重启和新地形探索分别记录，不能合并成未经验证的“所有场景通过”。
+
+2026-10-26 起，该主线入口支持 `--loader fabric|neoforge|both`（默认 `both`），日常主线可只验收 Fabric。通过条件另要求 `RED SAND SELFTEST PASSED`；红沙夹具先等待实体区块真正就绪，使用自有、非持久化且限时的测试 ticket，实际刷取后释放。1.21.1 通用联装安装 Lootr 时必须出现 `LOOTR ARCHAEOLOGY SELFTEST PASSED`；模拟玩家在网络监听器边界记录通知包，不把模拟通知当成客户端联网验收。
 
 主线平坦夹具必须提供带 `layers`、`biome` 的完整 `generator-settings`；空对象会记录 `No key layers in MapLike[{}]`，即使默认回退后生成自测通过也不能忽略该错误。主线同样要求距离边界标记，保留失败夹具的日志后在全新世界复查。
 

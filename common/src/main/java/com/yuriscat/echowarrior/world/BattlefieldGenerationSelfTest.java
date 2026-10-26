@@ -31,6 +31,7 @@ public final class BattlefieldGenerationSelfTest {
         if (!armed) return;
         try {
             if (level == null) {
+                if (!RedSandSelfTest.prepare(server.overworld())) return;
                 level = server.overworld();
                 BattlefieldSpacingSelfTest.run(level);
                 original = BattlefieldSavedData.get(level);

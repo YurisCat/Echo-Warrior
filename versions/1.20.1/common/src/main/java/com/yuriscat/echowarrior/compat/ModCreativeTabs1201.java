@@ -15,6 +15,7 @@ public final class ModCreativeTabs1201 {
                     output.accept(ModContent1201.ECHO_COMPASS);
                     output.accept(ModContent1201.SUSPICIOUS_GRASS_BLOCK_ITEM);
                     output.accept(ModContent1201.SUSPICIOUS_DIRT_ITEM);
+                    output.accept(ModContent1201.SUSPICIOUS_RED_SAND_ITEM);
                     output.accept(ModContent1201.TUTORIAL_MANUAL);
                     output.accept(ModContent1201.ECHO_RECYCLER_ITEM);
                     for (var hero : EchoHeroType1201.values()) output.accept(ModContent1201.relic(hero));
