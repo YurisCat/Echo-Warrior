@@ -32,6 +32,14 @@ dependencies {
     modImplementation("software.bernie.geckolib:geckolib-forge-${minecraft_version}:${geckolib_version}")
     implementation('com.eliotlash.mclib:mclib:20')
     annotationProcessor('org.spongepowered:mixin:0.8.5:processor')
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:${mixinextras_version}"))
+    // Forge must bootstrap this even when no optional mod bundles MixinExtras.
+    jarJar(implementation('io.github.llamalad7:mixinextras-forge')) {
+        version {
+            strictly "[${mixinextras_version},)"
+            prefer mixinextras_version
+        }
+    }
 }
 
 mixin {

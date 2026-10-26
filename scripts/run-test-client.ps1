@@ -418,7 +418,7 @@ try {
     if ($TargetVersion -eq '1.20.1' -and $expectsQuickPlayWorld) {
         if ($finalLog -notmatch 'Client smoke test requesting normal shutdown' -or
             $finalLog -notmatch 'Summoner item model and texture resolved' -or
-            $finalLog -notmatch 'All 43 registered item models, textures and names resolved' -or
+            $finalLog -notmatch 'All 44 registered item models, textures and names resolved' -or
             $finalLog -notmatch 'EXPLORATION CLIENT SELFTEST PASSED compass=overrides-and-tint grass=biome recycler=72-vertices-and-atlas brushing=renderer' -or
             $finalLog -notmatch 'RECYCLER CLIENT SELFTEST PASSED menu=27-slots deposit=3-diamonds withdraw=conserved lid=open-close fixture=restored' -or
             $finalLog -notmatch 'NETWORK CLIENT SELFTEST PASSED mode=survival' -or

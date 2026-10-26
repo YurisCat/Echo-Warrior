@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import io
 from pathlib import Path
 import re
 import struct
@@ -50,6 +51,48 @@ def resource_matches(payload: bytes, source: Path) -> bool:
     # byte-identical rather than accepting an arbitrary resource difference.
     expected = source.read_bytes()
     return json.loads(payload) == json.loads(expected) if source.suffix == ".json" else payload == expected
+
+
+def audit_growth_runtime(jar: zipfile.ZipFile, loader: str, config: dict, refmap: dict) -> None:
+    growth = "com/yuriscat/echowarrior/compat/mixin/EchoGrowthAttributeMixin1201"
+    require(growth + ".class" in jar.namelist(), "Missing growth attribute Mixin")
+    bytecode = jar.read(growth + ".class")
+    require(b"com/llamalad7/mixinextras/injector/wrapoperation/WrapOperation" in bytecode
+            and b"org/spongepowered/asm/mixin/injection/Redirect" not in bytecode,
+            "Growth attribute must use composable WrapOperation")
+    mapping = refmap["mappings"].get(growth, {})
+    for target in ("calculateValue", "Lnet/minecraft/world/entity/ai/attributes/Attribute;sanitizeValue(D)D"):
+        require(bool(mapping.get(target)), f"Missing growth runtime mapping: {target}")
+    require("com/yuriscat/echowarrior/compat/item/EchoProgressionSelfTest1201$CountingAttribute.class"
+            in jar.namelist(), "Missing growth operation/cache regression")
+    if loader == "fabric":
+        metadata = json.loads(jar.read("fabric.mod.json"))
+        require(metadata["depends"].get("fabricloader") == f">={config['loader_version']}",
+                "Fabric Loader must supply the declared MixinExtras runtime")
+        return
+    require("META-INF/jarjar/metadata.json" in jar.namelist(), "Missing Forge MixinExtras JarJar metadata")
+    metadata = json.loads(jar.read("META-INF/jarjar/metadata.json"))
+    entries = [entry for entry in metadata["jars"]
+               if entry["identifier"] == {"group": "io.github.llamalad7", "artifact": "mixinextras-forge"}]
+    require(len(entries) == 1, "Missing/duplicate Forge MixinExtras dependency")
+    entry = entries[0]
+    require(entry["version"] == {"range": f"[{config['mixinextras_version']},)",
+                                "artifactVersion": config["mixinextras_version"]},
+            "Wrong Forge MixinExtras version/range")
+    require(entry["path"] in jar.namelist(), "Missing embedded Forge MixinExtras runtime")
+    with zipfile.ZipFile(io.BytesIO(jar.read(entry["path"]))) as runtime:
+        require("mixinextras.init.mixins.json" in runtime.namelist(),
+                "Missing Forge MixinExtras bootstrap")
+        require("MixinConfigs: mixinextras.init.mixins.json" in runtime.read("META-INF/MANIFEST.MF").decode(),
+                "Missing Forge MixinExtras bootstrap manifest")
+        bootstrap = json.loads(runtime.read("mixinextras.init.mixins.json"))
+        require(bootstrap["plugin"].replace(".", "/") + ".class" in runtime.namelist(),
+                "Missing Forge MixinExtras bootstrap plugin")
+        core_entry = json.loads(runtime.read("META-INF/jarjar/metadata.json"))["jars"][0]
+        require(core_entry["path"] in runtime.namelist(), "Missing MixinExtras core runtime")
+        with zipfile.ZipFile(io.BytesIO(runtime.read(core_entry["path"]))) as core:
+            require("com/llamalad7/mixinextras/injector/wrapoperation/WrapOperation.class" in core.namelist(),
+                    "Missing MixinExtras operation implementation")
 
 
 def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> Path:
@@ -207,6 +250,7 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
                 "Client-only Mixins must be separated from server loading")
         refmap = json.loads(jar.read(mixin["refmap"]))
         require(bool(refmap.get("mappings")), f"{loader}: empty production refmap")
+        audit_growth_runtime(jar, loader, config, refmap)
         for mixin_name, method in (("BrushableTypeMixin1201", "isValid"), ("PlacedBlockTrackerMixin1201", "placeBlock"),
                                    ("BlockBehaviourMixin1201", "onRemove"),
                                    ("GuiMixin1201", "setOverlayMessage")):

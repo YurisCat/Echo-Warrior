@@ -8,6 +8,8 @@ dependencies {
     modImplementation("net.tslat.smartbrainlib:SmartBrainLib-fabric-${minecraft_version}:${smartbrainlib_version}")
     modImplementation("software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}")
     implementation('com.eliotlash.mclib:mclib:20')
+    // The required Fabric Loader already supplies the runtime; only pin our API/AP.
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:${mixinextras_version}"))
 }
 
 loom {

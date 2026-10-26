@@ -126,6 +126,51 @@ class BaselineRejectionTests(unittest.TestCase):
             entries[path] = json.dumps(config).encode()
         self.rejected("forge", mutate, "Missing conditional growth Mixin selector")
 
+    def test_missing_growth_runtime_mapping(self):
+        def mutate(entries):
+            path = "echo_warrior_1201.refmap.json"
+            value = json.loads(entries[path])
+            value["mappings"].pop("com/yuriscat/echowarrior/compat/mixin/EchoGrowthAttributeMixin1201")
+            entries[path] = json.dumps(value).encode()
+        self.rejected("forge", mutate, "Missing growth runtime mapping")
+
+    def test_missing_growth_cache_regression(self):
+        self.rejected("fabric", lambda entries: entries.pop(
+            "com/yuriscat/echowarrior/compat/item/EchoProgressionSelfTest1201$CountingAttribute.class"),
+            "Missing growth operation/cache regression")
+
+    def test_missing_mixinextras_metadata(self):
+        self.rejected("forge", lambda entries: entries.pop("META-INF/jarjar/metadata.json"),
+                      "Missing Forge MixinExtras JarJar metadata")
+
+    def test_missing_mixinextras_dependency(self):
+        def mutate(entries):
+            entries["META-INF/jarjar/metadata.json"] = b'{"jars":[]}'
+        self.rejected("forge", mutate, "Missing/duplicate Forge MixinExtras dependency")
+
+    def test_missing_embedded_mixinextras_runtime(self):
+        def mutate(entries):
+            metadata = json.loads(entries["META-INF/jarjar/metadata.json"])
+            entry = next(e for e in metadata["jars"] if e["identifier"]["artifact"] == "mixinextras-forge")
+            entries.pop(entry["path"])
+        self.rejected("forge", mutate, "Missing embedded Forge MixinExtras runtime")
+
+    def test_mixinextras_version_cannot_silently_downgrade(self):
+        def mutate(entries):
+            path = "META-INF/jarjar/metadata.json"
+            metadata = json.loads(entries[path])
+            next(e for e in metadata["jars"] if e["identifier"]["artifact"] == "mixinextras-forge")["version"]["range"] = "[0.1,)"
+            entries[path] = json.dumps(metadata).encode()
+        self.rejected("forge", mutate, "Wrong Forge MixinExtras version/range")
+
+    def test_missing_composable_growth_annotation_is_rejected(self):
+        def mutate(entries):
+            # Keep the classfile structure valid while making its annotation
+            # unrecognized; artifact checks must reject the missing injector.
+            path = "com/yuriscat/echowarrior/compat/mixin/EchoGrowthAttributeMixin1201.class"
+            entries[path] = entries[path].replace(b"/WrapOperation;", b"/WrapOperatioX;")
+        self.rejected("forge", mutate, "Growth attribute must use composable WrapOperation")
+
     def test_missing_apothic_growth_class(self):
         self.rejected("forge", lambda entries: entries.pop(
             "com/yuriscat/echowarrior/compat/mixin/ApothicGrowthEntityMixin1201.class"),

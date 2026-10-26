@@ -1,6 +1,68 @@
 # 1.20.1 成长属性 Redirect 崩溃：LOL-new 联装排查
 
-排查日期：2026-10-26。任务范围是根据新提供的原始报告定位此前只有摘要的启动崩溃，并在 FOXY-NODE 做隔离对照；本记录不代表补丁已实现或已发布。
+排查日期：2026-10-26。最初根据新报告定位启动崩溃；作者随后确认风险目标、要求推送恢复点，并授权继续实施和测试。当前候选已实现，并通过下述自动验收，未发布。下方“原始诊断与方案评估”保留实施前的证据与边界，最新状态以本节为准。
+
+## 当前候选与验收
+
+恢复点 `940ec13f14efb679c436c480f0e04654b8c25d60` 已推送到 `codex/checkpoint-2026-10-26-before-growth-fix`，包含红沙、Lootr 共享考古、翻译及当时的项目改动。修复在本地 `codex/fix-growth-attribute-compat` 分支进行，没有移动恢复点、改版本号或发布。
+
+实际改动：
+
+- `EchoGrowthAttributeMixin1201` 统一改成 WrapOperation，使用 `original.call(attribute, value)` 执行已有操作链。成长接口、标记、缓存刷新及最终有限值/上界判断原样保留；没有新增 LOL 专用检测或运行时分支。
+- 1.20.1 编译/AP 固定 MixinExtras 0.4.1；Forge 用 JarJar 内置 `mixinextras-forge`，范围 `[0.4.1,)`，保留内外层 `LICENSE_MixinExtras`。Fabric 使用已要求的 Loader 0.19.5 自带运行库，本轮日志实测为 MixinExtras 0.5.5；Forge 实测为 0.4.1。
+- 扩充真实转换类自测：一次原清理调用、缓存命中/失效、三种 modifier 运算、下界/非有限值、五英雄高属性及撤除加成、普通实例保留 LOL 扩展和英灵不重复乘算。LOL 测试使用核对过的 modifier 命名契约创建局部夹具，不往真实实体添加兼容标记。
+- 生产包基线检查包装注入、映射、Forge 外层引导和内层核心库；原损坏包/等价资源测试扩展到 64 项。服务端从实际 JAR 的 `mods.toml` 识别 LOL，要求独立 `lol=true` 成功标记。移植规则为 PORT-039。
+
+候选仍使用内部版本字符串 0.2.9，**不等于已发布的 0.2.9 原包**。首轮候选：
+
+| 候选 | SHA-256 |
+| --- | --- |
+| Fabric 1.20.1 | `f85cdd0d5c6a82834b5c257280ac608aaa99959f64f8355179aafbc7cf74a738` |
+| Forge 1.20.1 | `3bc12719032fca5c077217f512c9637382c2f99fba1c2702ff69a2a5e42d9b2a` |
+
+本地仓库 Wrapper 在 Java 21 / Java 17 工具链下双端构建通过；双 JAR 基线、64 项损坏/等价资源测试、15 项狐狸节点输入校验通过。
+
+首轮候选在 FOXY-NODE 生产专服共十次成功启动，各配置均两次，包含磁盘重启和正常保存退出：
+
+| 任务 | 配置与结果 | 证据 ZIP SHA-256 |
+| --- | --- | --- |
+| `20261026T120543Z-88376` | 普通 Fabric、Forge 47.4.10 共四次通过；随后联装的 Forge 安装器下载被连接重置，未启动该组合，整任务保留 failed | `498ab2ae7ad16adb9c722349c5c30995a978c0be39d1665524822cf56a5dae62` |
+| `20261026T121237Z-83952` | Forge 47.4.26 + LOL-new 1.0.6 + Apothic 1.3.7 / Placebo 8.6.3，两次通过 | `503e62a5431bd9d36e7de34d8bbf9383353c108441bf9fcd91f0ab49157ca8be` |
+| `20261026T121547Z-84168` | Forge 47.4.26 + LOL-new 1.0.6，无 Apothic，两次通过 | `64e178e62661eb6b23376a4c2cc3796d28e0ef609696bcdb7658d561da5a0275` |
+| `20261026T122009Z-88636` | Forge 47.4.26 + Apothic 1.3.7 / Placebo 8.6.3，无 LOL，两次通过 | `346612d7e8764aa13ef93c7907ca64d888bfbb061cc12fd2411f5d24d38a9161` |
+
+原始证据在 `build/foxy-tests/<任务>/evidence/`。网络失败后只从已通过的诊断任务 `20261026T092238Z-62844` 缓存 104 个官方 libraries 文件，逐文件 SHA-256 复核，复用现有 loader-cache 机制；没有改测试成功条件。
+
+首轮客户端任务 `growth-clients-20261026T122303Z` 的 Fabric 已进入 CATTEST，随后因红沙物品纹理自测失败而停止，保留 failed。核对恢复点 `940ec13` 的控制器可确认这是之前新增红沙时遗漏的测试分支：其物品继承方块模型，旧测试却要求 `item/suspicious_red_sand`；外层启动器也仍要求 43 个物品。现仅为红沙补充精确的 `block/suspicious_red_sand_c05_s0` 烘焙纹理断言，并把启动器期望改为实际 44 项；没有修改红沙资源或玩法，也未忽略模型检查。失败证据包 `build/growth-fix-2026-10-26/growth-clients-20261026T122303Z.zip` 的 SHA-256 为 `86fb5cdca049de59f5b054413200107d3a39216c4b80fd1f15104b3b620b2450`。
+
+补齐客户端自测后的最终候选：
+
+| 候选 | SHA-256 |
+| --- | --- |
+| Fabric 1.20.1 | `52c5c7fadda81c9b4bcfe87b42aa701ea5405d017164a1548fff9cbf5e1c409c` |
+| Forge 1.20.1 | `2c914d5c9c1280ee260c1e1f39c8665ef5932d699d8ad4201d06b91b3ac77262` |
+
+逐个 JAR 条目比较确认，相对首轮候选两端均仅 `AutomatedTestController1201.class` 变化，其他运行类和资源完全相同；比较记录为 `build/growth-fix-2026-10-26/final-artifact-diff.json`。仍重新执行最终产物矩阵，不以首轮结果替代最终文件的验收。
+
+| 最终候选任务 | 配置与结果 | 证据 ZIP SHA-256 |
+| --- | --- | --- |
+| `20261026T123315Z-87132` | 普通 Fabric、Forge 47.4.10、Forge 47.4.26 + LOL/Apothic 各两次，共六次通过；基线及 64 项损坏/等价资源测试通过 | `09bc8922bec2ed33422e77c8fa56da5eeabdc7371c74e6defdd7e46bca1e3d51` |
+| `20261026T123709Z-70876` | Forge 47.4.26 + LOL-new 1.0.6，无 Apothic，两次通过 | `cd33f5c8db4f38f7ce6a139e07e4451f43f9039501b50c917c15eb87f8e4611c` |
+| `20261026T123930Z-49456` | Forge 47.4.26 + Apothic 1.3.7 / Placebo 8.6.3，无 LOL，两次通过 | `70b9b1be78c6668d069487d87744ea7962645a3c0fa170863b8d01365ccd9500` |
+
+最终专服共十次通过，每次均核对成长操作链、红沙和正常保存标记。
+
+第二轮客户端任务 `growth-clients-final-20261026T124129Z` 的 Fabric 游戏报告为 `passed=true, cleanup_passed=true`，44 项物品及完整客户端自测通过并正常保存退出；但临时外层 PowerShell 5.1 驱动器通过 `Refresh()` 轮询后取得的 `ExitCode` 为 null，因而整任务仍保留 failed。证据包 `build/growth-fix-2026-10-26/growth-clients-final-20261026T124129Z.zip` 的 SHA-256 为 `3483a7b61cf588d62b75bc263593b26cfc435af5f833f747988d379262b26a2b`。驱动器改为启动后立即保留进程句柄、用有时限的 `WaitForExit()` 等待，明确拒绝 null；在节点上分别用退出码 0 与 7 校验读回。此项只修改本轮忽略目录中的临时驱动器，不修改候选 JAR 或正式启动器退出条件。
+
+最终客户端矩阵 `growth-clients-final-20261026T124530Z` 通过 GUI 桥、已有 `run-test-client.ps1 -Production -StartupOnly` 和独立 CATTEST 串行执行普通 Fabric、普通 Forge 47.4.26、Forge 47.4.26 + LOL/Apothic，**三组均通过**。普通与联装世界分别来自最终候选已正常保存的相应专服，避免把联装世界拿来当无模组对照。客户端快照使用 `20261026T123930Z-49456`，三个联装 JAR 使用 `20261026T123315Z-87132/test-extra-mods` 并由准备器记录哈希。
+
+每组均核对最终候选 JAR 哈希、退出码 0、`passed=true` 和 `cleanup_passed=true`，并从真实日志逐项确认：44 项物品模型/纹理/名称，两种游戏模式真实网络往返，12 类创造销毁/保留路径，五英雄实际召唤、预览、血量同步、技能、AI 命中和撤回，以及书本、罗盘、回收箱、正常保存。任务结束后无本项目 Java 进程残留，节点锁已释放。证据包 `build/growth-fix-2026-10-26/growth-clients-final-20261026T124530Z.zip` 已下载并核对 SHA-256：`93f256cb489152b9867428f238ec7c6f1c2d8605a7eb6dd19ebd8a97ed94c4ba`；解包在同目录 `final-client-evidence/`。
+
+另核对联装客户端导出的真实 `AttributeInstance.class`：`calculateValue` 调用本体 WrapOperation，包装器只调用一次 `Operation.call`，生成的桥接方法继续调用 LOL 的 `allowOverflow` Redirect，确认第三方处理没有被吞掉。反汇编记录为 `build/growth-fix-2026-10-26/final-joint-attribute-bytecode.txt`，原 class 在上述客户端证据包内。
+
+成长公式、存档、网络、Apothic 构造适配以及其他 Minecraft 版本的实现没有修改；本轮无需同步百科或语言文案。原完整整合包及真人多人仍未验收，不将本次最小组合通过外推到全部第三方行为。需要重启，无需新世界。
+
+## 原始诊断与方案评估
 
 **结论：已确认并实跑复现 Echo Warrior 与 LOL-new 的同位成长属性 Redirect 冲突。** 同版 Forge/Apothic 对照通过，只加入 LOL-new 官方 1.0.6 后失败，真实日志同时点名双方注入。最小组合中是 LOL-new 的注入失败，玩家报告中是 Echo Warrior 的注入失败；确认了相同冲突机制，但没有还原原整合包的确切 JAR 与注入顺序。
 

@@ -18,6 +18,7 @@ import socket
 import subprocess
 import sys
 import time
+import tomllib
 import urllib.request
 import zipfile
 
@@ -231,10 +232,17 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
     console_log = run_dir / f"console-{attempt}.log"
     expected = "BOOTSTRAP SELFTEST PASSED"
     process = None
+    lol_required = False
+    for mod in (run_dir / "mods").glob("*.jar"):
+        with zipfile.ZipFile(mod) as jar:
+            if "META-INF/mods.toml" in jar.namelist():
+                metadata = tomllib.loads(jar.read("META-INF/mods.toml").decode("utf-8", errors="replace"))
+                lol_required |= any(entry.get("modId") == "lolmod" for entry in metadata.get("mods", []))
+    flags = joint_test_flags() + (["-DechoWarrior.lolRequired=true"] if lol_required else [])
     try:
         with console_log.open("w", encoding="utf-8") as output:
             process = subprocess.Popen(
-                [java, "-Xms512M", "-Xmx2G", *joint_test_flags(), "-Decho_warrior.compat_bootstrap_test=true", "-Decho_warrior.battlefield_generation_test=true",
+                [java, "-Xms512M", "-Xmx2G", *flags, "-Decho_warrior.compat_bootstrap_test=true", "-Decho_warrior.battlefield_generation_test=true",
                  f"-Decho_warrior.compat_storage_expected_boot={attempt}", *arguments],
                 cwd=run_dir, stdin=subprocess.PIPE, stdout=output, stderr=subprocess.STDOUT,
                 text=True, encoding="utf-8", creationflags=NO_WINDOW,
@@ -263,6 +271,7 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
                         and "BATTLEFIELD SNOW SELFTEST PASSED layers=1-8 placement=actual cover=preserved solid-snow=untouched" in text
                         and "BATTLEFIELD SPACING SELFTEST PASSED" in text
                         and "RED SAND SELFTEST PASSED" in text
+                        and "GROWTH ATTRIBUTE SELFTEST PASSED" in text
                         and "BATTLEFIELD GENERATION SELFTEST PASSED" in text
                         and "BATTLEFIELD PERFORMANCE SELFTEST PASSED regions=10000 lookup=1 search=49 removal=event reload=local" in text
                         and 'For help, type "help"' in text):
@@ -272,6 +281,8 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
                     if process.wait(timeout=60) != 0:
                         raise RuntimeError(f"Server shutdown failed: {console_log}")
                     final = console_log.read_text(encoding="utf-8", errors="replace")
+                    if lol_required and "bounds=preserved lol=true" not in final:
+                        raise RuntimeError(f"Installed LOL growth compatibility acceptance missing: {console_log}")
                     if joint_test_flags() and "[TbfJointSelfTest] PASS" not in final:
                         raise RuntimeError(f"Installed TBF joint-test acceptance missing: {console_log}")
                     if "Stopping server" not in final or "All dimensions are saved" not in final:

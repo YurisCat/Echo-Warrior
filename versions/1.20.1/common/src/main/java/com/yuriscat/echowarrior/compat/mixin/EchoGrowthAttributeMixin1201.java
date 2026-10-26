@@ -1,7 +1,8 @@
 package com.yuriscat.echowarrior.compat.mixin;
 
 import com.yuriscat.echowarrior.compat.item.EchoGrowthAttribute1201;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,10 +20,10 @@ public abstract class EchoGrowthAttributeMixin1201 implements EchoGrowthAttribut
         this.setDirty();
     }
 
-    @Redirect(method = "calculateValue", at = @At(value = "INVOKE",
+    @WrapOperation(method = "calculateValue", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/entity/ai/attributes/Attribute;sanitizeValue(D)D"))
-    private double echoWarrior$allowCultivatedAttribute(Attribute attribute, double value) {
-        double vanilla = attribute.sanitizeValue(value);
+    private double echoWarrior$allowCultivatedAttribute(Attribute attribute, double value, Operation<Double> original) {
+        double vanilla = original.call(attribute, value);
         return this.echoWarrior$growthRange && Double.isFinite(value) && value > vanilla ? value : vanilla;
     }
 }
