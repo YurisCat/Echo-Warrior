@@ -7,7 +7,8 @@ redirecting it, preserving LOL-new's own attribute handling. Forge embeds
 MixinExtras 0.4.1 through JarJar; the required Fabric Loader supplies its runtime.
 Growth formulas, instance flags, cache invalidation, Apothic constructor selection,
 saves and networking remain unchanged. Restart is required; no new world is needed.
-This candidate is not published. Exact artifact hashes, production-server/client
+This fix ships in 0.2.10; final artifacts and portal status are recorded in
+[`0.2.10.md`](../../docs/releases/0.2.10.md). Candidate hashes, production-server/client
 results and acceptance limits are maintained in
 [`lolmod-growth-redirect-crash-2026-10-26.md`](../../docs/research/lolmod-growth-redirect-crash-2026-10-26.md).
 Source changes start from the pushed checkpoint `940ec13`.
