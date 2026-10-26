@@ -28,7 +28,7 @@ public final class ExplorationSelfTest1201 {
     public static void run(MinecraftServer server) {
         checks = 0;
         var level = server.overworld();
-        check(ModContent1201.items().size() == 43 && ModContent1201.blocks().size() == 3, "full content counts");
+        check(ModContent1201.items().size() == 44 && ModContent1201.blocks().size() == 4, "full content counts");
         check(server.getRecipeManager().getRecipes().stream().filter(r -> r.getId().getNamespace().equals("echo_warrior")).count() == 31,
                 "31 parsed recipes, including both custom serializers");
         var recipe = server.getRecipeManager().byKey(ModContent1201.id("craft_legacy_repair")).orElseThrow();

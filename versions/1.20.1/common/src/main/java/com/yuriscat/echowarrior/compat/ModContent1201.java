@@ -13,6 +13,13 @@ public final class ModContent1201 {
     public static final net.minecraft.world.level.block.Block SUSPICIOUS_GRASS_BLOCK = brushable("suspicious_grass_block", net.minecraft.world.level.block.Blocks.GRASS_BLOCK);
     public static final net.minecraft.world.level.block.Block SUSPICIOUS_DIRT = brushable("suspicious_dirt", net.minecraft.world.level.block.Blocks.DIRT);
     public static final Item SUSPICIOUS_GRASS_BLOCK_ITEM = register("suspicious_grass_block", new com.yuriscat.echowarrior.compat.item.SuspiciousBlockItem1201(SUSPICIOUS_GRASS_BLOCK, new Item.Properties().stacksTo(1)));
+    public static final net.minecraft.world.level.block.Block SUSPICIOUS_RED_SAND = block("suspicious_red_sand",
+            new net.minecraft.world.level.block.BrushableBlock(net.minecraft.world.level.block.Blocks.RED_SAND,
+                    net.minecraft.world.level.block.state.BlockBehaviour.Properties.copy(net.minecraft.world.level.block.Blocks.SUSPICIOUS_SAND)
+                            .mapColor(net.minecraft.world.level.material.MapColor.COLOR_ORANGE),
+                    net.minecraft.sounds.SoundEvents.BRUSH_SAND, net.minecraft.sounds.SoundEvents.BRUSH_SAND_COMPLETED));
+    public static final Item SUSPICIOUS_RED_SAND_ITEM = register("suspicious_red_sand",
+            new com.yuriscat.echowarrior.compat.item.SuspiciousBlockItem1201(SUSPICIOUS_RED_SAND, new Item.Properties().stacksTo(1)));
     public static final Item SUSPICIOUS_DIRT_ITEM = register("suspicious_dirt", new com.yuriscat.echowarrior.compat.item.SuspiciousBlockItem1201(SUSPICIOUS_DIRT, new Item.Properties().stacksTo(1)));
     public static final Item ECHO_COMPASS = register("echo_compass", new com.yuriscat.echowarrior.compat.item.EchoCompassItem1201(new Item.Properties().stacksTo(1)));
     public static final com.yuriscat.echowarrior.compat.block.RecyclerChestBlock1201 ECHO_RECYCLER = block("echo_recycler",

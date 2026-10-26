@@ -29,6 +29,7 @@ public final class BattlefieldPerformanceSelfTest1211 {
         checkReplacementPersistence(level);
         BattlefieldSpacingSelfTest1211.run(level);
         checkRemovalEvents(level);
+        LootrArchaeologySelfTest1211.run(level);
         BattlefieldGenerationSelfTest1211.arm();
         EchoWarrior1211.LOGGER.info("[Compat1211] BATTLEFIELD PERFORMANCE SELFTEST PASSED regions=10000 lookup=1 search=49 removal=event reload=local");
     }

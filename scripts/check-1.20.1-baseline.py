@@ -55,6 +55,8 @@ def resource_matches(payload: bytes, source: Path) -> bool:
 def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> Path:
     jar_path = artifact(loader, config) if jar_path is None else jar_path
     with zipfile.ZipFile(jar_path) as jar:
+        import runpy
+        runpy.run_path(str(ROOT / "scripts/check-archaeology.py"))["audit_jar"](jar, "1.20.1")
         names = set(jar.namelist())
         tbf_config = f"echo_warrior_tbf_{loader}_1201.mixins.json"
         require(tbf_config in names, "Missing optional TBF Mixin configuration")
@@ -354,6 +356,7 @@ def main() -> int:
     runpy.run_path(str(ROOT / "scripts/check-summoner-slot-layout.py"), run_name="__main__")
     runpy.run_path(str(ROOT / "scripts/check-battlefield-snow.py"), run_name="__main__")
     runpy.run_path(str(ROOT / "scripts/check-battlefield-performance.py"), run_name="__main__")
+    runpy.run_path(str(ROOT / "scripts/check-archaeology.py"))["audit"]()
     config = properties()
     for loader in ("fabric", "forge"):
         audit(loader, config)

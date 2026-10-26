@@ -75,6 +75,7 @@ public final class ModContent1211 {
     public static final String ECHO_RECYCLER_ID = "echo_recycler";
     public static final String SUSPICIOUS_GRASS_BLOCK_ID = "suspicious_grass_block";
     public static final String SUSPICIOUS_DIRT_ID = "suspicious_dirt";
+    public static final String SUSPICIOUS_RED_SAND_ID = "suspicious_red_sand";
     public static final String RECYCLER_CHEST_BLOCK_ENTITY_ID = "recycler_chest";
     public static final String CRAFT_LEGACY_REPAIR_RECIPE_ID = "craft_legacy_repair";
     public static final String KNOWLEDGE_FRAGMENT_COLLECTION_RECIPE_ID = "knowledge_fragment_collection";
@@ -166,6 +167,12 @@ public final class ModContent1211 {
             new StableBrushableBlock1211(Blocks.DIRT, SoundEvents.BRUSH_GRAVEL, SoundEvents.BRUSH_GRAVEL,
                     BlockBehaviour.Properties.of().mapColor(MapColor.DIRT).strength(0.5F)
                             .sound(SoundType.ROOTED_DIRT).noLootTable().pushReaction(PushReaction.DESTROY)));
+    public static final Block SUSPICIOUS_RED_SAND = registerBlock(SUSPICIOUS_RED_SAND_ID,
+            new net.minecraft.world.level.block.BrushableBlock(Blocks.RED_SAND, SoundEvents.BRUSH_SAND,
+                    SoundEvents.BRUSH_SAND_COMPLETED, BlockBehaviour.Properties.ofFullCopy(Blocks.SUSPICIOUS_SAND)
+                            .mapColor(MapColor.COLOR_ORANGE)));
+    public static final Item SUSPICIOUS_RED_SAND_ITEM = registerItem(SUSPICIOUS_RED_SAND_ID,
+            new SuspiciousBlockItem1211(SUSPICIOUS_RED_SAND, new Item.Properties().stacksTo(1)));
     public static final RecyclerChestBlock1211 ECHO_RECYCLER = registerBlock(ECHO_RECYCLER_ID,
             new RecyclerChestBlock1211(BlockBehaviour.Properties.ofFullCopy(Blocks.CHEST)
                     .pushReaction(PushReaction.BLOCK)));

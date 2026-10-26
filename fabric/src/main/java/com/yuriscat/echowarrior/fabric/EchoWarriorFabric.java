@@ -69,6 +69,7 @@ public final class EchoWarriorFabric implements ModInitializer {
 		ModEntities.registerAttributes(FabricDefaultAttributeRegistry::register);
 		BlockEntityType.BRUSHABLE_BLOCK.addValidBlock(ModBlocks.SUSPICIOUS_GRASS_BLOCK);
 		BlockEntityType.BRUSHABLE_BLOCK.addValidBlock(ModBlocks.SUSPICIOUS_DIRT);
+		BlockEntityType.BRUSHABLE_BLOCK.addValidBlock(ModBlocks.SUSPICIOUS_RED_SAND);
 	}
 
 	private static void registerNetworking() {

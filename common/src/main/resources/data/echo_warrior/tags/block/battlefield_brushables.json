@@ -3,6 +3,7 @@
   "values": [
     "echo_warrior:suspicious_grass_block",
     "echo_warrior:suspicious_dirt",
+    "echo_warrior:suspicious_red_sand",
     "minecraft:suspicious_sand",
     "minecraft:suspicious_gravel"
   ]

@@ -84,9 +84,10 @@ def package(destination: Path, versions: list[str], tbf_forge: Path | None = Non
     new_files = subprocess.check_output(["git", "ls-files", "--others", "--exclude-standard", "-z"], cwd=ROOT).decode("utf-8").split("\0")
     selected = {name for name in tracked if name in root_files or name.startswith(prefixes)}
     selected.update(name for name in new_files if name.startswith(("common/src/", "versions/"))
-                    and Path(name).suffix in (".java", ".json", ".gradle", ".properties"))
+                    and Path(name).suffix in (".java", ".json", ".png", ".gradle", ".properties"))
     selected.update(name for name in new_files if name in {
         "scripts/check-summoner-slot-layout.py",
+        "scripts/check-archaeology.py",
         "scripts/check-battlefield-performance.py", "scripts/smoke-test-1.21.1-production-servers.py",
         "scripts/foxy-test-worker.py", "scripts/run-foxy-tests.ps1", "docs/FOXY_TEST_NODE.md"})
     artifacts = {}

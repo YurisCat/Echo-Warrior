@@ -115,6 +115,10 @@ def run_once(java: str, arguments: list[str], run_dir: Path, timeout: int) -> di
                         and "BATTLEFIELD SPACING SELFTEST PASSED" in text):
                     if "DEPARTURE EFFECTS SELFTEST PASSED heroes=5" not in text:
                         raise RuntimeError(f"Departure regression guard missing: {log}")
+                    if "RED SAND SELFTEST PASSED" not in text:
+                        raise RuntimeError(f"Red sand regression guard missing: {log}")
+                    if any(run_dir.glob("mods/lootr-*.jar")) and "LOOTR ARCHAEOLOGY SELFTEST PASSED" not in text:
+                        raise RuntimeError(f"Installed Lootr archaeology acceptance missing: {log}")
                     process.stdin.write("forceload remove 32 32 47 47\nstop\n")
                     process.stdin.flush()
                     if process.wait(timeout=60) != 0:

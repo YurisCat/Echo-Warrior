@@ -509,6 +509,7 @@ public final class BattlefieldSystem {
 
 	private static Block suspiciousFor(BlockState floor) {
 		if (floor.is(Blocks.GRASS_BLOCK)) return ModBlocks.SUSPICIOUS_GRASS_BLOCK;
+		if (floor.is(Blocks.RED_SAND)) return ModBlocks.SUSPICIOUS_RED_SAND;
 		if (floor.is(BlockTags.SAND)) return Blocks.SUSPICIOUS_SAND;
 		if (floor.is(Blocks.GRAVEL)) return Blocks.SUSPICIOUS_GRAVEL;
 		return ModBlocks.SUSPICIOUS_DIRT;

@@ -17,6 +17,7 @@ public final class BattlefieldSpacingSelfTest1201 {
     private BattlefieldSpacingSelfTest1201() {}
 
     public static void run(ServerLevel level) {
+        RedSandSelfTest1201.run(level);
         BlockPos center = new BlockPos(-1, 96, -1);
         Map<BlockPos, BlockState> previous = new LinkedHashMap<>();
         try {

@@ -53,6 +53,8 @@ Collect 仅取回本轮状态、输入清单、步骤日志、服务端日志/�
 
 26.1.2 的生成专项入口为 `scripts/smoke-test-battlefield-mainline.py`。向 `--input` 提供官方安装器准备的 `fabric/`、`neoforge/` 运行时、候选与依赖 JAR，以及逐文件 SHA-256 的 `inputs.json`；另外显式提供 `--games`、`--reports`、节点 Java 25 的 `--java` 和统一 `active-test.lock` 的 `--lock`。脚本只允许 FOXY-NODE、验证输入后创建全新平坦测试世界，串行运行两种发行包并等待真实生成验收及正常保存。准备公共库可以在控制端完成，不在长测期间占用节点做安装或另一轮游戏测试。输入、旧包驻留对照、原存档重启和新地形探索分别记录，不能合并成未经验证的“所有场景通过”。
 
+2026-10-26 起，该主线入口支持 `--loader fabric|neoforge|both`（默认 `both`），日常主线可只验收 Fabric。通过条件另要求 `RED SAND SELFTEST PASSED`；红沙夹具先等待实体区块真正就绪，使用自有、非持久化且限时的测试 ticket，实际刷取后释放。1.21.1 通用联装安装 Lootr 时必须出现 `LOOTR ARCHAEOLOGY SELFTEST PASSED`；模拟玩家在网络监听器边界记录通知包，不把模拟通知当成客户端联网验收。
+
 主线平坦夹具必须提供带 `layers`、`biome` 的完整 `generator-settings`；空对象会记录 `No key layers in MapLike[{}]`，即使默认回退后生成自测通过也不能忽略该错误。主线同样要求距离边界标记，保留失败夹具的日志后在全新世界复查。
 
 需要实际客户端时先读节点 `GUI.md`，通过现有 `invoke-desktop-gui.ps1` 在已登录且解锁的 FOXY 会话执行 `scripts/run-test-client.ps1`，检查已有客户端并串行运行。普通 SSH 验收只证明无界面测试可运行；画面、声音、控制、真实多人和第三方整合包仍需相应实机验收。

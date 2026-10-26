@@ -38,6 +38,25 @@
 | CORE-017 | 英灵杂物回收箱 | Echo Salvage Chest | 回收重复或不需要的英灵物品，等待午夜后返还材料。英文名称、动词及可回收属性统一采用 Salvage / salvage / salvageable。 | 固定 |
 | CORE-018 | 《回声、战士与你》 | Echoes, Warriors, and You | 教程手册正式书名；标点按目标语言书名习惯处理。 | 固定 |
 
+## 考古地表
+
+| 中文 | 当前英文 | 约束 |
+|---|---|---|
+| 可疑的红沙 | Suspicious Red Sand | `echo_warrior:suspicious_red_sand`；与原版可疑沙子同属可刷取沙类，刷完恢复红沙，不译为红砂砾。 |
+
+红沙目标语言词汇（2026-10-26；独立审校通过，见[本批审阅记录](REVIEW_RED_SAND_2026-10-26.md)）：
+
+| 基准语言 | 可疑的红沙 | 原版红沙 / 可疑的沙子对应词 |
+|---|---|---|
+| zh_tw | 可疑的紅沙 | 紅沙 / 可疑的沙 |
+| ja_jp | 怪しげな赤い砂 | 赤い砂 / 怪しげな砂 |
+| ru_ru | Подозрительный красный песок | Красный песок / Подозрительный песок |
+| pt_br | Areia Vermelha Suspeita | Areia Vermelha / Areia Suspeita |
+| es_es | Arena roja sospechosa | Arena roja / Arena sospechosa |
+| es_mx | Arena roja sospechosa | Arena roja / Arena sospechosa |
+
+`zh_hk` 沿用 `zh_tw`；`es_ar`、`es_cl`、`es_ec`、`es_uy`、`es_ve` 沿用 `es_mx`。方块名与同名物品名使用完全相同的译文。
+
 ## 召唤器模式
 
 | 中文 | 当前英文 | 约束 |

@@ -262,6 +262,7 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
                         and "EXPLORATION INTEGRATION SELFTEST PASSED placement=actual safety=edited-fluid-tree-slope-unloaded compass=new-instances" in text
                         and "BATTLEFIELD SNOW SELFTEST PASSED layers=1-8 placement=actual cover=preserved solid-snow=untouched" in text
                         and "BATTLEFIELD SPACING SELFTEST PASSED" in text
+                        and "RED SAND SELFTEST PASSED" in text
                         and "BATTLEFIELD GENERATION SELFTEST PASSED" in text
                         and "BATTLEFIELD PERFORMANCE SELFTEST PASSED regions=10000 lookup=1 search=49 removal=event reload=local" in text
                         and 'For help, type "help"' in text):

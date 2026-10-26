@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>英灵回声 · MC 百科稿件预览</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="content.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#"><span class="brand-mark">EW</span><span>英灵回声 <small>百科稿件预览</small></span></a>
+      <span class="local-badge"><i></i> 本地预览</span>
+    </div>
+  </header>
+  <div class="page">
+    <nav id="breadcrumb" class="breadcrumb" aria-label="当前位置"></nav>
+    <section class="mod-banner" aria-label="模组信息">
+      <div class="mod-icon"><img src="icons/echo_compass.png" width="64" height="64" alt=""></div>
+      <div><p class="eyebrow">物品 / 方块</p><h1>英灵回声 <span>Echo Warrior</span></h1><p class="banner-description">浏览分类，逐项检查正文与排版。</p></div>
+      <div class="banner-stats"><span><b id="total-count">43</b> 件资料</span><span><b>6</b> 个分类</span><span class="version">0.2.2</span></div>
+    </section>
+    <div class="layout">
+      <aside class="sidebar">
+        <section class="panel category-panel"><h2 class="panel-title">资料分类</h2><nav id="categories" aria-label="资料分类"></nav></section>
+        <section id="toc-panel" class="panel toc-panel" hidden><h2 class="panel-title">正文目录</h2><nav id="toc" aria-label="正文目录"></nav></section>
+        <p class="sidebar-note">本地核对稿 · <span id="snapshot-date"></span><br> 确认正文后，再提交 MC 百科。</p>
+      </aside>
+      <main id="main" tabindex="-1">
+        <section id="catalog-view" class="panel">
+          <div class="catalog-toolbar"><div><h2 id="catalog-title">全部物品</h2><p id="result-count" role="status" aria-live="polite"></p></div><div class="search-box"><label class="sr-only" for="search">搜索物品名称或注册名</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="搜索名称或注册名" autocomplete="off"><button id="clear-search" aria-label="清空搜索" hidden>×</button></div></div>
+          <div id="catalog"></div>
+        </section>
+        <article id="article-view" class="panel" hidden>
+          <header class="article-header"><div class="article-icon"><img id="article-icon" width="80" height="80" alt=""></div><div class="article-title"><p id="article-category" class="eyebrow"></p><h2 id="article-name"></h2><p id="article-english"></p></div><a id="site-link" class="external-link" target="_blank" rel="noopener noreferrer">站内原页 ↗</a></header>
+          <dl id="article-meta" class="article-meta"></dl>
+          <div class="article-toolbar"><span class="section-label">资料介绍</span><div class="display-controls" role="group" aria-label="正文显示方式"><button id="preview-mode" class="selected" aria-pressed="true">排版预览</button><button id="markup-mode" aria-pressed="false">标题代码</button></div></div>
+          <div id="article-body" class="article-body"></div>
+          <nav id="article-pager" class="article-pager" aria-label="同分类上一篇和下一篇"></nav>
+        </article>
+        <section id="not-found" class="panel empty-state" hidden><h2>没有找到这件物品</h2><p>链接中的物品不在本次稿件中。</p><a href="#">返回全部物品</a></section>
+      </main>
+    </div>
+    <footer>英灵回声 · MC 百科稿件预览 <span>本地页面，不代表站方审核结果。</span></footer>
+  </div>
+  <noscript><p>请启用 JavaScript，以浏览分类和正文。</p></noscript>
+</body>
+</html>

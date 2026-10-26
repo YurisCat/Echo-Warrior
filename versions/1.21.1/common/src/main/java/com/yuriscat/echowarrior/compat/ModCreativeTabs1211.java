@@ -37,6 +37,7 @@ public final class ModCreativeTabs1211 {
                     output.accept(ModContent1211.CRAFT_LEGACY);
                     output.accept(ModContent1211.SUSPICIOUS_GRASS_BLOCK_ITEM);
                     output.accept(ModContent1211.SUSPICIOUS_DIRT_ITEM);
+                    output.accept(ModContent1211.SUSPICIOUS_RED_SAND_ITEM);
                     output.accept(ModContent1211.ROMAN_LEGIONARY_RELIC);
                     output.accept(ModContent1211.AZTEC_WARRIOR_RELIC);
                     output.accept(ModContent1211.EGYPTIAN_ARCHER_RELIC);

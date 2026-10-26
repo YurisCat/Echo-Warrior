@@ -1,5 +1,9 @@
 # Minecraft 1.20.1 compatibility line
 
+## Archaeology candidate — 2026-10-26
+
+Suspicious red sand now generates on red-sand terrain, uses the existing archaeology loot pools, and returns to red sand after brushing. Both Fabric and Forge packaged server suites pass, including two boots per loader. Modern Lootr integration is limited to the verified 1.21.1 API; it is not silently copied into this line. Restart is required; existing worlds remain usable and only newly generated ruins gain red sand. These local candidates are not a published release. Exact hashes, retained failures and manual acceptance: [archaeology report](../../docs/research/archaeology-lootr-red-sand-2026-10-26.md).
+
 ## Local battlefield generation fix — 2026-10-13
 
 Replacement and admin generation now prepare one bounded chunk footprint across ticks,

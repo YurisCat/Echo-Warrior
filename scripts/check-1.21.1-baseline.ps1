@@ -14,6 +14,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Cross-version summoner slot layout check faile
 if ($LASTEXITCODE -ne 0) { throw 'Cross-version snow cover policy check failed.' }
 & python (Join-Path $PSScriptRoot 'check-battlefield-performance.py')
 if ($LASTEXITCODE -ne 0) { throw 'Battlefield performance policy check failed.' }
+& python (Join-Path $PSScriptRoot 'check-archaeology.py')
+if ($LASTEXITCODE -ne 0) { throw 'Cross-version archaeology check failed.' }
 
 if (-not $SkipBuild) {
     & (Join-Path $PSScriptRoot 'build-1.21.1.ps1') -Loader Dual
@@ -578,6 +580,8 @@ function Assert-Archive {
     )
 
     Assert-Condition (Test-Path -LiteralPath $Path -PathType Leaf) "$Loader JAR was not built: $Path"
+    & python (Join-Path $PSScriptRoot 'check-archaeology.py') --jar $Path
+    if ($LASTEXITCODE -ne 0) { throw 'Packaged archaeology check failed.' }
     $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $Path).Path)
     try {
         foreach ($module in @('TbfApiTypes1211', 'TbfCompatibility1211', 'TbfMixinPlugin1211',
@@ -750,9 +754,9 @@ function Assert-Archive {
             'knowledge_fragment_collection',
             'tutorial_manual'
         ) + $relicIds + $legacyIds + $accessoryIds
-        $blockItemIds = @('echo_recycler', 'suspicious_grass_block', 'suspicious_dirt')
+        $blockItemIds = @('echo_recycler', 'suspicious_grass_block', 'suspicious_dirt', 'suspicious_red_sand')
         $itemIds = @('echo_compass') + $simpleTextureItemIds + $blockItemIds
-        Assert-Condition ($itemIds.Count -eq 43) 'The expected 1.21.1 item catalogue must contain 43 items.'
+        Assert-Condition ($itemIds.Count -eq 44) 'The expected 1.21.1 item catalogue must contain 44 items.'
         foreach ($itemId in $itemIds) {
             $commonEntries += "assets/echo_warrior/models/item/$itemId.json"
         }
@@ -971,7 +975,7 @@ function Assert-Archive {
                 Assert-Condition ($languageKeys -contains "item.echo_warrior.$itemId") `
                     "$Loader $languageEntry is missing item.echo_warrior.$itemId"
             }
-            foreach ($blockId in @('echo_recycler', 'suspicious_grass_block', 'suspicious_dirt')) {
+            foreach ($blockId in @('echo_recycler', 'suspicious_grass_block', 'suspicious_dirt', 'suspicious_red_sand')) {
                 Assert-Condition ($languageKeys -contains "block.echo_warrior.$blockId") `
                     "$Loader $languageEntry is missing block.echo_warrior.$blockId"
             }

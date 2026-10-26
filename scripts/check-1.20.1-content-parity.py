@@ -13,6 +13,11 @@ ADAPTERS = {
     "CreativeSummonerInsertionPayload": ("CreativeInsertRequest", "CreativeInsertReply"),
     "EchoProgressionPayload": ("EchoProgressionPacket",),
 }
+# Lootr's modern archaeology API is only integrated on the verified 1.21.1 line.
+# Do not manufacture 1.20.1 stubs or silently claim compatibility with its older API.
+VERSION_ONLY = {
+    "LootrArchaeology", "LootrMixinPlugin", "LootrSharedArchaeologyMixin", "LootrArchaeologySelfTest",
+}
 for packet in ("RecallPet", "SummonPet", "TeleportPetToPlayer", "DirectTeleportPetToPlayer",
                "ReleaseRecalledPet", "RevivePet", "HealPet", "DeletePetData",
                "SetPriority", "RequestPetData", "AreaRecall"):
@@ -23,7 +28,8 @@ for packet in ("RecallPet", "SummonPet", "TeleportPetToPlayer", "DirectTeleportP
 def audit() -> None:
     source = {p.stem.removesuffix("1211") for p in (ROOT / "versions/1.21.1/common/src").rglob("*.java")}
     target = {p.stem.removesuffix("1201") for p in (ROOT / "versions/1.20.1").glob("*/src/**/*.java")}
-    missing = source - target - ADAPTERS.keys()
+    missing = source - target - ADAPTERS.keys() - VERSION_ONLY
+    assert VERSION_ONLY <= source and not VERSION_ONLY & target, "Review version-specific integration scope"
     assert not missing, f"Unaccounted source modules: {sorted(missing)}"
     for name, replacements in ADAPTERS.items():
         assert name in source, f"Stale adapter explanation: {name}"
