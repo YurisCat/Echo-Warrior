@@ -3,6 +3,7 @@ package com.yuriscat.echowarrior.compat.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.yuriscat.echowarrior.compat.client.PetFeedbackLayout1201;
+import com.yuriscat.echowarrior.compat.client.PetFeedbackOverlayAccess1201;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,8 +13,14 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(Gui.class)
-public abstract class PetFeedbackGuiMixin1201 {
+public abstract class PetFeedbackGuiMixin1201 implements PetFeedbackOverlayAccess1201 {
     @Shadow private Component overlayMessageString;
+    @Shadow private int overlayMessageTime;
+    @Shadow private boolean animateOverlayMessageColor;
+
+    @Override public Component echoWarrior$petOverlayMessage() { return overlayMessageString; }
+    @Override public int echoWarrior$petOverlayTime() { return overlayMessageTime; }
+    @Override public boolean echoWarrior$petOverlayAnimated() { return animateOverlayMessageColor; }
 
     // 1.20.1 draws the action-bar backdrop separately; ordinal 0 excludes title/subtitle backdrops.
     @WrapOperation(method = "render", at = @At(value = "INVOKE", ordinal = 0,

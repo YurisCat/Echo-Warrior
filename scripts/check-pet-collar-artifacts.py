@@ -51,6 +51,10 @@ def audit(path: Path, version: str, loader: str) -> None:
         assert f"{client_package}/client/PetFeedbackLayout{number}.class" in names, "Missing wrapped feedback renderer"
         assert f'{client_config["package"].replace(".", "/")}/{feedback_mixin}.class' in names
         assert feedback_mixin not in client_config.get("mixins", []), "Client feedback must not load on servers"
+        if version == "1.20.1" and loader == "forge":
+            forge_client = "com/yuriscat/echowarrior/compat/forge/"
+            assert forge_client + "PetFeedbackOverlay1201Forge.class" in names, "ForgeGui bypasses vanilla render"
+            assert b"PetFeedbackOverlay1201Forge" in jar.read(forge_client + "EchoClient1201Forge.class"), "Forge feedback event is not wired"
         package = config["package"].replace(".", "/") + "/"
         plugin = config["plugin"].replace(".", "/") + ".class"
         assert plugin in names and not plugin.startswith(package), "Plugin in reserved Mixin package"
