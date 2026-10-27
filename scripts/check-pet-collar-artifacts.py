@@ -51,6 +51,9 @@ def audit(path: Path, version: str, loader: str) -> None:
         assert f"{client_package}/client/PetFeedbackLayout{number}.class" in names, "Missing wrapped feedback renderer"
         assert f'{client_config["package"].replace(".", "/")}/{feedback_mixin}.class' in names
         assert feedback_mixin not in client_config.get("mixins", []), "Client feedback must not load on servers"
+        if version == "1.21.1" and loader == "neoforge":
+            feedback = jar.read(f'{client_config["package"].replace(".", "/")}/{feedback_mixin}.class')
+            assert b"drawStringWithBackdrop(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIII)I" in feedback, "1.21.1 backdrop draw returns int, unlike 26.1.2"
         if version == "1.20.1" and loader == "forge":
             forge_client = "com/yuriscat/echowarrior/compat/forge/"
             assert forge_client + "PetFeedbackOverlay1201Forge.class" in names, "ForgeGui bypasses vanilla render"
