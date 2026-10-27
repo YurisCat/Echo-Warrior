@@ -248,14 +248,15 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
         require(mixin["client"] == ["MinecraftClientMixin1201", "MouseHandlerMixin1201", "ClientMenuSyncMixin1201",
                                     "CreativeModeSlotWrapperAccessor1201", "CreativeModeInventoryScreenInvoker1201",
                                     "CreativeModeInventoryScreenMixin1201", "AbstractContainerScreenMixin1201", "ItemInHandRendererMixin1201", "RecyclerItemRendererMixin1201",
-                                    "GuiMixin1201", "GuiGraphicsMixin1201", "GuiGraphicsInvoker1201", "ClientColorsAccessor1201"],
+                                    "GuiMixin1201", "PetFeedbackGuiMixin1201", "GuiGraphicsMixin1201", "GuiGraphicsInvoker1201", "ClientColorsAccessor1201"],
                 "Client-only Mixins must be separated from server loading")
         refmap = json.loads(jar.read(mixin["refmap"]))
         require(bool(refmap.get("mappings")), f"{loader}: empty production refmap")
         audit_growth_runtime(jar, loader, config, refmap)
         for mixin_name, method in (("BrushableTypeMixin1201", "isValid"), ("PlacedBlockTrackerMixin1201", "placeBlock"),
                                    ("BlockBehaviourMixin1201", "onRemove"),
-                                   ("GuiMixin1201", "setOverlayMessage")):
+                                   ("GuiMixin1201", "setOverlayMessage"),
+                                   ("PetFeedbackGuiMixin1201", "render")):
             require(bool(refmap["mappings"].get(f"com/yuriscat/echowarrior/compat/mixin/{mixin_name}", {}).get(method)),
                     f"Missing exploration runtime mapping: {mixin_name}/{method}")
         for part in ("menu/HeldBookMenu1201", "test/RecyclerSelfTest1201", "world/BattlefieldSystem1201",
