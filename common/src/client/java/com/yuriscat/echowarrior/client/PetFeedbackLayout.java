@@ -18,6 +18,10 @@ public final class PetFeedbackLayout {
     private static final List<String> KEYS = List.of(
             "message.echo_warrior.pet_management_restricted",
             "message.echo_warrior.pet_compass_unavailable");
+    private static final List<String> TOOLTIP_KEYS = List.of(
+            "tooltip.echo_warrior.pet_collar_saved",
+            "tooltip.echo_warrior.pet_collar_limits",
+            "tooltip.echo_warrior.pet_collar_immaturity");
     private PetFeedbackLayout() {}
 
     public static boolean wraps(Font font, Component message, int guiWidth) {
@@ -29,6 +33,27 @@ public final class PetFeedbackLayout {
 
     public static List<FormattedCharSequence> lines(Font font, Component message, int guiWidth) {
         return font.split(message, availableWidth(guiWidth));
+    }
+
+    /** Split only our collar explanation rows before vanilla or loader tooltip processing. */
+    public static List<Component> wrapTooltipLines(Font font, List<Component> original, int guiWidth) {
+        var result = new java.util.ArrayList<Component>();
+        boolean changed = false;
+        for (Component line : original) {
+            if (line.getContents() instanceof TranslatableContents text && TOOLTIP_KEYS.contains(text.getKey())
+                    && font.width(line) > availableWidth(guiWidth)) {
+                for (var part : font.getSplitter().splitLines(line, availableWidth(guiWidth), line.getStyle())) {
+                    var styled = Component.empty();
+                    part.visit((style, value) -> {
+                        styled.append(Component.literal(value).setStyle(style));
+                        return java.util.Optional.empty();
+                    }, line.getStyle());
+                    result.add(styled);
+                }
+                changed = true;
+            } else result.add(line);
+        }
+        return changed ? result : original;
     }
 
     /** Called inside vanilla's action-bar pose, with the last row on its original baseline. */
@@ -56,7 +81,7 @@ public final class PetFeedbackLayout {
                 try (var reader = new InputStreamReader(client.getResourceManager().getResource(id).orElseThrow().open(),
                         StandardCharsets.UTF_8)) {
                     var language = JsonParser.parseReader(reader).getAsJsonObject();
-                    for (String key : KEYS) {
+                    for (String key : java.util.stream.Stream.concat(KEYS.stream(), TOOLTIP_KEYS.stream()).toList()) {
                         String text = language.get(key).getAsString();
                         for (int guiWidth : new int[]{320, 426, 640}) {
                             StringBuilder restored = new StringBuilder();
@@ -77,6 +102,25 @@ public final class PetFeedbackLayout {
                     || wraps(client.font, Component.translatable(KEYS.getFirst()), 10000)
                     || !wraps(client.font, Component.translatable(KEYS.getFirst()), 20))
                 throw new IllegalStateException("Pet message scope or fit regression");
+            List<Component> unrelated = List.of(Component.literal("Unrelated tooltip ".repeat(200)));
+            if (wrapTooltipLines(client.font, unrelated, 320) != unrelated)
+                throw new IllegalStateException("Unrelated tooltip was changed");
+            for (String key : TOOLTIP_KEYS) {
+                var original = Component.translatable(key).withStyle(net.minecraft.ChatFormatting.GOLD);
+                StringBuilder restored = new StringBuilder();
+                for (var line : wrapTooltipLines(client.font, List.of(original), 320)) {
+                    if (client.font.width(line) > availableWidth(320))
+                        throw new IllegalStateException("Collar tooltip exceeds viewport");
+                    line.visit((style, value) -> {
+                        if (!value.isEmpty() && !original.getStyle().getColor().equals(style.getColor()))
+                            throw new IllegalStateException("Collar tooltip lost its color");
+                        return java.util.Optional.empty();
+                    }, line.getStyle());
+                    restored.append(line.getString());
+                }
+                if (!restored.toString().replaceAll("\\s", "").equals(original.getString().replaceAll("\\s", "")))
+                    throw new IllegalStateException("Collar tooltip lost text");
+            }
         } catch (Exception failure) {
             throw new IllegalStateException("Pet feedback layout self-test failed", failure);
         }

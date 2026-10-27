@@ -97,7 +97,7 @@ try {
             $report=Get-Content -LiteralPath "$games\$mc-$loader-smoke\report.json" -Raw | ConvertFrom-Json
             if (-not $report.passed -or -not $report.cleanup_passed) { throw "Client report missing acceptance: $name" }
             $clientLog = Get-Content -LiteralPath "$games\$mc-$loader-smoke\logs\latest.log" -Raw
-            if ($clientLog -notmatch 'PET FEEDBACK LAYOUT SELFTEST PASSED cases=48') {
+            if ($clientLog -notmatch 'PET FEEDBACK LAYOUT SELFTEST PASSED cases=120') {
                 throw "Client did not complete the real-font pet feedback guard: $name"
             }
             $status.results += @{case=$name;passed=$true;report="$games\$mc-$loader-smoke\report.json";artifacts=$report.artifacts}
