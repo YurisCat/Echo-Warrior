@@ -38,4 +38,24 @@ if($launch.Count -ne 1){throw 'Automated client launch is ambiguous'}
 $parameters=@($launch[0].CommandElements|Where-Object{$_ -is [Management.Automation.Language.CommandParameterAst]}|ForEach-Object{$_.ParameterName})
 if($parameters -notcontains 'NoNewWindow' -or $parameters -contains 'WindowStyle'){throw 'Automated client must retain the launcher console'}
 if($parameters -notcontains 'RedirectStandardOutput' -or $parameters -notcontains 'RedirectStandardError'){throw 'Client logs must remain redirected'}
+$queueStop=@($ast.FindAll({param($node)
+    $node -is [Management.Automation.Language.IfStatementAst] -and
+    $node.Extent.Text -like '*Automated prepared client needs a fresh owned acceptance queue*'
+},$true)|Where-Object{$_.Clauses[0].Item1.Extent.Text -like '*$Production*'})
+if($queueStop.Count -ne 1){throw 'Prepared-client shutdown owner is ambiguous'}
+$condition=$queueStop[0].Clauses[0].Item1.Extent.Text
+foreach($case in @(
+    @{Version='1.20.1';Prepared='fixture.json';World=$true;Expected=$false},
+    @{Version='1.21.1';Prepared='fixture.json';World=$true;Expected=$true},
+    @{Version='Current';Prepared='fixture.json';World=$true;Expected=$true},
+    @{Version='1.21.1';Prepared='fixture.json';World=$false;Expected=$false},
+    @{Version='1.20.1';Prepared='';World=$true;Expected=$false}
+)){
+    $actual=& {
+        param($expression,$TargetVersion,$PreparedProductionLaunch,$expectsQuickPlayWorld)
+        $Production=$true
+        Invoke-Expression $expression
+    } $condition $case.Version $case.Prepared $case.World
+    if([bool]$actual -ne $case.Expected){throw "Wrong shutdown owner for $($case.Version) prepared=$($case.Prepared) world=$($case.World)"}
+}
 [pscustomobject]@{Passed=$true;Checks=@('Console hosts excluded from forced cleanup','Descendants through console hosts retained','Unrelated processes excluded','Absent root stays empty','Automated launch retains console','Output remains logged');SyntheticOnly=$true;ProcessesStarted=0;LauncherSha256=(Get-FileHash -LiteralPath $LauncherPath).Hash}|ConvertTo-Json -Depth 4

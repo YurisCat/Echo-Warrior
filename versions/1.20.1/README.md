@@ -1,5 +1,20 @@
 # Minecraft 1.20.1 compatibility line
 
+## Pet collar compatibility candidate — 2026-10-27
+
+Optional Domestication Innovation / Pet Home collar state is stored with the authoritative relic,
+restored before health assignment, and protected against stale entity generations. Independent
+capture, bed resurrection and ownership changes are rejected; restricted enchantments retain their
+stored data. This is an unpublished candidate. Exact package coverage, retained failures,
+automated results and remaining visual/multiplayer acceptance are tracked in
+[`pet-collar-compatibility-2026-10-27.md`](../../docs/research/pet-collar-compatibility-2026-10-27.md).
+
+Follow-up acceptance excludes the upstream write-only collar marker from deadline migration,
+preventing repeated idle relic updates. Current artifact hashes and final regression results
+are in [`pet-collar-acceptance-2026-10-27.md`](../../docs/research/pet-collar-acceptance-2026-10-27.md).
+The real paired-client session in that report targets 1.21.1; it is not a 1.20.1 multiplayer result.
+
+
 ## Growth attribute compatibility candidate — 2026-10-26
 
 The growth sanitizer now wraps the existing operation instead of exclusively

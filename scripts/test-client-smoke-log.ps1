@@ -24,4 +24,39 @@ foreach ($stage in @('bootstrap', 'internal compatibility build; full-port accep
 if ('[Compat1211] Initialized NeoForge bootstrap' -match (Get-1201ClientInitializationPattern)) {
     throw 'A different version/loader was accepted.'
 }
-Write-Host 'Client smoke log classification: 10 checks passed.'
+$petHash = '545828042d151f8665bbd975832768ba458f18809428728514630e3c081c1ec2'
+foreach ($entity in @('chain_lightning','recall_ball','feather','giant_bubble','following_jukebox','highlighted_block','psychic_wall','net')) {
+    $line = "[12:00:00] [Render thread/ERROR]: No data fixer registered for $entity`n"
+    if (Remove-KnownPetHome1201ClientDataFixerErrors $line $petHash) { throw 'Known pinned diagnostic was not classified.' }
+    if ((Remove-KnownPetHome1201ClientDataFixerErrors $line 'unknown') -ne $line) { throw 'Unknown artifact was suppressed.' }
+}
+foreach ($line in @(
+    '[12:00:00] [Render thread/ERROR]: No data fixer registered for network',
+    '[12:00:00] [Render thread/ERROR]: No data fixer registered for net extra failure',
+    '[12:00:00] [Server thread/ERROR]: No data fixer registered for net',
+    '[12:00:00] [Render thread/FATAL]: No data fixer registered for net',
+    '[12:00:00] [Render thread/ERROR]: Pet Home entity failure'
+)) {
+    if ((Remove-KnownPetHome1201ClientDataFixerErrors $line $petHash) -ne $line) {
+        throw 'Unreviewed client diagnostic was suppressed.'
+    }
+}
+Write-Host 'Client smoke log classification: 31 checks passed.'
+$pet1211Hash = 'e42894ad07d7417637cf83858fa64a4854c9143f3c34618c9caba2792e98c45e'
+foreach ($entity in @('chain_lightning','recall_ball','feather','giant_bubble','highlighted_block','psychic_wall','net')) {
+    $line = "[12:00:00] [Render thread/ERROR]: No data fixer registered for $entity`n"
+    if (Remove-KnownPetHome1211ClientDataFixerErrors $line $pet1211Hash) { throw 'Pinned 1.21.1 diagnostic not classified.' }
+    if ((Remove-KnownPetHome1211ClientDataFixerErrors $line $petHash) -ne $line) { throw 'Wrong version hash accepted.' }
+}
+foreach ($line in @(
+    '[12:00:00] [Render thread/ERROR]: No data fixer registered for following_jukebox',
+    '[12:00:00] [Render thread/ERROR]: No data fixer registered for net extra',
+    '[12:00:00] [Server thread/ERROR]: No data fixer registered for net',
+    '[12:00:00] [Render thread/FATAL]: No data fixer registered for net',
+    '[12:00:00] [Render thread/ERROR]: Pet Home registration failed'
+)) {
+    if ((Remove-KnownPetHome1211ClientDataFixerErrors $line $pet1211Hash) -ne $line) {
+        throw 'Unreviewed 1.21.1 diagnostic suppressed.'
+    }
+}
+Write-Host 'Pinned 1.21.1 client log classification: 19 additional checks passed.'

@@ -14,6 +14,7 @@ public final class AutomatedTestPauseController {
 	}
 
 	public static void tick(Minecraft client) {
+		PetAcceptanceClient.tick(client);
 		if (!ENABLED || opened || client.player == null || client.level == null || client.screen != null) return;
 		if (client.getSingleplayerServer() != null) {
 			if (growthCheck == null) {

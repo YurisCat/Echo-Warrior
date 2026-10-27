@@ -49,6 +49,21 @@ Collect 仅取回本轮状态、输入清单、步骤日志、服务端日志/�
 
 ## 主线与图形测试
 
+项圈兼容候选新增 `scripts/run-pet-mainline-tests.ps1`。先准备包含官方 Fabric/NeoForge
+运行时、当前候选和 Pet Home 的目录及逐文件 SHA-256 `inputs.json`，然后使用
+`-InputDirectory <目录> -Loader both` 派发。该入口沿用固定身份、独立快照、隐藏进程、
+Java 25 和全节点互斥锁；`-Action Status|Collect -RunId <编号>` 查询及核验取回证据。
+底层 `smoke-test-battlefield-mainline.py --pet-collars` 要求两次独立 JVM 启动，首轮同时跑
+原有生成回归，第二轮专门验证前次写入的实际项圈物品 NBT 恢复；不会复用玩家存档。
+1.21.1 安装受测宠物模组时同样执行两次启动，1.20.1 继续沿用既有双启动流程。
+联装必须同时出现存储 API 启用、真实项圈交互及对应 written/reloaded 标记，禁用兼容后
+“仍能启动”不能算通过。该套件不替代客户端观感和真实多人验收。
+主线无依赖基线可提供不含宠物模组的独立输入目录并加 `-Baseline`。
+1.21.1 的新世界远处生成夹具只在首次启动运行，第二次专测保存恢复；日志仍严格拒绝
+未知 ERROR/FATAL。1.20.1 的外部伙伴交互等待真实世界 tick 初始化后执行，专用区块票在
+夹具结束时释放，验收必须出现外部伙伴完成标记。通用额外模组输入中识别到 TBF 时也
+强制要求 TBF handler 的联装标记，不依赖人工设置开关。
+
 当前入口支持 1.21.1/1.20.1 两条兼容线。26.1.2 长测试使用相同固定 SSH 和独立快照，设置任务的 Java 25 后调用仓库 Wrapper 和既有测试脚本；不要用 Java 17，也不要引入全局 Gradle。运行 1.20.1 Gradle 构建时显式传入 `-Porg.gradle.java.installations.paths=D:\Tools-Terminal\EchoWarrior\jdk-17,D:\Tools-Terminal\EchoWarrior\jdk-21`，让 Java 21 上的 Wrapper 发现 Java 17 编译/运行工具链。2026-10-11 实测只在 `JAVA_TOOL_OPTIONS` 中设置同名 `-D` 系统属性不足以让 Gradle 9.5.1 发现节点 JDK 17；改用上述 Gradle 项目属性后，Minecraft 编译产物生成正常启动。
 
 26.1.2 的生成专项入口为 `scripts/smoke-test-battlefield-mainline.py`。向 `--input` 提供官方安装器准备的 `fabric/`、`neoforge/` 运行时、候选与依赖 JAR，以及逐文件 SHA-256 的 `inputs.json`；另外显式提供 `--games`、`--reports`、节点 Java 25 的 `--java` 和统一 `active-test.lock` 的 `--lock`。脚本只允许 FOXY-NODE、验证输入后创建全新平坦测试世界，串行运行两种发行包并等待真实生成验收及正常保存。准备公共库可以在控制端完成，不在长测期间占用节点做安装或另一轮游戏测试。输入、旧包驻留对照、原存档重启和新地形探索分别记录，不能合并成未经验证的“所有场景通过”。
@@ -92,3 +107,26 @@ Collect 仅取回本轮状态、输入清单、步骤日志、服务端日志/�
 FOXY Session 1 / Windows PowerShell 5.1 下，使用新的独立 CMD-CLEANUP-e85a67eb 世界进行 1.21.1 Fabric 启动、检查点和收尾回归，全部通过，未留新 cmd/Java 或错误窗口。之前的发布测试和证据不修改；当前只补签控制台收尾这一范围，没有据此扩展到其他游戏。
 
 基础设施记录：D:\AI-Workshop\60_Infrastructure\desktop-ms-xamanfjjoqzl\operations\2026-10-07-cmd-startup-errors\README.md。微软说明控制台连接尚未完成就关闭时可出现 0xc0000142：https://learn.microsoft.com/en-us/windows/console/creating-a-pseudoconsole-session 。
+
+项圈客户端复核补充（2026-10-27）：`run-test-client.ps1` 对正式 1.20.1 Fabric 的 Pet Home
+1.1.4 只按已复核的官方 JAR SHA-256 排除八条精确的 Render thread datafixer 注册诊断，
+不按文件名、模糊消息或未知版本放宽门禁。`test-client-smoke-log.ps1` 的 31 项正反例覆盖未知
+哈希、消息后缀、其他线程和 FATAL 拒绝。原失败与新快照复核分别保留；不能回改旧状态冒充原轮通过。
+
+项圈真实联机验收（2026-10-27）：作者明确要求补测多人、旧世界升级和附魔战斗。
+`prepare-pet-acceptance-client.py` 使用官方生产运行时、校验后的候选包与固定测试身份；
+`run-pet-acceptance-node.ps1 -Cases ...` 可选择六个版本/加载器组合，默认仍为四个现代客户端，
+通过 `run-test-client.ps1 -Production -PreparedProductionLaunch ... -StartupOnly` 串行运行。
+`-ArtifactRoot` 允许单独指向逐文件校验的六包快照，不覆盖已有测试输入。
+`pet-acceptance-server.py` 只在 FOXY-NODE 全新隔离目录启动回环专服，并持有统一互斥锁；
+双人客户端通过有哈希清单的 `-MultiplayerTestManifest` 显式限定同版本、同回环端点、
+两个不同身份与至多两个实例。该例外不放开普通开发客户端的单实例约束。
+测试客户端的动作队列须同时开启专用系统属性和本地目录，默认关闭；发送原版物品、
+实体交互及菜单包，服务端结果与双客户端视图分别保存。
+`pet-acceptance-cases.py` 记录升级、物理转交、双向延迟、跨维度、断线重连、同时操作、
+五英雄代表性效果及普通狼换装。1.21.1 菜单发送不等于操作成功，必须等待反馈；
+仅明确的过期状态回复可有限重试，其他失败不能当作成功。旧世界、失败用例和最终
+成功用例分开保留，日志、代理流量和产物哈希归档；听感和所有特效观感仍需人工签收。
+1.20.1 的首次暂停只是完整自测的起点，prepared 入口必须等内置控制器完成后自行退出，
+不能使用现代版本的外部 stop 队列提前关服；退出归属由 `test-client-console-cleanup.ps1`
+验证五种入口组合，缺少既有检查点仍然失败。

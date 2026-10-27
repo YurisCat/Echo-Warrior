@@ -224,8 +224,53 @@ def stage_mods(loader: str, run_dir: Path, values: dict[str, str]) -> dict[str, 
     return {path.name: sha256(path) for path in sorted(mod_dir.glob("*.jar"))}
 
 
-def joint_test_flags() -> list[str]:
-    return ["-DechoWarrior.tbfRequired=true"] if os.environ.get("ECHO_WARRIOR_TBF_JOINT") == "1" else []
+def joint_test_flags(run_dir: Path | None = None) -> list[str]:
+    required = os.environ.get("ECHO_WARRIOR_TBF_JOINT") == "1"
+    required |= run_dir is not None and "trulybestfriends" in installed_mod_ids(run_dir)
+    return ["-DechoWarrior.tbfRequired=true"] if required else []
+
+def installed_mod_ids(run_dir: Path) -> set[str]:
+    """Read actual installed metadata; filenames alone are not compatibility evidence."""
+    result: set[str] = set()
+    for path in (run_dir / "mods").glob("*.jar"):
+        with zipfile.ZipFile(path) as jar:
+            names = jar.namelist()
+            if "fabric.mod.json" in names:
+                mod_id = json.loads(jar.read("fabric.mod.json")).get("id")
+                if isinstance(mod_id, str):
+                    result.add(mod_id)
+            for name in ("META-INF/mods.toml", "META-INF/neoforge.mods.toml"):
+                if name in names:
+                    # Some fixed upstream packages have non-UTF8 comments; identifiers
+                    # remain ASCII. Match the existing production metadata reader.
+                    metadata = tomllib.loads(jar.read(name).decode("utf-8", errors="replace"))
+                    result.update(entry["modId"] for entry in metadata.get("mods", [])
+                                  if isinstance(entry.get("modId"), str))
+    return result
+
+
+def installed_pet_mods(run_dir: Path) -> set[str]:
+    return installed_mod_ids(run_dir) & {"pet_home", "domesticationinnovation"}
+
+
+def require_pet_joint(final: str, run_dir: Path, attempt: int = 1) -> None:
+    for mod in installed_pet_mods(run_dir):
+        if f"[Pet collar compatibility] {mod} storage API verified" not in final:
+            raise RuntimeError(f"Installed {mod} compatibility did not enable: {run_dir}")
+        if "[PetCollarJointSelfTest] PASS" not in final:
+            raise RuntimeError(f"Installed {mod} actual collar interaction test missing: {run_dir}")
+        mode = "written" if attempt == 1 else "reloaded"
+        if f"[PetCollarDiskSelfTest] PASS mode={mode}" not in final:
+            raise RuntimeError(f"Installed {mod} collar disk {mode} evidence missing: {run_dir}")
+
+
+def pet_datafixer_diagnostic(line: str, pet_mods: set[str]) -> bool:
+    # These registrations in Pet Home's Fabric releases have no DFU schema.
+    # Keep exact names and complete-line matching; never suppress generic ERRORs.
+    return ("pet_home" in pet_mods
+            and re.fullmatch(r".*\[main/ERROR\]: No data fixer registered for "
+                             r"(?:chain_lightning|giant_bubble|psychic_wall|highlighted_block|feather|recall_ball|net|following_jukebox)",
+                             line) is not None)
 
 
 def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeout: int) -> None:
@@ -238,7 +283,7 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
             if "META-INF/mods.toml" in jar.namelist():
                 metadata = tomllib.loads(jar.read("META-INF/mods.toml").decode("utf-8", errors="replace"))
                 lol_required |= any(entry.get("modId") == "lolmod" for entry in metadata.get("mods", []))
-    flags = joint_test_flags() + (["-DechoWarrior.lolRequired=true"] if lol_required else [])
+    flags = joint_test_flags(run_dir) + (["-DechoWarrior.lolRequired=true"] if lol_required else [])
     try:
         with console_log.open("w", encoding="utf-8") as output:
             process = subprocess.Popen(
@@ -263,6 +308,7 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
                         and "DEPARTURE EFFECTS SELFTEST PASSED heroes=5 modes=item-id-destroy-death packets=24-soul once=true vanilla=unchanged combo=critical" in text
                         and "MELEE REACH SELFTEST PASSED hero=aztec start=2.4 delayed=2.4 reject=2.6 vertical=checked wall=checked" in text
                         and re.search(rf"HERO DISK SELFTEST PASSED boot={attempt} heroes=5 arrow=1 migration=", text)
+                        and "[EchoExternalCompanionSelfTest] PASS" in text
                         and re.search(r"TALENT INTEGRATION SELFTEST PASSED mining=actual-96-to-\d+ trading=actual-discount-and-stock", text)
                         and re.search(r"BOOKS SELFTEST PASSED checks=\d+ knowledge=40 tutorial=44", text)
                         and re.search(r"RECYCLER SELFTEST PASSED checks=\d+ transaction=nbt-restored loot=actual sealed=protected", text)
@@ -281,14 +327,18 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
                     if process.wait(timeout=60) != 0:
                         raise RuntimeError(f"Server shutdown failed: {console_log}")
                     final = console_log.read_text(encoding="utf-8", errors="replace")
+                    require_pet_joint(final, run_dir, attempt)
+                    pet_mods = installed_pet_mods(run_dir)
+                    unexpected = "\n".join(line for line in final.splitlines()
+                                           if not pet_datafixer_diagnostic(line, pet_mods))
                     if lol_required and "bounds=preserved lol=true" not in final:
                         raise RuntimeError(f"Installed LOL growth compatibility acceptance missing: {console_log}")
-                    if joint_test_flags() and "[TbfJointSelfTest] PASS" not in final:
+                    if joint_test_flags(run_dir) and "[TbfJointSelfTest] PASS" not in final:
                         raise RuntimeError(f"Installed TBF joint-test acceptance missing: {console_log}")
                     if "Stopping server" not in final or "All dimensions are saved" not in final:
                         raise RuntimeError(f"Normal save/shutdown markers missing: {console_log}")
                     if ("Failed: " in final or "Exception in server tick loop" in final
-                            or re.search(r"\[(?:[^\]\r\n]+/)?(?:ERROR|FATAL)\]", final)):
+                            or re.search(r"\[(?:[^\]\r\n]+/)?(?:ERROR|FATAL)\]", unexpected)):
                         raise RuntimeError(f"Self-test or server exception: {console_log}")
                     print(f"PASS {run_dir.name} boot {attempt}: production Mixin + storage + world authority/restart + dependencies + shutdown", flush=True)
                     return

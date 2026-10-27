@@ -624,5 +624,10 @@
   "gui.echo_warrior.tutorial.skill.roman.bulwark.name": "军团壁垒",
   "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "来自身体前方的攻击和投射物伤害降低50%。",
   "message.echo_warrior.tbf.unavailable": "无法操作这名英灵：请检查遗物、控制权和召唤器状态。",
-  "message.echo_warrior.tbf.healing_disabled": "英灵使用自身的恢复机制，永恒伙伴治疗不适用。"
+  "message.echo_warrior.tbf.healing_disabled": "英灵使用自身的恢复机制，永恒伙伴治疗不适用。",
+  "message.echo_warrior.pet_management_restricted": "请使用回声召唤器管理这位英灵；宠物床、捕网和外部归属变更不可用。",
+  "tooltip.echo_warrior.pet_collar_limits": "全面召回与来世诅咒不对英灵生效；附魔仍保留在项圈上。",
+  "tooltip.echo_warrior.pet_collar_saved": "已保存宠物项圈：收回、死亡及遗物转装后保留",
+  "message.echo_warrior.pet_compass_unavailable": "无法通过宠物罗盘执行此操作，请检查英灵归属、燃料与召唤器。",
+  "tooltip.echo_warrior.pet_collar_immaturity": "此版本的英灵不支持幼体形态，变小诅咒保留但不生效。"
 }

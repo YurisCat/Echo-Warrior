@@ -1,5 +1,7 @@
 package com.yuriscat.echowarrior.binding;
 
+import com.yuriscat.echowarrior.integration.PetCollarCompat;
+
 import com.yuriscat.echowarrior.EchoWarrior;
 import com.yuriscat.echowarrior.entity.EchoWarriorEntity;
 import com.yuriscat.echowarrior.item.EchoRelicState;
@@ -180,6 +182,7 @@ public final class EchoBindingSystem {
 				|| !binding.entityId().equals(entity.getUUID())
 				|| binding.generation() != echo.getBindingGeneration()) return false;
 		if (entity.tickCount % 20 == 0) {
+			PetCollarCompat.capture(entity);
 			binding.setSnapshot(snapshot(entity));
 			data.changed(binding);
 		}
@@ -202,6 +205,7 @@ public final class EchoBindingSystem {
 		EchoBindingSavedData.Binding binding = data.get(summonerId);
 		if (binding == null || !binding.active()) return false;
 		EchoWarriorEntity loaded = findLoadedSpirit(server, summonerId);
+		if (loaded != null) PetCollarCompat.capture(loaded.livingEntity());
 		binding.setGeneration(binding.generation() + 1L);
 		binding.setActive(false);
 		binding.setEntityId(null);
@@ -212,6 +216,7 @@ public final class EchoBindingSystem {
 	}
 
 	public static void terminate(MinecraftServer server, EchoWarriorEntity echo, String reason) {
+		PetCollarCompat.capture(echo.livingEntity());
 		UUID summonerId = echo.getSummonerUuid();
 		if (summonerId == null) return;
 		EchoBindingSavedData data = EchoBindingSavedData.get(server);
@@ -232,7 +237,10 @@ public final class EchoBindingSystem {
 		if (binding == null || !binding.active()) return false;
 		if (!canAddControllerEcho(server, newController.getUUID(), summonerId)) return false;
 		EchoWarriorEntity loaded = findLoadedSpirit(server, summonerId);
-		if (loaded != null) binding.setSnapshot(snapshot(loaded.livingEntity()));
+		if (loaded != null) {
+			PetCollarCompat.capture(loaded.livingEntity());
+			binding.setSnapshot(snapshot(loaded.livingEntity()));
+		}
 		ItemStack relic = TestEchoSummonerItem.relicStack(binding.summonerState());
 		EchoRelicState.setActivityMode(relic, EchoRelicState.ActivityMode.FOLLOW);
 		TestEchoSummonerItem.setRelicStack(binding.summonerState(), relic);
@@ -257,6 +265,7 @@ public final class EchoBindingSystem {
 		if (controller == null || !controller.isAlive() || controller.isSpectator()) return false;
 		EchoWarriorEntity loaded = findLoadedSpirit(server, summonerId);
 		if (loaded != null) {
+			PetCollarCompat.capture(loaded.livingEntity());
 			binding.setSnapshot(snapshot(loaded.livingEntity()));
 			loaded.dismiss();
 		}
@@ -296,6 +305,7 @@ public final class EchoBindingSystem {
 			EchoWarriorEntity loaded = findLoadedSpirit(server, binding.summonerId());
 			if (loaded == null || loaded.livingEntity().level() != controller.level()) {
 				if (loaded != null) {
+					PetCollarCompat.capture(loaded.livingEntity());
 					binding.setSnapshot(snapshot(loaded.livingEntity()));
 					loaded.dismiss();
 				}

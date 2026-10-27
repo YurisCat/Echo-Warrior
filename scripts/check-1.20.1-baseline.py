@@ -97,6 +97,8 @@ def audit_growth_runtime(jar: zipfile.ZipFile, loader: str, config: dict, refmap
 
 def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> Path:
     jar_path = artifact(loader, config) if jar_path is None else jar_path
+    import runpy
+    runpy.run_path(str(ROOT / "scripts/check-pet-collar-artifacts.py"))["audit"](jar_path, "1.20.1", loader)
     with zipfile.ZipFile(jar_path) as jar:
         import runpy
         runpy.run_path(str(ROOT / "scripts/check-archaeology.py"))["audit_jar"](jar, "1.20.1")

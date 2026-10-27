@@ -1194,6 +1194,8 @@ $results = @(
     Assert-Archive $fabricJar Fabric
     Assert-Archive $neoForgeJar NeoForge
 )
+& python (Join-Path $PSScriptRoot 'check-pet-collar-artifacts.py') --version 1.21.1
+if ($LASTEXITCODE -ne 0) { throw 'Optional pet collar artifact check failed.' }
 
 $results | Format-Table -AutoSize
 Write-Host 'Minecraft 1.21.1 dual-loader baseline validation passed.'

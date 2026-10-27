@@ -34,6 +34,8 @@ public final class EchoExternalCompanionSelfTest1211 {
             binding.setFuel(300);
             var initial = EchoBindingSystem1211.summonNew(level, player, summoner);
             check(initial.succeeded(), "initial ordinary summon");
+            verifyFollowTransfer(server, player, summoner, binding);
+            PetCollarJointSelfTest1211.run(server, player, binding, summoner);
             UUID id = EchoExternalCompanion1211.entryId(binding);
             check(player.getInventory().isEmpty(), "external fixture carries no summoner");
             // Physical item stays in a real chest; the adapter receives only a stable entry ID.
@@ -109,6 +111,41 @@ public final class EchoExternalCompanionSelfTest1211 {
             if (blockEntity instanceof net.minecraft.world.Container container) container.clearContent();
             previous.forEach((pos,state)->level.setBlock(pos,state,2));
         }
+    }
+    static void verifyFollowTransfer(MinecraftServer server, ServerPlayer original, ItemStack summoner,
+            EchoBindingSavedData1211.Binding binding) {
+        var level = original.serverLevel();
+        ServerPlayer recipient = new ServerPlayer(server, level,
+                new GameProfile(UUID.randomUUID(), "EchoFollowTest"),
+                net.minecraft.server.level.ClientInformation.createDefault());
+        check(!EchoBindingSystem1211.transferToFollowing(recipient, summoner, binding),
+                "FOLLOW requires the actual physical summoner");
+        recipient.getInventory().setItem(0, summoner);
+        var previous = EchoBindingSystem1211.findLoaded(server, binding.spiritId());
+        float maximum = previous.livingEntity().getMaxHealth();
+        previous.livingEntity().setHealth(7);
+        long generation = binding.generation();
+        int fuel = binding.fuel();
+        recipient.moveTo(40.5, level.getMinBuildHeight() - 30, 40.5, 0, 0);
+        check(!EchoBindingSystem1211.transferToFollowing(recipient, summoner, binding)
+                && original.getUUID().equals(binding.controllerId()) && binding.generation() == generation
+                && binding.fuel() == fuel && !previous.livingEntity().isRemoved(),
+                "failed FOLLOW transfer retains controller, generation, fuel and original entity");
+        recipient.moveTo(42.5,96,40.5,0,0);
+        check(EchoBindingSystem1211.transferToFollowing(recipient, summoner, binding), "explicit FOLLOW transfer");
+        var replacement = EchoBindingSystem1211.findLoaded(server, binding.spiritId());
+        check(recipient.getUUID().equals(binding.controllerId()) && generation + 1 == binding.generation()
+                && binding.fuel() == fuel && replacement.livingEntity().getHealth() == 7
+                && replacement.livingEntity().getMaxHealth() == maximum
+                && previous.livingEntity().isRemoved() && !EchoBindingSystem1211.validateAndTrack(previous),
+                "FOLLOW commits one generation with no fuel or health reset and rejects the old entity");
+        recipient.getInventory().setItem(0, ItemStack.EMPTY);
+        original.getInventory().setItem(0, summoner);
+        check(EchoBindingSystem1211.transferToFollowing(original, summoner, binding), "FOLLOW transfer back");
+        original.getInventory().setItem(0, ItemStack.EMPTY);
+        check(binding.fuel() == fuel && original.getUUID().equals(binding.controllerId()), "restored original controller");
+        org.slf4j.LoggerFactory.getLogger("echo_warrior").info(
+                "[EchoFollowTransferSelfTest] PASS holder=required rollback=unsafe-position fuel=unchanged health=preserved generation=retired");
     }
     private static void check(boolean valid,String label) { if(!valid) throw new IllegalStateException("External companion: "+label); }
 }

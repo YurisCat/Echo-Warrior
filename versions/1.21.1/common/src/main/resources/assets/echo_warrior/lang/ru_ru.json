@@ -624,5 +624,10 @@
   "gui.echo_warrior.tutorial.skill.roman.bulwark.name": "Оплот легионера",
   "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "Урон от атак и снарядов спереди снижается на 50%.",
   "message.echo_warrior.tbf.healing_disabled": "У отголосков своя система восстановления. Лечение через TBF недоступно.",
-  "message.echo_warrior.tbf.unavailable": "Нельзя управлять этим отголоском. Проверьте реликвию, права управления и устройство призыва."
+  "message.echo_warrior.tbf.unavailable": "Нельзя управлять этим отголоском. Проверьте реликвию, права управления и устройство призыва.",
+  "message.echo_warrior.pet_management_restricted": "Управляйте отголоском через устройство призыва. Лежанки, сети для поимки и сторонняя смена владельца недоступны.",
+  "tooltip.echo_warrior.pet_collar_limits": "«Отзыв» и «С того света» не действуют на отголосков, но сохраняются на ошейнике.",
+  "tooltip.echo_warrior.pet_collar_saved": "Ошейник питомца сохранён: остаётся после отзыва, смерти и переноса реликвии.",
+  "message.echo_warrior.pet_compass_unavailable": "Действие недоступно через компас питомцев. Проверьте владельца, топливо и устройство призыва.",
+  "tooltip.echo_warrior.pet_collar_immaturity": "В этой версии у отголосков нет детской формы. Проклятие незрелости сохраняется, но не действует."
 }

@@ -624,5 +624,10 @@
   "gui.echo_warrior.tutorial.skill.roman.bulwark.name": "軍団兵の防壁",
   "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "正面から受ける攻撃と飛び道具のダメージを50%軽減する。",
   "message.echo_warrior.tbf.healing_disabled": "エコーは独自の仕組みで回復するため、TBFの治療は利用できません。",
-  "message.echo_warrior.tbf.unavailable": "このエコーは操作できません。遺物、操作権限、召喚器の状態を確認してください。"
+  "message.echo_warrior.tbf.unavailable": "このエコーは操作できません。遺物、操作権限、召喚器の状態を確認してください。",
+  "message.echo_warrior.pet_management_restricted": "このエコーはエコー召喚器で管理してください。ペット用ベッド、捕獲ネット、外部からの所有者変更は使えません。",
+  "tooltip.echo_warrior.pet_collar_limits": "トータルリコールと来世の呪いはエコーには効果がありませんが、首輪のエンチャントは保持されます。",
+  "tooltip.echo_warrior.pet_collar_saved": "ペットの首輪を保存済み：送還、死亡、遺物の移し替え後も保持",
+  "message.echo_warrior.pet_compass_unavailable": "ペットコンパスではこの操作はできません。所有者、燃料、エコー召喚器を確認してください。",
+  "tooltip.echo_warrior.pet_collar_immaturity": "このバージョンのエコーに子どもの姿はありません。未熟の呪いは保持されますが、効果はありません。"
 }

@@ -24,6 +24,7 @@ public final class AutomatedTestController1201 {
     public static boolean blockMouseCapture() { return PAUSE.blockMouseCapture(); }
 
     public static void tick(Minecraft client) {
+        PetAcceptanceClient1201.tick(client);
         if (!PAUSE.enabled() || stopping) return;
         if (client.level == null) {
             PAUSE.onDisconnected();

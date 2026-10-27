@@ -30,7 +30,8 @@
     ]
   },
   "mixins": [
-    "echo_warrior.mixins.json"
+    "echo_warrior.mixins.json",
+    "echo_warrior_pet_collars.mixins.json"
   ],
   "accessWidener": "echo_warrior.classtweaker",
   "depends": {

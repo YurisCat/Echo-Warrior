@@ -354,6 +354,18 @@ public final class SummonerMenu1211 extends AbstractContainerMenu {
             return true;
         }
         if (id >= BUTTON_ACTIVITY_START && id < BUTTON_ACTIVITY_START + 3) {
+            if (id == BUTTON_ACTIVITY_START && binding.active()
+                    && !serverPlayer.getUUID().equals(binding.controllerId())) {
+                if (!EchoBindingSystem1211.canAddControllerEcho(
+                        level.getServer(), serverPlayer.getUUID(), binding.summonerId())) {
+                    reportAction(ACTION_LIMIT_REACHED);
+                } else {
+                    reportAction(EchoBindingSystem1211.transferToFollowing(serverPlayer, source, binding)
+                            ? ACTION_MODE_CHANGED : ACTION_CREATE_FAILED);
+                }
+                refreshData();
+                return true;
+            }
             EchoBindingSystem1211.setActivityMode(level, binding, id - BUTTON_ACTIVITY_START);
             refreshData();
             reportAction(ACTION_MODE_CHANGED);

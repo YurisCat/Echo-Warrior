@@ -57,6 +57,38 @@
 
 `zh_hk` 沿用 `zh_tw`；`es_ar`、`es_cl`、`es_ec`、`es_uy`、`es_ve` 沿用 `es_mx`。方块名与同名物品名使用完全相同的译文。
 
+## 可选宠物模组兼容术语
+
+2026-10-27 项圈兼容候选沿用第三方官方中英文键的名称；不按内部字段自行重新命名。
+
+| 中文 | 英文 | 稳定标识与约束 |
+|---|---|---|
+| 项圈标签 | Collar Tag | `collar_tag`；说明中可简称“项圈”。 |
+| 全面召回 | Total Recall | `total_recall`；第三方低生命收纳效果，不等于本体“召回在场英灵”。 |
+| 来世诅咒 | Curse of Afterlife | `undead_curse`；第三方死亡后产生敌对实体的效果，不能译成本体复活。 |
+| 变小诅咒 | Curse of Immaturity | `immaturity_curse`；26.1.2 英灵不是可成长动物，保留附魔但不切换幼体。 |
+| 宠物床 | Pet Bed | 第三方独立复活入口，不等于回声召唤器。 |
+| 所有权契约 | Deed of Ownership | 第三方归属变更物品，不改变本体的当前控制者校验。 |
+
+项圈限制提示的目标语言术语（2026-10-27）：
+
+| 基准语言 | Total Recall | Curse of Afterlife | Curse of Immaturity |
+|---|---|---|---|
+| zh_tw | 全面召回（晶球保護） | 來世詛咒 | 變小詛咒（幼稚詛咒） |
+| ja_jp | トータルリコール | 来世の呪い | 未熟の呪い |
+| ru_ru | Отзыв | С того света | Проклятие незрелости |
+| pt_br | Chamamento total | Maldição do vivo-morto | Maldição da Imaturidade |
+| es_es | Retiro total | Maldición del más allá | Maldición de Inmadurez |
+| es_mx | Retiro total | Maldición del más allá | Maldición de Inmadurez |
+
+日语、西班牙西语三项及俄语、巴西葡语前两项沿用受测驯养革新 1.7.1 JAR 的实际语言资源；
+繁中同时保留 Pet Home 1.20.1 两加载器实际使用的「晶球保護」「幼稚詛咒」名称，方便对照；
+俄语、葡语缺少的变小诅咒按英文语义补译，中性拉美西语沿用上述通用西语专名。
+受测 Pet Home 1.21.1 与 26.1.2 的四个包均未提供这些目标语言文件，可能仍显示英文名称；
+本表不表示已为第三方模组补充语言文件。
+俄语「Отзыв」在引号内指附魔，在普通动词语境中才指本体收回操作；葡语「Maldição do vivo-morto」
+是第三方专名，不把英灵解释为亡灵。别名沿用基准语言，审校记录见 `REVIEW_PET_COLLAR_2026-10-27.md`。
+
 ## 召唤器模式
 
 | 中文 | 当前英文 | 约束 |
