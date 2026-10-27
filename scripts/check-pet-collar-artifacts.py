@@ -51,6 +51,9 @@ def audit(path: Path, version: str, loader: str) -> None:
         assert f"{client_package}/client/PetFeedbackLayout{number}.class" in names, "Missing wrapped feedback renderer"
         assert f'{client_config["package"].replace(".", "/")}/{feedback_mixin}.class' in names
         assert feedback_mixin not in client_config.get("mixins", []), "Client feedback must not load on servers"
+        tooltip_mixin = "GuiGraphicsExtractorMixin" if version == "26.1.2" else f"GuiGraphicsMixin{number}"
+        tooltip_hook = jar.read(f'{client_config["package"].replace(".", "/")}/{tooltip_mixin}.class')
+        assert b";Ljava/util/List;Ljava/util/Optional;II" in tooltip_hook and b"wrapTooltipLines" in tooltip_hook, "Collar tooltips must hook the list overload used directly by container screens"
         if version == "1.21.1" and loader == "neoforge":
             feedback = jar.read(f'{client_config["package"].replace(".", "/")}/{feedback_mixin}.class')
             assert b"drawStringWithBackdrop(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIII)I" in feedback, "1.21.1 backdrop draw returns int, unlike 26.1.2"

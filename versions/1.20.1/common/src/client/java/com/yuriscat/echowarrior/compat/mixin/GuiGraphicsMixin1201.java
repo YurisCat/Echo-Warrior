@@ -1,6 +1,6 @@
 package com.yuriscat.echowarrior.compat.mixin;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.yuriscat.echowarrior.compat.client.PetFeedbackLayout1201;
 import com.yuriscat.echowarrior.compat.ModContent1201;
@@ -28,9 +28,9 @@ import java.util.List;
 public abstract class GuiGraphicsMixin1201 {
     @Shadow @Final private Minecraft minecraft;
 
-    @ModifyExpressionValue(
-            method = "renderTooltip(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;getTooltipFromItem(Lnet/minecraft/client/Minecraft;Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;")
+    @ModifyVariable(
+        method = "renderTooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;Ljava/util/Optional;II)V",
+        at = @At("HEAD"), argsOnly = true, ordinal = 0
     )
     private List<Component> echoWarrior$wrapCollarTooltip(List<Component> original, @Local(argsOnly = true) Font font) {
         return PetFeedbackLayout1201.wrapTooltipLines(font, original, ((GuiGraphics)(Object)this).guiWidth());

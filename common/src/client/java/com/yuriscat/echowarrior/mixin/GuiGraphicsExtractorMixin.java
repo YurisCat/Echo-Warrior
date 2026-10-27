@@ -1,6 +1,6 @@
 package com.yuriscat.echowarrior.mixin;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.yuriscat.echowarrior.ModItems;
 import com.yuriscat.echowarrior.client.EchoCompassPulseHud;
@@ -35,9 +35,9 @@ public abstract class GuiGraphicsExtractorMixin {
 	@Shadow @Final private Minecraft minecraft;
 	@Shadow private @Nullable Runnable deferredTooltip;
 
-	@ModifyExpressionValue(
-			method = "setTooltipForNextFrame(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;getTooltipFromItem(Lnet/minecraft/client/Minecraft;Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;")
+	@ModifyVariable(
+		method = "setTooltipForNextFrame(Lnet/minecraft/client/gui/Font;Ljava/util/List;Ljava/util/Optional;IILnet/minecraft/resources/Identifier;)V",
+		at = @At("HEAD"), argsOnly = true, ordinal = 0
 	)
 	private List<Component> echoWarrior$wrapCollarTooltip(List<Component> original, @Local(argsOnly = true) Font font) {
 		return PetFeedbackLayout.wrapTooltipLines(font, original, ((GuiGraphicsExtractor)(Object)this).guiWidth());
