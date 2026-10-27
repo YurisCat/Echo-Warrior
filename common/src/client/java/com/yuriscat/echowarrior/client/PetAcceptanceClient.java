@@ -23,10 +23,15 @@ public final class PetAcceptanceClient {
     private static final String DIRECTORY = System.getProperty("echo_warrior.acceptance_queue", "");
     private static final boolean ENABLED = Boolean.getBoolean("echo_warrior.acceptance_client") && !DIRECTORY.isBlank();
     private static int next = 1;
+    private static boolean layoutChecked;
     private PetAcceptanceClient() {}
 
     public static void tick(Minecraft client) {
         if (!ENABLED) return;
+        if (!layoutChecked && client.player != null && client.level != null) {
+            PetFeedbackLayout.selfTest(client);
+            layoutChecked = true;
+        }
         Path root = Path.of(DIRECTORY);
         Path request = root.resolve(String.format("%05d.json", next));
         if (!Files.isRegularFile(request)) return;

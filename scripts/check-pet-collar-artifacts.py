@@ -44,6 +44,13 @@ def audit(path: Path, version: str, loader: str) -> None:
     with zipfile.ZipFile(path) as jar:
         names = set(jar.namelist())
         config = json.loads(jar.read(config_name))
+        client_config = json.loads(jar.read(f"echo_warrior{suffix}.mixins.json"))
+        feedback_mixin = f"PetFeedbackGuiMixin{number}"
+        assert feedback_mixin in client_config["client"], "Missing client-only pet feedback hook"
+        client_package = client_config["package"].replace(".", "/").rsplit("/", 1)[0]
+        assert f"{client_package}/client/PetFeedbackLayout{number}.class" in names, "Missing wrapped feedback renderer"
+        assert f'{client_config["package"].replace(".", "/")}/{feedback_mixin}.class' in names
+        assert feedback_mixin not in client_config.get("mixins", []), "Client feedback must not load on servers"
         package = config["package"].replace(".", "/") + "/"
         plugin = config["plugin"].replace(".", "/") + ".class"
         assert plugin in names and not plugin.startswith(package), "Plugin in reserved Mixin package"

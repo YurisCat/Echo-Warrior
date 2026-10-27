@@ -15,6 +15,7 @@ All notable development changes to Echo Warrior are recorded here.
 
 - Restored Minecraft 1.21.1 Follow takeover when another player holds the bound summoner. Successful takeover preserves health and collar attributes without charging extra fuel; a failed transfer keeps the previous Echo and controller.
 - Prevented an unused third-party collar-swap marker from repeatedly rewriting idle relic data. Active enchantment cooldowns still retain their intended timing.
+- Long pet-management and pet-compass failure messages now wrap above the hotbar at large GUI scales instead of being cut off at the screen edges.
 - Protected collar replacement, attribute restoration and pet-compass actions against duplicate returns, stale Echo instances and unauthorized control. Ordinary pets retain their original behavior.
 
 ### Notes

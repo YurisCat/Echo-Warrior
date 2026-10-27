@@ -25,6 +25,7 @@
     "AbstractContainerScreenMixin",
 	"CreativeModeInventoryScreenMixin",
     "GuiGraphicsExtractorMixin",
+    "PetFeedbackGuiMixin",
     "ItemInHandRendererMixin"
   ],
   "injectors": {
