@@ -35,6 +35,7 @@ abstract class MinecraftServerMixin1201 {
         com.yuriscat.echowarrior.compat.binding.EchoBindingSystem1201.tick(server);
         com.yuriscat.echowarrior.compat.entity.EchoAuraAuditSystem1201.tick(server);
         com.yuriscat.echowarrior.compat.test.HeroDiskRestartSelfTest1201.tick(server);
+        com.yuriscat.echowarrior.compat.integration.EchoExternalCompanionSelfTest1201.tickScheduled(server);
     }
     @Inject(method = "loadLevel", at = @At("RETURN"))
     private void echoWarrior$checkBootstrap(CallbackInfo callback) {

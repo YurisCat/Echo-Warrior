@@ -63,6 +63,16 @@ public final class VisualDebugCommands {
                     com.yuriscat.echowarrior.item.EchoProgressionSelfTest.run(context.getSource().getLevel());
                     return 1;
                 }))
+				.then(Commands.literal("pet_collar_selftest").executes(context -> {
+                    try {
+                        com.yuriscat.echowarrior.integration.PetCollarJointSelfTest.run(context.getSource().getServer());
+                    } catch (RuntimeException failure) {
+                        org.slf4j.LoggerFactory.getLogger("echo_warrior")
+                                .error("[PetCollarJointSelfTest] FAIL", failure);
+                        throw failure;
+                    }
+                    return 1;
+                }))
 				.then(Commands.literal("visual")
 						.then(Commands.literal("status").executes(context -> executeStatus(context.getSource())))
 						.then(Commands.literal("samurai_afterimage_neutral")

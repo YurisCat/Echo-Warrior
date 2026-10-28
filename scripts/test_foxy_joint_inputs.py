@@ -31,6 +31,49 @@ class JointInputsTest(unittest.TestCase):
     def test_absent_is_optional(self):
         self.assertEqual(worker.extra_mod_inputs(None, ["1.20.1"]), [])
 
+    def test_pet_diagnostic_filter_rejects_unrelated_errors(self):
+        line = "[12:00:00] [main/ERROR]: No data fixer registered for net"
+        self.assertTrue(smoke.pet_datafixer_diagnostic(line, {"pet_home"}))
+        for altered, mods in ((line, set()), (line + " unexpected failure", {"pet_home"}),
+                              (line.replace("for net", "for unknown"), {"pet_home"}),
+                              (line.replace("main/ERROR", "Server thread/ERROR"), {"pet_home"}),
+                              ("[main/ERROR]: Pet Home entity crash", {"pet_home"})):
+            self.assertFalse(smoke.pet_datafixer_diagnostic(altered, mods))
+
+    def test_pet_acceptance_requires_real_metadata_and_both_boot_modes(self):
+        mods = self.root / "mods"
+        mods.mkdir()
+        with zipfile.ZipFile(mods / "unrelated-filename.jar", "w") as archive:
+            archive.writestr("fabric.mod.json", '{"id":"pet_home"}')
+        self.assertEqual(smoke.installed_pet_mods(self.root), {"pet_home"})
+        api = "[Pet collar compatibility] pet_home storage API verified\n"
+        joint = "[PetCollarJointSelfTest] PASS\n"
+        written = "[PetCollarDiskSelfTest] PASS mode=written\n"
+        reloaded = "[PetCollarDiskSelfTest] PASS mode=reloaded\n"
+        for incomplete in ("Done (1.0s)!", api + joint, joint + written, api + written):
+            with self.assertRaises(RuntimeError):
+                smoke.require_pet_joint(incomplete, self.root)
+        smoke.require_pet_joint(api + joint + written, self.root, 1)
+        smoke.require_pet_joint(api + joint + reloaded, self.root, 2)
+        with self.assertRaises(RuntimeError):
+            smoke.require_pet_joint(api + joint + written, self.root, 2)
+
+    def test_pet_filename_is_not_installation_evidence(self):
+        mods = self.root / "mods"
+        mods.mkdir()
+        with zipfile.ZipFile(mods / "pet_home-fake.jar", "w") as archive:
+            archive.writestr("fabric.mod.json", '{"id":"ordinary_fixture"}')
+        self.assertEqual(smoke.installed_pet_mods(self.root), set())
+
+    def test_generic_tbf_combo_requires_handler_acceptance_despite_non_utf8_comment(self):
+        mods = self.root / "mods"
+        mods.mkdir()
+        with zipfile.ZipFile(mods / "official-fixture.jar", "w") as archive:
+            archive.writestr("META-INF/mods.toml", b'# \xb8\n[[mods]]\nmodId="trulybestfriends"\n')
+        with patch.dict("os.environ", {}, clear=True):
+            self.assertEqual(smoke.joint_test_flags(self.root), ["-DechoWarrior.tbfRequired=true"])
+        self.assertEqual(smoke.installed_pet_mods(self.root), set())
+
     def test_valid_multiple_dependencies(self):
         first = self.jar("1.20.1/forge/apothic.jar")
         second = self.jar("1.20.1/forge/placebo.jar")

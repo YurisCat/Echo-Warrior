@@ -50,3 +50,6 @@ type = "required"
 versionRange = "[${smartbrainlib_version},)"
 ordering = "NONE"
 side = "BOTH"
+
+[[mixins]]
+config = "echo_warrior_pet_collars_1211.mixins.json"

@@ -19,4 +19,5 @@ dependencies {
 mixin {
     add sourceSets.main, 'echo_warrior_1201.refmap.json'
     config 'echo_warrior_1201.mixins.json'
+    config 'echo_warrior_pet_collars_1201.mixins.json'
 }

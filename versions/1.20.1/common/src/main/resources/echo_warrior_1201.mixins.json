@@ -44,6 +44,7 @@
     "ItemInHandRendererMixin1201",
     "RecyclerItemRendererMixin1201",
     "GuiMixin1201",
+    "PetFeedbackGuiMixin1201",
     "GuiGraphicsMixin1201",
     "GuiGraphicsInvoker1201",
     "ClientColorsAccessor1201"

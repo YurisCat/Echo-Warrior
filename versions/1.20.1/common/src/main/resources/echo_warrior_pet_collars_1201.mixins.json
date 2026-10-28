@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.yuriscat.echowarrior.compat.integration.petmixin",
+  "plugin": "com.yuriscat.echowarrior.compat.integration.PetCollarMixinPlugin1201",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "refmap": "echo_warrior_1201.refmap.json"
+}

@@ -22,6 +22,7 @@ public final class EchoClient1201Forge {
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut logout) -> com.yuriscat.echowarrior.compat.item.EchoProgressionConfig1201.resetConnection());
         // ForgeGui overrides Gui.render without calling super: a vanilla render Mixin never runs here.
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(EchoClient1201Forge::renderHud);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(PetFeedbackOverlay1201Forge::render);
         event.enqueueWork(() -> {
             com.yuriscat.echowarrior.compat.client.EchoCompassClientProperties1201.register(net.minecraft.client.renderer.item.ItemProperties::register);
             com.yuriscat.echowarrior.compat.client.SummonerRelicIconProperty1201.register(net.minecraft.client.renderer.item.ItemProperties::register);

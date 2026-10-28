@@ -1,5 +1,21 @@
 # Echo Warrior for Minecraft 1.21.1
 
+## Pet collar compatibility candidate — 2026-10-27
+
+Optional Pet Home collar state is stored with the authoritative relic,
+restored before health assignment, and protected against stale entity generations. Independent
+capture, bed resurrection and ownership changes are rejected; restricted enchantments retain their
+stored data. This is an unpublished candidate. Exact package coverage, retained failures,
+automated results and remaining visual/multiplayer acceptance are tracked in
+[`pet-collar-compatibility-2026-10-27.md`](../../docs/research/pet-collar-compatibility-2026-10-27.md).
+
+Follow-up acceptance fixed the missing physical-holder FOLLOW takeover and excluded an
+upstream write-only collar marker from deadline migration. Real paired clients exercised
+upgrade, transfer, latency, dimensions, reconnect, concurrent requests and representative
+combat for all five heroes. Current hashes and remaining visual/audio limits are in
+[`pet-collar-acceptance-2026-10-27.md`](../../docs/research/pet-collar-acceptance-2026-10-27.md).
+
+
 ## Archaeology candidate — 2026-10-26
 
 Suspicious red sand now generates on red-sand terrain, uses the existing archaeology loot pools, and returns to red sand after brushing. The optional Lootr adapter preserves shared battlefield rewards and repairs previously converted tracked sand/gravel when their chunk loads. Fabric and NeoForge joint tests pass with Lootr 1.11.38.127. Restart is required; existing worlds remain usable and only newly generated ruins gain red sand. These local candidates are not a published release. Exact hashes, retained failures and manual acceptance: [archaeology report](../../docs/research/archaeology-lootr-red-sand-2026-10-26.md).

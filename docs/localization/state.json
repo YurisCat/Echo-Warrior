@@ -1,7 +1,7 @@
 {
   "accepted": {
     "es_ar": {
-      "accepted_on": "2026-10-26",
+      "accepted_on": "2026-10-27",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
@@ -550,6 +550,8 @@
         "message.echo_warrior.echo_compass.sound_disabled": "90661a02cf745331c78d60d02b565feae6c762f11be55b34e40ed3b84c977d0a",
         "message.echo_warrior.echo_compass.sound_enabled": "08b625d9c4117efc954c32b8032f2366f190d5410bbc5406ecbf4e950dc06545",
         "message.echo_warrior.echo_count_performance_warning": "c06ea4923865f4bfffda16bb439d3551cde0bf6374a59f4d16df2a8828af0311",
+        "message.echo_warrior.pet_compass_unavailable": "390962ba9f43328ec05423b0c145e8daa2dae6173a07c1b2eb3980ef3b343fc0",
+        "message.echo_warrior.pet_management_restricted": "40f5ca7f9ecbece3ef751adefca86040afad85f3c638f941eb7c4a2d39090074",
         "message.echo_warrior.recycler.space_failure": "7add524e3451eb7b7c060d3209b4729e02034cfa4c6b2f21cbd767b64884ff19",
         "message.echo_warrior.relic.level_up": "2ede1032bef13be3394d9edaad2e26b1e28743df2daa9f0a920d9eb71aa68675",
         "message.echo_warrior.tbf.healing_disabled": "57a3ac891addf8c41442097a73082d0cf1a695f6e656aefc3177fed6097d9e52",
@@ -572,6 +574,9 @@
         "tag.item.echo_warrior.recycler.legacy": "f134ab7e57af5ad401cd25081ff78d5b915f3268702aab71226daa541de11714",
         "tag.item.echo_warrior.recycler.relic": "b7a18a99e00e19e184ab77d3a5195a5d30b447ce2e43acf7aad1c6cd9d61b89c",
         "tag.item.echo_warrior.summoner_accessories": "3223d49de4c4b6f70d086910d17cba7dc58ffdbd95d6395f526a5663699b7f3b",
+        "tooltip.echo_warrior.pet_collar_immaturity": "f1ec67efaf1165ac97810e16154cce7791da3d3403cc2d67ed7c48881a08e567",
+        "tooltip.echo_warrior.pet_collar_limits": "94e86e60a80589b4b6dc084dea96c70cf27d4c4a6ce041f6b18349091db62292",
+        "tooltip.echo_warrior.pet_collar_saved": "905ac4c5facfb128a17ec26ff42635129281bfdde740a7d2917ade0c493a5131",
         "tooltip.echo_warrior.relic.experience": "f8c77d4c03fd5d6908559c1cd9f60cd5f6c502632a6b45ecf868d7702f378637",
         "tooltip.echo_warrior.relic.experience.max": "896c37817d42de80557d6963ef509e77edbbef0b4e8b10861bc80badae68d7cd",
         "tooltip.echo_warrior.relic.level": "5d8f34ff5cb25057c9cb42acfae27524ad4c27124717a59d67ac9fb59acd24b2",
@@ -632,7 +637,7 @@
       }
     },
     "es_cl": {
-      "accepted_on": "2026-10-26",
+      "accepted_on": "2026-10-27",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
@@ -1181,6 +1186,8 @@
         "message.echo_warrior.echo_compass.sound_disabled": "90661a02cf745331c78d60d02b565feae6c762f11be55b34e40ed3b84c977d0a",
         "message.echo_warrior.echo_compass.sound_enabled": "08b625d9c4117efc954c32b8032f2366f190d5410bbc5406ecbf4e950dc06545",
         "message.echo_warrior.echo_count_performance_warning": "c06ea4923865f4bfffda16bb439d3551cde0bf6374a59f4d16df2a8828af0311",
+        "message.echo_warrior.pet_compass_unavailable": "390962ba9f43328ec05423b0c145e8daa2dae6173a07c1b2eb3980ef3b343fc0",
+        "message.echo_warrior.pet_management_restricted": "40f5ca7f9ecbece3ef751adefca86040afad85f3c638f941eb7c4a2d39090074",
         "message.echo_warrior.recycler.space_failure": "7add524e3451eb7b7c060d3209b4729e02034cfa4c6b2f21cbd767b64884ff19",
         "message.echo_warrior.relic.level_up": "2ede1032bef13be3394d9edaad2e26b1e28743df2daa9f0a920d9eb71aa68675",
         "message.echo_warrior.tbf.healing_disabled": "57a3ac891addf8c41442097a73082d0cf1a695f6e656aefc3177fed6097d9e52",
@@ -1203,6 +1210,9 @@
         "tag.item.echo_warrior.recycler.legacy": "f134ab7e57af5ad401cd25081ff78d5b915f3268702aab71226daa541de11714",
         "tag.item.echo_warrior.recycler.relic": "b7a18a99e00e19e184ab77d3a5195a5d30b447ce2e43acf7aad1c6cd9d61b89c",
         "tag.item.echo_warrior.summoner_accessories": "3223d49de4c4b6f70d086910d17cba7dc58ffdbd95d6395f526a5663699b7f3b",
+        "tooltip.echo_warrior.pet_collar_immaturity": "f1ec67efaf1165ac97810e16154cce7791da3d3403cc2d67ed7c48881a08e567",
+        "tooltip.echo_warrior.pet_collar_limits": "94e86e60a80589b4b6dc084dea96c70cf27d4c4a6ce041f6b18349091db62292",
+        "tooltip.echo_warrior.pet_collar_saved": "905ac4c5facfb128a17ec26ff42635129281bfdde740a7d2917ade0c493a5131",
         "tooltip.echo_warrior.relic.experience": "f8c77d4c03fd5d6908559c1cd9f60cd5f6c502632a6b45ecf868d7702f378637",
         "tooltip.echo_warrior.relic.experience.max": "896c37817d42de80557d6963ef509e77edbbef0b4e8b10861bc80badae68d7cd",
         "tooltip.echo_warrior.relic.level": "5d8f34ff5cb25057c9cb42acfae27524ad4c27124717a59d67ac9fb59acd24b2",
@@ -1263,7 +1273,7 @@
       }
     },
     "es_ec": {
-      "accepted_on": "2026-10-26",
+      "accepted_on": "2026-10-27",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
@@ -1812,6 +1822,8 @@
         "message.echo_warrior.echo_compass.sound_disabled": "90661a02cf745331c78d60d02b565feae6c762f11be55b34e40ed3b84c977d0a",
         "message.echo_warrior.echo_compass.sound_enabled": "08b625d9c4117efc954c32b8032f2366f190d5410bbc5406ecbf4e950dc06545",
         "message.echo_warrior.echo_count_performance_warning": "c06ea4923865f4bfffda16bb439d3551cde0bf6374a59f4d16df2a8828af0311",
+        "message.echo_warrior.pet_compass_unavailable": "390962ba9f43328ec05423b0c145e8daa2dae6173a07c1b2eb3980ef3b343fc0",
+        "message.echo_warrior.pet_management_restricted": "40f5ca7f9ecbece3ef751adefca86040afad85f3c638f941eb7c4a2d39090074",
         "message.echo_warrior.recycler.space_failure": "7add524e3451eb7b7c060d3209b4729e02034cfa4c6b2f21cbd767b64884ff19",
         "message.echo_warrior.relic.level_up": "2ede1032bef13be3394d9edaad2e26b1e28743df2daa9f0a920d9eb71aa68675",
         "message.echo_warrior.tbf.healing_disabled": "57a3ac891addf8c41442097a73082d0cf1a695f6e656aefc3177fed6097d9e52",
@@ -1834,6 +1846,9 @@
         "tag.item.echo_warrior.recycler.legacy": "f134ab7e57af5ad401cd25081ff78d5b915f3268702aab71226daa541de11714",
         "tag.item.echo_warrior.recycler.relic": "b7a18a99e00e19e184ab77d3a5195a5d30b447ce2e43acf7aad1c6cd9d61b89c",
         "tag.item.echo_warrior.summoner_accessories": "3223d49de4c4b6f70d086910d17cba7dc58ffdbd95d6395f526a5663699b7f3b",
+        "tooltip.echo_warrior.pet_collar_immaturity": "f1ec67efaf1165ac97810e16154cce7791da3d3403cc2d67ed7c48881a08e567",
+        "tooltip.echo_warrior.pet_collar_limits": "94e86e60a80589b4b6dc084dea96c70cf27d4c4a6ce041f6b18349091db62292",
+        "tooltip.echo_warrior.pet_collar_saved": "905ac4c5facfb128a17ec26ff42635129281bfdde740a7d2917ade0c493a5131",
         "tooltip.echo_warrior.relic.experience": "f8c77d4c03fd5d6908559c1cd9f60cd5f6c502632a6b45ecf868d7702f378637",
         "tooltip.echo_warrior.relic.experience.max": "896c37817d42de80557d6963ef509e77edbbef0b4e8b10861bc80badae68d7cd",
         "tooltip.echo_warrior.relic.level": "5d8f34ff5cb25057c9cb42acfae27524ad4c27124717a59d67ac9fb59acd24b2",
@@ -1894,7 +1909,7 @@
       }
     },
     "es_es": {
-      "accepted_on": "2026-10-26",
+      "accepted_on": "2026-10-27",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
@@ -2443,6 +2458,8 @@
         "message.echo_warrior.echo_compass.sound_disabled": "90661a02cf745331c78d60d02b565feae6c762f11be55b34e40ed3b84c977d0a",
         "message.echo_warrior.echo_compass.sound_enabled": "08b625d9c4117efc954c32b8032f2366f190d5410bbc5406ecbf4e950dc06545",
         "message.echo_warrior.echo_count_performance_warning": "c06ea4923865f4bfffda16bb439d3551cde0bf6374a59f4d16df2a8828af0311",
+        "message.echo_warrior.pet_compass_unavailable": "390962ba9f43328ec05423b0c145e8daa2dae6173a07c1b2eb3980ef3b343fc0",
+        "message.echo_warrior.pet_management_restricted": "40f5ca7f9ecbece3ef751adefca86040afad85f3c638f941eb7c4a2d39090074",
         "message.echo_warrior.recycler.space_failure": "7add524e3451eb7b7c060d3209b4729e02034cfa4c6b2f21cbd767b64884ff19",
         "message.echo_warrior.relic.level_up": "2ede1032bef13be3394d9edaad2e26b1e28743df2daa9f0a920d9eb71aa68675",
         "message.echo_warrior.tbf.healing_disabled": "57a3ac891addf8c41442097a73082d0cf1a695f6e656aefc3177fed6097d9e52",
@@ -2465,6 +2482,9 @@
         "tag.item.echo_warrior.recycler.legacy": "f134ab7e57af5ad401cd25081ff78d5b915f3268702aab71226daa541de11714",
         "tag.item.echo_warrior.recycler.relic": "b7a18a99e00e19e184ab77d3a5195a5d30b447ce2e43acf7aad1c6cd9d61b89c",
         "tag.item.echo_warrior.summoner_accessories": "3223d49de4c4b6f70d086910d17cba7dc58ffdbd95d6395f526a5663699b7f3b",
+        "tooltip.echo_warrior.pet_collar_immaturity": "f1ec67efaf1165ac97810e16154cce7791da3d3403cc2d67ed7c48881a08e567",
+        "tooltip.echo_warrior.pet_collar_limits": "94e86e60a80589b4b6dc084dea96c70cf27d4c4a6ce041f6b18349091db62292",
+        "tooltip.echo_warrior.pet_collar_saved": "905ac4c5facfb128a17ec26ff42635129281bfdde740a7d2917ade0c493a5131",
         "tooltip.echo_warrior.relic.experience": "f8c77d4c03fd5d6908559c1cd9f60cd5f6c502632a6b45ecf868d7702f378637",
         "tooltip.echo_warrior.relic.experience.max": "896c37817d42de80557d6963ef509e77edbbef0b4e8b10861bc80badae68d7cd",
         "tooltip.echo_warrior.relic.level": "5d8f34ff5cb25057c9cb42acfae27524ad4c27124717a59d67ac9fb59acd24b2",
@@ -2525,7 +2545,7 @@
       }
     },
     "es_mx": {
-      "accepted_on": "2026-10-26",
+      "accepted_on": "2026-10-27",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
@@ -3074,6 +3094,8 @@
         "message.echo_warrior.echo_compass.sound_disabled": "90661a02cf745331c78d60d02b565feae6c762f11be55b34e40ed3b84c977d0a",
         "message.echo_warrior.echo_compass.sound_enabled": "08b625d9c4117efc954c32b8032f2366f190d5410bbc5406ecbf4e950dc06545",
         "message.echo_warrior.echo_count_performance_warning": "c06ea4923865f4bfffda16bb439d3551cde0bf6374a59f4d16df2a8828af0311",
+        "message.echo_warrior.pet_compass_unavailable": "390962ba9f43328ec05423b0c145e8daa2dae6173a07c1b2eb3980ef3b343fc0",
+        "message.echo_warrior.pet_management_restricted": "40f5ca7f9ecbece3ef751adefca86040afad85f3c638f941eb7c4a2d39090074",
         "message.echo_warrior.recycler.space_failure": "7add524e3451eb7b7c060d3209b4729e02034cfa4c6b2f21cbd767b64884ff19",
         "message.echo_warrior.relic.level_up": "2ede1032bef13be3394d9edaad2e26b1e28743df2daa9f0a920d9eb71aa68675",
         "message.echo_warrior.tbf.healing_disabled": "57a3ac891addf8c41442097a73082d0cf1a695f6e656aefc3177fed6097d9e52",
@@ -3096,6 +3118,9 @@
         "tag.item.echo_warrior.recycler.legacy": "f134ab7e57af5ad401cd25081ff78d5b915f3268702aab71226daa541de11714",
         "tag.item.echo_warrior.recycler.relic": "b7a18a99e00e19e184ab77d3a5195a5d30b447ce2e43acf7aad1c6cd9d61b89c",
         "tag.item.echo_warrior.summoner_accessories": "3223d49de4c4b6f70d086910d17cba7dc58ffdbd95d6395f526a5663699b7f3b",
+        "tooltip.echo_warrior.pet_collar_immaturity": "f1ec67efaf1165ac97810e16154cce7791da3d3403cc2d67ed7c48881a08e567",
+        "tooltip.echo_warrior.pet_collar_limits": "94e86e60a80589b4b6dc084dea96c70cf27d4c4a6ce041f6b18349091db62292",
+        "tooltip.echo_warrior.pet_collar_saved": "905ac4c5facfb128a17ec26ff42635129281bfdde740a7d2917ade0c493a5131",
         "tooltip.echo_warrior.relic.experience": "f8c77d4c03fd5d6908559c1cd9f60cd5f6c502632a6b45ecf868d7702f378637",
         "tooltip.echo_warrior.relic.experience.max": "896c37817d42de80557d6963ef509e77edbbef0b4e8b10861bc80badae68d7cd",
         "tooltip.echo_warrior.relic.level": "5d8f34ff5cb25057c9cb42acfae27524ad4c27124717a59d67ac9fb59acd24b2",
@@ -3156,7 +3181,7 @@
       }
     },
     "es_uy": {
-      "accepted_on": "2026-10-26",
+      "accepted_on": "2026-10-27",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
@@ -3705,6 +3730,8 @@
         "message.echo_warrior.echo_compass.sound_disabled": "90661a02cf745331c78d60d02b565feae6c762f11be55b34e40ed3b84c977d0a",
         "message.echo_warrior.echo_compass.sound_enabled": "08b625d9c4117efc954c32b8032f2366f190d5410bbc5406ecbf4e950dc06545",
         "message.echo_warrior.echo_count_performance_warning": "c06ea4923865f4bfffda16bb439d3551cde0bf6374a59f4d16df2a8828af0311",
+        "message.echo_warrior.pet_compass_unavailable": "390962ba9f43328ec05423b0c145e8daa2dae6173a07c1b2eb3980ef3b343fc0",
+        "message.echo_warrior.pet_management_restricted": "40f5ca7f9ecbece3ef751adefca86040afad85f3c638f941eb7c4a2d39090074",
         "message.echo_warrior.recycler.space_failure": "7add524e3451eb7b7c060d3209b4729e02034cfa4c6b2f21cbd767b64884ff19",
         "message.echo_warrior.relic.level_up": "2ede1032bef13be3394d9edaad2e26b1e28743df2daa9f0a920d9eb71aa68675",
         "message.echo_warrior.tbf.healing_disabled": "57a3ac891addf8c41442097a73082d0cf1a695f6e656aefc3177fed6097d9e52",
@@ -3727,6 +3754,9 @@
         "tag.item.echo_warrior.recycler.legacy": "f134ab7e57af5ad401cd25081ff78d5b915f3268702aab71226daa541de11714",
         "tag.item.echo_warrior.recycler.relic": "b7a18a99e00e19e184ab77d3a5195a5d30b447ce2e43acf7aad1c6cd9d61b89c",
         "tag.item.echo_warrior.summoner_accessories": "3223d49de4c4b6f70d086910d17cba7dc58ffdbd95d6395f526a5663699b7f3b",
+        "tooltip.echo_warrior.pet_collar_immaturity": "f1ec67efaf1165ac97810e16154cce7791da3d3403cc2d67ed7c48881a08e567",
+        "tooltip.echo_warrior.pet_collar_limits": "94e86e60a80589b4b6dc084dea96c70cf27d4c4a6ce041f6b18349091db62292",
+        "tooltip.echo_warrior.pet_collar_saved": "905ac4c5facfb128a17ec26ff42635129281bfdde740a7d2917ade0c493a5131",
         "tooltip.echo_warrior.relic.experience": "f8c77d4c03fd5d6908559c1cd9f60cd5f6c502632a6b45ecf868d7702f378637",
         "tooltip.echo_warrior.relic.experience.max": "896c37817d42de80557d6963ef509e77edbbef0b4e8b10861bc80badae68d7cd",
         "tooltip.echo_warrior.relic.level": "5d8f34ff5cb25057c9cb42acfae27524ad4c27124717a59d67ac9fb59acd24b2",
@@ -3787,7 +3817,7 @@
       }
     },
     "es_ve": {
-      "accepted_on": "2026-10-26",
+      "accepted_on": "2026-10-27",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
@@ -4336,6 +4366,8 @@
         "message.echo_warrior.echo_compass.sound_disabled": "90661a02cf745331c78d60d02b565feae6c762f11be55b34e40ed3b84c977d0a",
         "message.echo_warrior.echo_compass.sound_enabled": "08b625d9c4117efc954c32b8032f2366f190d5410bbc5406ecbf4e950dc06545",
         "message.echo_warrior.echo_count_performance_warning": "c06ea4923865f4bfffda16bb439d3551cde0bf6374a59f4d16df2a8828af0311",
+        "message.echo_warrior.pet_compass_unavailable": "390962ba9f43328ec05423b0c145e8daa2dae6173a07c1b2eb3980ef3b343fc0",
+        "message.echo_warrior.pet_management_restricted": "40f5ca7f9ecbece3ef751adefca86040afad85f3c638f941eb7c4a2d39090074",
         "message.echo_warrior.recycler.space_failure": "7add524e3451eb7b7c060d3209b4729e02034cfa4c6b2f21cbd767b64884ff19",
         "message.echo_warrior.relic.level_up": "2ede1032bef13be3394d9edaad2e26b1e28743df2daa9f0a920d9eb71aa68675",
         "message.echo_warrior.tbf.healing_disabled": "57a3ac891addf8c41442097a73082d0cf1a695f6e656aefc3177fed6097d9e52",
@@ -4358,6 +4390,9 @@
         "tag.item.echo_warrior.recycler.legacy": "f134ab7e57af5ad401cd25081ff78d5b915f3268702aab71226daa541de11714",
         "tag.item.echo_warrior.recycler.relic": "b7a18a99e00e19e184ab77d3a5195a5d30b447ce2e43acf7aad1c6cd9d61b89c",
         "tag.item.echo_warrior.summoner_accessories": "3223d49de4c4b6f70d086910d17cba7dc58ffdbd95d6395f526a5663699b7f3b",
+        "tooltip.echo_warrior.pet_collar_immaturity": "f1ec67efaf1165ac97810e16154cce7791da3d3403cc2d67ed7c48881a08e567",
+        "tooltip.echo_warrior.pet_collar_limits": "94e86e60a80589b4b6dc084dea96c70cf27d4c4a6ce041f6b18349091db62292",
+        "tooltip.echo_warrior.pet_collar_saved": "905ac4c5facfb128a17ec26ff42635129281bfdde740a7d2917ade0c493a5131",
         "tooltip.echo_warrior.relic.experience": "f8c77d4c03fd5d6908559c1cd9f60cd5f6c502632a6b45ecf868d7702f378637",
         "tooltip.echo_warrior.relic.experience.max": "896c37817d42de80557d6963ef509e77edbbef0b4e8b10861bc80badae68d7cd",
         "tooltip.echo_warrior.relic.level": "5d8f34ff5cb25057c9cb42acfae27524ad4c27124717a59d67ac9fb59acd24b2",
@@ -4418,7 +4453,7 @@
       }
     },
     "ja_jp": {
-      "accepted_on": "2026-10-26",
+      "accepted_on": "2026-10-27",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
@@ -4967,6 +5002,8 @@
         "message.echo_warrior.echo_compass.sound_disabled": "90661a02cf745331c78d60d02b565feae6c762f11be55b34e40ed3b84c977d0a",
         "message.echo_warrior.echo_compass.sound_enabled": "08b625d9c4117efc954c32b8032f2366f190d5410bbc5406ecbf4e950dc06545",
         "message.echo_warrior.echo_count_performance_warning": "c06ea4923865f4bfffda16bb439d3551cde0bf6374a59f4d16df2a8828af0311",
+        "message.echo_warrior.pet_compass_unavailable": "390962ba9f43328ec05423b0c145e8daa2dae6173a07c1b2eb3980ef3b343fc0",
+        "message.echo_warrior.pet_management_restricted": "40f5ca7f9ecbece3ef751adefca86040afad85f3c638f941eb7c4a2d39090074",
         "message.echo_warrior.recycler.space_failure": "7add524e3451eb7b7c060d3209b4729e02034cfa4c6b2f21cbd767b64884ff19",
         "message.echo_warrior.relic.level_up": "2ede1032bef13be3394d9edaad2e26b1e28743df2daa9f0a920d9eb71aa68675",
         "message.echo_warrior.tbf.healing_disabled": "57a3ac891addf8c41442097a73082d0cf1a695f6e656aefc3177fed6097d9e52",
@@ -4989,6 +5026,9 @@
         "tag.item.echo_warrior.recycler.legacy": "f134ab7e57af5ad401cd25081ff78d5b915f3268702aab71226daa541de11714",
         "tag.item.echo_warrior.recycler.relic": "b7a18a99e00e19e184ab77d3a5195a5d30b447ce2e43acf7aad1c6cd9d61b89c",
         "tag.item.echo_warrior.summoner_accessories": "3223d49de4c4b6f70d086910d17cba7dc58ffdbd95d6395f526a5663699b7f3b",
+        "tooltip.echo_warrior.pet_collar_immaturity": "f1ec67efaf1165ac97810e16154cce7791da3d3403cc2d67ed7c48881a08e567",
+        "tooltip.echo_warrior.pet_collar_limits": "94e86e60a80589b4b6dc084dea96c70cf27d4c4a6ce041f6b18349091db62292",
+        "tooltip.echo_warrior.pet_collar_saved": "905ac4c5facfb128a17ec26ff42635129281bfdde740a7d2917ade0c493a5131",
         "tooltip.echo_warrior.relic.experience": "f8c77d4c03fd5d6908559c1cd9f60cd5f6c502632a6b45ecf868d7702f378637",
         "tooltip.echo_warrior.relic.experience.max": "896c37817d42de80557d6963ef509e77edbbef0b4e8b10861bc80badae68d7cd",
         "tooltip.echo_warrior.relic.level": "5d8f34ff5cb25057c9cb42acfae27524ad4c27124717a59d67ac9fb59acd24b2",
@@ -5049,7 +5089,7 @@
       }
     },
     "pt_br": {
-      "accepted_on": "2026-10-26",
+      "accepted_on": "2026-10-27",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
@@ -5598,6 +5638,8 @@
         "message.echo_warrior.echo_compass.sound_disabled": "90661a02cf745331c78d60d02b565feae6c762f11be55b34e40ed3b84c977d0a",
         "message.echo_warrior.echo_compass.sound_enabled": "08b625d9c4117efc954c32b8032f2366f190d5410bbc5406ecbf4e950dc06545",
         "message.echo_warrior.echo_count_performance_warning": "c06ea4923865f4bfffda16bb439d3551cde0bf6374a59f4d16df2a8828af0311",
+        "message.echo_warrior.pet_compass_unavailable": "390962ba9f43328ec05423b0c145e8daa2dae6173a07c1b2eb3980ef3b343fc0",
+        "message.echo_warrior.pet_management_restricted": "40f5ca7f9ecbece3ef751adefca86040afad85f3c638f941eb7c4a2d39090074",
         "message.echo_warrior.recycler.space_failure": "7add524e3451eb7b7c060d3209b4729e02034cfa4c6b2f21cbd767b64884ff19",
         "message.echo_warrior.relic.level_up": "2ede1032bef13be3394d9edaad2e26b1e28743df2daa9f0a920d9eb71aa68675",
         "message.echo_warrior.tbf.healing_disabled": "57a3ac891addf8c41442097a73082d0cf1a695f6e656aefc3177fed6097d9e52",
@@ -5620,6 +5662,9 @@
         "tag.item.echo_warrior.recycler.legacy": "f134ab7e57af5ad401cd25081ff78d5b915f3268702aab71226daa541de11714",
         "tag.item.echo_warrior.recycler.relic": "b7a18a99e00e19e184ab77d3a5195a5d30b447ce2e43acf7aad1c6cd9d61b89c",
         "tag.item.echo_warrior.summoner_accessories": "3223d49de4c4b6f70d086910d17cba7dc58ffdbd95d6395f526a5663699b7f3b",
+        "tooltip.echo_warrior.pet_collar_immaturity": "f1ec67efaf1165ac97810e16154cce7791da3d3403cc2d67ed7c48881a08e567",
+        "tooltip.echo_warrior.pet_collar_limits": "94e86e60a80589b4b6dc084dea96c70cf27d4c4a6ce041f6b18349091db62292",
+        "tooltip.echo_warrior.pet_collar_saved": "905ac4c5facfb128a17ec26ff42635129281bfdde740a7d2917ade0c493a5131",
         "tooltip.echo_warrior.relic.experience": "f8c77d4c03fd5d6908559c1cd9f60cd5f6c502632a6b45ecf868d7702f378637",
         "tooltip.echo_warrior.relic.experience.max": "896c37817d42de80557d6963ef509e77edbbef0b4e8b10861bc80badae68d7cd",
         "tooltip.echo_warrior.relic.level": "5d8f34ff5cb25057c9cb42acfae27524ad4c27124717a59d67ac9fb59acd24b2",
@@ -5680,7 +5725,7 @@
       }
     },
     "ru_ru": {
-      "accepted_on": "2026-10-26",
+      "accepted_on": "2026-10-27",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
@@ -6229,6 +6274,8 @@
         "message.echo_warrior.echo_compass.sound_disabled": "90661a02cf745331c78d60d02b565feae6c762f11be55b34e40ed3b84c977d0a",
         "message.echo_warrior.echo_compass.sound_enabled": "08b625d9c4117efc954c32b8032f2366f190d5410bbc5406ecbf4e950dc06545",
         "message.echo_warrior.echo_count_performance_warning": "c06ea4923865f4bfffda16bb439d3551cde0bf6374a59f4d16df2a8828af0311",
+        "message.echo_warrior.pet_compass_unavailable": "390962ba9f43328ec05423b0c145e8daa2dae6173a07c1b2eb3980ef3b343fc0",
+        "message.echo_warrior.pet_management_restricted": "40f5ca7f9ecbece3ef751adefca86040afad85f3c638f941eb7c4a2d39090074",
         "message.echo_warrior.recycler.space_failure": "7add524e3451eb7b7c060d3209b4729e02034cfa4c6b2f21cbd767b64884ff19",
         "message.echo_warrior.relic.level_up": "2ede1032bef13be3394d9edaad2e26b1e28743df2daa9f0a920d9eb71aa68675",
         "message.echo_warrior.tbf.healing_disabled": "57a3ac891addf8c41442097a73082d0cf1a695f6e656aefc3177fed6097d9e52",
@@ -6251,6 +6298,9 @@
         "tag.item.echo_warrior.recycler.legacy": "f134ab7e57af5ad401cd25081ff78d5b915f3268702aab71226daa541de11714",
         "tag.item.echo_warrior.recycler.relic": "b7a18a99e00e19e184ab77d3a5195a5d30b447ce2e43acf7aad1c6cd9d61b89c",
         "tag.item.echo_warrior.summoner_accessories": "3223d49de4c4b6f70d086910d17cba7dc58ffdbd95d6395f526a5663699b7f3b",
+        "tooltip.echo_warrior.pet_collar_immaturity": "f1ec67efaf1165ac97810e16154cce7791da3d3403cc2d67ed7c48881a08e567",
+        "tooltip.echo_warrior.pet_collar_limits": "94e86e60a80589b4b6dc084dea96c70cf27d4c4a6ce041f6b18349091db62292",
+        "tooltip.echo_warrior.pet_collar_saved": "905ac4c5facfb128a17ec26ff42635129281bfdde740a7d2917ade0c493a5131",
         "tooltip.echo_warrior.relic.experience": "f8c77d4c03fd5d6908559c1cd9f60cd5f6c502632a6b45ecf868d7702f378637",
         "tooltip.echo_warrior.relic.experience.max": "896c37817d42de80557d6963ef509e77edbbef0b4e8b10861bc80badae68d7cd",
         "tooltip.echo_warrior.relic.level": "5d8f34ff5cb25057c9cb42acfae27524ad4c27124717a59d67ac9fb59acd24b2",
@@ -6311,7 +6361,7 @@
       }
     },
     "zh_hk": {
-      "accepted_on": "2026-10-26",
+      "accepted_on": "2026-10-27",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
@@ -6860,6 +6910,8 @@
         "message.echo_warrior.echo_compass.sound_disabled": "90661a02cf745331c78d60d02b565feae6c762f11be55b34e40ed3b84c977d0a",
         "message.echo_warrior.echo_compass.sound_enabled": "08b625d9c4117efc954c32b8032f2366f190d5410bbc5406ecbf4e950dc06545",
         "message.echo_warrior.echo_count_performance_warning": "c06ea4923865f4bfffda16bb439d3551cde0bf6374a59f4d16df2a8828af0311",
+        "message.echo_warrior.pet_compass_unavailable": "390962ba9f43328ec05423b0c145e8daa2dae6173a07c1b2eb3980ef3b343fc0",
+        "message.echo_warrior.pet_management_restricted": "40f5ca7f9ecbece3ef751adefca86040afad85f3c638f941eb7c4a2d39090074",
         "message.echo_warrior.recycler.space_failure": "7add524e3451eb7b7c060d3209b4729e02034cfa4c6b2f21cbd767b64884ff19",
         "message.echo_warrior.relic.level_up": "2ede1032bef13be3394d9edaad2e26b1e28743df2daa9f0a920d9eb71aa68675",
         "message.echo_warrior.tbf.healing_disabled": "57a3ac891addf8c41442097a73082d0cf1a695f6e656aefc3177fed6097d9e52",
@@ -6882,6 +6934,9 @@
         "tag.item.echo_warrior.recycler.legacy": "f134ab7e57af5ad401cd25081ff78d5b915f3268702aab71226daa541de11714",
         "tag.item.echo_warrior.recycler.relic": "b7a18a99e00e19e184ab77d3a5195a5d30b447ce2e43acf7aad1c6cd9d61b89c",
         "tag.item.echo_warrior.summoner_accessories": "3223d49de4c4b6f70d086910d17cba7dc58ffdbd95d6395f526a5663699b7f3b",
+        "tooltip.echo_warrior.pet_collar_immaturity": "f1ec67efaf1165ac97810e16154cce7791da3d3403cc2d67ed7c48881a08e567",
+        "tooltip.echo_warrior.pet_collar_limits": "94e86e60a80589b4b6dc084dea96c70cf27d4c4a6ce041f6b18349091db62292",
+        "tooltip.echo_warrior.pet_collar_saved": "905ac4c5facfb128a17ec26ff42635129281bfdde740a7d2917ade0c493a5131",
         "tooltip.echo_warrior.relic.experience": "f8c77d4c03fd5d6908559c1cd9f60cd5f6c502632a6b45ecf868d7702f378637",
         "tooltip.echo_warrior.relic.experience.max": "896c37817d42de80557d6963ef509e77edbbef0b4e8b10861bc80badae68d7cd",
         "tooltip.echo_warrior.relic.level": "5d8f34ff5cb25057c9cb42acfae27524ad4c27124717a59d67ac9fb59acd24b2",
@@ -6942,7 +6997,7 @@
       }
     },
     "zh_tw": {
-      "accepted_on": "2026-10-26",
+      "accepted_on": "2026-10-27",
       "source_hashes": {
         "block.echo_warrior.echo_recycler": "01d991e01ad1c8b9dc674f3ee35c1e337682051f462607735456173ff58cf796",
         "block.echo_warrior.suspicious_dirt": "e728b91bcf2d675b139679453f66ff971278e175eab54b24ef1435442aa477b8",
@@ -7491,6 +7546,8 @@
         "message.echo_warrior.echo_compass.sound_disabled": "90661a02cf745331c78d60d02b565feae6c762f11be55b34e40ed3b84c977d0a",
         "message.echo_warrior.echo_compass.sound_enabled": "08b625d9c4117efc954c32b8032f2366f190d5410bbc5406ecbf4e950dc06545",
         "message.echo_warrior.echo_count_performance_warning": "c06ea4923865f4bfffda16bb439d3551cde0bf6374a59f4d16df2a8828af0311",
+        "message.echo_warrior.pet_compass_unavailable": "390962ba9f43328ec05423b0c145e8daa2dae6173a07c1b2eb3980ef3b343fc0",
+        "message.echo_warrior.pet_management_restricted": "40f5ca7f9ecbece3ef751adefca86040afad85f3c638f941eb7c4a2d39090074",
         "message.echo_warrior.recycler.space_failure": "7add524e3451eb7b7c060d3209b4729e02034cfa4c6b2f21cbd767b64884ff19",
         "message.echo_warrior.relic.level_up": "2ede1032bef13be3394d9edaad2e26b1e28743df2daa9f0a920d9eb71aa68675",
         "message.echo_warrior.tbf.healing_disabled": "57a3ac891addf8c41442097a73082d0cf1a695f6e656aefc3177fed6097d9e52",
@@ -7513,6 +7570,9 @@
         "tag.item.echo_warrior.recycler.legacy": "f134ab7e57af5ad401cd25081ff78d5b915f3268702aab71226daa541de11714",
         "tag.item.echo_warrior.recycler.relic": "b7a18a99e00e19e184ab77d3a5195a5d30b447ce2e43acf7aad1c6cd9d61b89c",
         "tag.item.echo_warrior.summoner_accessories": "3223d49de4c4b6f70d086910d17cba7dc58ffdbd95d6395f526a5663699b7f3b",
+        "tooltip.echo_warrior.pet_collar_immaturity": "f1ec67efaf1165ac97810e16154cce7791da3d3403cc2d67ed7c48881a08e567",
+        "tooltip.echo_warrior.pet_collar_limits": "94e86e60a80589b4b6dc084dea96c70cf27d4c4a6ce041f6b18349091db62292",
+        "tooltip.echo_warrior.pet_collar_saved": "905ac4c5facfb128a17ec26ff42635129281bfdde740a7d2917ade0c493a5131",
         "tooltip.echo_warrior.relic.experience": "f8c77d4c03fd5d6908559c1cd9f60cd5f6c502632a6b45ecf868d7702f378637",
         "tooltip.echo_warrior.relic.experience.max": "896c37817d42de80557d6963ef509e77edbbef0b4e8b10861bc80badae68d7cd",
         "tooltip.echo_warrior.relic.level": "5d8f34ff5cb25057c9cb42acfae27524ad4c27124717a59d67ac9fb59acd24b2",

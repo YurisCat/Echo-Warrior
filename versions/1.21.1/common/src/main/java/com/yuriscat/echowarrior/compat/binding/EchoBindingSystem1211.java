@@ -1,5 +1,7 @@
 package com.yuriscat.echowarrior.compat.binding;
 
+import com.yuriscat.echowarrior.compat.integration.PetCollarCompat1211;
+
 import com.yuriscat.echowarrior.compat.EchoHeroType1211;
 import com.yuriscat.echowarrior.compat.EchoWarrior1211;
 import com.yuriscat.echowarrior.compat.ModContent1211;
@@ -338,6 +340,7 @@ public final class EchoBindingSystem1211 {
         EchoBindingSavedData1211.Binding binding = synchronize(level, summoner);
         if (!binding.active()) return false;
         EchoWarriorEntity1211 loaded = findLoaded(level.getServer(), binding.spiritId());
+        if (loaded != null) PetCollarCompat1211.capture(loaded.livingEntity());
         binding.deactivate();
         data.setDirty();
         EchoSummonerItem1211.setSpiritId(summoner, null);
@@ -350,6 +353,7 @@ public final class EchoBindingSystem1211 {
         EchoBindingSavedData1211.Binding binding = data.get(summonerId);
         if (binding == null || !binding.active()) return false;
         EchoWarriorEntity1211 loaded = findLoaded(server, binding.spiritId());
+        if (loaded != null) PetCollarCompat1211.capture(loaded.livingEntity());
         binding.deactivate();
         data.setDirty();
         if (loaded != null) loaded.dismiss();
@@ -362,6 +366,59 @@ public final class EchoBindingSystem1211 {
                 }
             }
         }
+        return true;
+    }
+
+    /** Explicit FOLLOW hands control to the physical holder, preserving state without a summon charge. */
+    public static boolean transferToFollowing(net.minecraft.server.level.ServerPlayer controller,
+            ItemStack summoner, EchoBindingSavedData1211.Binding binding) {
+        ServerLevel level = controller.serverLevel();
+        MinecraftServer server = level.getServer();
+        EchoBindingSavedData1211 data = EchoBindingSavedData1211.get(server);
+        if (!controller.isAlive() || controller.isSpectator() || !binding.active()
+                || data.get(binding.summonerId()) != binding
+                || !binding.summonerId().equals(EchoSummonerItem1211.getSummonerId(summoner))
+                || findPhysicalSummoner(controller, binding.summonerId()) != summoner
+                || !canAddControllerEcho(server, controller.getUUID(), binding.summonerId())) return false;
+        EchoWarriorEntity1211 previous = findLoaded(server, binding.spiritId());
+        if (previous != null) track(previous); // Includes the latest authoritative collar and cooldown state.
+        EchoWarriorEntity1211 replacement = createHero(level, binding.relic());
+        if (replacement == null || !(replacement.livingEntity() instanceof PathfinderMob living)) return false;
+        Vec3 position = EchoSafeTeleport1211.findSafeDestination(level, living, controller);
+        if (position == null) return false;
+        long nextGeneration = Math.addExact(binding.generation(), 1);
+        long expectedRevision = binding.stateRevision();
+        living.moveTo(position.x, position.y, position.z, controller.getYRot(), 0);
+        replacement.bindTo(controller, binding.summonerId(), nextGeneration);
+        replacement.applyRelicState(binding.relic(), false);
+        EchoAccessorySystem1211.apply(replacement, binding.accessories());
+        if (!PetCollarCompat1211.restore(living, binding.relic())) return false;
+        living.setHealth(binding.health() > 0 ? Math.min(binding.health(), living.getMaxHealth()) : living.getMaxHealth());
+        living.setAbsorptionAmount(binding.absorption());
+        living.setRemainingFireTicks(binding.remainingFireTicks());
+        living.setTicksFrozen(binding.ticksFrozen());
+        living.setAirSupply(binding.airSupply());
+        replacement.readMigrationState(binding.migrationState());
+        if (!level.addFreshEntity(living)) return false;
+        // Join callbacks may reject or change authority. Never retire the old controller first.
+        if (data.get(binding.summonerId()) != binding || binding.stateRevision() != expectedRevision) {
+            living.discard();
+            return false;
+        }
+        net.minecraft.nbt.CompoundTag migration = new net.minecraft.nbt.CompoundTag();
+        replacement.writeMigrationState(migration);
+        binding.activate(controller.getUUID(), living.getUUID(), level.dimension().location().toString(),
+                living.getX(), living.getY(), living.getZ(), living.getHealth(), living.getAbsorptionAmount(),
+                living.getRemainingFireTicks(), living.getTicksFrozen(), living.getAirSupply(), migration);
+        binding.setActivityMode(EchoRelicState1211.ActivityMode.FOLLOW.ordinal());
+        data.setDirty();
+        EchoSummonerItem1211.setSpiritId(summoner, living.getUUID());
+        SummonerFuel1211.setAmount(summoner, binding.fuel());
+        synchronizeVisibleCopies(server, binding.summonerId(), binding.relic(), binding.accessories());
+        replacement.applyBindingState(binding, true);
+        replacement.recallTo(controller);
+        track(replacement);
+        if (previous != null) previous.dismiss();
         return true;
     }
 
@@ -444,6 +501,8 @@ public final class EchoBindingSystem1211 {
         living.moveTo(spawnPosition.x, spawnPosition.y, spawnPosition.z, controller.getYRot(), 0.0F);
         spirit.applyRelicState(binding.relic(), false);
         EchoAccessorySystem1211.apply(spirit, binding.accessories());
+        if (!PetCollarCompat1211.restore(living, binding.relic()))
+            return SpawnAttempt.failed(SpawnFailure.CREATE_FAILED);
         float health = Float.isFinite(restoredHealth) && restoredHealth > 0.0F
                 ? Math.min(restoredHealth, living.getMaxHealth())
                 : living.getMaxHealth();
@@ -503,6 +562,7 @@ public final class EchoBindingSystem1211 {
     }
 
     public static void track(EchoWarriorEntity1211 spirit) {
+        PetCollarCompat1211.capture(spirit.livingEntity());
         LivingEntity living = spirit.livingEntity();
         if (!(living.level() instanceof ServerLevel level) || spirit.getSummonerId() == null) return;
         EchoBindingSavedData1211 data = EchoBindingSavedData1211.get(level.getServer());
@@ -517,6 +577,7 @@ public final class EchoBindingSystem1211 {
     }
 
     public static void deactivate(EchoWarriorEntity1211 spirit) {
+        PetCollarCompat1211.capture(spirit.livingEntity());
         LivingEntity living = spirit.livingEntity();
         if (!(living.level() instanceof ServerLevel level) || spirit.getSummonerId() == null) return;
         EchoBindingSavedData1211 data = EchoBindingSavedData1211.get(level.getServer());

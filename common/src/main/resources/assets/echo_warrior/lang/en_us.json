@@ -624,5 +624,10 @@
   "gui.echo_warrior.tutorial.skill.roman.bulwark.name": "Legionary Bulwark",
   "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "Attack and projectile damage from in front of the legionary is reduced by 50%.",
   "message.echo_warrior.tbf.unavailable": "This Echo is unavailable. Check its relic, controller, and summoner.",
-  "message.echo_warrior.tbf.healing_disabled": "Echoes use their own recovery. TBF healing is unavailable."
+  "message.echo_warrior.tbf.healing_disabled": "Echoes use their own recovery. TBF healing is unavailable.",
+  "message.echo_warrior.pet_management_restricted": "Use the Echo Summoner to manage this warrior. Pet beds, capture nets and external ownership changes are unavailable.",
+  "tooltip.echo_warrior.pet_collar_limits": "Total Recall and Curse of Afterlife are inactive on Echo Warriors; their enchantments remain on the collar.",
+  "tooltip.echo_warrior.pet_collar_saved": "Pet collar saved: kept after dismissal, death and relic transfers.",
+  "message.echo_warrior.pet_compass_unavailable": "This pet-compass action is unavailable. Check ownership, fuel and your Echo Summoner.",
+  "tooltip.echo_warrior.pet_collar_immaturity": "Echo Warriors in this version have no baby form. Curse of Immaturity is retained but inactive."
 }

@@ -75,8 +75,8 @@ def install(loader: str, run_dir: Path, values: dict[str, str], java: str) -> li
     return [f"@{args_file}", "nogui"]
 
 
-def run_once(java: str, arguments: list[str], run_dir: Path, timeout: int) -> dict:
-    log = run_dir / "console-1.log"
+def run_once(java: str, arguments: list[str], run_dir: Path, timeout: int, attempt: int = 1) -> dict:
+    log = run_dir / f"console-{attempt}.log"
     process = None
     started = time.monotonic()
     command_sent = False
@@ -84,7 +84,11 @@ def run_once(java: str, arguments: list[str], run_dir: Path, timeout: int) -> di
     fixture_probe_at = 0.0
     try:
         with log.open("w", encoding="utf-8") as output:
-            process = subprocess.Popen([java, "-Xms512M", "-Xmx2G", "-Decho_warrior.battlefield_generation_test=true", *helpers.joint_test_flags(), *arguments], cwd=run_dir,
+            # The generation fixture owns fresh remote chunks. The second boot specifically
+            # tests persisted collars in the same world; it must not reuse that fresh-world fixture.
+            process = subprocess.Popen([java, "-Xms512M", "-Xmx2G",
+                                        *(["-Decho_warrior.battlefield_generation_test=true"] if attempt == 1 else []),
+                                        *helpers.joint_test_flags(run_dir), *arguments], cwd=run_dir,
                                        stdin=subprocess.PIPE, stdout=output, stderr=subprocess.STDOUT,
                                        text=True, encoding="utf-8", creationflags=helpers.NO_WINDOW)
             while time.monotonic() - started < timeout:
@@ -111,10 +115,12 @@ def run_once(java: str, arguments: list[str], run_dir: Path, timeout: int) -> di
                     process.stdin.flush()
                     command_sent = True
                 if (command_sent and SUCCESS in text and PERFORMANCE in text
-                        and "BATTLEFIELD GENERATION SELFTEST PASSED" in text
+                        and (attempt > 1 or "BATTLEFIELD GENERATION SELFTEST PASSED" in text)
                         and "BATTLEFIELD SPACING SELFTEST PASSED" in text):
                     if "DEPARTURE EFFECTS SELFTEST PASSED heroes=5" not in text:
                         raise RuntimeError(f"Departure regression guard missing: {log}")
+                    if "[EchoFollowTransferSelfTest] PASS holder=required rollback=unsafe-position" not in text:
+                        raise RuntimeError(f"Explicit FOLLOW controller-transfer acceptance missing: {log}")
                     if "RED SAND SELFTEST PASSED" not in text:
                         raise RuntimeError(f"Red sand regression guard missing: {log}")
                     if any(run_dir.glob("mods/lootr-*.jar")) and "LOOTR ARCHAEOLOGY SELFTEST PASSED" not in text:
@@ -124,19 +130,23 @@ def run_once(java: str, arguments: list[str], run_dir: Path, timeout: int) -> di
                     if process.wait(timeout=60) != 0:
                         raise RuntimeError(f"Server shutdown failed: {log}")
                     final = log.read_text(encoding="utf-8", errors="replace")
-                    if helpers.joint_test_flags() and "[TbfJointSelfTest] PASS" not in final:
+                    helpers.require_pet_joint(final, run_dir, attempt)
+                    if helpers.joint_test_flags(run_dir) and "[TbfJointSelfTest] PASS" not in final:
                         raise RuntimeError(f"Installed TBF joint-test acceptance missing: {log}")
                     if "Stopping server" not in final or "All dimensions are saved" not in final:
                         raise RuntimeError(f"Normal save/shutdown markers missing: {log}")
                     # Same narrow exclusions as the existing 1.21.1 development smoke.
+                    pet_mods = helpers.installed_pet_mods(run_dir)
                     allowed = [line for line in final.splitlines() if re.search(
                         r"No data fixer registered for echo_warrior:(?:roman_legionary_echo|aztec_warrior_echo|guandao_warrior_echo|japanese_samurai_echo|egyptian_archer_echo|egyptian_archer_arrow)\b"
-                        r"|\[Yggdrasil Key Fetcher/ERROR\].*Failed to request yggdrasil public key", line)]
+                        r"|\[Yggdrasil Key Fetcher/ERROR\].*Failed to request yggdrasil public key", line)
+                        or helpers.pet_datafixer_diagnostic(line, pet_mods)]
                     unexpected = "\n".join(line for line in final.splitlines() if line not in allowed)
                     if re.search(r"\[(?:[^\]\r\n]+/)?(?:ERROR|FATAL)\]", unexpected):
                         raise RuntimeError(f"Unexpected server ERROR/FATAL: {log}")
                     print(f"PASS {run_dir.name}: packaged Mixin + performance + compatibility + graceful shutdown", flush=True)
-                    return {"seconds": round(time.monotonic() - started, 2),
+                    return {"seconds": round(time.monotonic() - started, 2), "boot": attempt,
+                            "generation_fixture": attempt == 1,
                             "performance_marker": PERFORMANCE, "allowed_diagnostics": allowed}
                 time.sleep(0.5)
             raise TimeoutError(f"Server acceptance timed out: {log}")
@@ -184,7 +194,10 @@ def main() -> int:
             )
             results[loader] = {"passed": False, "artifacts": helpers.stage_mods(loader, run_dir, values)}
             print(f"Preparing production {loader}: {run_dir}", flush=True)
-            results[loader].update(run_once(java, install(loader, run_dir, values, java), run_dir, args.timeout))
+            arguments = install(loader, run_dir, values, java)
+            boots = 2 if helpers.installed_pet_mods(run_dir) else 1
+            results[loader]["boots"] = [run_once(java, arguments, run_dir, args.timeout, attempt)
+                                        for attempt in range(1, boots + 1)]
             results[loader]["passed"] = True
         return 0
     finally:

@@ -40,6 +40,7 @@ public class EchoRelicItem extends Item {
 			Consumer<Component> builder,
 			TooltipFlag tooltipFlag
 	) {
+		com.yuriscat.echowarrior.integration.PetCollarCompat.appendTooltip(stack, builder);
 		int level = EchoRelicProgress.level(stack);
 		builder.accept(Component.translatable(
 				"tooltip.echo_warrior.relic.level", level, EchoRelicProgress.maxLevel()

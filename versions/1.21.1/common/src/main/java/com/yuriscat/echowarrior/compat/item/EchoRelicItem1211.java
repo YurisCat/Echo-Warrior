@@ -33,6 +33,7 @@ public final class EchoRelicItem1211 extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        com.yuriscat.echowarrior.compat.integration.PetCollarCompat1211.appendTooltip(stack, tooltip::add);
         int level = EchoRelicProgress1211.level(stack);
         tooltip.add(Component.translatable("tooltip.echo_warrior.relic.level",
                 level, EchoRelicProgress1211.maxLevel()).withStyle(ChatFormatting.AQUA));

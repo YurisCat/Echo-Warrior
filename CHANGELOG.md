@@ -4,6 +4,29 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+## 0.2.11 - 2026-10-28
+
+### Added
+
+- Added optional Pet Home collar support across all six packages, plus Domestication Innovation support on Minecraft 1.20.1 Forge. Collars, enchantments, names and supported cooldowns stay with the Echo Relic through dismissal, death, resummoning and relic transfers.
+- Added localized feedback for unsupported pet-management actions and relic tooltips explaining saved collars and enchantment limits. All shipped languages are updated.
+
+### Fixed
+
+- Restored Minecraft 1.21.1 Follow takeover when another player holds the bound summoner. Successful takeover preserves health and collar attributes without charging extra fuel; a failed transfer keeps the previous Echo and controller.
+- Stopped unnecessary repeated saves of idle collar data. Active enchantment cooldowns still retain their intended timing.
+- Long pet-management and pet-compass failure messages now wrap above the hotbar at large GUI scales instead of being cut off at the screen edges.
+- Long saved-collar explanations in relic tooltips also wrap to the available width while keeping their original text and colors.
+- Protected collar replacement, attribute restoration and pet-compass actions against duplicate returns, stale Echo instances and unauthorized control. Ordinary pets retain their original behavior.
+
+### Notes
+
+- Echo Summoner ownership, fuel and active-Echo limits remain authoritative. Pet beds, capture nets and external ownership contracts cannot independently store, revive or transfer Echoes. Total Recall and Curse of Afterlife remain on the collar but their independent storage/revival effects are inactive.
+- On Minecraft 26.1.2, Curse of Immaturity is also retained but inactive because Echoes have no baby form. Pet-compass recall on this version requires carrying the corresponding Echo Summoner.
+- Verified Pet Home versions: 1.1.4 on 1.20.1 Fabric/Forge and 1.21.1 Fabric; 1.1.3 on 1.21.1 NeoForge and 26.1.2 Fabric/NeoForge. Domestication Innovation 1.7.1 was verified with Citadel 2.6.3 on 1.20.1 Forge. These mods remain optional and are not bundled.
+- Representative multiplayer, save/reload and combat cases passed; this does not certify every enchantment combination, audiovisual effect or third-party modpack.
+- Existing worlds are supported. Restart the game and server after updating; no world reset or new chunks are required. This is not a promise of arbitrary dependency removal or downgrades.
+
 ## 0.2.10 - 2026-10-26
 
 ### Added

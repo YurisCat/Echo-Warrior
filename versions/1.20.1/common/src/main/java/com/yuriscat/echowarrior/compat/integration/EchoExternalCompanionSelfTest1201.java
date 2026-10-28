@@ -14,6 +14,29 @@ import java.util.*;
 
 /** Tests the real existing transaction through the external entry point, without requiring TBF. */
 public final class EchoExternalCompanionSelfTest1201 {
+    private static MinecraftServer pending;
+    private static int readyTick;
+    private static boolean ownedChunk;
+
+    /** Installed mods initialize their per-level trackers on real level ticks, after loadLevel. */
+    public static void schedule(MinecraftServer server) {
+        pending = server;
+        readyTick = server.getTickCount() + 4;
+        var level = server.overworld();
+        ownedChunk = !level.getForcedChunks().contains(net.minecraft.world.level.ChunkPos.asLong(2, 2));
+        if (ownedChunk) level.setChunkForced(2, 2, true);
+    }
+
+    public static void tickScheduled(MinecraftServer server) {
+        if (pending != server || server.getTickCount() < readyTick) return;
+        pending = null;
+        try { run(server); }
+        finally {
+            if (ownedChunk) server.overworld().setChunkForced(2, 2, false);
+            ownedChunk = false;
+        }
+    }
+
     public static void run(MinecraftServer server) {
         var level = server.overworld();
         ServerPlayer player = new ServerPlayer(server, level, new GameProfile(UUID.randomUUID(), "EchoBridgeTest"));
@@ -36,6 +59,7 @@ public final class EchoExternalCompanionSelfTest1201 {
             binding.setFuel(300);
             var initial = EchoBindingSystem1201.summonNew(level, player, summoner);
             check(initial.succeeded(), "initial ordinary summon");
+            PetCollarJointSelfTest1201.run(server, player, binding, summoner);
             UUID id = EchoExternalCompanion1201.entryId(binding);
             check(player.getInventory().isEmpty(), "external fixture carries no summoner");
             // Physical item stays in a real chest; the adapter receives only a stable entry ID.

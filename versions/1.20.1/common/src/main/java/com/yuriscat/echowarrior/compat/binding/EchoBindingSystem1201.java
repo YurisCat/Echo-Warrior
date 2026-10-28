@@ -1,5 +1,7 @@
 package com.yuriscat.echowarrior.compat.binding;
 
+import com.yuriscat.echowarrior.compat.integration.PetCollarCompat1201;
+
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -54,6 +56,8 @@ public final class EchoBindingSystem1201 {
         long expectedRevision = binding.stateRevision();
         echo.bindTo(controller, binding.summonerId(), nextGeneration);
         echo.applyBindingState(binding, true);
+        if (!PetCollarCompat1201.restore(living, binding.relic()))
+            return SpawnAttempt.failed(SpawnFailure.CREATE_FAILED);
         var saved = binding.snapshot();
         living.setHealth(restore && saved.health() > 0 ? Math.min(saved.health(), living.getMaxHealth()) : living.getMaxHealth());
         if (restore) {
@@ -98,6 +102,7 @@ public final class EchoBindingSystem1201 {
         var binding = EchoBindingSavedData1201.get(server).get(id);
         if (binding == null || !binding.active()) return false;
         var echo = findLoaded(server, binding.spiritId());
+        if (echo != null) PetCollarCompat1201.capture(echo.livingEntity());
         if (!binding.deactivate(binding.spiritId(), binding.generation())) return false;
         if (echo != null) echo.dismiss();
         mirrorVisible(server, binding);
@@ -273,11 +278,13 @@ public final class EchoBindingSystem1201 {
                 living.getRemainingFireTicks(), living.getTicksFrozen(), living.getAirSupply(), state);
     }
     public static void track(EchoWarriorEntity1201 echo) {
+        PetCollarCompat1201.capture(echo.livingEntity());
         if (!(echo.livingEntity().level() instanceof ServerLevel level)) return;
         var binding = EchoBindingSavedData1201.get(level.getServer()).get(echo.getSummonerId());
         if (binding != null) binding.track(echo.livingEntity().getUUID(), echo.getBindingGeneration(), snapshot(echo));
     }
     public static void deactivate(EchoWarriorEntity1201 echo) {
+        PetCollarCompat1201.capture(echo.livingEntity());
         if (!(echo.livingEntity().level() instanceof ServerLevel level)) return;
         var binding = EchoBindingSavedData1201.get(level.getServer()).get(echo.getSummonerId());
         if (binding != null && binding.deactivate(echo.livingEntity().getUUID(), echo.getBindingGeneration())) mirrorVisible(level.getServer(), binding);

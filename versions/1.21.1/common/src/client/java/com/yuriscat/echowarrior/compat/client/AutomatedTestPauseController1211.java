@@ -46,6 +46,7 @@ public final class AutomatedTestPauseController1211 {
     }
 
     public static void tick(Minecraft client) {
+        PetAcceptanceClient1211.tick(client);
         if (!ENABLED || stage == Stage.DONE || client.player == null || client.level == null) return;
         stageTicks++;
         try {

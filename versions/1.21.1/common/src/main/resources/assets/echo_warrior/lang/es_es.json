@@ -624,5 +624,10 @@
   "gui.echo_warrior.tutorial.skill.roman.bulwark.name": "Baluarte legionario",
   "gui.echo_warrior.tutorial.skill.roman.bulwark.description.1": "Reduce un 50 % el daño de ataques y proyectiles que llegan desde delante del legionario.",
   "message.echo_warrior.tbf.healing_disabled": "Los Ecos usan su propio sistema de recuperación. La curación de TBF no está disponible.",
-  "message.echo_warrior.tbf.unavailable": "No se puede controlar este Eco. Comprueba la reliquia, los permisos de control y el invocador."
+  "message.echo_warrior.tbf.unavailable": "No se puede controlar este Eco. Comprueba la reliquia, los permisos de control y el invocador.",
+  "message.echo_warrior.pet_management_restricted": "Gestiona este Eco con el dispositivo Invocador de Ecos. No sirven camas de mascotas, redes de captura ni cambios externos de dueño.",
+  "tooltip.echo_warrior.pet_collar_limits": "Retiro total y Maldición del más allá no afectan a los Ecos, pero permanecen en el collar.",
+  "tooltip.echo_warrior.pet_collar_saved": "Collar de mascota guardado: se conserva tras retirar al Eco, su muerte o el traslado de la reliquia.",
+  "message.echo_warrior.pet_compass_unavailable": "Brújula de mascotas: acción no disponible. Comprueba el dueño, el combustible y el dispositivo Invocador de Ecos.",
+  "tooltip.echo_warrior.pet_collar_immaturity": "Los Ecos no tienen forma infantil en esta versión. La Maldición de Inmadurez se conserva sin efecto."
 }

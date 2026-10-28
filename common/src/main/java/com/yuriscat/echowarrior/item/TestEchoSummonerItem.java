@@ -308,6 +308,10 @@ public final class TestEchoSummonerItem extends Item {
 		long generation = EchoBindingSystem.activate(level, stack, serverPlayer, spiritEntity);
 		spirit.setBindingGeneration(generation);
 		spirit.applyRelicState(relic, true);
+		if (!com.yuriscat.echowarrior.integration.PetCollarCompat.restore(spiritEntity, relic)) {
+			EchoBindingSystem.dismiss(level.getServer(), summonerId, "unsupported_collar_data");
+			return SummonResult.CREATE_FAILED;
+		}
 		spiritEntity.setHealth(spiritEntity.getMaxHealth());
 		if (!level.addFreshEntity(spiritEntity)) {
 			EchoBindingSystem.dismiss(level.getServer(), summonerId, "spawn_failed");
@@ -489,6 +493,7 @@ public final class TestEchoSummonerItem extends Item {
 		spirit.setBindingGeneration(binding.generation());
 		spirit.readMigrationState(binding.snapshot().migrationState());
 		spirit.applyRelicState(relic, true);
+		if (!com.yuriscat.echowarrior.integration.PetCollarCompat.restore(entity, relic)) return false;
 		EchoBindingSavedData.Snapshot snapshot = binding.snapshot();
 		entity.setHealth(snapshot.health() > 0.0F
 				? Math.min(entity.getMaxHealth(), snapshot.health()) : entity.getMaxHealth());

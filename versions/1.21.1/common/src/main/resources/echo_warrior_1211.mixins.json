@@ -26,6 +26,7 @@
     "GuiGraphicsInvoker1211",
     "GuiGraphicsMixin1211",
     "GuiMixin1211",
+    "PetFeedbackGuiMixin1211",
     "ItemInHandRendererMixin1211"
   ],
   "injectors": {

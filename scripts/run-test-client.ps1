@@ -10,6 +10,9 @@ param(
     [switch]$PauseOnJoin,
     [switch]$Production,
     [string]$PreparedProductionLaunch,
+    [string]$MultiplayerTestManifest,
+    [ValidateSet('EchoPetOwner','EchoPetGuest')]
+    [string]$AcceptancePlayer,
     [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+$')]
     [string]$ProductionForgeVersion,
     [ValidateRange(30, 300)]
@@ -17,9 +20,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-if ($PreparedProductionLaunch -and (-not $Production -or $TargetVersion -ne '1.21.1' -or
-        $Loader -ne 'NeoForge' -or $StartupOnly -or $PauseOnJoin)) {
-    throw 'PreparedProductionLaunch requires a manual 1.21.1 NeoForge Production run.'
+if ($PreparedProductionLaunch -and (-not $Production -or $PauseOnJoin)) {
+    throw 'PreparedProductionLaunch requires Production; its descriptor selects interactive or automated acceptance.'
+}
+if ($MultiplayerTestManifest -and (-not $PreparedProductionLaunch -or $StartupOnly)) {
+    throw 'MultiplayerTestManifest requires a prepared interactive production launch.'
+}
+if ($AcceptancePlayer -and -not $MultiplayerTestManifest) {
+    throw 'AcceptancePlayer is limited to a registered two-client test.'
 }
 if ($Production -and -not $PreparedProductionLaunch -and
         ($TargetVersion -ne '1.20.1' -or ($StartupOnly -eq $PauseOnJoin))) {
@@ -34,6 +42,7 @@ if ($PauseOnJoin -and $TargetVersion -ne '1.20.1') {
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $focusScript = Join-Path $PSScriptRoot 'focus-test-client-window.ps1'
 . (Join-Path $PSScriptRoot 'client-smoke-log.ps1')
+. (Join-Path $PSScriptRoot 'prepared-client-pair.ps1')
 
 function Get-DescendantProcessIds {
     param([int]$RootProcessId)
@@ -130,6 +139,7 @@ if (-not $configuredUsername.Success -or $configuredUsername.Groups[1].Value -cn
 if ($clientUsername -notmatch '^[A-Za-z0-9_]{1,16}$') {
     throw "Client username '$clientUsername' violates the Minecraft login protocol limit."
 }
+if ($AcceptancePlayer) { $clientUsername = $AcceptancePlayer }
 
 $javaExecutable = Join-Path $jdkRoot 'bin\java.exe'
 if (-not (Test-Path -LiteralPath $javaExecutable)) {
@@ -139,6 +149,12 @@ if (-not (Test-Path -LiteralPath $javaExecutable)) {
 $escapedRunDirectory = [regex]::Escape($runDirectory)
 $escapedClientProjectDirectory = [regex]::Escape($clientProjectDirectory)
 $escapedClientUsername = [regex]::Escape($clientUsername)
+$expectedMinecraft = if ($TargetVersion -eq 'Current') { '26.1.2' } else { $TargetVersion }
+$peerArguments = @()
+if ($MultiplayerTestManifest) {
+    $peerArguments = @(Get-PreparedClientPair -ManifestPath $MultiplayerTestManifest `
+        -DescriptorPath $PreparedProductionLaunch -MinecraftVersion $expectedMinecraft)
+}
 $clientMainPattern = 'net\.minecraft\.client\.main\.Main|net\.fabricmc\.devlaunchinjector\.Main|net\.fabricmc\.loader\.impl\.launch\.knot\.KnotClient|net\.neoforged\.devlaunch\.Main|cpw\.mods\.bootstraplauncher\.BootstrapLauncher.*(?:forgeclient|client)|gradle-wrapper\.jar.*runClient\b|client-arguments\.txt'
 $allRunningClients = @(Get-CimInstance Win32_Process -ErrorAction Stop |
     Where-Object { $_.Name -match '^javaw?\.exe$' -and $_.CommandLine -match $clientMainPattern })
@@ -160,7 +176,8 @@ if ($runningClient) {
     }
     exit 0
 }
-if ($allRunningClients.Count -gt 0) {
+if ($allRunningClients.Count -gt 1 -or @($allRunningClients |
+        Where-Object { -not (Test-PreparedPeerProcess $_.CommandLine $peerArguments) }).Count -gt 0) {
     $otherClient = $allRunningClients | Select-Object -First 1
     throw "Another Minecraft development client is already running (PID $($otherClient.ProcessId)); refusing to launch a concurrent client."
 }
@@ -179,13 +196,16 @@ if ($Production) {
     }
     $productionLaunch = Get-Content -LiteralPath $descriptorPath -Raw | ConvertFrom-Json
     if ($PreparedProductionLaunch) {
-        if ($productionLaunch.production -ne $true -or $productionLaunch.loader -ne 'neoforge' -or
-                $productionLaunch.minecraft -ne '1.21.1' -or $productionLaunch.username -cne $clientUsername) {
-            throw 'Prepared descriptor must identify a production 1.21.1 NeoForge test client.'
+        if ($productionLaunch.production -ne $true -or $productionLaunch.loader -ne $Loader.ToLowerInvariant() -or
+                $productionLaunch.minecraft -ne $expectedMinecraft -or $productionLaunch.username -cne $clientUsername) {
+            throw 'Prepared descriptor must match the selected production version, loader and test identity.'
         }
+        $expectedPreparedJava = if ($TargetVersion -eq '1.20.1') {
+            Join-Path $projectRoot '.toolchains\jdk-17\bin\java.exe'
+        } else { $javaExecutable }
         if ((Resolve-Path -LiteralPath $productionLaunch.java).Path -ne
-                (Resolve-Path -LiteralPath $javaExecutable).Path) {
-            throw 'Prepared production client must use the selected Java 21 runtime.'
+                (Resolve-Path -LiteralPath $expectedPreparedJava).Path) {
+            throw 'Prepared production client must use the selected version-specific Java runtime.'
         }
         $preparedRoot = (Resolve-Path -LiteralPath $productionLaunch.run_directory).Path
         $preparedArguments = (Resolve-Path -LiteralPath $productionLaunch.argument_file).Path
@@ -218,10 +238,13 @@ if ($Production) {
         $actualHash = (Get-FileHash -LiteralPath (Join-Path $runDirectory "mods\$($artifact.Name)") -Algorithm SHA256).Hash
         if ($actualHash -ne $artifact.Value) { throw "Production artifact changed after staging: $($artifact.Name)" }
     }
-    $otherClient = Get-CimInstance Win32_Process -ErrorAction Stop |
+    $preparationClients = @(Get-CimInstance Win32_Process -ErrorAction Stop |
         Where-Object { $_.Name -match '^javaw?\.exe$' -and $_.CommandLine -match $clientMainPattern } |
-        Select-Object -First 1
-    if ($otherClient) { throw "A client started during preparation (PID $($otherClient.ProcessId)); refusing concurrent launch." }
+        Select-Object ProcessId,CommandLine)
+    if ($preparationClients.Count -gt 1 -or @($preparationClients |
+            Where-Object { -not (Test-PreparedPeerProcess $_.CommandLine $peerArguments) }).Count -gt 0) {
+        throw 'An unregistered client started during preparation; refusing concurrent launch.'
+    }
 }
 
 $env:JAVA_HOME = $jdkRoot
@@ -391,7 +414,17 @@ try {
         throw "$TargetVersion $Loader client did not reach the startup checkpoint.`nSTDOUT:`n$stdoutTail`nSTDERR:`n$stderrTail"
     }
 
-    if ($TargetVersion -eq '1.20.1' -and $expectsQuickPlayWorld) {
+    if ($Production -and $PreparedProductionLaunch -and $expectsQuickPlayWorld -and $TargetVersion -ne '1.20.1') {
+        # 1.20.1 owns a longer interactive suite and requests shutdown itself.
+        # Its initial pause checkpoint is not completion of those checks.
+        $queue = [string]$productionLaunch.acceptance_queue
+        if (-not $queue -or (Split-Path -Parent $queue) -ne $runDirectory -or
+                (Test-Path -LiteralPath (Join-Path $queue '00001.json'))) {
+            throw 'Automated prepared client needs a fresh owned acceptance queue.'
+        }
+        [IO.File]::WriteAllText((Join-Path $queue '00001.json'), '{"action":"stop"}', [Text.UTF8Encoding]::new($false))
+    }
+    if (($TargetVersion -eq '1.20.1' -or ($Production -and $PreparedProductionLaunch)) -and $expectsQuickPlayWorld) {
         # This controller requests vanilla shutdown after the pause checkpoint; allow save/exit.
         $exitDeadline = $deadline
         while (-not $gradleProcess.HasExited -and [DateTime]::UtcNow -lt $exitDeadline) {
@@ -402,12 +435,16 @@ try {
             $gradleProcess.Refresh()
         }
         if (-not $gradleProcess.HasExited -or $gradleProcess.ExitCode -ne 0) {
-            throw "1.20.1 client did not exit normally after its smoke test (exited=$($gradleProcess.HasExited), exitCode=$($gradleProcess.ExitCode))."
+            throw "$TargetVersion client did not exit normally after its smoke test (exited=$($gradleProcess.HasExited), exitCode=$($gradleProcess.ExitCode))."
         }
     }
 
     $finalLog = Get-Content -LiteralPath $latestLog -Raw
     if ($null -eq $finalLog) { $finalLog = '' }
+    if ($Production -and $PreparedProductionLaunch -and $expectsQuickPlayWorld -and
+            $finalLog -notmatch 'All dimensions are saved') {
+        throw 'Prepared production client did not save its integrated world normally.'
+    }
     if ($expectsQuickPlayWorld -and $TargetVersion -in @('Current', '1.21.1') -and
         $finalLog -notmatch 'GUANDAO PRESENTATION SELFTEST PASSED processor=geckolib5? root=idle-walk packet-order=three') {
         throw "$TargetVersion Guandao animation handoff checkpoint is missing."
@@ -458,8 +495,22 @@ try {
         $finalLog = $finalLog.Substring([int]$logStartLength)
     }
     $unexpectedErrorLog = $finalLog
+    if ($Production -and $TargetVersion -eq '1.21.1' -and $Loader -eq 'Fabric') {
+        $verifiedPetHome1211Hash = @($productionLaunch.artifacts.PSObject.Properties.Value) |
+            Where-Object { $_ -ceq 'e42894ad07d7417637cf83858fa64a4854c9143f3c34618c9caba2792e98c45e' } |
+            Select-Object -First 1
+        $unexpectedErrorLog = Remove-KnownPetHome1211ClientDataFixerErrors `
+            -LogText $unexpectedErrorLog -VerifiedArtifactSha256 $verifiedPetHome1211Hash
+    }
     if ($TargetVersion -eq '1.20.1') {
         $unexpectedErrorLog = Remove-Known1201OfflineAuthenticationError $unexpectedErrorLog
+        if ($Production -and $Loader -eq 'Fabric') {
+            $verifiedPetHomeHash = @($productionLaunch.artifacts.PSObject.Properties.Value) |
+                Where-Object { $_ -ceq '545828042d151f8665bbd975832768ba458f18809428728514630e3c081c1ec2' } |
+                Select-Object -First 1
+            $unexpectedErrorLog = Remove-KnownPetHome1201ClientDataFixerErrors `
+                -LogText $unexpectedErrorLog -VerifiedArtifactSha256 $verifiedPetHomeHash
+        }
     } else {
         # Preserve the existing high-version policy; the isolated production 1.20.1
         # client only permits the exact offline-authlib 401 pair above.
