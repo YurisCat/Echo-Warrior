@@ -1,0 +1,119 @@
+{
+  "date": "2026-11-12",
+  "run": "skill-client-20261112T151423Z-localization",
+  "results": [
+    {
+      "locale": "ru_ru",
+      "case": "26.1.2-fabric-smoke",
+      "passed": true,
+      "artifact_sha256": "9fdbc99b74256d6341c1c875172708d2f30aba15a3a9c2db1bbb10bfc30b84a9",
+      "mode": "smoke"
+    },
+    {
+      "locale": "ja_jp",
+      "case": "1.21.1-fabric-smoke",
+      "passed": true,
+      "artifact_sha256": "78f9d7369f436ef8c7e82edb9bdd41ead6f5962346493d24a75cd281b907b2f1",
+      "mode": "smoke"
+    },
+    {
+      "locale": "pt_br",
+      "case": "26.1.2-neoforge-smoke",
+      "passed": true,
+      "artifact_sha256": "3783ea869d52bb5d9663745986bcc386e2060e25b6fa45e36ba7af80e827627f",
+      "mode": "smoke"
+    },
+    {
+      "locale": "es_es",
+      "case": "1.21.1-neoforge-smoke",
+      "passed": true,
+      "artifact_sha256": "6a9055ff1f944a8b738269af4a533ee0ffdb5cacf5ce156317ae39dda652b85b",
+      "mode": "smoke"
+    },
+    {
+      "locale": "zh_tw",
+      "case": "1.20.1-fabric-smoke",
+      "passed": true,
+      "artifact_sha256": "e9af066a9b1355e3fff3a3705364ee26f26d3005729c0c8db5d44ea2700c71c9",
+      "mode": "smoke"
+    },
+    {
+      "locale": "es_mx",
+      "case": "1.20.1-forge-smoke",
+      "passed": true,
+      "artifact_sha256": "d5e53d1cc5c9ac680f48bab01a6e8dcd2150acd94f1e0ef7ac6e71c397570f52",
+      "mode": "smoke"
+    },
+    {
+      "locale": "ru_ru",
+      "case": "26.1.2-fabric-manual",
+      "passed": true,
+      "artifact_sha256": "9fdbc99b74256d6341c1c875172708d2f30aba15a3a9c2db1bbb10bfc30b84a9",
+      "mode": "manual"
+    },
+    {
+      "locale": "ja_jp",
+      "case": "1.21.1-fabric-manual",
+      "passed": true,
+      "artifact_sha256": "78f9d7369f436ef8c7e82edb9bdd41ead6f5962346493d24a75cd281b907b2f1",
+      "mode": "manual"
+    },
+    {
+      "locale": "es_es",
+      "case": "26.1.2-fabric-spanish-manual",
+      "passed": true,
+      "artifact_sha256": "9fdbc99b74256d6341c1c875172708d2f30aba15a3a9c2db1bbb10bfc30b84a9",
+      "mode": "manual"
+    }
+  ],
+  "cleanup": {
+    "state": "passed",
+    "completed": 9,
+    "owned_java": 0,
+    "test_lock_present": false,
+    "error": null
+  },
+  "evidence_sha256": "55b3dea721a0419230c4737797101a2c302ff6704fa88451defaa079b78bf348",
+  "evidence_files": 214,
+  "artifacts": {
+    "fabric/build/libs/echo-warrior-fabric-26.1.2-0.2.11.jar": "9fdbc99b74256d6341c1c875172708d2f30aba15a3a9c2db1bbb10bfc30b84a9",
+    "neoforge/build/libs/echo-warrior-neoforge-26.1.2-0.2.11.jar": "3783ea869d52bb5d9663745986bcc386e2060e25b6fa45e36ba7af80e827627f",
+    "versions/1.21.1/fabric/build/libs/echo-warrior-fabric-1.21.1-0.2.11.jar": "78f9d7369f436ef8c7e82edb9bdd41ead6f5962346493d24a75cd281b907b2f1",
+    "versions/1.21.1/neoforge/build/libs/echo-warrior-neoforge-1.21.1-0.2.11.jar": "6a9055ff1f944a8b738269af4a533ee0ffdb5cacf5ce156317ae39dda652b85b",
+    "versions/1.20.1/fabric/build/libs/echo-warrior-fabric-1.20.1-0.2.11.jar": "e9af066a9b1355e3fff3a3705364ee26f26d3005729c0c8db5d44ea2700c71c9",
+    "versions/1.20.1/forge/build/libs/echo-warrior-forge-1.20.1-0.2.11.jar": "d5e53d1cc5c9ac680f48bab01a6e8dcd2150acd94f1e0ef7ac6e71c397570f52"
+  },
+  "visual_review": {
+    "run": "skill-client-20261112T151423Z-localization",
+    "reviewer": "Codex root, direct image inspection",
+    "verdict": "passed",
+    "client_area": "854x480 pixels, GUI scale 2; window bounds 870x519",
+    "observed": [
+      "Russian and Spanish accessory effect text wraps completely with original positive color",
+      "Japanese glyphs and accessory text display completely",
+      "White skill body, gray formulas/notes, green level terms; red attack formula checked in Russian",
+      "Held Alt expands and release restores concise text",
+      "Russian and Spanish Assist protection descriptions fit and retain their target list"
+    ],
+    "scope": "Representative incremental localization acceptance in 26.1.2 and 1.21.1; six packaged loaders passed automatic font/color/text-completeness checks. No claim of exhaustive screenshots for every locale, GUI scale or third-party font pack.",
+    "screenshots": {
+      "ru-fixed-fang-short.png": "14126bec1ffa2669f697c1042137b7fe1eca79fbc71b950fc82a4536684808b3",
+      "ru-fixed-endures-held-alt.png": "1d8b951ee0758778952173f664dab868ce64ecd1492e26accf0e56b762a65031",
+      "ru-fixed-endures-released.png": "6bc59bb3dd554967d17f0f5571e51cce020b52d4173df04dad2c1a07b2475c3a",
+      "ru-fixed-protect-short.png": "eafed0be8ca86fbfd82f2ccc023878469964c00d2480cf06bd44e864d6813df3",
+      "ru-fixed-wound-held-alt.png": "5fe65c1295a827312a626dcbc57de1656483045193819d92822fd6ebdabbe6eb",
+      "ja-fixed-endures-held-alt.png": "79878588e417ae91220a1f49a626295039dd3dccedfad729c0ca018e7b82697b",
+      "ja-fixed-endures-released.png": "983d08e073b7652a0a491e1108e79044be41bbcc3135764068a9d23cf56dfd8e",
+      "ja-fixed-fang-short.png": "c7883dc9b63de12ade1108979689c9803525056dd22df21eba8f83cb79eb95e5",
+      "es-fixed-fang-short.png": "3019ee6741f49edd3377008532b1c22e8eaccb07727578e5e180004ec7fc9926",
+      "es-fixed-endures-held-alt.png": "f4bd7eb516700fe9a07b2d57dbaf7778eb1039373348de36c4f5778dff99931b",
+      "es-fixed-endures-released.png": "2d4eaa92694aaa6966303cc64f09138725bc48edf413adfbb80163bf4b623b3d",
+      "es-fixed-protect-short.png": "75c5c3c952701e44133bbf43524dd7fd74620e444c72ec5ed2ded90ae94f86b8"
+    }
+  },
+  "localization_gate": {
+    "hard_errors": 0,
+    "pending": 0,
+    "waiver": false
+  }
+}

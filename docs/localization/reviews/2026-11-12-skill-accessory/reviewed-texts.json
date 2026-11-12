@@ -1,0 +1,618 @@
+{
+  "source_commit": "7e50c583bb68bbe9491802bfcb80c216df85da21",
+  "keys": {
+    "item.echo_warrior.accessory.battle_worn_whetstone.effect.1": {
+      "zh_cn": "攻击力 +20%",
+      "en_us": "Attack damage +20%"
+    },
+    "item.echo_warrior.accessory.mountain_burden_blade.effect.1": {
+      "zh_cn": "攻击力 +40%",
+      "en_us": "Attack damage +40%"
+    },
+    "item.echo_warrior.accessory.fractured_crystal_blade.effect.1": {
+      "zh_cn": "攻击力 +40%",
+      "en_us": "Attack damage +40%"
+    },
+    "item.echo_warrior.accessory.twin_oath_badge.effect.1": {
+      "zh_cn": "攻击力 +10%",
+      "en_us": "Attack damage +10%"
+    },
+    "item.echo_warrior.accessory.battle_blindfold.effect.1": {
+      "zh_cn": "攻击力 +30%",
+      "en_us": "Attack damage +30%"
+    },
+    "item.echo_warrior.accessory.blood_pact_fang.effect.1": {
+      "zh_cn": "攻击造成伤害时有30%概率恢复2点＋最大生命值的5%",
+      "en_us": "Dealing attack damage has a 30% chance to restore 2 health + 5% of max health"
+    },
+    "item.echo_warrior.accessory.memory_ritual_knife.effect.1": {
+      "zh_cn": "攻击力 +20%",
+      "en_us": "Attack damage +20%"
+    },
+    "item.echo_warrior.accessory.heart_sprout_amber.effect.1": {
+      "zh_cn": "最大生命值 +20%",
+      "en_us": "Max health +20%"
+    },
+    "item.echo_warrior.accessory.feast_ham.effect.1": {
+      "zh_cn": "最大生命值 +35%",
+      "en_us": "Max health +35%"
+    },
+    "item.echo_warrior.accessory.peacemaker.effect.1": {
+      "zh_cn": "最大生命值 +60%",
+      "en_us": "Max health +60%"
+    },
+    "item.echo_warrior.accessory.peacemaker.effect.2": {
+      "zh_cn": "攻击力 -40%",
+      "en_us": "Attack damage -40%"
+    },
+    "item.echo_warrior.accessory.sunwheel_garland.effect.1": {
+      "zh_cn": "白天每2.5秒恢复1点＋最大生命值的1%",
+      "en_us": "During the day, restores 1 health + 1% of max health every 2.5s"
+    },
+    "item.echo_warrior.accessory.moondew_bottle.effect.1": {
+      "zh_cn": "夜晚每2.5秒恢复1点＋最大生命值的1%",
+      "en_us": "At night, restores 1 health + 1% of max health every 2.5s"
+    },
+    "item.echo_warrior.accessory.hollow_bird_bone.effect.2": {
+      "zh_cn": "最大生命值 -25%",
+      "en_us": "Max health -25%"
+    },
+    "gui.echo_warrior.summoner.skill.roman.formation.simple.1": {
+      "zh_cn": "附近友军攻击力提高30%。主人持盾时，额外获得15%减伤。",
+      "en_us": "Nearby allies gain 30% attack damage. While the owner holds a shield, they also take 15% less damage."
+    },
+    "gui.echo_warrior.summoner.skill.roman.formation.full.1": {
+      "zh_cn": "附近友军攻击力提高30%。主人持盾时，额外获得15%减伤。",
+      "en_us": "Nearby allies gain 30% attack damage. While the owner holds a shield, they also take 15% less damage."
+    },
+    "gui.echo_warrior.summoner.skill.roman.formation.full.2": {
+      "zh_cn": "<gray>-影响8格内自身、主人、同主人所属英灵。</gray>",
+      "en_us": "<gray>-Affects this echo, its owner and their echoes within 8 blocks.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.roman.formation.full.3": {
+      "zh_cn": "<gray>-同名光环不叠加。</gray>",
+      "en_us": "<gray>-Does not stack with the same aura.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.roman.endures.simple.1": {
+      "zh_cn": "举盾嘲讽5秒，护甲增加{armor}*点。结束时对周围敌人造成{release}%*累计伤害。冷却20秒。",
+      "en_us": "Raise the shield and taunt for 5s, gaining {armor}* armor. Then deal {release}%* of accumulated damage to nearby enemies. Cooldown: 20s."
+    },
+    "gui.echo_warrior.summoner.skill.roman.endures.full.1": {
+      "zh_cn": "举盾嘲讽5秒，护甲增加{armor}*点<gray>（12＋<level>等级</level>×0.1）</gray>。结束时对周围敌人造成{release}%*累计伤害<gray>（100%＋<level>等级</level>×1%）</gray>。冷却20秒。",
+      "en_us": "Raise the shield and taunt for 5s, gaining {armor}* armor <gray>(12 + <level>level</level> × 0.1)</gray>. Then deal {release}%* of accumulated damage <gray>(100% + <level>level</level> × 1%)</gray> to nearby enemies. Cooldown: 20s."
+    },
+    "gui.echo_warrior.summoner.skill.roman.endures.full.2": {
+      "zh_cn": "<gray>-按减伤前受到的伤害累计。</gray>",
+      "en_us": "<gray>-Accumulates incoming damage before mitigation.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.1": {
+      "zh_cn": "自身或主人受击时，有概率使攻击者虚弱。",
+      "en_us": "When this echo or its owner is hit, it may weaken the attacker."
+    },
+    "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.2": {
+      "zh_cn": "直接命中时，每种自身增益与目标减益追加{curse}*点魔法伤害。",
+      "en_us": "Direct hits deal {curse}* extra magic damage per beneficial effect on this echo and harmful effect on the target."
+    },
+    "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.1": {
+      "zh_cn": "自身或主人受击时，有概率使攻击者虚弱。",
+      "en_us": "When this echo or its owner is hit, it may weaken the attacker."
+    },
+    "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.2": {
+      "zh_cn": "直接命中时，每种自身增益与目标减益追加{curse}*点魔法伤害<gray>（1＋<level>等级</level>÷100）</gray>。",
+      "en_us": "Direct hits deal {curse}* extra magic damage <gray>(1 + <level>level</level> ÷ 100)</gray> per beneficial effect on this echo and harmful effect on the target."
+    },
+    "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.3": {
+      "zh_cn": "<gray>-60%概率触发虚弱：75%为虚弱Ⅰ，持续5秒；25%为虚弱Ⅱ，持续3秒。</gray>",
+      "en_us": "<gray>-60% chance to weaken: 75% Weakness I for 5s; 25% Weakness II for 3s.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.4": {
+      "zh_cn": "<gray>-日照、群系强化、追猎各计为1种增益。</gray>",
+      "en_us": "<gray>-Sunlight, favored biome and Pursuit each count as one benefit.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.simple.1": {
+      "zh_cn": "攻击有概率造成流血，每秒{bleed}*点伤害，持续6秒。",
+      "en_us": "Attacks may cause bleeding for {bleed}* damage every second for 6s."
+    },
+    "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.1": {
+      "zh_cn": "攻击有概率造成流血，每秒{bleed}*点伤害<gray>（1＋<attack>攻击力</attack>×10%）</gray>，持续6秒。",
+      "en_us": "Attacks may cause bleeding for {bleed}* damage <gray>(1 + <attack>attack damage</attack> × 10%)</gray> every second for 6s."
+    },
+    "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.2": {
+      "zh_cn": "<gray>-触发概率：普攻主目标30%，横扫次目标与追猎命中15%。</gray>",
+      "en_us": "<gray>-Chance: 30% on the primary melee target; 15% on sweep and Pursuit targets.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.aztec.macuahuitl.simple.1": {
+      "zh_cn": "普攻变为范围横扫，次目标伤害减半。追猎后强化3秒。",
+      "en_us": "Basic attacks sweep an area, dealing half damage to secondary targets. Empowered for 3s after Pursuit."
+    },
+    "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.1": {
+      "zh_cn": "普攻变为范围横扫，次目标伤害减半。追猎后强化3秒。",
+      "en_us": "Basic attacks sweep an area, dealing half damage to secondary targets. Empowered for 3s after Pursuit."
+    },
+    "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.2": {
+      "zh_cn": "<gray>-横扫范围4.5格，强化后5格。</gray>",
+      "en_us": "<gray>-Sweep radius: 4.5 blocks, or 5 while empowered.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.3": {
+      "zh_cn": "<gray>-次目标伤害{half}*点（<attack>攻击力</attack>×50%），强化后{threequarters}*点（<attack>攻击力</attack>×75%）。</gray>",
+      "en_us": "<gray>-Secondary damage: {half}* (<attack>attack damage</attack> × 50%), or {threequarters}* (<attack>attack damage</attack> × 75%) while empowered.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.egyptian.cat_god.simple.1": {
+      "zh_cn": "附近苦力怕将会仓皇逃窜。埃及弓箭手对亡灵的伤害提高20%。",
+      "en_us": "Nearby creepers flee in panic. The Egyptian Archer deals 20% more damage to undead."
+    },
+    "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.1": {
+      "zh_cn": "附近苦力怕将会仓皇逃窜。埃及弓箭手对亡灵的伤害提高20%。",
+      "en_us": "Nearby creepers flee in panic. The Egyptian Archer deals 20% more damage to undead."
+    },
+    "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.2": {
+      "zh_cn": "<gray>-影响30格内的苦力怕。</gray>",
+      "en_us": "<gray>-Affects creepers within 30 blocks.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.simple.1": {
+      "zh_cn": "命中后流血4秒，每2秒造成{bleed}*点伤害，并减速2秒。",
+      "en_us": "Hits cause bleeding for 4s, dealing {bleed}* damage every 2s, and slow for 2s."
+    },
+    "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.1": {
+      "zh_cn": "命中后流血4秒，每2秒造成{bleed}*点伤害<gray>（1＋<attack>发射时攻击力</attack>×10%）</gray>，并减速2秒。",
+      "en_us": "Hits cause bleeding for 4s, dealing {bleed}* damage <gray>(1 + <attack>attack damage at launch</attack> × 10%)</gray> every 2s, and slow for 2s."
+    },
+    "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.2": {
+      "zh_cn": "<gray>-减速为缓慢Ⅰ。</gray>",
+      "en_us": "<gray>-Applies Slowness I.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.3": {
+      "zh_cn": "<gray>-命中刷新对应来源，分别计时，取未到期的最强流血。</gray>",
+      "en_us": "<gray>-Hits refresh their own source. Sources expire separately; only the strongest active bleed deals damage.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.simple.1": {
+      "zh_cn": "忽略{penetration}%*护甲，{pierce}%*概率贯穿，最多命中2个目标。",
+      "en_us": "Ignores {penetration}%* armor, with a {pierce}%* chance to pierce. Hits up to 2 targets."
+    },
+    "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.1": {
+      "zh_cn": "忽略{penetration}%*护甲<gray>（35%＋<level>等级</level>×0.5%）</gray>，{pierce}%*概率贯穿<gray>（25%＋<level>等级</level>×0.5%）</gray>，最多命中2个目标。",
+      "en_us": "Ignores {penetration}%* armor <gray>(35% + <level>level</level> × 0.5%)</gray>, with a {pierce}%* chance to pierce <gray>(25% + <level>level</level> × 0.5%)</gray>. Hits up to 2 targets."
+    },
+    "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.2": {
+      "zh_cn": "<gray>-穿甲超过100%的部分转为额外伤害。</gray>",
+      "en_us": "<gray>-Armor penetration above 100% becomes extra damage.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.guandao.combo.simple.1": {
+      "zh_cn": "施展四段连击。前三段使敌人小幅浮空，近战攻击距离降低80%，持续2秒。冷却12秒。",
+      "en_us": "Perform four strikes. The first three briefly lift enemies and reduce melee reach by 80% for 2s. Cooldown: 12s."
+    },
+    "gui.echo_warrior.summoner.skill.guandao.combo.full.1": {
+      "zh_cn": "施展四段连击。前三段使敌人小幅浮空，近战攻击距离降低80%，持续2秒。冷却12秒。",
+      "en_us": "Perform four strikes. The first three briefly lift enemies and reduce melee reach by 80% for 2s. Cooldown: 12s."
+    },
+    "gui.echo_warrior.summoner.skill.guandao.combo.full.2": {
+      "zh_cn": "<gray>-四段伤害{hit1}*／{hit2}*／{hit1}*／{hit4}*（<attack>攻击力</attack>×70%／100%／70%／180%，受越战越勇加成）。</gray>",
+      "en_us": "<gray>-Strike damage: {hit1}* / {hit2}* / {hit1}* / {hit4}* (<attack>attack damage</attack> × 70% / 100% / 70% / 180%, affected by Growing Valor).</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.guandao.combo.full.3": {
+      "zh_cn": "<gray>-前三段命中刷新减益。</gray>",
+      "en_us": "<gray>-Each of the first three hits refreshes the debuff.</gray>"
+    },
+    "gui.echo_warrior.summoner.skill.guandao.combo.full.4": {
+      "zh_cn": "<gray>-受近战或投射物伤害时，冷却缩短0.5秒。</gray>",
+      "en_us": "<gray>-Taking melee or projectile damage reduces the cooldown by 0.5s.</gray>"
+    },
+    "gui.echo_warrior.summoner.section.assist": {
+      "zh_cn": "协助战斗",
+      "en_us": "Assist"
+    },
+    "gui.echo_warrior.summoner.assist.off.name": {
+      "zh_cn": "关闭",
+      "en_us": "Off"
+    },
+    "gui.echo_warrior.summoner.assist.off.description": {
+      "zh_cn": "不跟随主人的攻击目标",
+      "en_us": "Do not follow the owner's attack target"
+    },
+    "gui.echo_warrior.summoner.assist.safe.name": {
+      "zh_cn": "保护",
+      "en_us": "Protect"
+    },
+    "gui.echo_warrior.summoner.assist.safe.description": {
+      "zh_cn": "跟随主人攻击，避开村民、铁傀儡和已驯服生物",
+      "en_us": "Follow the owner's attacks, sparing villagers, iron golems and tamed creatures"
+    },
+    "gui.echo_warrior.summoner.assist.all.name": {
+      "zh_cn": "全部",
+      "en_us": "All"
+    },
+    "gui.echo_warrior.summoner.assist.all.description": {
+      "zh_cn": "跟随主人攻击所有允许攻击的目标",
+      "en_us": "Follow the owner's attacks against all valid targets"
+    },
+    "death.attack.quetzalcoatl_curse": {
+      "zh_cn": "%1$s 被羽蛇神的诅咒吞噬了",
+      "en_us": "%1$s succumbed to the curse of Quetzalcoatl"
+    },
+    "death.attack.quetzalcoatl_curse.player": {
+      "zh_cn": "%1$s 在与 %2$s 战斗时被羽蛇神的诅咒吞噬了",
+      "en_us": "%1$s succumbed to the curse of Quetzalcoatl while fighting %2$s"
+    }
+  },
+  "removed_keys": [
+    "gui.echo_warrior.summoner.skill.aztec.macuahuitl.description.1",
+    "gui.echo_warrior.summoner.skill.aztec.macuahuitl.description.2",
+    "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.description.1",
+    "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.description.1",
+    "gui.echo_warrior.summoner.skill.egyptian.cat_god.description.1",
+    "gui.echo_warrior.summoner.skill.egyptian.cat_god.description.2",
+    "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.description.1",
+    "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.description.2",
+    "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.description.1",
+    "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.description.2",
+    "gui.echo_warrior.summoner.skill.guandao.combo.description.1",
+    "gui.echo_warrior.summoner.skill.guandao.combo.description.2",
+    "gui.echo_warrior.summoner.skill.guandao.combo.description.3",
+    "gui.echo_warrior.summoner.skill.roman.endures.description.1",
+    "gui.echo_warrior.summoner.skill.roman.endures.description.2",
+    "gui.echo_warrior.summoner.skill.roman.formation.description.1",
+    "gui.echo_warrior.summoner.skill.roman.formation.description.2"
+  ],
+  "translations": {
+    "zh_tw": {
+      "item.echo_warrior.accessory.battle_worn_whetstone.effect.1": "攻擊力 +20%",
+      "item.echo_warrior.accessory.mountain_burden_blade.effect.1": "攻擊力 +40%",
+      "item.echo_warrior.accessory.fractured_crystal_blade.effect.1": "攻擊力 +40%",
+      "item.echo_warrior.accessory.twin_oath_badge.effect.1": "攻擊力 +10%",
+      "item.echo_warrior.accessory.battle_blindfold.effect.1": "攻擊力 +30%",
+      "item.echo_warrior.accessory.blood_pact_fang.effect.1": "攻擊造成傷害時有30%機率恢復2點＋最大生命值的5%",
+      "item.echo_warrior.accessory.memory_ritual_knife.effect.1": "攻擊力 +20%",
+      "item.echo_warrior.accessory.heart_sprout_amber.effect.1": "最大生命值 +20%",
+      "item.echo_warrior.accessory.feast_ham.effect.1": "最大生命值 +35%",
+      "item.echo_warrior.accessory.peacemaker.effect.1": "最大生命值 +60%",
+      "item.echo_warrior.accessory.peacemaker.effect.2": "攻擊力 -40%",
+      "item.echo_warrior.accessory.sunwheel_garland.effect.1": "白天每2.5秒恢復1點＋最大生命值的1%",
+      "item.echo_warrior.accessory.moondew_bottle.effect.1": "夜晚每2.5秒恢復1點＋最大生命值的1%",
+      "item.echo_warrior.accessory.hollow_bird_bone.effect.2": "最大生命值 -25%",
+      "gui.echo_warrior.summoner.skill.roman.formation.simple.1": "附近友軍攻擊力提高30%。主人持盾時受到的傷害額外降低15%。",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.1": "附近友軍攻擊力提高30%。主人持盾時受到的傷害額外降低15%。",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.2": "<gray>-影響8格內的自身、主人及同一主人所屬英靈。</gray>",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.3": "<gray>-同名光環不疊加。</gray>",
+      "gui.echo_warrior.summoner.skill.roman.endures.simple.1": "舉盾嘲諷5秒，盔甲增加{armor}*點。結束時對周圍敵人造成{release}%*累計傷害。冷卻20秒。",
+      "gui.echo_warrior.summoner.skill.roman.endures.full.1": "舉盾嘲諷5秒，盔甲增加{armor}*點<gray>（12＋<level>等級</level>×0.1）</gray>。結束時對周圍敵人造成{release}%*累計傷害<gray>（100%＋<level>等級</level>×1%）</gray>。冷卻20秒。",
+      "gui.echo_warrior.summoner.skill.roman.endures.full.2": "<gray>-按減傷前受到的傷害累計。</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.1": "自身或主人受擊時，有機率使攻擊者虛弱。",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.2": "直接命中時，自身每種增益與目標每種減益各追加{curse}*點魔法傷害。",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.1": "自身或主人受擊時，有機率使攻擊者虛弱。",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.2": "直接命中時，自身每種增益與目標每種減益各追加{curse}*點魔法傷害<gray>（1＋<level>等級</level>÷100）</gray>。",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.3": "<gray>-60%機率觸發虛弱：75%為虛弱Ⅰ，持續5秒；25%為虛弱Ⅱ，持續3秒。</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.4": "<gray>-日照、生態域強化、追獵各計為1種增益。</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.simple.1": "攻擊有機率造成流血，每秒{bleed}*點傷害，持續6秒。",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.1": "攻擊有機率造成流血，每秒{bleed}*點傷害<gray>（1＋<attack>攻擊力</attack>×10%）</gray>，持續6秒。",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.2": "<gray>-觸發機率：普攻主目標30%，橫掃次要目標與追獵命中15%。</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.simple.1": "普攻變為範圍橫掃，次要目標傷害減半。追獵後強化3秒。",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.1": "普攻變為範圍橫掃，次要目標傷害減半。追獵後強化3秒。",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.2": "<gray>-橫掃半徑4.5格，強化後5格。</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.3": "<gray>-次要目標傷害{half}*點（<attack>攻擊力</attack>×50%），強化後{threequarters}*點（<attack>攻擊力</attack>×75%）。</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.simple.1": "附近苦力怕會倉皇逃竄。埃及弓箭手對亡靈的傷害提高20%。",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.1": "附近苦力怕會倉皇逃竄。埃及弓箭手對亡靈的傷害提高20%。",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.2": "<gray>-影響30格內的苦力怕。</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.simple.1": "命中後流血4秒，每2秒造成{bleed}*點傷害，並減速2秒。",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.1": "命中後流血4秒，每2秒造成{bleed}*點傷害<gray>（1＋<attack>發射時攻擊力</attack>×10%）</gray>，並減速2秒。",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.2": "<gray>-減速為緩速Ⅰ。</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.3": "<gray>-命中會刷新對應來源；各來源分別計時，僅未到期的最強流血造成傷害。</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.simple.1": "忽略{penetration}%*盔甲，{pierce}%*機率貫穿，最多命中2個目標。",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.1": "忽略{penetration}%*盔甲<gray>（35%＋<level>等級</level>×0.5%）</gray>，{pierce}%*機率貫穿<gray>（25%＋<level>等級</level>×0.5%）</gray>，最多命中2個目標。",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.2": "<gray>-穿甲超過100%的部分轉為額外傷害。</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.simple.1": "施展四段連擊。前三段使敵人小幅浮空，並使其近戰攻擊距離降低80%，持續2秒。冷卻12秒。",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.1": "施展四段連擊。前三段使敵人小幅浮空，並使其近戰攻擊距離降低80%，持續2秒。冷卻12秒。",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.2": "<gray>-四段傷害{hit1}*／{hit2}*／{hit1}*／{hit4}*（<attack>攻擊力</attack>×70%／100%／70%／180%，受越戰越勇加成）。</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.3": "<gray>-前三段每次命中均會刷新減益。</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.4": "<gray>-受到近戰或投射物傷害時，冷卻縮短0.5秒。</gray>",
+      "gui.echo_warrior.summoner.section.assist": "協助戰鬥",
+      "gui.echo_warrior.summoner.assist.off.name": "關閉",
+      "gui.echo_warrior.summoner.assist.off.description": "不協助攻擊主人的目標",
+      "gui.echo_warrior.summoner.assist.safe.name": "保護",
+      "gui.echo_warrior.summoner.assist.safe.description": "跟隨主人攻擊，避開村民、鐵魔像和已馴服生物",
+      "gui.echo_warrior.summoner.assist.all.name": "全部",
+      "gui.echo_warrior.summoner.assist.all.description": "跟隨主人攻擊所有允許攻擊的目標",
+      "death.attack.quetzalcoatl_curse": "%1$s 被羽蛇神的詛咒吞噬了",
+      "death.attack.quetzalcoatl_curse.player": "%1$s 在與 %2$s 戰鬥時被羽蛇神的詛咒吞噬了"
+    },
+    "ja_jp": {
+      "item.echo_warrior.accessory.battle_worn_whetstone.effect.1": "攻撃力 +20%",
+      "item.echo_warrior.accessory.mountain_burden_blade.effect.1": "攻撃力 +40%",
+      "item.echo_warrior.accessory.fractured_crystal_blade.effect.1": "攻撃力 +40%",
+      "item.echo_warrior.accessory.twin_oath_badge.effect.1": "攻撃力 +10%",
+      "item.echo_warrior.accessory.battle_blindfold.effect.1": "攻撃力 +30%",
+      "item.echo_warrior.accessory.blood_pact_fang.effect.1": "攻撃でダメージを与えると、30%の確率で体力を2＋最大体力の5%回復",
+      "item.echo_warrior.accessory.memory_ritual_knife.effect.1": "攻撃力 +20%",
+      "item.echo_warrior.accessory.heart_sprout_amber.effect.1": "最大体力 +20%",
+      "item.echo_warrior.accessory.feast_ham.effect.1": "最大体力 +35%",
+      "item.echo_warrior.accessory.peacemaker.effect.1": "最大体力 +60%",
+      "item.echo_warrior.accessory.peacemaker.effect.2": "攻撃力 -40%",
+      "item.echo_warrior.accessory.sunwheel_garland.effect.1": "昼間、2.5秒ごとに体力を1＋最大体力の1%回復",
+      "item.echo_warrior.accessory.moondew_bottle.effect.1": "夜間、2.5秒ごとに体力を1＋最大体力の1%回復",
+      "item.echo_warrior.accessory.hollow_bird_bone.effect.2": "最大体力 -25%",
+      "gui.echo_warrior.summoner.skill.roman.formation.simple.1": "周囲の味方の攻撃力が30%増加。所有者は盾を持っている間、受けるダメージがさらに15%減少する。",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.1": "周囲の味方の攻撃力が30%増加。所有者は盾を持っている間、受けるダメージがさらに15%減少する。",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.2": "<gray>-8ブロック以内の自身・所有者・同じ所有者のエコーに適用。</gray>",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.3": "<gray>-同じオーラの効果は重複しない。</gray>",
+      "gui.echo_warrior.summoner.skill.roman.endures.simple.1": "5秒間盾を構えて挑発し、防御力が{armor}*増加。終了時、蓄積したダメージの{release}%*を周囲の敵に与える。クールダウン20秒。",
+      "gui.echo_warrior.summoner.skill.roman.endures.full.1": "5秒間盾を構えて挑発し、防御力が{armor}*増加<gray>（12＋<level>レベル</level>×0.1）</gray>。終了時、蓄積したダメージの{release}%*<gray>（100%＋<level>レベル</level>×1%）</gray>を周囲の敵に与える。クールダウン20秒。",
+      "gui.echo_warrior.summoner.skill.roman.endures.full.2": "<gray>-軽減前の被ダメージを蓄積する。</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.1": "自身か所有者が攻撃されると、攻撃者を弱体化させることがある。",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.2": "直撃時、自身の強化効果と対象の弱体効果を合計し、1種類につき{curse}*の追加魔法ダメージを与える。",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.1": "自身か所有者が攻撃されると、攻撃者を弱体化させることがある。",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.2": "直撃時、自身の強化効果と対象の弱体効果を合計し、1種類につき{curse}*の追加魔法ダメージ<gray>（1＋<level>レベル</level>÷100）</gray>を与える。",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.3": "<gray>-60%の確率で弱体化を付与：75%で弱体化Ⅰを5秒間、25%で弱体化Ⅱを3秒間。</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.4": "<gray>-日光・得意なバイオーム・追撃による強化は各1種類の強化効果として数える。</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.simple.1": "攻撃時、6秒間の出血を与えることがある。毎秒{bleed}*のダメージ。",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.1": "攻撃時、6秒間の出血を与えることがある。毎秒{bleed}*のダメージ<gray>（1＋<attack>攻撃力</attack>×10%）</gray>。",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.2": "<gray>-発生確率：通常攻撃の主対象は30%、薙ぎ払いの主対象以外と追撃の命中対象は15%。</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.simple.1": "通常攻撃で周囲を薙ぎ払い、主対象以外へのダメージは半減。追撃後は3秒間強化される。",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.1": "通常攻撃で周囲を薙ぎ払い、主対象以外へのダメージは半減。追撃後は3秒間強化される。",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.2": "<gray>-薙ぎ払いの半径は4.5ブロック、強化中は5ブロック。</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.3": "<gray>-主対象以外へのダメージは{half}*（<attack>攻撃力</attack>×50%）、強化中は{threequarters}*（<attack>攻撃力</attack>×75%）。</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.simple.1": "近くのクリーパーが怯えて逃げる。エジプト弓兵のアンデッドへのダメージが20%増加。",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.1": "近くのクリーパーが怯えて逃げる。エジプト弓兵のアンデッドへのダメージが20%増加。",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.2": "<gray>-30ブロック以内のクリーパーに適用。</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.simple.1": "命中時、4秒間の出血を与え、2秒ごとに{bleed}*のダメージ。さらに2秒間、移動速度を低下させる。",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.1": "命中時、4秒間の出血を与え、2秒ごとに{bleed}*のダメージ<gray>（1＋<attack>発射時の攻撃力</attack>×10%）</gray>。さらに2秒間、移動速度を低下させる。",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.2": "<gray>-移動速度低下Ⅰを付与する。</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.3": "<gray>-命中時に同じ発生源の出血を更新。持続時間は発生源ごとに管理され、有効な出血のうち最も強いものだけがダメージを与える。</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.simple.1": "防御力を{penetration}%*無視し、{pierce}%*の確率で貫通。最大2体に命中する。",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.1": "防御力を{penetration}%*無視<gray>（35%＋<level>レベル</level>×0.5%）</gray>し、{pierce}%*の確率で貫通<gray>（25%＋<level>レベル</level>×0.5%）</gray>。最大2体に命中する。",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.2": "<gray>-防御力無視率が100%を超えた分は追加ダメージになる。</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.simple.1": "4連撃を繰り出す。最初の3撃は敵をわずかに打ち上げ、敵の近接攻撃のリーチを2秒間80%短縮する。クールダウン12秒。",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.1": "4連撃を繰り出す。最初の3撃は敵をわずかに打ち上げ、敵の近接攻撃のリーチを2秒間80%短縮する。クールダウン12秒。",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.2": "<gray>-各攻撃のダメージ：{hit1}*／{hit2}*／{hit1}*／{hit4}*（<attack>攻撃力</attack>×70%／100%／70%／180%、「戦うほど勇猛に」の強化が適用）。</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.3": "<gray>-最初の3撃は命中するたびに弱体効果を更新する。</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.4": "<gray>-近接攻撃か飛び道具でダメージを受けると、クールダウンが0.5秒短縮。</gray>",
+      "gui.echo_warrior.summoner.section.assist": "戦闘支援",
+      "gui.echo_warrior.summoner.assist.off.name": "オフ",
+      "gui.echo_warrior.summoner.assist.off.description": "所有者の攻撃に合わせた攻撃はしない",
+      "gui.echo_warrior.summoner.assist.safe.name": "保護",
+      "gui.echo_warrior.summoner.assist.safe.description": "所有者に合わせて攻撃するが、村人・アイアンゴーレム・手懐けられた生物は攻撃しない",
+      "gui.echo_warrior.summoner.assist.all.name": "すべて",
+      "gui.echo_warrior.summoner.assist.all.description": "所有者に合わせて、攻撃可能なすべての対象を攻撃する",
+      "death.attack.quetzalcoatl_curse": "%1$sはケツァルコアトルの呪いに倒れた",
+      "death.attack.quetzalcoatl_curse.player": "%1$sは%2$sとの戦闘中にケツァルコアトルの呪いに倒れた"
+    },
+    "ru_ru": {
+      "item.echo_warrior.accessory.battle_worn_whetstone.effect.1": "Урон при атаке +20%",
+      "item.echo_warrior.accessory.mountain_burden_blade.effect.1": "Урон при атаке +40%",
+      "item.echo_warrior.accessory.fractured_crystal_blade.effect.1": "Урон при атаке +40%",
+      "item.echo_warrior.accessory.twin_oath_badge.effect.1": "Урон при атаке +10%",
+      "item.echo_warrior.accessory.battle_blindfold.effect.1": "Урон при атаке +30%",
+      "item.echo_warrior.accessory.blood_pact_fang.effect.1": "Наносящие урон атаки с шансом 30% восстанавливают 2 ед. здоровья + 5% от максимального здоровья",
+      "item.echo_warrior.accessory.memory_ritual_knife.effect.1": "Урон при атаке +20%",
+      "item.echo_warrior.accessory.heart_sprout_amber.effect.1": "Максимальное здоровье +20%",
+      "item.echo_warrior.accessory.feast_ham.effect.1": "Максимальное здоровье +35%",
+      "item.echo_warrior.accessory.peacemaker.effect.1": "Максимальное здоровье +60%",
+      "item.echo_warrior.accessory.peacemaker.effect.2": "Урон при атаке -40%",
+      "item.echo_warrior.accessory.sunwheel_garland.effect.1": "Днём восстанавливает 1 ед. здоровья + 1% от максимального здоровья каждые 2,5 с",
+      "item.echo_warrior.accessory.moondew_bottle.effect.1": "Ночью восстанавливает 1 ед. здоровья + 1% от максимального здоровья каждые 2,5 с",
+      "item.echo_warrior.accessory.hollow_bird_bone.effect.2": "Максимальное здоровье -25%",
+      "gui.echo_warrior.summoner.skill.roman.formation.simple.1": "Ближайшие союзники наносят на 30% больше урона при атаке. Пока владелец держит щит, он также получает на 15% меньше урона.",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.1": "Ближайшие союзники наносят на 30% больше урона при атаке. Пока владелец держит щит, он также получает на 15% меньше урона.",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.2": "<gray>-Действует на этого отголоска, его владельца и отголосков того же владельца в пределах 8 блоков.</gray>",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.3": "<gray>-Не суммируется с такой же аурой.</gray>",
+      "gui.echo_warrior.summoner.skill.roman.endures.simple.1": "Поднимает щит и провоцирует врагов на 5 с, получая {armor}* брони. Затем наносит ближайшим врагам {release}%* накопленного урона. Перезарядка: 20 с.",
+      "gui.echo_warrior.summoner.skill.roman.endures.full.1": "Поднимает щит и провоцирует врагов на 5 с, получая {armor}* брони <gray>(12 + <level>уровень</level> × 0,1)</gray>. Затем наносит ближайшим врагам {release}%* накопленного урона <gray>(100% + <level>уровень</level> × 1%)</gray>. Перезарядка: 20 с.",
+      "gui.echo_warrior.summoner.skill.roman.endures.full.2": "<gray>-Накапливает входящий урон до его снижения.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.1": "Когда этот отголосок или его владелец получает удар, нападающий может получить слабость.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.2": "Прямые попадания наносят {curse}* дополнительного магического урона за каждый положительный эффект на этом отголоске и каждый отрицательный эффект на цели.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.1": "Когда этот отголосок или его владелец получает удар, нападающий может получить слабость.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.2": "Прямые попадания наносят {curse}* дополнительного магического урона <gray>(1 + <level>уровень</level> ÷ 100)</gray> за каждый положительный эффект на этом отголоске и каждый отрицательный эффект на цели.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.3": "<gray>-Шанс наложить слабость: 60%. При срабатывании: 75% — Слабость I на 5 с; 25% — Слабость II на 3 с.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.4": "<gray>-Солнечный свет, благоприятный биом и «Преследование» учитываются как 1 положительный эффект каждый.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.simple.1": "Атаки могут вызвать кровотечение: {bleed}* урона каждую секунду в течение 6 с.",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.1": "Атаки могут вызвать кровотечение: {bleed}* урона <gray>(1 + <attack>урон при атаке</attack> × 10%)</gray> каждую секунду в течение 6 с.",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.2": "<gray>-Шанс: 30% для основной цели в ближнем бою; 15% для второстепенных целей размаха и целей «Преследования».</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.simple.1": "Обычные атаки бьют с размаха по области, нанося второстепенным целям половину урона. Усиливаются на 3 с после «Преследования».",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.1": "Обычные атаки бьют с размаха по области, нанося второстепенным целям половину урона. Усиливаются на 3 с после «Преследования».",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.2": "<gray>-Радиус размаха: 4,5 блока; при усилении — 5 блоков.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.3": "<gray>-Урон второстепенным целям: {half}* (<attack>урон при атаке</attack> × 50%); при усилении — {threequarters}* (<attack>урон при атаке</attack> × 75%).</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.simple.1": "Ближайшие криперы в панике убегают. Египетский лучник наносит нежити на 20% больше урона.",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.1": "Ближайшие криперы в панике убегают. Египетский лучник наносит нежити на 20% больше урона.",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.2": "<gray>-Действует на криперов в пределах 30 блоков.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.simple.1": "Попадания вызывают кровотечение на 4 с, наносящее {bleed}* урона каждые 2 с, и замедляют цель на 2 с.",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.1": "Попадания вызывают кровотечение на 4 с, наносящее {bleed}* урона <gray>(1 + <attack>урон при атаке в момент выстрела</attack> × 10%)</gray> каждые 2 с, и замедляют цель на 2 с.",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.2": "<gray>-Накладывает Замедление I.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.3": "<gray>-Попадания обновляют кровотечение от своего источника. Длительность каждого источника отсчитывается отдельно; урон наносит только сильнейшее активное кровотечение.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.simple.1": "Игнорирует {penetration}%* брони, с шансом {pierce}%* пробивает цель насквозь. Поражает до 2 целей.",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.1": "Игнорирует {penetration}%* брони <gray>(35% + <level>уровень</level> × 0,5%)</gray>, с шансом {pierce}%* пробивает цель насквозь <gray>(25% + <level>уровень</level> × 0,5%)</gray>. Поражает до 2 целей.",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.2": "<gray>-Пробивание брони свыше 100% превращается в дополнительный урон.</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.simple.1": "Наносит четыре удара. Первые три слегка подбрасывают врагов и снижают дальность их атак в ближнем бою на 80% на 2 с. Перезарядка: 12 с.",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.1": "Наносит четыре удара. Первые три слегка подбрасывают врагов и снижают дальность их атак в ближнем бою на 80% на 2 с. Перезарядка: 12 с.",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.2": "<gray>-Урон ударов: {hit1}* / {hit2}* / {hit1}* / {hit4}* (<attack>урон при атаке</attack> × 70% / 100% / 70% / 180%, усиливается «Растущей доблестью»).</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.3": "<gray>-Каждое из первых трёх попаданий обновляет отрицательный эффект.</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.4": "<gray>-Получение урона в ближнем бою или от снарядов сокращает перезарядку на 0,5 с.</gray>",
+      "gui.echo_warrior.summoner.section.assist": "Помощь",
+      "gui.echo_warrior.summoner.assist.off.name": "Выкл.",
+      "gui.echo_warrior.summoner.assist.off.description": "Не поддерживает атаки владельца",
+      "gui.echo_warrior.summoner.assist.safe.name": "Защита",
+      "gui.echo_warrior.summoner.assist.safe.description": "Поддерживает атаки владельца, щадя жителей, железных големов и приручённых существ",
+      "gui.echo_warrior.summoner.assist.all.name": "Все",
+      "gui.echo_warrior.summoner.assist.all.description": "Поддерживает атаки владельца по всем допустимым целям",
+      "death.attack.quetzalcoatl_curse": "%1$s погиб от проклятия Кетцалькоатля",
+      "death.attack.quetzalcoatl_curse.player": "%1$s погиб от проклятия Кетцалькоатля в бою с %2$s"
+    },
+    "pt_br": {
+      "item.echo_warrior.accessory.battle_worn_whetstone.effect.1": "Dano de ataque +20%",
+      "item.echo_warrior.accessory.mountain_burden_blade.effect.1": "Dano de ataque +40%",
+      "item.echo_warrior.accessory.fractured_crystal_blade.effect.1": "Dano de ataque +40%",
+      "item.echo_warrior.accessory.twin_oath_badge.effect.1": "Dano de ataque +10%",
+      "item.echo_warrior.accessory.battle_blindfold.effect.1": "Dano de ataque +30%",
+      "item.echo_warrior.accessory.blood_pact_fang.effect.1": "Ataques que causam dano têm 30% de chance de restaurar 2 pontos de vida + 5% da vida máxima",
+      "item.echo_warrior.accessory.memory_ritual_knife.effect.1": "Dano de ataque +20%",
+      "item.echo_warrior.accessory.heart_sprout_amber.effect.1": "Vida máxima +20%",
+      "item.echo_warrior.accessory.feast_ham.effect.1": "Vida máxima +35%",
+      "item.echo_warrior.accessory.peacemaker.effect.1": "Vida máxima +60%",
+      "item.echo_warrior.accessory.peacemaker.effect.2": "Dano de ataque -40%",
+      "item.echo_warrior.accessory.sunwheel_garland.effect.1": "Durante o dia, restaura 1 ponto de vida + 1% da vida máxima a cada 2,5 s",
+      "item.echo_warrior.accessory.moondew_bottle.effect.1": "Durante a noite, restaura 1 ponto de vida + 1% da vida máxima a cada 2,5 s",
+      "item.echo_warrior.accessory.hollow_bird_bone.effect.2": "Vida máxima -25%",
+      "gui.echo_warrior.summoner.skill.roman.formation.simple.1": "O dano de ataque dos aliados próximos aumenta em 30%. Enquanto segura um escudo, o dono também recebe 15% menos dano.",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.1": "O dano de ataque dos aliados próximos aumenta em 30%. Enquanto segura um escudo, o dono também recebe 15% menos dano.",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.2": "<gray>-Afeta este Eco, seu dono e os Ecos do mesmo dono em até 8 blocos.</gray>",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.3": "<gray>-Não se acumula com a mesma aura.</gray>",
+      "gui.echo_warrior.summoner.skill.roman.endures.simple.1": "Ergue o escudo e provoca os inimigos por 5 s, ganhando {armor}* de armadura. Depois, causa {release}%* do dano acumulado aos inimigos próximos. Recarga: 20 s.",
+      "gui.echo_warrior.summoner.skill.roman.endures.full.1": "Ergue o escudo e provoca os inimigos por 5 s, ganhando {armor}* de armadura <gray>(12 + <level>nível</level> × 0,1)</gray>. Depois, causa {release}%* do dano acumulado <gray>(100% + <level>nível</level> × 1%)</gray> aos inimigos próximos. Recarga: 20 s.",
+      "gui.echo_warrior.summoner.skill.roman.endures.full.2": "<gray>-Acumula o dano recebido antes da redução de dano.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.1": "Quando este Eco ou seu dono é atingido, o agressor pode receber Fraqueza.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.2": "Acertos diretos causam {curse}* de dano mágico adicional por cada efeito benéfico neste Eco e cada efeito nocivo no alvo.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.1": "Quando este Eco ou seu dono é atingido, o agressor pode receber Fraqueza.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.2": "Acertos diretos causam {curse}* de dano mágico adicional <gray>(1 + <level>nível</level> ÷ 100)</gray> por cada efeito benéfico neste Eco e cada efeito nocivo no alvo.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.3": "<gray>-60% de chance de aplicar Fraqueza: em 75% dos casos, Fraqueza I por 5 s; nos outros 25%, Fraqueza II por 3 s.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.4": "<gray>-Luz do sol, bioma favorável e Perseguição contam como 1 efeito benéfico cada.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.simple.1": "Ataques podem causar sangramento, com {bleed}* de dano a cada segundo por 6 s.",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.1": "Ataques podem causar sangramento, com {bleed}* de dano <gray>(1 + <attack>dano de ataque</attack> × 10%)</gray> a cada segundo por 6 s.",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.2": "<gray>-Chance: 30% no alvo principal corpo a corpo; 15% nos alvos secundários do golpe em área e nos alvos de Perseguição.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.simple.1": "Ataques normais atingem uma área, causando metade do dano aos alvos secundários. Ficam fortalecidos por 3 s após Perseguição.",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.1": "Ataques normais atingem uma área, causando metade do dano aos alvos secundários. Ficam fortalecidos por 3 s após Perseguição.",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.2": "<gray>-Raio do golpe em área: 4,5 blocos, ou 5 enquanto fortalecido.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.3": "<gray>-Dano aos alvos secundários: {half}* (<attack>dano de ataque</attack> × 50%), ou {threequarters}* (<attack>dano de ataque</attack> × 75%) enquanto fortalecido.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.simple.1": "Creepers próximos fogem em pânico. O Arqueiro Egípcio causa 20% a mais de dano a mortos-vivos.",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.1": "Creepers próximos fogem em pânico. O Arqueiro Egípcio causa 20% a mais de dano a mortos-vivos.",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.2": "<gray>-Afeta creepers em até 30 blocos.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.simple.1": "Acertos causam sangramento por 4 s, com {bleed}* de dano a cada 2 s, e reduzem a velocidade do alvo por 2 s.",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.1": "Acertos causam sangramento por 4 s, com {bleed}* de dano <gray>(1 + <attack>dano de ataque no disparo</attack> × 10%)</gray> a cada 2 s, e reduzem a velocidade do alvo por 2 s.",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.2": "<gray>-Aplica Lentidão I.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.3": "<gray>-Acertos renovam o sangramento da própria fonte. Cada fonte tem duração independente; só o sangramento ativo mais forte causa dano.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.simple.1": "Ignora {penetration}%* da armadura, com {pierce}%* de chance de atravessar o alvo. Atinge até 2 alvos.",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.1": "Ignora {penetration}%* da armadura <gray>(35% + <level>nível</level> × 0,5%)</gray>, com {pierce}%* de chance de atravessar o alvo <gray>(25% + <level>nível</level> × 0,5%)</gray>. Atinge até 2 alvos.",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.2": "<gray>-A penetração de armadura acima de 100% se converte em dano adicional.</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.simple.1": "Executa quatro golpes. Os três primeiros erguem levemente os inimigos e reduzem o alcance dos ataques corpo a corpo deles em 80% por 2 s. Recarga: 12 s.",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.1": "Executa quatro golpes. Os três primeiros erguem levemente os inimigos e reduzem o alcance dos ataques corpo a corpo deles em 80% por 2 s. Recarga: 12 s.",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.2": "<gray>-Dano dos golpes: {hit1}* / {hit2}* / {hit1}* / {hit4}* (<attack>dano de ataque</attack> × 70% / 100% / 70% / 180%, afetado por Bravura Crescente).</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.3": "<gray>-Cada um dos três primeiros acertos renova o efeito nocivo.</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.4": "<gray>-Receber dano corpo a corpo ou de projéteis reduz a recarga em 0,5 s.</gray>",
+      "gui.echo_warrior.summoner.section.assist": "Apoio",
+      "gui.echo_warrior.summoner.assist.off.name": "Desligado",
+      "gui.echo_warrior.summoner.assist.off.description": "Não acompanha os ataques do dono",
+      "gui.echo_warrior.summoner.assist.safe.name": "Proteger",
+      "gui.echo_warrior.summoner.assist.safe.description": "Acompanha os ataques do dono, poupando aldeões, golens de ferro e criaturas domesticadas",
+      "gui.echo_warrior.summoner.assist.all.name": "Todos",
+      "gui.echo_warrior.summoner.assist.all.description": "Acompanha os ataques do dono contra todos os alvos válidos",
+      "death.attack.quetzalcoatl_curse": "%1$s sucumbiu à maldição de Quetzalcoatl",
+      "death.attack.quetzalcoatl_curse.player": "%1$s sucumbiu à maldição de Quetzalcoatl enquanto lutava contra %2$s"
+    },
+    "es_es": {
+      "item.echo_warrior.accessory.battle_worn_whetstone.effect.1": "Daño de ataque +20 %",
+      "item.echo_warrior.accessory.mountain_burden_blade.effect.1": "Daño de ataque +40 %",
+      "item.echo_warrior.accessory.fractured_crystal_blade.effect.1": "Daño de ataque +40 %",
+      "item.echo_warrior.accessory.twin_oath_badge.effect.1": "Daño de ataque +10 %",
+      "item.echo_warrior.accessory.battle_blindfold.effect.1": "Daño de ataque +30 %",
+      "item.echo_warrior.accessory.blood_pact_fang.effect.1": "Los ataques que infligen daño tienen un 30 % de probabilidad de restaurar 2 puntos de salud + el 5 % de la salud máxima",
+      "item.echo_warrior.accessory.memory_ritual_knife.effect.1": "Daño de ataque +20 %",
+      "item.echo_warrior.accessory.heart_sprout_amber.effect.1": "Salud máxima +20 %",
+      "item.echo_warrior.accessory.feast_ham.effect.1": "Salud máxima +35 %",
+      "item.echo_warrior.accessory.peacemaker.effect.1": "Salud máxima +60 %",
+      "item.echo_warrior.accessory.peacemaker.effect.2": "Daño de ataque -40 %",
+      "item.echo_warrior.accessory.sunwheel_garland.effect.1": "Durante el día, restaura 1 punto de salud + el 1 % de la salud máxima cada 2,5 s",
+      "item.echo_warrior.accessory.moondew_bottle.effect.1": "Durante la noche, restaura 1 punto de salud + el 1 % de la salud máxima cada 2,5 s",
+      "item.echo_warrior.accessory.hollow_bird_bone.effect.2": "Salud máxima -25 %",
+      "gui.echo_warrior.summoner.skill.roman.formation.simple.1": "Los aliados cercanos obtienen un 30 % más de daño de ataque. El dueño recibe además un 15 % menos de daño mientras sostiene un escudo.",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.1": "Los aliados cercanos obtienen un 30 % más de daño de ataque. El dueño recibe además un 15 % menos de daño mientras sostiene un escudo.",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.2": "<gray>-Afecta a este Eco, a su dueño y a sus otros Ecos en un radio de 8 bloques.</gray>",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.3": "<gray>-No se acumula con la misma aura.</gray>",
+      "gui.echo_warrior.summoner.skill.roman.endures.simple.1": "Alza el escudo y provoca a los enemigos durante 5 s, ganando {armor}* puntos de armadura. Al terminar, inflige a los enemigos cercanos un {release} %* del daño acumulado. Recarga: 20 s.",
+      "gui.echo_warrior.summoner.skill.roman.endures.full.1": "Alza el escudo y provoca a los enemigos durante 5 s, ganando {armor}* puntos de armadura <gray>(12 + <level>nivel</level> × 0,1)</gray>. Al terminar, inflige a los enemigos cercanos un {release} %* del daño acumulado <gray>(100 % + <level>nivel</level> × 1 %)</gray>. Recarga: 20 s.",
+      "gui.echo_warrior.summoner.skill.roman.endures.full.2": "<gray>-Acumula el daño recibido antes de aplicar las reducciones.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.1": "Cuando este Eco o su dueño recibe un golpe, el atacante puede quedar debilitado.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.2": "Los golpes directos infligen {curse}* de daño mágico adicional por cada efecto beneficioso de este Eco y por cada efecto perjudicial del objetivo.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.1": "Cuando este Eco o su dueño recibe un golpe, el atacante puede quedar debilitado.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.2": "Los golpes directos infligen {curse}* de daño mágico adicional <gray>(1 + <level>nivel</level> ÷ 100)</gray> por cada efecto beneficioso de este Eco y por cada efecto perjudicial del objetivo.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.3": "<gray>-60 % de probabilidad de debilitar: Debilidad I durante 5 s (75 %) o Debilidad II durante 3 s (25 %).</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.4": "<gray>-La luz solar, el bioma favorable y Persecución cuentan cada uno como un efecto beneficioso.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.simple.1": "Los ataques pueden causar una hemorragia que inflige {bleed}* de daño por segundo durante 6 s.",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.1": "Los ataques pueden causar una hemorragia que inflige {bleed}* de daño <gray>(1 + <attack>daño de ataque</attack> × 10 %)</gray> por segundo durante 6 s.",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.2": "<gray>-Probabilidad: 30 % en el objetivo principal del ataque normal; 15 % en objetivos secundarios del barrido y en impactos de Persecución.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.simple.1": "Los ataques normales barren un área e infligen la mitad de daño a los objetivos secundarios. Se potencian durante 3 s tras Persecución.",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.1": "Los ataques normales barren un área e infligen la mitad de daño a los objetivos secundarios. Se potencian durante 3 s tras Persecución.",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.2": "<gray>-Radio del barrido: 4,5 bloques; 5 al potenciarse.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.3": "<gray>-Daño a objetivos secundarios: {half}* (<attack>daño de ataque</attack> × 50 %); {threequarters}* (<attack>daño de ataque</attack> × 75 %) al potenciarse.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.simple.1": "Los creepers cercanos huyen despavoridos. El arquero egipcio inflige un 20 % más de daño a los no muertos.",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.1": "Los creepers cercanos huyen despavoridos. El arquero egipcio inflige un 20 % más de daño a los no muertos.",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.2": "<gray>-Afecta a los creepers en un radio de 30 bloques.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.simple.1": "Los impactos causan hemorragia durante 4 s, con {bleed}* de daño cada 2 s, y ralentizan al objetivo durante 2 s.",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.1": "Los impactos causan hemorragia durante 4 s, con {bleed}* de daño <gray>(1 + <attack>daño de ataque al disparar</attack> × 10 %)</gray> cada 2 s, y ralentizan al objetivo durante 2 s.",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.2": "<gray>-Aplica Lentitud I.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.3": "<gray>-Los impactos renuevan la hemorragia de su fuente. Cada fuente expira por separado; solo inflige daño la hemorragia activa más fuerte.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.simple.1": "Ignora un {penetration} %* de la armadura y tiene un {pierce} %* de probabilidad de atravesar al objetivo. Alcanza hasta 2 objetivos.",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.1": "Ignora un {penetration} %* de la armadura <gray>(35 % + <level>nivel</level> × 0,5 %)</gray> y tiene un {pierce} %* de probabilidad de atravesar al objetivo <gray>(25 % + <level>nivel</level> × 0,5 %)</gray>. Alcanza hasta 2 objetivos.",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.2": "<gray>-La penetración de armadura que supere el 100 % se convierte en daño adicional.</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.simple.1": "Ejecuta cuatro golpes. Los tres primeros elevan ligeramente a los enemigos y reducen su alcance cuerpo a cuerpo un 80 % durante 2 s. Recarga: 12 s.",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.1": "Ejecuta cuatro golpes. Los tres primeros elevan ligeramente a los enemigos y reducen su alcance cuerpo a cuerpo un 80 % durante 2 s. Recarga: 12 s.",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.2": "<gray>-Daño por golpe: {hit1}* / {hit2}* / {hit1}* / {hit4}* (<attack>daño de ataque</attack> × 70 % / 100 % / 70 % / 180 %, con la bonificación de Valor creciente).</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.3": "<gray>-Cada uno de los tres primeros golpes renueva el efecto perjudicial.</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.4": "<gray>-Recibir daño cuerpo a cuerpo o de proyectiles reduce la recarga en 0,5 s.</gray>",
+      "gui.echo_warrior.summoner.section.assist": "Asistencia",
+      "gui.echo_warrior.summoner.assist.off.name": "Desactivada",
+      "gui.echo_warrior.summoner.assist.off.description": "No se suma a los ataques del dueño",
+      "gui.echo_warrior.summoner.assist.safe.name": "Proteger",
+      "gui.echo_warrior.summoner.assist.safe.description": "Se suma a los ataques del dueño, sin atacar a aldeanos, gólems de hierro ni criaturas domesticadas",
+      "gui.echo_warrior.summoner.assist.all.name": "Todos",
+      "gui.echo_warrior.summoner.assist.all.description": "Se suma a los ataques del dueño contra cualquier objetivo permitido",
+      "death.attack.quetzalcoatl_curse": "%1$s sucumbió a la maldición de Quetzalcóatl",
+      "death.attack.quetzalcoatl_curse.player": "%1$s sucumbió a la maldición de Quetzalcóatl mientras luchaba contra %2$s"
+    },
+    "es_mx": {
+      "item.echo_warrior.accessory.battle_worn_whetstone.effect.1": "Daño de ataque +20 %",
+      "item.echo_warrior.accessory.mountain_burden_blade.effect.1": "Daño de ataque +40 %",
+      "item.echo_warrior.accessory.fractured_crystal_blade.effect.1": "Daño de ataque +40 %",
+      "item.echo_warrior.accessory.twin_oath_badge.effect.1": "Daño de ataque +10 %",
+      "item.echo_warrior.accessory.battle_blindfold.effect.1": "Daño de ataque +30 %",
+      "item.echo_warrior.accessory.blood_pact_fang.effect.1": "Los ataques que infligen daño tienen un 30 % de probabilidad de restaurar 2 puntos de salud + el 5 % de la salud máxima",
+      "item.echo_warrior.accessory.memory_ritual_knife.effect.1": "Daño de ataque +20 %",
+      "item.echo_warrior.accessory.heart_sprout_amber.effect.1": "Salud máxima +20 %",
+      "item.echo_warrior.accessory.feast_ham.effect.1": "Salud máxima +35 %",
+      "item.echo_warrior.accessory.peacemaker.effect.1": "Salud máxima +60 %",
+      "item.echo_warrior.accessory.peacemaker.effect.2": "Daño de ataque -40 %",
+      "item.echo_warrior.accessory.sunwheel_garland.effect.1": "Durante el día, restaura 1 punto de salud + el 1 % de la salud máxima cada 2,5 s",
+      "item.echo_warrior.accessory.moondew_bottle.effect.1": "Durante la noche, restaura 1 punto de salud + el 1 % de la salud máxima cada 2,5 s",
+      "item.echo_warrior.accessory.hollow_bird_bone.effect.2": "Salud máxima -25 %",
+      "gui.echo_warrior.summoner.skill.roman.formation.simple.1": "Los aliados cercanos obtienen un 30 % más de daño de ataque. El dueño recibe además un 15 % menos de daño mientras sostiene un escudo.",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.1": "Los aliados cercanos obtienen un 30 % más de daño de ataque. El dueño recibe además un 15 % menos de daño mientras sostiene un escudo.",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.2": "<gray>-Afecta a este Eco, a su dueño y a sus otros Ecos en un radio de 8 bloques.</gray>",
+      "gui.echo_warrior.summoner.skill.roman.formation.full.3": "<gray>-No se acumula con la misma aura.</gray>",
+      "gui.echo_warrior.summoner.skill.roman.endures.simple.1": "Alza el escudo y provoca a los enemigos durante 5 s, ganando {armor}* puntos de armadura. Al terminar, inflige a los enemigos cercanos un {release} %* del daño acumulado. Recarga: 20 s.",
+      "gui.echo_warrior.summoner.skill.roman.endures.full.1": "Alza el escudo y provoca a los enemigos durante 5 s, ganando {armor}* puntos de armadura <gray>(12 + <level>nivel</level> × 0,1)</gray>. Al terminar, inflige a los enemigos cercanos un {release} %* del daño acumulado <gray>(100 % + <level>nivel</level> × 1 %)</gray>. Recarga: 20 s.",
+      "gui.echo_warrior.summoner.skill.roman.endures.full.2": "<gray>-Acumula el daño recibido antes de aplicar las reducciones.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.1": "Cuando este Eco o su dueño recibe un golpe, el atacante puede quedar debilitado.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.simple.2": "Los golpes directos infligen {curse}* de daño mágico adicional por cada efecto beneficioso de este Eco y por cada efecto perjudicial del objetivo.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.1": "Cuando este Eco o su dueño recibe un golpe, el atacante puede quedar debilitado.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.2": "Los golpes directos infligen {curse}* de daño mágico adicional <gray>(1 + <level>nivel</level> ÷ 100)</gray> por cada efecto beneficioso de este Eco y por cada efecto perjudicial del objetivo.",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.3": "<gray>-60 % de probabilidad de debilitar: Debilidad I durante 5 s (75 %) o Debilidad II durante 3 s (25 %).</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.quetzalcoatls_curse.full.4": "<gray>-La luz solar, el bioma favorable y Persecución cuentan cada uno como un efecto beneficioso.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.simple.1": "Los ataques pueden causar una hemorragia que inflige {bleed}* de daño por segundo durante 6 s.",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.1": "Los ataques pueden causar una hemorragia que inflige {bleed}* de daño <gray>(1 + <attack>daño de ataque</attack> × 10 %)</gray> por segundo durante 6 s.",
+      "gui.echo_warrior.summoner.skill.aztec.obsidian_wound.full.2": "<gray>-Probabilidad: 30 % en el objetivo principal del ataque normal; 15 % en objetivos secundarios del barrido y en impactos de Persecución.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.simple.1": "Los ataques normales barren un área e infligen la mitad de daño a los objetivos secundarios. Se potencian durante 3 s tras Persecución.",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.1": "Los ataques normales barren un área e infligen la mitad de daño a los objetivos secundarios. Se potencian durante 3 s tras Persecución.",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.2": "<gray>-Radio del barrido: 4,5 bloques; 5 al potenciarse.</gray>",
+      "gui.echo_warrior.summoner.skill.aztec.macuahuitl.full.3": "<gray>-Daño a objetivos secundarios: {half}* (<attack>daño de ataque</attack> × 50 %); {threequarters}* (<attack>daño de ataque</attack> × 75 %) al potenciarse.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.simple.1": "Los creepers cercanos huyen despavoridos. El arquero egipcio inflige un 20 % más de daño a los no muertos.",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.1": "Los creepers cercanos huyen despavoridos. El arquero egipcio inflige un 20 % más de daño a los no muertos.",
+      "gui.echo_warrior.summoner.skill.egyptian.cat_god.full.2": "<gray>-Afecta a los creepers en un radio de 30 bloques.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.simple.1": "Los impactos causan hemorragia durante 4 s, con {bleed}* de daño cada 2 s, y ralentizan al objetivo durante 2 s.",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.1": "Los impactos causan hemorragia durante 4 s, con {bleed}* de daño <gray>(1 + <attack>daño de ataque al disparar</attack> × 10 %)</gray> cada 2 s, y ralentizan al objetivo durante 2 s.",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.2": "<gray>-Aplica Lentitud I.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.leaf_arrow.full.3": "<gray>-Los impactos renuevan la hemorragia de su fuente. Cada fuente expira por separado; solo inflige daño la hemorragia activa más fuerte.</gray>",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.simple.1": "Ignora un {penetration} %* de la armadura y tiene un {pierce} %* de probabilidad de atravesar al objetivo. Alcanza hasta 2 objetivos.",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.1": "Ignora un {penetration} %* de la armadura <gray>(35 % + <level>nivel</level> × 0,5 %)</gray> y tiene un {pierce} %* de probabilidad de atravesar al objetivo <gray>(25 % + <level>nivel</level> × 0,5 %)</gray>. Alcanza hasta 2 objetivos.",
+      "gui.echo_warrior.summoner.skill.egyptian.cone_arrow.full.2": "<gray>-La penetración de armadura que supere el 100 % se convierte en daño adicional.</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.simple.1": "Ejecuta cuatro golpes. Los tres primeros elevan ligeramente a los enemigos y reducen su alcance cuerpo a cuerpo un 80 % durante 2 s. Recarga: 12 s.",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.1": "Ejecuta cuatro golpes. Los tres primeros elevan ligeramente a los enemigos y reducen su alcance cuerpo a cuerpo un 80 % durante 2 s. Recarga: 12 s.",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.2": "<gray>-Daño por golpe: {hit1}* / {hit2}* / {hit1}* / {hit4}* (<attack>daño de ataque</attack> × 70 % / 100 % / 70 % / 180 %, con la bonificación de Valor creciente).</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.3": "<gray>-Cada uno de los tres primeros golpes renueva el efecto perjudicial.</gray>",
+      "gui.echo_warrior.summoner.skill.guandao.combo.full.4": "<gray>-Recibir daño cuerpo a cuerpo o de proyectiles reduce la recarga en 0,5 s.</gray>",
+      "gui.echo_warrior.summoner.section.assist": "Asistencia",
+      "gui.echo_warrior.summoner.assist.off.name": "Desactivada",
+      "gui.echo_warrior.summoner.assist.off.description": "No se suma a los ataques del dueño",
+      "gui.echo_warrior.summoner.assist.safe.name": "Proteger",
+      "gui.echo_warrior.summoner.assist.safe.description": "Se suma a los ataques del dueño, sin atacar a aldeanos, gólems de hierro ni criaturas domesticadas",
+      "gui.echo_warrior.summoner.assist.all.name": "Todos",
+      "gui.echo_warrior.summoner.assist.all.description": "Se suma a los ataques del dueño contra cualquier objetivo permitido",
+      "death.attack.quetzalcoatl_curse": "%1$s sucumbió a la maldición de Quetzalcóatl",
+      "death.attack.quetzalcoatl_curse.player": "%1$s sucumbió a la maldición de Quetzalcóatl mientras luchaba contra %2$s"
+    }
+  }
+}

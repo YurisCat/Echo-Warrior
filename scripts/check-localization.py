@@ -16,7 +16,9 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = PROJECT_ROOT / "docs/localization/config.json"
-PLACEHOLDER_PATTERN = re.compile(r"%(?:\d+\$)?[a-zA-Z%]")
+PLACEHOLDER_PATTERN = re.compile(r"%(?:\d+\$)?[a-zA-Z%]|\{[a-z][a-z0-9_]*\}")
+STYLE_TAG_PATTERN = re.compile(r"</?[a-z_]+>")
+SKILL_STYLES = {"gray", "attack", "level"}
 CONTROL_CHARACTER_PATTERN = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 TRANSLATION_KEY_VALUE_PATTERN = re.compile(r"^(?:[a-z0-9_]+\.){2,}[a-z0-9_.-]+$")
 REPORT_LIMIT = 12
@@ -286,6 +288,28 @@ def placeholder_signature(text: str) -> Counter[str]:
     return Counter(PLACEHOLDER_PATTERN.findall(text))
 
 
+def style_signature(text: str) -> Counter[str]:
+    return Counter(STYLE_TAG_PATTERN.findall(text))
+
+
+def valid_skill_markup(text: str) -> bool:
+    plain = STYLE_TAG_PATTERN.sub("", text)
+    if "<" in plain or ">" in plain:
+        return False
+    stack: list[str] = []
+    for token in STYLE_TAG_PATTERN.findall(text):
+        closing = token.startswith("</")
+        name = token[2:-1] if closing else token[1:-1]
+        if name not in SKILL_STYLES:
+            return False
+        if closing:
+            if not stack or stack.pop() != name:
+                return False
+        else:
+            stack.append(name)
+    return not stack
+
+
 def source_fingerprint(en_text: str, zh_text: str) -> str:
     payload = json.dumps(
         {"en_us": en_text, "zh_cn": zh_text},
@@ -471,6 +495,16 @@ class Audit:
                 locale if target_locale else None,
             )
 
+        invalid_markup = sorted(
+            key for key, value in language.items()
+            if ".skill." in key and not valid_skill_markup(value)
+        )
+        if invalid_markup:
+            self.add_hard(
+                f"{locale} 技能颜色标记未知或嵌套不完整：{summarize_keys(invalid_markup)}。",
+                locale if target_locale else None,
+            )
+
         for runtime_key, tutorial_key in SYNCED_UI_TRANSLATION_PAIRS:
             runtime_value = language.get(runtime_key)
             tutorial_value = language.get(tutorial_key)
@@ -535,6 +569,8 @@ class Audit:
                     f"核心语言占位符不一致：{key}，en_us={dict(en_signature)}，"
                     f"zh_cn={dict(zh_signature)}。"
                 )
+            if ".skill." in key and style_signature(main_en[key]) != style_signature(main_zh[key]):
+                self.add_hard(f"核心语言技能颜色标记不一致：{key}。")
             self.source_hashes[key] = source_fingerprint(main_en[key], main_zh[key])
 
         for directory_index in range(1, len(directories)):
@@ -591,6 +627,8 @@ class Audit:
                     f"实际为 {dict(actual)}。",
                     locale,
                 )
+            if ".skill." in key and style_signature(main_en[key]) != style_signature(canonical[key]):
+                self.add_hard(f"{locale} 技能颜色标记与源文不一致：{key}。", locale)
 
         for directory_index in range(1, len(self.config["language_directories"])):
             path = self.language_path(directory_index, locale)

@@ -46,12 +46,69 @@ public final class SkillTooltipClientSelfTest {
                         "all copy resolves without placeholders: " + skill);
             }
         }
+        checkTranslations(base);
         check(text(EchoSkillTooltips.descriptions(base + "egyptian.cone_arrow", 200, 1, false)).contains("135%*"),
                 "tooltip preserves penetration above 100%");
-        EchoWarrior.LOGGER.info("SKILL TOOLTIP CLIENT SELFTEST PASSED current-values=true styles=gray-red-green short-full=9");
+        EchoWarrior.LOGGER.info("SKILL TOOLTIP CLIENT SELFTEST PASSED current-values=true styles=gray-red-green short-full=9 resource-locales=8 accessory-wrap=true locale={}",
+                net.minecraft.client.Minecraft.getInstance().options.languageCode);
+    }
+    private static void checkTranslations(String base) {
+        var client = net.minecraft.client.Minecraft.getInstance();
+        for (String locale : List.of("en_us", "zh_cn", "zh_tw", "ja_jp", "ru_ru", "pt_br", "es_es", "es_mx")) {
+            var id = net.minecraft.resources.Identifier.fromNamespaceAndPath("echo_warrior", "lang/" + locale + ".json");
+            try (var reader = new java.io.InputStreamReader(
+                    client.getResourceManager().getResource(id).orElseThrow().open(), java.nio.charset.StandardCharsets.UTF_8)) {
+                var entries = com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();
+                for (var entry : entries.entrySet()) {
+                    if (locale.equals(client.options.languageCode)
+                            && entry.getKey().startsWith("item.echo_warrior.accessory.")
+                            && entry.getKey().contains(".effect.")) {
+                        checkAccessoryTooltip(entry.getKey(), client);
+                    }
+                    if (!entry.getKey().startsWith(base)
+                            || !(entry.getKey().contains(".simple.") || entry.getKey().contains(".full."))) continue;
+                    // A deliberately wide current value exercises wrapping in every shipped base locale.
+                    var line = EchoSkillTooltips.colored(entry.getValue().getAsString().replaceAll("\\{[a-z][a-z0-9_]*\\}", "123.45"));
+                    for (int width : new int[]{160, 240, 320, 480}) {
+                        var restored = new StringBuilder();
+                        for (var wrapped : EchoSkillTooltips.wrap(client.font, List.of(line), width)) {
+                            check(client.font.width(wrapped) <= Math.min(320, width - 16),
+                                    "localized real-font width: " + locale + " " + entry.getKey());
+                            wrapped.accept((index, style, codePoint) -> { restored.appendCodePoint(codePoint); return true; });
+                        }
+                        check(restored.toString().replaceAll("\\s", "").equals(line.getString().replaceAll("\\s", "")),
+                                "localized text remains complete: " + locale + " " + entry.getKey());
+                    }
+                }
+            } catch (java.io.IOException failure) {
+                throw new IllegalStateException("Cannot check skill locale: " + locale, failure);
+            }
+        }
+    }
+    private static void checkAccessoryTooltip(String key, net.minecraft.client.Minecraft client) {
+        for (int color : new int[]{0x93CE85, 0xE46D6D}) {
+            var original = Component.literal("+").withStyle(style -> style.withColor(color))
+                    .append(Component.translatable(key).withStyle(style -> style.withColor(color)));
+            for (int width : new int[]{160, 240, 320, 480}) {
+                var restored = new StringBuilder();
+                for (var line : PetFeedbackLayout.wrapTooltipLines(client.font, List.of(original), width)) {
+                    check(client.font.width(line) <= PetFeedbackLayout.availableWidth(width), "accessory tooltip width: " + key);
+                    line.visit((style, value) -> {
+                        check(value.isEmpty() || style.getColor() != null && style.getColor().getValue() == color,
+                                "accessory polarity color: " + key);
+                        return Optional.empty();
+                    }, line.getStyle());
+                    restored.append(line.getString());
+                }
+                check(restored.toString().replaceAll("\\s", "").equals(original.getString().replaceAll("\\s", "")),
+                        "accessory tooltip remains complete: " + key);
+            }
+        }
     }
     private static String text(List<Component> lines) {
-        return String.join("\n", lines.stream().map(Component::getString).toList());
+        // Localized percent spacing is typography; keep the numeric assertions unchanged.
+        return String.join("\n", lines.stream().map(Component::getString).toList())
+                .replace(" %", "%").replace("\u00a0%", "%").replace("\u202f%", "%");
     }
     private static void check(boolean value, String message) {
         if (!value) throw new IllegalStateException("Skill tooltip: " + message);

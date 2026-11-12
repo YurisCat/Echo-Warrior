@@ -15,10 +15,11 @@ All notable development changes to Echo Warrior are recorded here.
 - Extended Aztec melee and sweep reach. Guandao's first three combo hits now apply a small vertical lift and briefly reduce the target's melee reach.
 - Converted selected accessory attack and maximum-health bonuses to percentages. Day/night healing now restores 1 health plus 1% of maximum health; Blood Pact Fang restores 2 health plus 5% of maximum health when triggered.
 - Updated the summoner GUI, encyclopedia and Simplified Chinese/English text across Minecraft 26.1.2, 1.21.1 and 1.20.1.
+- Updated skill formulas, Assist controls and accessory descriptions in all shipped languages, preserving localized terminology and formula colors.
+- Long accessory effect tooltips now wrap to the window width while preserving their benefit/penalty colors.
 
 ### Notes
 
-- Other locales still need the new skill/Assist text and updated accessory descriptions. The localization release gate remains pending.
 - Existing worlds are supported. Restart the client and server after updating; no new world or chunks are required.
 
 ## 0.2.11 - 2026-10-28

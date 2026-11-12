@@ -13,7 +13,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-/** Wrap only our two pet-management messages; vanilla owns time, replacement and HUD visibility. */
+/** Scoped wrapping for pet messages and our collar/accessory tooltips; vanilla owns positioning. */
 public final class PetFeedbackLayout {
     private static final List<String> KEYS = List.of(
             "message.echo_warrior.pet_management_restricted",
@@ -35,13 +35,12 @@ public final class PetFeedbackLayout {
         return font.split(message, availableWidth(guiWidth));
     }
 
-    /** Split only our collar explanation rows before vanilla or loader tooltip processing. */
+    /** Split our collar and accessory-effect rows before vanilla or loader tooltip processing. */
     public static List<Component> wrapTooltipLines(Font font, List<Component> original, int guiWidth) {
         var result = new java.util.ArrayList<Component>();
         boolean changed = false;
         for (Component line : original) {
-            if (line.getContents() instanceof TranslatableContents text && TOOLTIP_KEYS.contains(text.getKey())
-                    && font.width(line) > availableWidth(guiWidth)) {
+            if (isWrappedTooltip(line) && font.width(line) > availableWidth(guiWidth)) {
                 for (var part : font.getSplitter().splitLines(line, availableWidth(guiWidth), line.getStyle())) {
                     var styled = Component.empty();
                     part.visit((style, value) -> {
@@ -54,6 +53,14 @@ public final class PetFeedbackLayout {
             } else result.add(line);
         }
         return changed ? result : original;
+    }
+
+    private static boolean isWrappedTooltip(Component line) {
+        if (line.getContents() instanceof TranslatableContents text
+                && (TOOLTIP_KEYS.contains(text.getKey())
+                    || text.getKey().matches("item\\.echo_warrior\\.accessory\\.[a-z0-9_]+\\.effect\\.[1-9][0-9]*"))) return true;
+        // Accessory effects are siblings of a colored +/- prefix, not the root contents.
+        return line.getSiblings().stream().anyMatch(PetFeedbackLayout::isWrappedTooltip);
     }
 
     /** Called inside vanilla's action-bar pose, with the last row on its original baseline. */

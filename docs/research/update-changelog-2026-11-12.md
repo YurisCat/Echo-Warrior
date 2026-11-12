@@ -26,3 +26,7 @@
 - 本次只审计并记录，没有批量翻译、改写接受基线或使用缺译发布豁免。源码推送不触发发布；CurseForge／Modrinth正式发布前仍须完成本地化门禁。
 
 原始审计输出：`build/update-push-2026-11-12/localization-audit.log`。核对依据：[技能实施记录](skill-update-implementation-2026-11-12.md)、[饰品实施记录](accessory-update-implementation-2026-11-12.md)、[正文白色修正](skill-tooltip-white-text-2026-11-12.md)。
+
+## 同日后续补译
+
+作者随后要求按规范补齐。上述缺译、过期及旧键现已处理完毕，经过独立译审、六包构建与狐狸节点验收，登记基线后的发布门禁为0错误、0待处理；另修复长饰品效果在窄窗口中的裁切。此前审计数字作为当时记录保留，最终状态见[本地化审阅与验收记录](../localization/REVIEW_SKILL_ACCESSORY_2026-11-12.md)。
