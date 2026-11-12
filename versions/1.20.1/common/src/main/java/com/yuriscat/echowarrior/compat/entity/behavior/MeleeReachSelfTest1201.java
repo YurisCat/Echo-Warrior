@@ -26,11 +26,11 @@ public final class MeleeReachSelfTest1201 {
         try {
             hero.setPos(8.5, 96, 8.5);
             target.setNoAi(true);
-            target.moveTo(8.5, 96, 10.9, 0, 0); // 2.4 blocks: inside 2.25 + half-width, outside vanilla reach.
+            target.moveTo(8.5, 96, 12.9, 0, 0); // 4.4 blocks: inside 4.25 + half-width, outside vanilla reach.
             level.addFreshEntity(target);
             BrainUtils.setMemory(hero, MemoryModuleType.ATTACK_TARGET, target);
             check(!hero.isWithinMeleeAttackRange(target), "fixture must exceed vanilla reach");
-            check(attack.checkExtraStartConditions(level, hero), "custom range must allow starting at 2.4 blocks");
+            check(attack.checkExtraStartConditions(level, hero), "custom range must allow starting at 4.4 blocks");
             float before = target.getHealth();
             attack.doDelayedAction(hero);
             check(target.getHealth() < before, "custom range must also allow the delayed damage frame");
@@ -40,14 +40,14 @@ public final class MeleeReachSelfTest1201 {
             target.setHealth(target.getMaxHealth());
             target.setPos(8.5, 96, 9.5);
             check(attack.checkExtraStartConditions(level, hero), "near target starts normally");
-            target.setPos(8.5, 96, 10.9);
+            target.setPos(8.5, 96, 12.9);
             before = target.getHealth();
             attack.doDelayedAction(hero);
             check(target.getHealth() < before, "target moving beyond vanilla reach during windup still takes damage");
 
             target.invulnerableTime = 0;
             target.setHealth(target.getMaxHealth());
-            target.setPos(8.5, 96, 11.1); // 2.6 > 2.25 + zombie half-width.
+            target.setPos(8.5, 96, 13.1); // 4.6 > 4.25 + zombie half-width.
             check(!attack.checkExtraStartConditions(level, hero), "beyond custom reach cannot start");
             before = target.getHealth();
             attack.doDelayedAction(hero);
@@ -58,7 +58,7 @@ public final class MeleeReachSelfTest1201 {
             attack.doDelayedAction(hero);
             check(target.getHealth() == before, "damage frame also rechecks vertical overlap");
 
-            target.setPos(8.5, 96, 10.9);
+            target.setPos(8.5, 96, 12.9);
             level.setBlock(wall, Blocks.STONE.defaultBlockState(), 2);
             check(!attack.checkExtraStartConditions(level, hero), "no attack through wall");
             attack.doDelayedAction(hero);
@@ -70,7 +70,7 @@ public final class MeleeReachSelfTest1201 {
             BrainUtils.clearMemory(hero, MemoryModuleType.ATTACK_TARGET);
             check(!attack.checkExtraStartConditions(level, hero), "absent target rejected");
             attack.doDelayedAction(hero);
-            EchoWarrior1201.LOGGER.info("[Compat1201] MELEE REACH SELFTEST PASSED hero=aztec start=2.4 delayed=2.4 reject=2.6 vertical=checked wall=checked");
+            EchoWarrior1201.LOGGER.info("[Compat1201] MELEE REACH SELFTEST PASSED hero=aztec start=4.4 delayed=4.4 reject=4.6 vertical=checked wall=checked");
         } finally {
             level.setBlock(wall, oldWall, 2);
             target.discard();

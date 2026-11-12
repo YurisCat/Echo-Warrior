@@ -16,17 +16,17 @@ public final class ObsidianWoundMobEffect extends MobEffect {
 
 	@Override
 	public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-		return duration % 20 == 0;
+		return true;
 	}
 
 	@Override
 	public boolean applyEffectTick(ServerLevel level, LivingEntity entity, int amplifier) {
-		boolean damaged = entity.hurtServer(level, ModDamageTypes.source(level, ModDamageTypes.OBSIDIAN_WOUND), 1.0F);
+		if (!com.yuriscat.echowarrior.entity.EchoBleeding.tick(level, entity, true)) return true;
 		level.sendParticles(
 				new BlockParticleOption(ParticleTypes.BLOCK, Blocks.REDSTONE_BLOCK.defaultBlockState()),
 				entity.getX(), entity.getY() + entity.getBbHeight() * 0.65, entity.getZ(),
 				2, entity.getBbWidth() * 0.2, entity.getBbHeight() * 0.12, entity.getBbWidth() * 0.2, 0.01
 		);
-		return damaged;
+		return true;
 	}
 }

@@ -13,14 +13,14 @@ public final class BleedingMobEffect1211 extends MobEffect {
 
     public BleedingMobEffect1211() { super(MobEffectCategory.HARMFUL, 0xA52222); }
 
-    @Override public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) { return duration % 40 == 0; }
+    @Override public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) { return true; }
 
     @Override
     public boolean applyEffectTick(LivingEntity entity, int amplifier) {
         if (!(entity.level() instanceof ServerLevel level)) return false;
-        boolean damaged = entity.hurt(ModDamageTypes1211.source(level, ModDamageTypes1211.BLEEDING), 1.0F);
+        if (!com.yuriscat.echowarrior.compat.entity.EchoBleeding1211.tick(level, entity, false)) return true;
         level.sendParticles(PARTICLE, entity.getX(), entity.getY() + entity.getBbHeight() * 0.65, entity.getZ(),
                 4, entity.getBbWidth() * 0.25, entity.getBbHeight() * 0.18, entity.getBbWidth() * 0.25, 0.0);
-        return damaged;
+        return true;
     }
 }

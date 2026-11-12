@@ -17,7 +17,9 @@ public abstract class LivingEntityAccessoryMixin1211 {
     private void echoWarrior1211$applyAccessoryDodge(DamageSource source, float amount,
                                                       CallbackInfoReturnable<Boolean> callback) {
         LivingEntity victim = (LivingEntity)(Object)this;
-        if (!victim.level().isClientSide() && !EchoAccessorySystem1211.allowDamage(victim, source, amount)) {
+        if (!com.yuriscat.echowarrior.compat.entity.EchoMeleeReach1211.allowsDamage(victim, source)
+                || !com.yuriscat.echowarrior.compat.entity.EchoAssistPolicy1211.allowsDamage(victim, source)
+                || !victim.level().isClientSide() && !EchoAccessorySystem1211.allowDamage(victim, source, amount)) {
             callback.setReturnValue(false);
         }
     }
@@ -25,6 +27,9 @@ public abstract class LivingEntityAccessoryMixin1211 {
     @ModifyVariable(method = "hurt", at = @At("HEAD"), argsOnly = true, ordinal = 0)
     private float echoWarrior1211$applyOutgoingModifiers(float amount, DamageSource source) {
         LivingEntity victim = (LivingEntity)(Object)this;
+        if (source.is(com.yuriscat.echowarrior.compat.ModDamageTypes1211.QUETZALCOATL_CURSE)
+                || source.is(com.yuriscat.echowarrior.compat.ModDamageTypes1211.BLEEDING)
+                || source.is(com.yuriscat.echowarrior.compat.ModDamageTypes1211.OBSIDIAN_WOUND)) return amount;
         if (!(victim.level() instanceof ServerLevel level)) return amount;
         var echo = EchoAccessorySystem1211.resolveAttackingEcho(source);
         float talented = echo == null ? amount : EchoTalentSystem1211.modifyOutgoingDamage(echo, victim, level, amount);

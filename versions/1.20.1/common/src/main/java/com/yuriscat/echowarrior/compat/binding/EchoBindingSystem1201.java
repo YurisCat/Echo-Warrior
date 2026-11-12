@@ -189,6 +189,12 @@ public final class EchoBindingSystem1201 {
         EchoRelicState1201.setAlertMode(relic, EchoRelicState1201.AlertMode.values()[mode]);
         if (binding.persistRelic(relic)) applyChangedState(level, binding, false);
     }
+    public static void setAssistMode(ServerLevel level, EchoBindingSavedData1201.Binding binding, int mode) {
+        if (mode < 0 || mode >= EchoRelicState1201.AssistMode.values().length) return;
+        var relic = binding.relic();
+        EchoRelicState1201.setAssistMode(relic, EchoRelicState1201.AssistMode.values()[mode]);
+        if (binding.persistRelic(relic)) applyChangedState(level, binding, false);
+    }
     public static void toggleSkill(ServerLevel level, EchoBindingSavedData1201.Binding binding, int skill) {
         if (skill < 0 || skill >= EchoHeroType1201.fromRelic(binding.relic()).skillCount()) return;
         var relic = binding.relic();

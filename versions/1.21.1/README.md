@@ -1,5 +1,25 @@
 # Echo Warrior for Minecraft 1.21.1
 
+
+## Accessory growth candidate — 2026-11-12
+
+Attack accessories now add percentages of the current base attack. Maximum-health
+bonuses are +20%, +35%, +60% and -25%, with additive stacking. Day/night healing is
+1 + 1% of current maximum health per 50 ticks; Blood Pact Fang retains its 30%
+attack-window chance and heals 2 + 5% of current maximum health.
+The existing skill update is included. Restart with matching client/server packages;
+existing items and worlds remain usable. Implementation and FOXY-NODE results:
+[`accessory-update-implementation-2026-11-12.md`](../../docs/research/accessory-update-implementation-2026-11-12.md).
+
+## Skill and Assist candidate — 2026-11-12
+
+The unpublished candidate implements the approved skill scaling, independent bleeding sources,
+held-Alt descriptions and three Assist modes. Existing relics default to Protect.
+Implementation and FOXY-NODE acceptance are tracked in
+[`skill-update-implementation-2026-11-12.md`](../../docs/research/skill-update-implementation-2026-11-12.md).
+Restart both client and server with matching candidates; existing worlds remain usable.
+Guandao float strength and Aztec reach feel remain the author's tuning pass.
+
 ## Pet collar compatibility candidate — 2026-10-27
 
 Optional Pet Home collar state is stored with the authoritative relic,

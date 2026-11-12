@@ -253,6 +253,9 @@ def build_assets(source: dict[str, Image.Image]) -> dict[str, object]:
         (105, 71, 125, 91),
         (127, 71, 147, 91),
         (149, 71, 169, 91),
+        (178, 57, 196, 75),
+        (197, 57, 215, 75),
+        (216, 57, 234, 75),
         (178, 90, 196, 108),
         (197, 90, 215, 108),
         (216, 90, 234, 108),
@@ -294,6 +297,10 @@ def build_assets(source: dict[str, Image.Image]) -> dict[str, object]:
     }
 
     modes_source = source["行动模式图标"]
+    assist = {
+        name: crop(modes_source, (179 + i * 19, 58, 195 + i * 19, 74))
+        for i, name in enumerate(["off", "safe", "all"])
+    }
     activity = {
         name: crop(modes_source, (179 + i * 19, 91, 195 + i * 19, 107))
         for i, name in enumerate(["follow", "wait", "wander"])
@@ -332,6 +339,7 @@ def build_assets(source: dict[str, Image.Image]) -> dict[str, object]:
         "traits": traits,
         "skills": skills,
         "activity": activity,
+        "assist": assist,
         "alert": alert,
         "mode_states": mode_states,
         "skill_states": skill_states,
@@ -451,6 +459,7 @@ def save_png_tree(base: Path, assets: dict[str, object], relic: Image.Image | No
         base / "traits",
         base / "skills" / "roman_legionary",
         base / "modes" / "activity",
+        base / "modes" / "assist",
         base / "modes" / "alert",
     ]
     if relic is not None:
@@ -469,6 +478,7 @@ def save_png_tree(base: Path, assets: dict[str, object], relic: Image.Image | No
         ("traits", base / "traits", ""),
         ("skills", base / "skills" / "roman_legionary", ""),
         ("activity", base / "modes" / "activity", ""),
+        ("assist", base / "modes" / "assist", ""),
         ("alert", base / "modes" / "alert", ""),
     ]
     for key, directory, prefix in mappings:

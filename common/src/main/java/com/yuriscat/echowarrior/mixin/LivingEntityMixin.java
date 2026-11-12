@@ -47,4 +47,15 @@ public abstract class LivingEntityMixin {
 		callback.setReturnValue(EchoTalentSystem.modifyFinalIncomingDamage(
 				(LivingEntity)(Object)this, source, callback.getReturnValue()));
 	}
+
+    @Inject(method = "getDamageAfterArmorAbsorb", at = @At("HEAD"), cancellable = true)
+    private void echoWarrior$applyConeArmor(DamageSource source, float damage, CallbackInfoReturnable<Float> callback) {
+        if (!source.is(com.yuriscat.echowarrior.ModDamageTypes.ARMOR_PIERCING_ARROW)
+                || !(source.getDirectEntity() instanceof com.yuriscat.echowarrior.entity.EgyptianArcherArrowEntity arrow)) return;
+        LivingEntity victim = (LivingEntity)(Object)this;
+        float armor = (float)(victim.getArmorValue() * com.yuriscat.echowarrior.item.EchoSkillScaling.remainingArmor(arrow.armorPenetration()));
+        float toughness = (float)victim.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS);
+        // Outgoing talents/crit have already run. Apply armor once, at the normal mitigation boundary.
+        callback.setReturnValue(net.minecraft.world.damagesource.CombatRules.getDamageAfterAbsorb(victim, damage, source, armor, toughness));
+    }
 }

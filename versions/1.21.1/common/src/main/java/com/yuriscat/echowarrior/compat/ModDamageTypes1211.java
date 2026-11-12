@@ -8,6 +8,8 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 
 public final class ModDamageTypes1211 {
+    public static final ResourceKey<DamageType> QUETZALCOATL_CURSE = ResourceKey.create(Registries.DAMAGE_TYPE, ModContent1211.id("quetzalcoatl_curse"));
+
     public static final ResourceKey<DamageType> OBSIDIAN_WOUND = key("obsidian_wound");
     public static final ResourceKey<DamageType> BLEEDING = key("bleeding");
     public static final ResourceKey<DamageType> ARMOR_PIERCING_ARROW = key("armor_piercing_arrow");

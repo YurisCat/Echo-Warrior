@@ -22,6 +22,8 @@ import com.yuriscat.echowarrior.item.EchoTalentSystem;
 import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
+import com.yuriscat.echowarrior.item.EchoSkillScaling;
+import com.yuriscat.echowarrior.item.EchoRelicProgress;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -299,6 +301,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	private long caughtExitOwnerAvoidUntil = -1L;
 	private Vec3 caughtExitOwnerAvoidPoint = Vec3.ZERO;
 	private EchoRelicState.ActivityMode activityMode = EchoRelicState.ActivityMode.FOLLOW;
+	private EchoRelicState.AssistMode assistMode = EchoRelicState.AssistMode.SAFE;
 	private EchoRelicState.AlertMode alertMode = EchoRelicState.AlertMode.DEFENSIVE;
 	private int enabledSkills = EchoHeroType.EGYPTIAN_ARCHER.defaultEnabledSkillsMask();
 	private final EchoCreeperTargeting creeperTargeting = new EchoCreeperTargeting();
@@ -675,7 +678,8 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			boolean eligible = canLandCommittedMeleeHit(meleeTarget);
 			boolean damaged = false;
 			if (eligible) {
-				float damage = meleeTarget.getType().builtInRegistryHolder().is(EntityTypeTags.UNDEAD) ? 3.6F : 3.0F;
+				float damage = (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE) * 0.5F;
+                if (skillEnabled(SKILL_CAT_GOD) && meleeTarget.getType().builtInRegistryHolder().is(EntityTypeTags.UNDEAD)) damage *= 1.2F;
 				damaged = meleeTarget.hurtServer(level, level.damageSources().mobAttack(this), damage);
 				if (damaged) {
 					meleeTarget.knockback(MELEE_KNOCKBACK, this.getX() - meleeTarget.getX(), this.getZ() - meleeTarget.getZ());
@@ -795,7 +799,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 				net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
 		if (arrow == null) return null;
 		arrow.setPos(this.getX(), this.getEyeY() - 0.18, this.getZ());
-		boolean pierce = this.arrowMode == EchoRelicState.EgyptianArrowMode.CONE && this.random.nextFloat() < 0.25F;
+		boolean pierce = this.arrowMode == EchoRelicState.EgyptianArrowMode.CONE && this.random.nextFloat() < EchoSkillScaling.conePierceChance(EchoRelicProgress.level(activeRelic()));
 		arrow.configure(this, this.arrowMode, (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE), pierce);
 		double dx = aimTarget.getX() - arrow.getX();
 		double dz = aimTarget.getZ() - arrow.getZ();
@@ -3325,7 +3329,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		LivingEntity ownerAttacker = owner.getLastHurtByMob();
 		if (isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
 				&& canProtectAgainst(ownerAttacker)) return ownerAttacker;
-		LivingEntity ownerTarget = owner.getLastHurtMob();
+		LivingEntity ownerTarget = EchoAssistPolicy.followsOwner(this) ? owner.getLastHurtMob() : null;
 		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
 				&& canProtectAgainst(ownerTarget)) return ownerTarget;
 		if (this.alertMode != EchoRelicState.AlertMode.AGGRESSIVE) return null;
@@ -3353,7 +3357,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 			this.creeperTargeting.authorizeReactive(this, ownerAttacker, now);
 			return ownerAttacker;
 		}
-		LivingEntity ownerTarget = owner.getLastHurtMob();
+		LivingEntity ownerTarget = EchoAssistPolicy.followsOwner(this) ? owner.getLastHurtMob() : null;
 		if (ownerTarget != hiddenCurrent && isRecent(owner, owner.getLastHurtMobTimestamp())
 				&& canAcquireCombatTarget(ownerTarget)) {
 			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
@@ -3505,7 +3509,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 				&& canDefendAgainst(ownerAttacker)) {
 			this.creeperTargeting.authorizeReactive(this, ownerAttacker, now);
 		}
-		LivingEntity ownerTarget = owner.getLastHurtMob();
+		LivingEntity ownerTarget = EchoAssistPolicy.followsOwner(this) ? owner.getLastHurtMob() : null;
 		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
 				&& canDefendAgainst(ownerTarget)) {
 			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
@@ -3584,7 +3588,13 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	}
 
 	@Override
-	public boolean canAttack(LivingEntity target) {
+    public EchoRelicState.AssistMode assistMode() { return this.assistMode; }
+
+	public boolean isCatGodDamageBonusActive() { return skillEnabled(SKILL_CAT_GOD); }
+
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        if (!EchoAssistPolicy.allowsTarget(this, target)) return false;
 		LivingEntity owner = this.getOwner();
 		if (target == this || target == owner || target.isAlliedTo(this) || owner != null && owner.isAlliedTo(target)) return false;
 		if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
@@ -3734,14 +3744,16 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 	public void applyRelicState(ItemStack relic, boolean resetAnchor) {
 		if (relic.isEmpty()) return;
 		EchoRelicState.ActivityMode previousActivity = this.activityMode;
+		EchoRelicState.AssistMode previousAssist = this.assistMode;
 		EchoRelicState.AlertMode previousAlert = this.alertMode;
 		this.activityMode = EchoRelicState.activityMode(relic);
 		this.alertMode = EchoRelicState.alertMode(relic);
+		this.assistMode = EchoRelicState.assistMode(relic);
 		this.enabledSkills = EchoRelicState.enabledSkills(relic);
 		this.arrowMode = EchoRelicState.egyptianArrowMode(relic);
 		this.entityData.set(ARROW_MODE, this.arrowMode.ordinal());
 		this.entityData.set(ATTACK_INTERVAL, EchoTalentSystem.attackIntervalTicks(this, relic));
-		if (previousActivity != this.activityMode || previousAlert != this.alertMode || resetAnchor) {
+		if (previousActivity != this.activityMode || previousAlert != this.alertMode || previousAssist != this.assistMode || resetAnchor) {
 			this.setTarget(null);
 			this.highThreatTarget = null;
 			this.resumeTargetAfterThreat = null;
@@ -3836,6 +3848,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		if (this.summonerUuid != null) output.putString("SummonerUuid", this.summonerUuid.toString());
 		output.putLong("BindingGeneration", this.bindingGeneration);
 		output.putInt("ActivityMode", this.activityMode.ordinal());
+		output.putInt("AssistMode", this.assistMode.ordinal());
 		output.putInt("AlertMode", this.alertMode.ordinal());
 		output.putInt("EnabledSkills", this.enabledSkills);
 		output.putDouble("ActivityAnchorX", this.activityAnchor.x);
@@ -3854,6 +3867,7 @@ public final class EgyptianArcherEchoEntity extends PathfinderMob implements Ech
 		this.setNoGravity(false);
 		this.entityData.set(ACTION, ACTION_IDLE);
 		this.activityMode = EchoRelicState.ActivityMode.byOrdinal(input.getIntOr("ActivityMode", 0));
+		this.assistMode = EchoRelicState.AssistMode.byOrdinal(input.getIntOr("AssistMode", 1));
 		this.alertMode = EchoRelicState.AlertMode.byOrdinal(input.getIntOr("AlertMode", 1));
 		this.enabledSkills = input.getIntOr("EnabledSkills", EchoHeroType.EGYPTIAN_ARCHER.defaultEnabledSkillsMask());
 		this.activityAnchor = new Vec3(input.getDoubleOr("ActivityAnchorX", this.getX()),

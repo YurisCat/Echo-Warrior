@@ -16,7 +16,9 @@
     "MerchantTalentMixin1211",
     "PlayerTalentMixin1211",
     "ServerGamePacketListenerMixin1211",
-    "ShulkerBulletAccessor1211"
+    "ShulkerBulletAccessor1211",
+    "EchoCombatStateMixin1211",
+    "EchoMeleeReachMixin1211"
   ],
   "client": [
     "AbstractContainerScreenMixin1211",

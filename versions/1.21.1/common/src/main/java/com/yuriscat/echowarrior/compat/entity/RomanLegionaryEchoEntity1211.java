@@ -12,6 +12,8 @@ import com.yuriscat.echowarrior.compat.item.EchoRelicState1211;
 import com.yuriscat.echowarrior.compat.item.EchoTalentSystem1211;
 import com.yuriscat.echowarrior.compat.progress.EchoExperienceSystem1211;
 import com.yuriscat.echowarrior.compat.mixin.ShulkerBulletAccessor1211;
+import com.yuriscat.echowarrior.compat.item.EchoSkillScaling1211;
+import com.yuriscat.echowarrior.compat.item.EchoRelicProgress1211;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -87,6 +89,7 @@ import java.util.UUID;
 
 public final class RomanLegionaryEchoEntity1211 extends TamableAnimal
         implements GeoEntity, SmartBrainOwner<RomanLegionaryEchoEntity1211>, EchoWarriorEntity1211 {
+    private EchoRelicState1211.AssistMode assistMode = EchoRelicState1211.AssistMode.SAFE;
     public static final byte VISUAL_NORMAL = 0;
     public static final byte VISUAL_ALERT = 1;
     public static final byte VISUAL_STARTLED = 2;
@@ -161,10 +164,6 @@ public final class RomanLegionaryEchoEntity1211 extends TamableAnimal
     private static final ResourceLocation FORMATION_ATTACK_ID = ModContent1211.id("soldier_formation_attack");
     private static final ResourceLocation LEGION_ARMOR_ID = ModContent1211.id("legion_endures_armor");
     private static final ResourceLocation LEGION_KNOCKBACK_ID = ModContent1211.id("legion_endures_knockback");
-    private static final AttributeModifier FORMATION_ATTACK = new AttributeModifier(
-            FORMATION_ATTACK_ID, 2.0, AttributeModifier.Operation.ADD_VALUE);
-    private static final AttributeModifier LEGION_ARMOR = new AttributeModifier(
-            LEGION_ARMOR_ID, 12.0, AttributeModifier.Operation.ADD_VALUE);
     private static final AttributeModifier LEGION_KNOCKBACK = new AttributeModifier(
             LEGION_KNOCKBACK_ID, 1.0, AttributeModifier.Operation.ADD_VALUE);
     private static final EntityDataAccessor<Boolean> SHIELD_RAISED = SynchedEntityData.defineId(
@@ -457,6 +456,12 @@ public final class RomanLegionaryEchoEntity1211 extends TamableAnimal
     }
 
     public void applyRelicState(ItemStack relic, boolean preserveHealthGain) {
+        if (this.assistMode != EchoRelicState1211.assistMode(relic)) {
+            this.assistMode = EchoRelicState1211.assistMode(relic);
+            this.setTarget(null);
+            net.tslat.smartbrainlib.util.BrainUtils.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
+        }
+
         if (relic.isEmpty()) return;
         AttributeInstance maximumHealth = this.getAttribute(Attributes.MAX_HEALTH);
         AttributeInstance attackDamage = this.getAttribute(Attributes.ATTACK_DAMAGE);
@@ -465,6 +470,7 @@ public final class RomanLegionaryEchoEntity1211 extends TamableAnimal
         if (maximumHealth != null) maximumHealth.setBaseValue(EchoRelicState1211.maximumHealth(relic));
         if (attackDamage != null) attackDamage.setBaseValue(EchoRelicState1211.attackDamage(relic));
         if (armor != null) armor.setBaseValue(EchoRelicState1211.armor(relic));
+        if (isLegionEnduresActive()) updateLegionArmor(relic);
         if (movement != null) movement.setBaseValue(EchoRelicState1211.movementSpeed(relic));
         if (this.getHealth() > this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
@@ -1398,7 +1404,7 @@ public final class RomanLegionaryEchoEntity1211 extends TamableAnimal
         if (this.alertMode == ALERT_PEACEFUL) return null;
         LivingEntity ownerAttacker = owner.getLastHurtByMob();
         if (isRecent(owner, owner.getLastHurtByMobTimestamp()) && canProtectAgainst(ownerAttacker)) return ownerAttacker;
-        LivingEntity ownerTarget = owner.getLastHurtMob();
+        LivingEntity ownerTarget = EchoAssistPolicy1211.followsOwner(this) ? owner.getLastHurtMob() : null;
         if (isRecent(owner, owner.getLastHurtMobTimestamp()) && canProtectAgainst(ownerTarget)) return ownerTarget;
         LivingEntity current = this.getTarget();
         if (canProtectAgainst(current)) return current;
@@ -1914,11 +1920,22 @@ public final class RomanLegionaryEchoEntity1211 extends TamableAnimal
         return level.getEntitiesOfClass(Monster.class, this.getBoundingBox().inflate(6.0), this::canAttack).size() >= 2;
     }
 
+
+    private void updateLegionArmor(ItemStack relic) {
+        var armor = this.getAttribute(Attributes.ARMOR);
+        if (armor == null) return;
+        double amount = EchoSkillScaling1211.legionArmor(EchoRelicProgress1211.level(relic));
+        var current = armor.getModifier(LEGION_ARMOR_ID);
+        if (current != null && current.amount() == amount) return;
+        armor.removeModifier(LEGION_ARMOR_ID);
+        addTransientModifier(Attributes.ARMOR, new AttributeModifier(LEGION_ARMOR_ID, amount, AttributeModifier.Operation.ADD_VALUE));
+    }
+
     private void startLegionEndures(ServerLevel level, EchoBindingSavedData1211.Binding binding, long now) {
         this.legionEnduresUntil = now + 100L;
         this.legionAccumulatedDamage = 0.0F;
         EchoBindingSystem1211.setLegionCooldownEnd(level, binding, now + 400L);
-        addTransientModifier(Attributes.ARMOR, LEGION_ARMOR);
+        updateLegionArmor(binding.relic());
         addTransientModifier(Attributes.KNOCKBACK_RESISTANCE, LEGION_KNOCKBACK);
         clearCombatAndMovement();
         raiseShield(now);
@@ -1951,8 +1968,8 @@ public final class RomanLegionaryEchoEntity1211 extends TamableAnimal
         removeModifier(Attributes.ARMOR, LEGION_ARMOR_ID);
         removeModifier(Attributes.KNOCKBACK_RESISTANCE, LEGION_KNOCKBACK_ID);
         lowerShield();
-        float damage = this.legionAccumulatedDamage;
-        double scale = Math.max(1.0, Math.sqrt(Math.max(0.0, damage) / 20.0));
+        float damage = (float)(this.legionAccumulatedDamage * EchoSkillScaling1211.legionRelease(EchoRelicProgress1211.level(activeRelic())));
+        double scale = Math.max(1.0, Math.sqrt(Math.max(0.0, this.legionAccumulatedDamage) / 20.0));
         for (LivingEntity enemy : level.getEntitiesOfClass(LivingEntity.class,
                 this.getBoundingBox().inflate(6.0), this::canAttack)) {
             if (damage > 0.0F) dealTalentDamage(level, enemy, damage);
@@ -1977,23 +1994,7 @@ public final class RomanLegionaryEchoEntity1211 extends TamableAnimal
 
     private void tickFormation(ServerLevel level, LivingEntity owner, boolean ownerAvailable) {
         this.formationActive = skillEnabled(SKILL_FORMATION);
-        updateFormationBeneficiary(level, owner);
-        for (RomanLegionaryEchoEntity1211 echo : level.getEntitiesOfClass(RomanLegionaryEchoEntity1211.class,
-                owner.getBoundingBox().inflate(9.0), candidate -> candidate.isAlive() && candidate.sameOwner(this))) {
-            updateFormationBeneficiary(level, echo);
-        }
-    }
-
-    private void updateFormationBeneficiary(ServerLevel level, LivingEntity beneficiary) {
-        boolean active = level.getEntitiesOfClass(RomanLegionaryEchoEntity1211.class,
-                        beneficiary.getBoundingBox().inflate(8.0), candidate -> candidate.isAlive()
-                                && candidate.sameOwner(this) && candidate.formationActive
-                                && candidate.distanceToSqr(beneficiary) <= 64.0)
-                .stream().findAny().isPresent();
-        AttributeInstance attack = beneficiary.getAttribute(Attributes.ATTACK_DAMAGE);
-        if (attack == null) return;
-        if (active && !attack.hasModifier(FORMATION_ATTACK_ID)) attack.addTransientModifier(FORMATION_ATTACK);
-        if (!active && attack.hasModifier(FORMATION_ATTACK_ID)) attack.removeModifier(FORMATION_ATTACK_ID);
+        // EchoAuraAuditSystem aggregates all owners and all hero types once per server tick.
     }
 
     private boolean sameOwner(RomanLegionaryEchoEntity1211 other) {
@@ -2033,7 +2034,11 @@ public final class RomanLegionaryEchoEntity1211 extends TamableAnimal
     }
 
     @Override
+    public EchoRelicState1211.AssistMode assistMode() { return this.assistMode; }
+
+    @Override
     public boolean canAttack(LivingEntity target) {
+        if (!EchoAssistPolicy1211.allowsTarget(this, target)) return false;
         LivingEntity owner = this.getOwner();
         if (target == this || target == owner || target.isAlliedTo(this)
                 || owner != null && owner.isAlliedTo(target)) return false;
@@ -2200,6 +2205,7 @@ public final class RomanLegionaryEchoEntity1211 extends TamableAnimal
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        tag.putInt("AssistMode", this.assistMode.ordinal());
         if (this.summonerId != null) tag.putUUID(SUMMONER_ID_KEY, this.summonerId);
         tag.putLong("EchoWarriorBindingGeneration", this.bindingGeneration);
         tag.putInt("EchoWarriorActivityMode", this.activityMode);
@@ -2214,6 +2220,7 @@ public final class RomanLegionaryEchoEntity1211 extends TamableAnimal
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        this.assistMode = EchoRelicState1211.AssistMode.byOrdinal(tag.contains("AssistMode") ? tag.getInt("AssistMode") : 1);
         this.summonerId = tag.hasUUID(SUMMONER_ID_KEY) ? tag.getUUID(SUMMONER_ID_KEY) : null;
         this.bindingGeneration = tag.getLong("EchoWarriorBindingGeneration");
         this.activityMode = Mth.clamp(tag.getInt("EchoWarriorActivityMode"), 0, 2);

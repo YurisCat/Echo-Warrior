@@ -4,6 +4,8 @@ import com.yuriscat.echowarrior.compat.ModDamageTypes1211;
 import com.yuriscat.echowarrior.compat.ModEffects1211;
 import com.yuriscat.echowarrior.compat.binding.EchoBindingSystem1211;
 import com.yuriscat.echowarrior.compat.item.EchoRelicState1211;
+import com.yuriscat.echowarrior.compat.item.EchoSkillScaling1211;
+import com.yuriscat.echowarrior.compat.item.EchoRelicProgress1211;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -43,6 +45,10 @@ public final class EgyptianArcherArrowEntity1211 extends Arrow {
 	private final Set<UUID> hitEntities = new HashSet<>();
 	private UUID summonerUuid;
 	private long bindingGeneration;
+    private int launchLevel = 1;
+    private UUID controllerUuid;
+    private UUID casterUuid;
+    private int launchAssistMode = 1;
 
 	public EgyptianArcherArrowEntity1211(EntityType<? extends EgyptianArcherArrowEntity1211> type, Level level) {
 		super(type, level);
@@ -53,13 +59,19 @@ public final class EgyptianArcherArrowEntity1211 extends Arrow {
 		this.setOwner(owner);
 		if (owner instanceof EchoWarriorEntity1211 echo) {
 			this.summonerUuid = echo.getSummonerUuid();
+            this.controllerUuid = echo.getOwnerUuid();
+            this.casterUuid = owner.getUUID();
+            this.launchAssistMode = echo.assistMode().ordinal();
 			this.bindingGeneration = echo.getBindingGeneration();
+            this.launchLevel = EchoRelicProgress1211.level(echo.activeRelic());
 		}
 		this.entityData.set(ARROW_MODE, mode.ordinal());
 		this.entityData.set(RAW_DAMAGE, damage);
 		this.entityData.set(PIERCE_ON_HIT, pierceOnHit);
 		this.pickup = Pickup.DISALLOWED;
 	}
+
+	public double armorPenetration() { return EchoSkillScaling1211.conePenetration(this.launchLevel); }
 
 	public EchoRelicState1211.EgyptianArrowMode arrowMode() {
 		return EchoRelicState1211.EgyptianArrowMode.byOrdinal(this.entityData.get(ARROW_MODE));
@@ -101,8 +113,7 @@ public final class EgyptianArcherArrowEntity1211 extends Arrow {
 	protected boolean canHitEntity(Entity entity) {
 		LivingEntity target = normalizeLivingTarget(entity);
 		if (target != null && this.hitEntities.contains(target.getUUID())) return false;
-		if (target != null && this.getOwner() instanceof EgyptianArcherEchoEntity1211 owner
-				&& !owner.canAttack(target)) return false;
+		if (target != null && !allowsTarget(target)) return false;
 		return super.canHitEntity(entity);
 	}
 
@@ -115,10 +126,10 @@ public final class EgyptianArcherArrowEntity1211 extends Arrow {
 			return;
 		}
 		Entity ownerEntity = this.getOwner();
-		if (ownerEntity instanceof EgyptianArcherEchoEntity1211 owner && !owner.canAttack(target)) return;
+		if (!allowsTarget(target)) return;
 		this.hitEntities.add(target.getUUID());
 		float damage = this.entityData.get(RAW_DAMAGE);
-		if (target.getType().builtInRegistryHolder().is(EntityTypeTags.UNDEAD)) damage *= 1.20F;
+		if (catGodBonusActive() && target.getType().builtInRegistryHolder().is(EntityTypeTags.UNDEAD)) damage *= 1.20F;
 		Entity causingEntity = ownerEntity == null ? this : ownerEntity;
 		if (target instanceof EnderDragon && ownerEntity instanceof EgyptianArcherEchoEntity1211 archer
 				&& archer.getOwner() != null) {
@@ -130,16 +141,18 @@ public final class EgyptianArcherArrowEntity1211 extends Arrow {
 		DamageSource normalArrowSource = level.damageSources().arrow(this, causingEntity);
 		DamageSource actualSource = normalArrowSource;
 		if (arrowMode() == EchoRelicState1211.EgyptianArrowMode.CONE) {
-			float reducedArmor = target.getArmorValue() * 0.65F;
-			damage = CombatRules.getDamageAfterAbsorb(target, damage, normalArrowSource, reducedArmor,
-					(float)target.getAttributeValue(Attributes.ARMOR_TOUGHNESS));
+            damage *= (float)EchoSkillScaling1211.penetrationDamage(armorPenetration());
 			actualSource = ModDamageTypes1211.source(level, ModDamageTypes1211.ARMOR_PIERCING_ARROW, this, causingEntity);
 		}
 		boolean damaged = hitEntity.hurt(actualSource, damage);
 		if (damaged) {
 			if (ownerEntity instanceof LivingEntity owner) owner.setLastHurtMob(target);
 			if (arrowMode() == EchoRelicState1211.EgyptianArrowMode.LEAF) {
-				target.addEffect(new MobEffectInstance(ModEffects1211.BLEEDING, 80, 0, false, true, true));
+				if (ownerEntity instanceof EchoWarriorEntity1211 echo) EchoBleeding1211.apply(level, target, echo, false, this.entityData.get(RAW_DAMAGE));
+                else if (this.casterUuid != null) EchoBleeding1211.applySnapshot(level, target, false,
+                        new EchoCombatState1211.Bleed(this.casterUuid, this.controllerUuid, this.summonerUuid,
+                                EchoSkillScaling1211.bleedingDamage(this.entityData.get(RAW_DAMAGE)),
+                                level.getGameTime() + 80, this.launchAssistMode));
                 target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 0, false, true, true));
 			}
 		}
@@ -148,6 +161,19 @@ public final class EgyptianArcherArrowEntity1211 extends Arrow {
 				&& this.entityData.get(PIERCE_ON_HIT) && this.hitEntities.size() < 2;
 		if (!continuePiercing) this.discard();
 	}
+
+    private boolean allowsTarget(LivingEntity target) {
+        if (this.getOwner() instanceof EgyptianArcherEchoEntity1211 archer) return archer.canAttack(target);
+        return !(this.level() instanceof ServerLevel level) || EchoAssistPolicy1211.allowsStoredTarget(
+                level, target, this.summonerUuid, this.controllerUuid, this.launchAssistMode);
+    }
+
+    private boolean catGodBonusActive() {
+        if (this.getOwner() instanceof EgyptianArcherEchoEntity1211 archer) return archer.isCatGodDamageBonusActive();
+        if (!(this.level() instanceof ServerLevel level) || this.summonerUuid == null) return false;
+        ItemStack relic = EchoBindingSystem1211.relic(level, this.summonerUuid);
+        return !relic.isEmpty() && EchoRelicState1211.skillEnabled(relic, EgyptianArcherEchoEntity1211.SKILL_CAT_GOD);
+    }
 
 	private static LivingEntity normalizeLivingTarget(Entity entity) {
 		if (entity instanceof LivingEntity living) return living;
@@ -169,6 +195,10 @@ public final class EgyptianArcherArrowEntity1211 extends Arrow {
 		tag.putBoolean("PierceOnHit", this.entityData.get(PIERCE_ON_HIT));
 		if (this.summonerUuid != null) tag.putUUID("SummonerUuid", this.summonerUuid);
 		tag.putLong("BindingGeneration", this.bindingGeneration);
+        tag.putInt("LaunchLevel", this.launchLevel);
+        if (this.controllerUuid != null) tag.putUUID("ControllerUuid", this.controllerUuid);
+        if (this.casterUuid != null) tag.putUUID("CasterUuid", this.casterUuid);
+        tag.putInt("LaunchAssistMode", this.launchAssistMode);
 	}
 
 	@Override
@@ -179,6 +209,10 @@ public final class EgyptianArcherArrowEntity1211 extends Arrow {
 		this.entityData.set(PIERCE_ON_HIT, tag.getBoolean("PierceOnHit"));
 		this.summonerUuid = tag.hasUUID("SummonerUuid") ? tag.getUUID("SummonerUuid") : null;
 		this.bindingGeneration = tag.getLong("BindingGeneration");
+        this.launchLevel = Math.max(1, tag.getInt("LaunchLevel"));
+        this.controllerUuid = tag.hasUUID("ControllerUuid") ? tag.getUUID("ControllerUuid") : null;
+        this.casterUuid = tag.hasUUID("CasterUuid") ? tag.getUUID("CasterUuid") : null;
+        this.launchAssistMode = tag.contains("LaunchAssistMode") ? tag.getInt("LaunchAssistMode") : 1;
 		this.pickup = Pickup.DISALLOWED;
 	}
 

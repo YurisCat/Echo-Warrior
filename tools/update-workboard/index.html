@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#7462d7">
+  <title>英灵回响 · 更新工作间</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%237462d7'/%3E%3Cpath d='M12 10h16v5H17v3h9v5h-9v3h11v5H12z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="data.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top"><span class="brand-mark">E</span><span><strong>英灵回响 · 更新工作间</strong><small>ECHO WARRIOR / WORKROOM</small></span></a>
+    <span id="saveState" class="save-state" role="status">本地工作清单</span>
+    <div class="top-actions">
+      <button type="button" id="importButton">导入备份</button>
+      <button type="button" id="exportButton">导出备份</button>
+      <button type="button" id="briefButton" class="primary">导出设计稿说明 ↗</button>
+    </div>
+  </header>
+  <main class="workspace" id="top">
+    <section class="hero">
+      <div>
+        <div class="eyebrow"><span class="dot"></span> 下一次冒险，从这里开始</div>
+        <h1>先把界面，<br>留给新的可能。</h1>
+        <p>把玩家的愿望拆成能推进的工作。<br>先画 UI，再敲定规则，让代码与美术接得上。</p>
+        <div class="hero-tags"><span>反馈基线 · 2026.11.11</span><span>当前版本 · 0.2.11</span><span>本次范围由你选择</span></div>
+      </div>
+      <div class="hero-note">
+        <div class="note-top"><span>THIS UPDATE</span><span class="paper-pin"></span></div>
+        <h2>护甲 &amp; 武器，记上了。</h2>
+        <p>玩家提出过两种方向：完整换装，或保留英灵外观、只获得装备属性与附魔。</p>
+        <div class="mini-slots" aria-hidden="true"><span>盔</span><span>甲</span><span>腿</span><span>靴</span><b>＋</b><span class="weapon">武器</span></div>
+        <p class="note-caption">槽数、武器规则与外观方案仍待你决定。</p>
+        <button type="button" id="gearFocus" class="text-button">从装备界面开始 <span>→</span></button>
+      </div>
+    </section>
+
+    <section class="design-desk" aria-labelledby="deskTitle">
+      <header class="section-heading">
+        <div><span class="kicker">DESIGN BEFORE PIXELS</span><h2 id="deskTitle">画 UI 前，先记下这几个决定</h2></div>
+        <button id="deskToggle" type="button" aria-expanded="true" aria-controls="deskBody" class="quiet">收起设计便笺 −</button>
+      </header>
+      <div id="deskBody">
+        <div class="decision-grid" id="decisions"></div>
+        <label class="desk-note"><span>这版界面的想法 <small>布局草稿路径、待讨论事项、视觉参考都可以记在这里</small></span><textarea id="designNote" rows="2" maxlength="20000" placeholder="例如：先画装备与行为两个页面的草图；护甲不改变人物外观的方案也留一版……"></textarea></label>
+        <p class="fine-print">选项是设计便笺，尚未选择的事项不会替你定案；勾选任务只记录工作进度，不会修改游戏。</p>
+      </div>
+    </section>
+
+    <nav id="categoryTabs" class="category-tabs" aria-label="按工作分类"></nav>
+    <div class="dashboard">
+      <aside class="sidebar">
+        <section class="panel overview">
+          <div class="panel-title"><h2>本次工作</h2><span class="small-label">已选入范围</span></div>
+          <div class="progress-number"><strong id="progressText">0%</strong><span id="progressDetail">先选定想做的内容</span></div>
+          <div class="progress-track"><div id="progressBar"></div></div>
+          <div class="stats"><div><strong id="statSelected">0</strong><span>本次要做</span></div><div><strong id="statDoing">0</strong><span>进行中</span></div><div><strong id="statDone">0</strong><span>已完成</span></div></div>
+        </section>
+        <section class="panel filters">
+          <div class="panel-title"><h2>筛选清单</h2><button type="button" id="clearFilters" class="text-button">清除</button></div>
+          <label>状态<select id="statusFilter"><option value="all">全部状态</option><option value="todo">待开始</option><option value="doing">进行中</option><option value="review">待验收</option><option value="done">已完成</option><option value="paused">暂缓</option></select></label>
+          <label>本次范围<select id="scopeFilter"><option value="all">全部候选</option><option value="selected">本次要做</option><option value="candidate">待决定</option><option value="later">以后再说</option></select></label>
+          <label>优先级<select id="priorityFilter"><option value="all">全部优先级</option><option value="high">优先处理</option><option value="normal">正常推进</option><option value="low">有空再做</option></select></label>
+          <label>需求类型<select id="kindFilter"><option value="all">全部来源</option><option value="promise">明确承诺</option><option value="intent">已认可需求</option><option value="conditional">有条件考虑</option><option value="wish">玩家愿望</option><option value="report">问题待核实</option><option value="derived">工作拆解</option><option value="external">外部事项</option></select></label>
+        </section>
+        <section class="panel help">
+          <h2>把决定留在这里</h2>
+          <p>状态、勾选、排序和备注会自动保存在当前浏览器。换电脑或换浏览器时，用 JSON 备份接着做。</p>
+          <a href="../../docs/research/community-feedback-2026-11-11.md" target="_blank" rel="noopener">查看完整留言核对 ↗</a>
+          <button type="button" id="archiveButton" class="text-button">已经兑现的愿望 <span id="archiveCount"></span> →</button>
+          <button type="button" id="resetButton" class="text-button muted">恢复初始清单</button>
+        </section>
+      </aside>
+      <section class="task-panel" aria-labelledby="listTitle">
+        <header class="task-toolbar">
+          <div><span class="kicker">ONE THING AT A TIME</span><h2 id="listTitle">UI 与交互</h2><p id="categoryIntro"></p></div>
+          <button type="button" id="addButton" class="primary">＋ 新增任务</button>
+        </header>
+        <div class="search-row"><label class="search-box"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="搜索装备、编号、来源或备注…" aria-label="搜索任务"><kbd>Ctrl K</kbd></label><span id="visibleCount"></span></div>
+        <div class="list-tip"><span>先展开一项，写下你的方案。</span><span>把手拖动排序 · 也可使用 ↑ ↓</span></div>
+        <div id="taskList"></div>
+        <div id="emptyState" class="empty-state" hidden><span>☁</span><h3>这里暂时没有任务</h3><p>换个筛选条件，或者记下一个新想法。</p><button type="button" id="emptyClear">清除筛选</button></div>
+      </section>
+    </div>
+    <footer class="page-footer">ECHO WARRIOR <span>每次推进一小格，也是在向前。</span><a href="README.md" target="_blank" rel="noopener">使用说明</a></footer>
+  </main>
+  <input type="file" id="importFile" accept=".json,application/json" hidden>
+  <div id="toast" role="status" hidden></div>
+
+  <dialog id="taskDialog">
+    <form id="taskForm" class="modal-card">
+      <header class="modal-heading"><div><span class="kicker">YOUR NEXT TASK</span><h2 id="editTitle">新增任务</h2></div><button type="button" data-close="taskDialog" aria-label="关闭">×</button></header>
+      <div class="form-grid">
+        <label class="wide">标题<input name="title" maxlength="120" required></label>
+        <label>分类<select name="category" id="editCategory"></select></label>
+        <label>优先级<select name="priority"><option value="high">优先处理</option><option value="normal">正常推进</option><option value="low">有空再做</option></select></label>
+        <label class="wide">工作说明<textarea name="summary" maxlength="4000" rows="3" required></textarea></label>
+        <label class="wide">子步骤 <small>每行一项；修改某一步的内容后，该步需要重新勾选</small><textarea name="steps" maxlength="10000" rows="5"></textarea></label>
+      </div>
+      <footer class="modal-actions"><button type="button" data-close="taskDialog">取消</button><button type="submit" class="primary">保存任务</button></footer>
+    </form>
+  </dialog>
+  <dialog id="confirmDialog"><div class="modal-card compact"><span class="kicker">PLEASE CONFIRM</span><h2 id="confirmTitle"></h2><p id="confirmText"></p><div class="modal-actions"><button type="button" id="confirmNo">取消</button><button type="button" id="confirmYes" class="primary">确认</button></div></div></dialog>
+  <dialog id="archiveDialog"><div class="modal-card"><header class="modal-heading"><div><span class="kicker">ALREADY DELIVERED</span><h2>已经兑现的愿望</h2></div><button type="button" data-close="archiveDialog" aria-label="关闭">×</button></header><p class="muted">历史成果不计入本次更新完成度。部分需求仍有后续工作，详见对应卡片。</p><div id="archiveList"></div></div></dialog>
+  <noscript><p class="noscript">请启用 JavaScript，并将 index.html、styles.css、data.js、app.js 保存在同一个文件夹。</p></noscript>
+</body>
+</html>

@@ -26,6 +26,9 @@ import com.yuriscat.echowarrior.compat.item.EchoTalentSystem1211;
 import com.yuriscat.echowarrior.compat.item.SummonerFuel1211;
 import com.yuriscat.echowarrior.compat.item.EchoSummonerItem1211;
 import com.yuriscat.echowarrior.compat.progress.EchoExperienceSystem1211;
+import com.yuriscat.echowarrior.compat.item.EchoSkillScaling1211;
+import com.yuriscat.echowarrior.compat.item.EchoRelicProgress1211;
+import com.yuriscat.echowarrior.compat.ModDamageTypes1211;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -85,6 +88,7 @@ import java.util.UUID;
 
 public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 		implements EchoWarriorEntity1211, SmartBrainOwner<AztecWarriorEchoEntity1211>, GeoEntity {
+    private EchoRelicState1211.AssistMode assistMode = EchoRelicState1211.AssistMode.SAFE;
 	public static final byte VISUAL_NORMAL = 0;
 	public static final byte VISUAL_ALERT = 1;
 	public static final byte VISUAL_STARTLED = 2;
@@ -146,7 +150,7 @@ public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 	private static final String PURSUIT_TRIGGER = "pursuit";
 	private static final String HURT_TRIGGER = "hurt";
 	private static final int ATTACK_ANIMATION_TICKS = 29;
-	private static final double MELEE_ATTACK_BASE_HORIZONTAL_RANGE = 2.25;
+	private static final double MELEE_ATTACK_BASE_HORIZONTAL_RANGE = 4.25;
 	private static final int PURSUIT_IMMUNITY_TICKS = 18;
 	private static final int PURSUIT_ANIMATION_TICKS = 24;
 	private static final ResourceLocation FAVORED_ATTACK_ID = EchoWarrior1211.id("aztec_favored_attack");
@@ -433,9 +437,9 @@ public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 			this.pursuitImpacted = true;
 			this.snapCompat(this.pursuitLanding.x, this.pursuitLanding.y, this.pursuitLanding.z,
 					yawToward(this.pursuitStart.x, this.pursuitStart.z, this.pursuitLanding.x, this.pursuitLanding.z), 0.0F);
-			pursuitImpact(level, relic);
 			this.pursuitBuffUntil = level.getGameTime() + 60L;
 			updatePursuitModifiers();
+            pursuitImpact(level, relic);
 		}
 		if (elapsed >= 24L) {
 			this.entityData.set(PURSUIT_ACTIVE, false);
@@ -451,8 +455,9 @@ public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 				target.knockback(0.6, this.getX() - target.getX(), this.getZ() - target.getZ());
 				if (EchoRelicState1211.skillEnabled(relic, SKILL_OBSIDIAN_WOUND) && this.random.nextFloat() < 0.15F) {
 					applyObsidianWound(level, target);
-				}
-			}
+                }
+                applyOffensiveCurse(level, target, relic);
+            }
 		}
 		level.sendParticles(ParticleTypes.SMOKE, this.getX(), this.getY() + 0.15, this.getZ(), 12, 0.65, 0.10, 0.65, 0.02);
 		level.sendParticles(ParticleTypes.FLAME, this.getX(), this.getY() + 0.15, this.getZ(), 8, 0.55, 0.08, 0.55, 0.02);
@@ -553,6 +558,7 @@ public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 		if (!relic.isEmpty() && EchoRelicState1211.skillEnabled(relic, SKILL_OBSIDIAN_WOUND) && this.random.nextFloat() < 0.30F) {
 			applyObsidianWound(level, mainTarget);
 		}
+		applyOffensiveCurse(level, mainTarget, relic);
 		if (!relic.isEmpty() && EchoRelicState1211.skillEnabled(relic, SKILL_MACUAHUITL)) {
 			performMacuahuitlSweep(level, mainTarget, relic);
 		}
@@ -561,7 +567,7 @@ public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 
 	private void performMacuahuitlSweep(ServerLevel level, LivingEntity mainTarget, ItemStack relic) {
 		boolean empowered = level.getGameTime() < this.pursuitBuffUntil;
-		double radius = empowered ? 3.0 : 2.5;
+		double radius = empowered ? 5.0 : 4.5;
 		double halfAngle = empowered ? 90.0 : 80.0;
 		float splashDamage = (float)(this.getAttributeValue(Attributes.ATTACK_DAMAGE) * (empowered ? 0.75 : 0.50));
 		Vec3 facing = this.getLookAngle().multiply(1.0, 0.0, 1.0).normalize();
@@ -570,16 +576,45 @@ public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 			Vec3 toward = target.position().subtract(this.position()).multiply(1.0, 0.0, 1.0).normalize();
 			double angle = Math.toDegrees(Math.acos(Math.clamp(facing.dot(toward), -1.0, 1.0)));
 			if (angle > halfAngle) continue;
-			if (target.hurt(level.damageSources().mobAttack(this), splashDamage)
-					&& EchoRelicState1211.skillEnabled(relic, SKILL_OBSIDIAN_WOUND) && this.random.nextFloat() < 0.15F) {
-				applyObsidianWound(level, target);
-			}
+			if (target.hurt(level.damageSources().mobAttack(this), splashDamage)) {
+                if (EchoRelicState1211.skillEnabled(relic, SKILL_OBSIDIAN_WOUND) && this.random.nextFloat() < 0.15F) {
+                    applyObsidianWound(level, target);
+                }
+                applyOffensiveCurse(level, target, relic);
+            }
 		}
 		level.sendParticles(ParticleTypes.SWEEP_ATTACK, mainTarget.getX(), mainTarget.getY() + mainTarget.getBbHeight() * 0.5,
 				mainTarget.getZ(), 1, 0.0, 0.0, 0.0, 0.0);
 	}
 
+
+    public int curseEffectCount(LivingEntity target) {
+        int count = 0;
+        for (MobEffectInstance effect : this.getActiveEffects()) {
+            if (effect.getEffect().value().getCategory() == net.minecraft.world.effect.MobEffectCategory.BENEFICIAL) count++;
+        }
+        for (MobEffectInstance effect : target.getActiveEffects()) {
+            if (effect.getEffect().value().getCategory() == net.minecraft.world.effect.MobEffectCategory.HARMFUL) count++;
+        }
+        var attack = this.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (attack != null && attack.getModifier(FAVORED_ATTACK_ID) != null) count++;
+        if (this.level().getGameTime() < this.pursuitBuffUntil) count++;
+        return count;
+    }
+
+    private void applyOffensiveCurse(ServerLevel level, LivingEntity target, ItemStack relic) {
+        if (relic.isEmpty() || !EchoRelicState1211.skillEnabled(relic, SKILL_CURSE)
+                || !target.isAlive() || !this.canAttack(target)) return;
+        float damage = (float)(curseEffectCount(target) * EchoSkillScaling1211.cursePerEffect(EchoRelicProgress1211.level(relic)));
+        if (damage > 0) {
+            Vec3 motion = target.getDeltaMovement();
+            target.hurt(ModDamageTypes1211.source(level, ModDamageTypes1211.QUETZALCOATL_CURSE, null, this), damage);
+            target.setDeltaMovement(motion);
+        }
+    }
+
 	public void tryApplyCurse(ServerLevel level, LivingEntity attacker) {
+        if (!this.canAttack(attacker)) return;
 		ItemStack relic = currentRelic();
 		if (relic.isEmpty() || !EchoRelicState1211.skillEnabled(relic, SKILL_CURSE) || this.random.nextFloat() >= 0.60F) return;
 		boolean stronger = this.random.nextFloat() < 0.25F;
@@ -590,8 +625,8 @@ public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 				attacker.getZ(), 5, 0.25, 0.35, 0.25, 0.01);
 	}
 
-	public static void applyObsidianWound(ServerLevel level, LivingEntity target) {
-		target.addEffect(new MobEffectInstance(ModEffects1211.OBSIDIAN_WOUND, 120, 0, false, true, true));
+	public void applyObsidianWound(ServerLevel level, LivingEntity target) {
+		EchoBleeding1211.apply(level, target, this, true, this.getAttributeValue(Attributes.ATTACK_DAMAGE));
 		level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.REDSTONE_BLOCK.defaultBlockState()),
 				target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(), 5, 0.25, 0.3, 0.25, 0.04);
 		level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.OBSIDIAN.defaultBlockState()),
@@ -1958,7 +1993,7 @@ public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 			this.targetVisibility.observe(this, ownerAttacker, now);
 			return ownerAttacker;
 		}
-		LivingEntity ownerTarget = owner.getLastHurtMob();
+		LivingEntity ownerTarget = EchoAssistPolicy1211.followsOwner(this) ? owner.getLastHurtMob() : null;
 		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory1211.GRACE_TICKS)
 				&& canProtectAgainst(ownerTarget)) {
 			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
@@ -2013,7 +2048,11 @@ public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 	}
 
 	@Override
-	public boolean canAttack(LivingEntity target) {
+	public EchoRelicState1211.AssistMode assistMode() { return this.assistMode; }
+
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        if (!EchoAssistPolicy1211.allowsTarget(this, target)) return false;
 		LivingEntity owner = this.getOwner();
 		if (target == this || target == owner || target.isAlliedTo(this) || owner != null && owner.isAlliedTo(target)) return false;
 		if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
@@ -2102,6 +2141,12 @@ public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 
 	@Override
 	public void applyRelicState(ItemStack relic, boolean resetAnchor) {
+        if (this.assistMode != EchoRelicState1211.assistMode(relic)) {
+            this.assistMode = EchoRelicState1211.assistMode(relic);
+            this.setTarget(null);
+            net.tslat.smartbrainlib.util.BrainUtils.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
+        }
+
 		if (relic.isEmpty()) return;
 		EchoRelicState1211.ActivityMode previousActivity = this.activityMode;
 		EchoRelicState1211.AlertMode previousAlert = this.alertMode;
@@ -2208,6 +2253,7 @@ public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 	@Override
 	public void addAdditionalSaveData(CompoundTag tag) {
 		super.addAdditionalSaveData(tag);
+        tag.putInt("AssistMode", this.assistMode.ordinal());
 		if (this.ownerUuid != null) tag.putUUID("EchoOwner", this.ownerUuid);
 		if (this.summonerUuid != null) tag.putUUID("SummonerUuid", this.summonerUuid);
 		tag.putLong("BindingGeneration", this.bindingGeneration);
@@ -2224,6 +2270,7 @@ public final class AztecWarriorEchoEntity1211 extends PathfinderMob
 	@Override
 	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
+        this.assistMode = EchoRelicState1211.AssistMode.byOrdinal(tag.contains("AssistMode") ? tag.getInt("AssistMode") : 1);
 		this.ownerUuid = tag.hasUUID("EchoOwner") ? tag.getUUID("EchoOwner") : null;
 		this.summonerUuid = tag.hasUUID("SummonerUuid") ? tag.getUUID("SummonerUuid") : null;
 		this.bindingGeneration = tag.getLong("BindingGeneration");

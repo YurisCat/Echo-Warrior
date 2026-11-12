@@ -66,6 +66,8 @@ def main() -> None:
     parser.add_argument("--server", default="127.0.0.1:25671")
     parser.add_argument("--label", default="")
     parser.add_argument("--username", choices=["EchoPetOwner", "EchoPetGuest"])
+    parser.add_argument("--baseline", action="store_true",
+                        help="Prepare an ordinary Echo Warrior client without requiring a pet mod.")
     args = parser.parse_args()
     if os.environ.get("COMPUTERNAME", "").upper() != "FOXY-NODE":
         raise RuntimeError("Long acceptance preparation belongs on FOXY-NODE")
@@ -96,8 +98,11 @@ def main() -> None:
     if instance.exists():
         raise ValueError(f"Fresh acceptance instance required: {instance}")
     cache = Path.home() / ".gradle/caches"
-    prior_runtimes = [p for p in Path(r"D:\Games-Terminal\EchoWarrior").glob("pet-acceptance-*/runtime")
-                      if p.resolve() != runtime.resolve()]
+    prior_runtimes = sorted(
+        (p for pattern in ("pet-acceptance-*/runtime", "skill-client-*/runtime", "skill-visual-*/runtime")
+         for p in Path(r"D:\Games-Terminal\EchoWarrior").glob(pattern)
+         if p.resolve() != runtime.resolve()),
+        key=lambda p: p.stat().st_mtime, reverse=True)
     cached: dict[str, list[Path]] = {}
     for path in (cache / "modules-2/files-2.1").rglob("*.jar"):
         cached.setdefault(path.name, []).append(path)
@@ -240,7 +245,7 @@ def main() -> None:
         target = instance / "mods" / path.name
         shutil.copy2(path, target)
         artifacts[path.name] = sha(target)
-    if not artifacts or not any("pet_home" in name or "domestication" in name for name in artifacts):
+    if not artifacts or (not args.baseline and not any("pet_home" in name or "domestication" in name for name in artifacts)):
         raise ValueError("Acceptance requires the selected official pet mod and dependencies")
     target = instance / "mods" / args.echo_jar.name
     shutil.copy2(args.echo_jar, target)

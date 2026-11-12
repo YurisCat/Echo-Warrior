@@ -607,9 +607,11 @@ public final class TutorialManualScreen1201 extends AbstractContainerScreen<Tuto
 		String key = HERO_SKILL_KEYS[hero][skill];
 		List<Component> tooltip = new ArrayList<>();
 		tooltip.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
-		for (int line = 1; line <= HERO_SKILL_LINES[hero][skill]; line++) {
-			tooltip.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
-		}
+		if (!EchoSkillTooltips1201.append(tooltip, key, 1, new double[] {6, 8, 5, 7, 6}[hero])) {
+            for (int line = 1; line <= HERO_SKILL_LINES[hero][skill]; line++) {
+                tooltip.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.WHITE));
+            }
+        }
 		renderScreenTooltip(graphics, tooltip, mouseX, mouseY);
 	}
 

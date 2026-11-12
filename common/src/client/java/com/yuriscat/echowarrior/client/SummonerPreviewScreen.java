@@ -48,7 +48,11 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			"gui.echo_warrior.summoner.activity.wait",
 			"gui.echo_warrior.summoner.activity.wander"
 	};
-	private static final String[] ALERT_MODE_TRANSLATION_KEYS = {
+	private static final String[] ASSIST_MODE_TRANSLATION_KEYS = {
+            "gui.echo_warrior.summoner.assist.off", "gui.echo_warrior.summoner.assist.safe", "gui.echo_warrior.summoner.assist.all"
+    };
+    private static final Identifier[] ASSIST_ICONS = {icon("modes/assist/off.png"), icon("modes/assist/safe.png"), icon("modes/assist/all.png")};
+    private static final String[] ALERT_MODE_TRANSLATION_KEYS = {
 			"gui.echo_warrior.summoner.alert.aggressive",
 			"gui.echo_warrior.summoner.alert.defensive",
 			"gui.echo_warrior.summoner.alert.peaceful"
@@ -296,7 +300,9 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 			graphics.text(this.font, this.menu.summonCostPercent() + "%", rx(Element.BASIC_INFO, 127), ry(Element.BASIC_INFO, 60), PRIMARY_TEXT_COLOR, true);
 		}
 
-		drawFittedText(graphics, Component.translatable("gui.echo_warrior.summoner.section.activity"),
+		drawFittedText(graphics, Component.translatable("gui.echo_warrior.summoner.section.assist"),
+                rx(Element.ASSIST, 179), ry(Element.ASSIST, 45), 55, PRIMARY_TEXT_COLOR, true);
+        drawFittedText(graphics, Component.translatable("gui.echo_warrior.summoner.section.activity"),
 				rx(Element.ACTIVITY, 179), ry(Element.ACTIVITY, 78), 55, PRIMARY_TEXT_COLOR, true);
 		drawFittedText(graphics, Component.translatable("gui.echo_warrior.summoner.section.alert"),
 				rx(Element.ALERT, 179), ry(Element.ALERT, 111), 55, PRIMARY_TEXT_COLOR, true);
@@ -464,7 +470,11 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 
 	private void renderModeButtons(GuiGraphicsExtractor graphics, boolean active, int mouseX, int mouseY) {
 		for (int index = 0; index < 3; index++) {
-			int activityX = x(Element.ACTIVITY, 178 + index * 19);
+			int assistX = x(Element.ASSIST, 178 + index * 19);
+            int assistY = y(Element.ASSIST, 57);
+            blitSized(graphics, modeFrame(active, index == this.menu.assistMode(), mouseX, mouseY, assistX, assistY), assistX, assistY, 18, 18);
+            if (active) blit16(graphics, ASSIST_ICONS[index], assistX + 1, assistY + 1);
+            int activityX = x(Element.ACTIVITY, 178 + index * 19);
 			int activityY = y(Element.ACTIVITY, 90);
 			int alertX = x(Element.ALERT, 178 + index * 19);
 			int alertY = y(Element.ALERT, 123);
@@ -783,7 +793,13 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		}
 
 		for (int index = 0; index < 3; index++) {
-			if (isInside(mouseX, mouseY, x(Element.ACTIVITY, 178 + index * 19), y(Element.ACTIVITY, 90), 18, 18)) {
+			if (isInside(mouseX, mouseY, x(Element.ASSIST, 178 + index * 19), y(Element.ASSIST, 57), 18, 18)) {
+                String key = ASSIST_MODE_TRANSLATION_KEYS[index];
+                showTooltip(graphics, mouseX, mouseY, Component.translatable(key + ".name"),
+                        Component.translatable(key + ".description"), modeStateText(active, index == this.menu.assistMode()));
+                return;
+            }
+            if (isInside(mouseX, mouseY, x(Element.ACTIVITY, 178 + index * 19), y(Element.ACTIVITY, 90), 18, 18)) {
 				String key = ACTIVITY_MODE_TRANSLATION_KEYS[index];
 				showTooltip(graphics, mouseX, mouseY,
 						Component.translatable(key + ".name"),
@@ -879,33 +895,37 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		for (Component description : descriptions) {
 			lines.add(description.copy().withStyle(ChatFormatting.GRAY));
 		}
-		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
+		graphics.setTooltipForNextFrame(this.font, EchoSkillTooltips.wrap(this.font, lines, this.width), mouseX, mouseY);
 	}
 
 	private void showAztecSkillTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int skill, boolean enabled) {
 		String key = AZTEC_SKILL_TRANSLATION_KEYS[skill];
 		List<Component> lines = new java.util.ArrayList<>();
 		lines.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
-		for (int line = 1; line <= AZTEC_SKILL_DESCRIPTION_LINES[skill]; line++) {
-			lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
+		if (!EchoSkillTooltips.append(lines, key, this.menu.relicLevel(), this.menu.skillAttackDamage())) {
+		    for (int line = 1; line <= AZTEC_SKILL_DESCRIPTION_LINES[skill]; line++) {
+		        lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.WHITE));
+		    }
 		}
 		lines.add(Component.translatable(enabled
 				? "gui.echo_warrior.summoner.skill.enabled"
 				: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
-		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
+		graphics.setTooltipForNextFrame(this.font, EchoSkillTooltips.wrap(this.font, lines, this.width), mouseX, mouseY);
 	}
 
 	private void showRomanSkillTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int skill, boolean enabled) {
 		String key = ROMAN_SKILL_TRANSLATION_KEYS[skill];
 		List<Component> lines = new java.util.ArrayList<>();
 		lines.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
-		for (int line = 1; line <= ROMAN_SKILL_DESCRIPTION_LINES[skill]; line++) {
-			lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
+		if (!EchoSkillTooltips.append(lines, key, this.menu.relicLevel(), this.menu.skillAttackDamage())) {
+		    for (int line = 1; line <= ROMAN_SKILL_DESCRIPTION_LINES[skill]; line++) {
+		        lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.WHITE));
+		    }
 		}
 		lines.add(Component.translatable(enabled
 				? "gui.echo_warrior.summoner.skill.enabled"
 				: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
-		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
+		graphics.setTooltipForNextFrame(this.font, EchoSkillTooltips.wrap(this.font, lines, this.width), mouseX, mouseY);
 	}
 
 	private void showEgyptianSkillTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int skill, boolean enabled) {
@@ -918,41 +938,47 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 				: EGYPTIAN_SKILL_TRANSLATION_KEYS[skill];
 		List<Component> lines = new java.util.ArrayList<>();
 		lines.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
-		for (int line = 1; line <= EGYPTIAN_SKILL_DESCRIPTION_LINES[skill]; line++) {
-			lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
+		if (!EchoSkillTooltips.append(lines, key, this.menu.relicLevel(), this.menu.skillAttackDamage())) {
+		    for (int line = 1; line <= EGYPTIAN_SKILL_DESCRIPTION_LINES[skill]; line++) {
+		        lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.WHITE));
+		    }
 		}
 		if (skill != 1) {
 			lines.add(Component.translatable(enabled
 					? "gui.echo_warrior.summoner.skill.enabled"
 					: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
 		}
-		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
+		graphics.setTooltipForNextFrame(this.font, EchoSkillTooltips.wrap(this.font, lines, this.width), mouseX, mouseY);
 	}
 
 	private void showGuandaoSkillTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int skill, boolean enabled) {
 		String key = GUANDAO_SKILL_TRANSLATION_KEYS[skill];
 		List<Component> lines = new java.util.ArrayList<>();
 		lines.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
-		for (int line = 1; line <= GUANDAO_SKILL_DESCRIPTION_LINES[skill]; line++) {
-			lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
+		if (!EchoSkillTooltips.append(lines, key, this.menu.relicLevel(), this.menu.skillAttackDamage())) {
+		    for (int line = 1; line <= GUANDAO_SKILL_DESCRIPTION_LINES[skill]; line++) {
+		        lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.WHITE));
+		    }
 		}
 		lines.add(Component.translatable(enabled
 				? "gui.echo_warrior.summoner.skill.enabled"
 				: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
-		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
+		graphics.setTooltipForNextFrame(this.font, EchoSkillTooltips.wrap(this.font, lines, this.width), mouseX, mouseY);
 	}
 
 	private void showSamuraiSkillTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int skill, boolean enabled) {
 		String key = SAMURAI_SKILL_TRANSLATION_KEYS[skill];
 		List<Component> lines = new java.util.ArrayList<>();
 		lines.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
-		for (int line = 1; line <= SAMURAI_SKILL_DESCRIPTION_LINES[skill]; line++) {
-			lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
+		if (!EchoSkillTooltips.append(lines, key, this.menu.relicLevel(), this.menu.skillAttackDamage())) {
+		    for (int line = 1; line <= SAMURAI_SKILL_DESCRIPTION_LINES[skill]; line++) {
+		        lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.WHITE));
+		    }
 		}
 		lines.add(Component.translatable(enabled
 				? "gui.echo_warrior.summoner.skill.enabled"
 				: "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
-		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
+		graphics.setTooltipForNextFrame(this.font, EchoSkillTooltips.wrap(this.font, lines, this.width), mouseX, mouseY);
 	}
 
 	private void showTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, Component[] tooltip) {
@@ -964,7 +990,7 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		for (int index = 1; index < tooltip.length; index++) {
 			lines.add(tooltip[index].copy().withStyle(ChatFormatting.GRAY));
 		}
-		graphics.setTooltipForNextFrame(this.font, lines, Optional.empty(), mouseX, mouseY);
+		graphics.setTooltipForNextFrame(this.font, EchoSkillTooltips.wrap(this.font, lines, this.width), mouseX, mouseY);
 	}
 
 	private Component summonButtonText(boolean relicLoaded) {
@@ -1139,7 +1165,11 @@ public final class SummonerPreviewScreen extends AbstractContainerScreen<Summone
 		if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
 			if (hasRelicLoaded()) {
 				for (int index = 0; index < 3; index++) {
-					if (isInside(event.x(), event.y(), x(Element.ACTIVITY, 178 + index * 19), y(Element.ACTIVITY, 90), 18, 18)) {
+					if (isInside(event.x(), event.y(), x(Element.ASSIST, 178 + index * 19), y(Element.ASSIST, 57), 18, 18)) {
+                        sendMenuButton(SummonerMenu.BUTTON_ASSIST_START + index);
+                        return true;
+                    }
+                    if (isInside(event.x(), event.y(), x(Element.ACTIVITY, 178 + index * 19), y(Element.ACTIVITY, 90), 18, 18)) {
 						sendMenuButton(SummonerMenu.BUTTON_ACTIVITY_START + index);
 						return true;
 					}

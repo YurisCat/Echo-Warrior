@@ -60,7 +60,13 @@ public final class VisualDebugCommands {
 		dispatcher.register(Commands.literal("echo_warrior")
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
 				.then(Commands.literal("progression_selftest").executes(context -> {
-                    com.yuriscat.echowarrior.item.EchoProgressionSelfTest.run(context.getSource().getLevel());
+                    try {
+                        com.yuriscat.echowarrior.item.EchoProgressionSelfTest.run(context.getSource().getLevel());
+                    } catch (RuntimeException failure) {
+                        org.slf4j.LoggerFactory.getLogger("echo_warrior")
+                                .error("[EchoProgressionSelfTest] FAIL", failure);
+                        throw failure;
+                    }
                     return 1;
                 }))
 				.then(Commands.literal("pet_collar_selftest").executes(context -> {

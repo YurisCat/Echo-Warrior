@@ -14,7 +14,7 @@ public final class GrowthMenuSelfTest1201 {
         var sending = new ArrayList<DataSlot>();
         var receiving = new ArrayList<DataSlot>();
         source.register(sending::add); target.register(receiving::add);
-        for (int value : new int[]{0, 100, 5000, 32767, 32768, 65535, 65536, 1000000, Integer.MAX_VALUE}) {
+        for (int value : new int[]{0, 100, 5000, 32767, 32768, 65535, 65536, 1000000, Float.floatToIntBits(35.310344F), Float.floatToIntBits(123456.789F), Integer.MAX_VALUE}) {
             source.set(value);
             for (int i=0; i<sending.size(); i++) {
                 var buffer = new FriendlyByteBuf(Unpooled.buffer());

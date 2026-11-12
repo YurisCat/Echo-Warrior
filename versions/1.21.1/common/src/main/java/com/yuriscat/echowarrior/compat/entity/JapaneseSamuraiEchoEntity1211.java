@@ -83,6 +83,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class JapaneseSamuraiEchoEntity1211 extends PathfinderMob
 		implements EchoWarriorEntity1211, SmartBrainOwner<JapaneseSamuraiEchoEntity1211>, GeoEntity,
 		GuandaoVisualBehavior1211.Host {
+    private EchoRelicState1211.AssistMode assistMode = EchoRelicState1211.AssistMode.SAFE;
 	public static final byte VISUAL_NORMAL = 0;
 	public static final byte VISUAL_ALERT = 1;
 	public static final byte VISUAL_STARTLED = 2;
@@ -1201,7 +1202,7 @@ public final class JapaneseSamuraiEchoEntity1211 extends PathfinderMob
 			this.targetVisibility.observe(this, ownerAttacker, now);
 			return ownerAttacker;
 		}
-		LivingEntity ownerTarget = owner.getLastHurtMob();
+		LivingEntity ownerTarget = EchoAssistPolicy1211.followsOwner(this) ? owner.getLastHurtMob() : null;
 		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory1211.GRACE_TICKS)
 				&& canProtectAgainst(ownerTarget)) {
 			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
@@ -1262,7 +1263,7 @@ public final class JapaneseSamuraiEchoEntity1211 extends PathfinderMob
 		LivingEntity owner = this.getOwner();
 		return owner != null && (
 				target == owner.getLastHurtByMob() && isRecent(owner, owner.getLastHurtByMobTimestamp())
-						|| target == owner.getLastHurtMob() && isRecent(owner, owner.getLastHurtMobTimestamp())
+						|| EchoAssistPolicy1211.followsOwner(this) && target == owner.getLastHurtMob() && isRecent(owner, owner.getLastHurtMobTimestamp())
 		);
 	}
 
@@ -1278,7 +1279,11 @@ public final class JapaneseSamuraiEchoEntity1211 extends PathfinderMob
 	}
 
 	@Override
-	public boolean canAttack(LivingEntity target) {
+	public EchoRelicState1211.AssistMode assistMode() { return this.assistMode; }
+
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        if (!EchoAssistPolicy1211.allowsTarget(this, target)) return false;
 		LivingEntity owner = this.getOwner();
 		if (target == this || target == owner || target.isAlliedTo(this) || owner != null && owner.isAlliedTo(target)) return false;
 		if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
@@ -1321,6 +1326,12 @@ public final class JapaneseSamuraiEchoEntity1211 extends PathfinderMob
 
 	@Override
 	public void applyRelicState(ItemStack relic, boolean resetAnchor) {
+        if (this.assistMode != EchoRelicState1211.assistMode(relic)) {
+            this.assistMode = EchoRelicState1211.assistMode(relic);
+            this.setTarget(null);
+            net.tslat.smartbrainlib.util.BrainUtils.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
+        }
+
 		if (relic.isEmpty()) return;
 		EchoRelicState1211.ActivityMode previousActivity = this.activityMode;
 		EchoRelicState1211.AlertMode previousAlert = this.alertMode;
@@ -1486,6 +1497,7 @@ public final class JapaneseSamuraiEchoEntity1211 extends PathfinderMob
 	@Override
 	public void addAdditionalSaveData(CompoundTag tag) {
 		super.addAdditionalSaveData(tag);
+        tag.putInt("AssistMode", this.assistMode.ordinal());
 		if (this.ownerUuid != null) tag.putUUID("EchoOwner", this.ownerUuid);
 		if (this.summonerUuid != null) tag.putUUID("SummonerUuid", this.summonerUuid);
 		tag.putLong("BindingGeneration", this.bindingGeneration);
@@ -1502,6 +1514,7 @@ public final class JapaneseSamuraiEchoEntity1211 extends PathfinderMob
 	@Override
 	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
+        this.assistMode = EchoRelicState1211.AssistMode.byOrdinal(tag.contains("AssistMode") ? tag.getInt("AssistMode") : 1);
 		this.ownerUuid = tag.hasUUID("EchoOwner") ? tag.getUUID("EchoOwner") : null;
 		this.summonerUuid = tag.hasUUID("SummonerUuid") ? tag.getUUID("SummonerUuid") : null;
 		this.bindingGeneration = tag.getLong("BindingGeneration");

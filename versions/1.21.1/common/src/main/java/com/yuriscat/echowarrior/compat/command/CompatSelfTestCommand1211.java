@@ -322,14 +322,14 @@ public final class CompatSelfTestCommand1211 {
                             summoner, 1, accessoryContents),
                     "accessory duplicate rejection");
             require(close(EchoAccessorySystem1211.armorBonus(binding.accessories()), 2.0)
-                            && close(EchoAccessorySystem1211.maximumHealthBonus(binding.accessories()), 12.0)
+                            && close(EchoAccessorySystem1211.maximumHealthBonus(binding.accessories(), 30.0), 10.5)
                             && close(EchoAccessorySystem1211.movementMultiplier(binding.accessories()), 0.85)
                             && close(EchoAccessorySystem1211.proactiveRange(binding.accessories(), 16.0, false), 24.0)
                             && close(EchoAccessorySystem1211.proactiveRange(binding.accessories(), 16.0, true), 8.0)
                             && EchoAccessorySystem1211.worldExperienceReward(5, true) == 8
                             && EchoAccessorySystem1211.growthExperienceReward(5, true) == 8
                             && close(EchoAccessorySystem1211.victorHealAmount(72.0F), 7.2),
-                    "Roman accessory fixed bonuses");
+                    "Roman accessory percentages and fixed armor");
             validateTraitRoll(binding.relic());
             require(EchoBindingSystem1211.consumeFuel(source.getLevel(), summoner, 100)
                             && binding.fuel() == 50 && SummonerFuel1211.amount(summoner) == 50,
@@ -470,7 +470,7 @@ public final class CompatSelfTestCommand1211 {
 
             original.applyRelicState(growthRelic, false);
             EchoAccessorySystem1211.apply(original, binding.accessories());
-            require(close(original.getAttributeValue(Attributes.MAX_HEALTH), 72.0)
+            require(close(original.getAttributeValue(Attributes.MAX_HEALTH), 81.0)
                             && close(original.getAttributeValue(Attributes.ATTACK_DAMAGE), 13.0)
                             && close(original.getAttributeValue(Attributes.ARMOR), 10.0)
                             && close(original.getAttributeValue(Attributes.MOVEMENT_SPEED), 0.2618),

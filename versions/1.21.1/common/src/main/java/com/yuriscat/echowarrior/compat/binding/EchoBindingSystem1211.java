@@ -679,6 +679,17 @@ public final class EchoBindingSystem1211 {
         if (spirit != null) spirit.applyBindingState(binding, false);
     }
 
+    public static void setAssistMode(ServerLevel level, EchoBindingSavedData1211.Binding binding, int mode) {
+        if (mode < 0 || mode > 2) return;
+        ItemStack relic = binding.relic();
+        EchoRelicState1211.setAssistMode(relic, EchoRelicState1211.AssistMode.byOrdinal(mode));
+        binding.setRelic(relic);
+        EchoBindingSavedData1211.get(level.getServer()).setDirty();
+        synchronizeVisibleCopies(level.getServer(), binding.summonerId(), binding.relic(), binding.accessories());
+        EchoWarriorEntity1211 spirit = findLoaded(level.getServer(), binding.spiritId());
+        if (spirit != null) spirit.applyBindingState(binding, false);
+    }
+
     public static void toggleSkill(ServerLevel level, EchoBindingSavedData1211.Binding binding, int skill) {
         ItemStack relic = binding.relic();
         if (EchoHeroType1211.fromRelic(relic) == EchoHeroType1211.EGYPTIAN_ARCHER && skill == 1) {

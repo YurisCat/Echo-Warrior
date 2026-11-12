@@ -17,6 +17,10 @@ import java.util.UUID;
 /** Common server contract used by every 1.20.1 echo implementation. */
 public interface EchoWarriorEntity1201 extends OwnableEntity {
     LivingEntity livingEntity();
+    default double skillTooltipAttackDamage() {
+        return livingEntity().getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+    }
+    EchoRelicState1201.AssistMode assistMode();
     EchoHeroType1201 heroType();
     UUID getOwnerUUID();
     UUID getSummonerId();

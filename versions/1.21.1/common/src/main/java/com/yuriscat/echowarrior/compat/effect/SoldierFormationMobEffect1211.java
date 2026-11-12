@@ -10,6 +10,6 @@ public final class SoldierFormationMobEffect1211 extends MobEffect {
     public SoldierFormationMobEffect1211() {
         super(MobEffectCategory.BENEFICIAL, 0xD8B55A);
         addAttributeModifier(Attributes.ATTACK_DAMAGE, EchoWarrior1211.id("soldier_formation_attack"),
-                2.0, AttributeModifier.Operation.ADD_VALUE);
+                0.30, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 }

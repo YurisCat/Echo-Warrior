@@ -4,6 +4,23 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+### Added
+
+- Added Off, Protect and All modes to the Echo Summoner's Assist controls. Protect is the default and prevents Echoes from harming villagers, iron golems and tamed creatures, including retaliation and area damage.
+- Added short skill descriptions with current values. Hold Alt for formulas and concise notes; release it to return. Skill body text is white, formulas and notes gray, attack terms red and level terms green.
+
+### Changed
+
+- Updated Roman, Aztec and Egyptian skills with level- and attack-based scaling, including Legion Endures, direct-hit curse damage, bleeding and armor-piercing arrows. Bleeding sources expire independently; only the strongest active source deals damage.
+- Extended Aztec melee and sweep reach. Guandao's first three combo hits now apply a small vertical lift and briefly reduce the target's melee reach.
+- Converted selected accessory attack and maximum-health bonuses to percentages. Day/night healing now restores 1 health plus 1% of maximum health; Blood Pact Fang restores 2 health plus 5% of maximum health when triggered.
+- Updated the summoner GUI, encyclopedia and Simplified Chinese/English text across Minecraft 26.1.2, 1.21.1 and 1.20.1.
+
+### Notes
+
+- Other locales still need the new skill/Assist text and updated accessory descriptions. The localization release gate remains pending.
+- Existing worlds are supported. Restart the client and server after updating; no new world or chunks are required.
+
 ## 0.2.11 - 2026-10-28
 
 ### Added

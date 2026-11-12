@@ -104,8 +104,9 @@ public final class EchoAuraAuditSystem {
 					considerLink(FORMATION_LINKS, seen, desired, source, controller,
 							strength, FORMATION_ENTER_SQR, FORMATION_EXIT_SQR);
 				}
-				for (RomanLegionaryEchoEntity beneficiary : levelRomans) {
-					if (beneficiary == source || !controllerId.equals(beneficiary.getOwnerUuid())) continue;
+				for (LivingEntity beneficiary : level.getEntitiesOfClass(LivingEntity.class, source.getBoundingBox().inflate(10.0),
+                        candidate -> candidate instanceof EchoWarriorEntity && candidate.isAlive())) {
+					if (beneficiary == source || !controllerId.equals(((EchoWarriorEntity)beneficiary).getOwnerUuid())) continue;
 					considerLink(FORMATION_LINKS, seen, desired, source, beneficiary,
 							strength, FORMATION_ENTER_SQR, FORMATION_EXIT_SQR);
 				}
@@ -127,7 +128,7 @@ public final class EchoAuraAuditSystem {
 			for (AztecWarriorEchoEntity source : entry.getValue()) {
 				ItemStack relic = source.activeRelic();
 				boolean enabled = !relic.isEmpty() && EchoHeroType.fromRelic(relic) == EchoHeroType.AZTEC_WARRIOR
-						&& EchoRelicState.skillEnabled(relic, 0);
+						&& EchoRelicState.skillEnabled(relic, AztecWarriorEchoEntity.SKILL_BLESSING);
 				if (!enabled) continue;
 				if (isSunlit(level, source)) {
 					desired.add(source.getUUID());

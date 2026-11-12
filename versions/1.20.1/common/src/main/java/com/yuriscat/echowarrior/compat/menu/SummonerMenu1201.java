@@ -32,6 +32,7 @@ public final class SummonerMenu1201 extends AbstractContainerMenu {
     public static final int BUTTON_SUMMON_OR_DISMISS = 0;
     public static final int BUTTON_ACTIVITY_START = 10;
     public static final int BUTTON_ALERT_START = 20;
+    public static final int BUTTON_ASSIST_START = 40;
     public static final int BUTTON_SKILL_START = 30;
     public static final int ACTION_SUMMONED = 1;
     public static final int ACTION_DISMISSED = 2;
@@ -55,6 +56,8 @@ public final class SummonerMenu1201 extends AbstractContainerMenu {
     private final WideDataSlot1201 spiritMaximumHealth = new WideDataSlot1201();
     private final DataSlot activityMode = DataSlot.standalone();
     private final DataSlot alertMode = DataSlot.standalone();
+    private final DataSlot assistMode = DataSlot.standalone();
+    private final WideDataSlot1201 skillAttackSnapshot = new WideDataSlot1201();
     private final DataSlot enabledSkills = DataSlot.standalone();
     private final DataSlot shieldCharges = DataSlot.standalone();
     private final DataSlot activeSkillMaximumCharges = DataSlot.standalone();
@@ -108,6 +111,8 @@ public final class SummonerMenu1201 extends AbstractContainerMenu {
         this.spiritMaximumHealth.register(this::addDataSlot);
         this.addDataSlot(this.activityMode);
         this.addDataSlot(this.alertMode);
+        this.addDataSlot(this.assistMode);
+        this.skillAttackSnapshot.register(this::addDataSlot);
         this.addDataSlot(this.enabledSkills);
         this.addDataSlot(this.shieldCharges);
         this.addDataSlot(this.activeSkillMaximumCharges);
@@ -150,6 +155,8 @@ public final class SummonerMenu1201 extends AbstractContainerMenu {
     public int spiritMaximumHealth() { return this.spiritMaximumHealth.get(); }
     public int activityMode() { return this.activityMode.get(); }
     public int alertMode() { return this.alertMode.get(); }
+    public int assistMode() { return this.assistMode.get(); }
+    public double skillAttackDamage() { return Float.intBitsToFloat(this.skillAttackSnapshot.get()); }
     public int enabledSkills() { return this.enabledSkills.get(); }
     public int shieldCharges() { return this.shieldCharges.get(); }
     public int activeSkillMaximumCharges() { return this.activeSkillMaximumCharges.get(); }
@@ -167,7 +174,7 @@ public final class SummonerMenu1201 extends AbstractContainerMenu {
     public int summonCostPercent() { return this.summonCostPercent.get(); }
     public int spiritAlertRange() { return this.spiritAlertRange.get(); }
     public double accessoryMaximumHealthChange() {
-        return EchoAccessorySystem1201.maximumHealthBonus(this.contents);
+        return EchoAccessorySystem1201.maximumHealthBonus(this.contents, EchoRelicState1201.maximumHealth(this.contents.getItem(7)));
     }
     public double accessoryArmorChange() { return EchoAccessorySystem1201.armorBonus(this.contents); }
     public double accessoryMovementChange() {
@@ -197,6 +204,9 @@ public final class SummonerMenu1201 extends AbstractContainerMenu {
         long now = player.level().getGameTime();
         this.activityMode.set(binding.activityMode());
         this.alertMode.set(binding.alertMode());
+        this.assistMode.set(EchoRelicState1201.assistMode(relic).ordinal());
+        this.skillAttackSnapshot.set(Float.floatToIntBits((float)(spirit != null ? spirit.skillTooltipAttackDamage()
+                : Math.max(0.0, EchoRelicState1201.attackDamage(relic) + EchoAccessorySystem1201.attackBonus(this.contents, EchoRelicState1201.attackDamage(relic))))));
         this.enabledSkills.set(binding.enabledSkills());
         this.shieldCharges.set(EchoRelicState1201.activeSkillCharges(relic, now));
         this.activeSkillMaximumCharges.set(EchoRelicState1201.activeSkillMaximumCharges(relic));
@@ -214,9 +224,9 @@ public final class SummonerMenu1201 extends AbstractContainerMenu {
             this.relicExperience.set(EchoRelicProgress1201.experience(relic));
             this.relicExperienceNeeded.set(EchoRelicProgress1201.experienceNeeded(levelValue));
             this.spiritMaximumHealth.set(Math.round((float)(EchoRelicState1201.maximumHealth(relic)
-                    + EchoAccessorySystem1201.maximumHealthBonus(this.contents))));
+                    + EchoAccessorySystem1201.maximumHealthBonus(this.contents, EchoRelicState1201.maximumHealth(relic)))));
             this.spiritAttackDamage.set((int)Math.round((EchoRelicState1201.attackDamage(relic)
-                    + EchoAccessorySystem1201.attackBonus(this.contents)) * 10.0));
+                    + EchoAccessorySystem1201.attackBonus(this.contents, EchoRelicState1201.attackDamage(relic))) * 10.0));
             this.spiritArmor.set((int)Math.round((EchoRelicState1201.armor(relic)
                     + EchoAccessorySystem1201.armorBonus(this.contents)) * 10.0));
             this.spiritMovement.set((int)Math.round(EchoRelicState1201.movementSpeed(relic)
@@ -316,6 +326,9 @@ public final class SummonerMenu1201 extends AbstractContainerMenu {
                 EchoBindingSystem1201.setActivityMode(level, binding, id - BUTTON_ACTIVITY_START);
                 action = ACTION_MODE_CHANGED;
             }
+        } else if (id >= BUTTON_ASSIST_START && id < BUTTON_ASSIST_START + 3) {
+            EchoBindingSystem1201.setAssistMode(level, binding, id - BUTTON_ASSIST_START);
+            action = ACTION_MODE_CHANGED;
         } else if (id >= BUTTON_ALERT_START && id < BUTTON_ALERT_START + 3) {
             EchoBindingSystem1201.setAlertMode(level, binding, id - BUTTON_ALERT_START);
             action = ACTION_MODE_CHANGED;

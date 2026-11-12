@@ -33,6 +33,7 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
     private static final int MODE_X = 178;
     private static final int ACTIVITY_Y = 90;
     private static final int ALERT_Y = 123;
+    private static final int ASSIST_Y = 57;
     private static final int MODE_SIZE = 18;
     private static final int SKILL_X = 61;
     private static final int SKILL_Y = 71;
@@ -62,6 +63,8 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
     private static final ResourceLocation[] ACTIVITY_ICONS = {
             icon("modes/activity/follow.png"), icon("modes/activity/wait.png"), icon("modes/activity/wander.png")
     };
+    private static final String[] ASSIST_KEYS = {"off", "safe", "all"};
+    private static final ResourceLocation[] ASSIST_ICONS = {icon("modes/assist/off.png"), icon("modes/assist/safe.png"), icon("modes/assist/all.png")};
     private static final ResourceLocation[] ALERT_ICONS = {
             icon("modes/alert/aggressive.png"), icon("modes/alert/defensive.png"), icon("modes/alert/peaceful.png")
     };
@@ -255,6 +258,7 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
         renderTraits(graphics, active);
         renderModeRow(graphics, ACTIVITY_ICONS, ACTIVITY_Y, this.menu.activityMode(), active, mouseX, mouseY);
         renderModeRow(graphics, ALERT_ICONS, ALERT_Y, this.menu.alertMode(), active, mouseX, mouseY);
+        renderModeRow(graphics, ASSIST_ICONS, ASSIST_Y, this.menu.assistMode(), active, mouseX, mouseY);
         renderSummonButton(graphics, active, mouseX, mouseY);
         renderProgressBars(graphics, active);
         renderParticles(graphics, this.fuelParticles, partialTick);
@@ -488,6 +492,8 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
                     attributeColor(this.menu.accessoryAlertRangeChange()), true);
             graphics.drawString(this.font, this.menu.summonCostPercent() + "%", 127, 60, 0xFFFFFF, true);
         }
+        drawFittedText(graphics, Component.translatable("gui.echo_warrior.summoner.section.assist"),
+                179, 45, 55, 0xFFFFFF, true);
         drawFittedText(graphics, Component.translatable("gui.echo_warrior.summoner.section.activity"),
                 179, 78, 55, 0xFFFFFF, true);
         drawFittedText(graphics, Component.translatable("gui.echo_warrior.summoner.section.alert"),
@@ -566,6 +572,12 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
                         index == this.menu.alertMode());
                 return;
             }
+            if (this.isHovering(MODE_X + index * 19, ASSIST_Y, MODE_SIZE, MODE_SIZE, mouseX, mouseY)) {
+                renderModeTooltip(graphics, mouseX, mouseY,
+                        "gui.echo_warrior.summoner.assist." + ASSIST_KEYS[index],
+                        index == this.menu.assistMode());
+                return;
+            }
         }
         for (int index = 0; index < this.menu.skillCount(); index++) {
             if (this.isHovering(SKILL_X + index * SKILL_STEP, SKILL_Y, 20, 20, mouseX, mouseY)) {
@@ -588,7 +600,7 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
                         this.menu.relicLevel(), this.menu.relicExperience(), this.menu.relicExperienceNeeded())
                         .withStyle(ChatFormatting.GRAY));
             }
-            graphics.renderComponentTooltip(this.font, lines, mouseX, mouseY);
+            graphics.renderTooltip(this.font, EchoSkillTooltips1211.wrap(this.font, lines, this.width), mouseX, mouseY);
             return;
         }
         if (this.isHovering(179, 164, 54, 5, mouseX, mouseY)) {
@@ -658,7 +670,7 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
                         || this.feedbackCode == SummonerMenu1211.ACTION_SKILL_CHANGED
                         ? ChatFormatting.GREEN : ChatFormatting.RED));
             }
-            graphics.renderComponentTooltip(this.font, lines, mouseX, mouseY);
+            graphics.renderTooltip(this.font, EchoSkillTooltips1211.wrap(this.font, lines, this.width), mouseX, mouseY);
         }
     }
 
@@ -705,11 +717,11 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
                 : selected
                         ? "gui.echo_warrior.summoner.state.selected"
                         : "gui.echo_warrior.summoner.state.switch");
-        graphics.renderComponentTooltip(this.font, List.of(
+        graphics.renderTooltip(this.font, EchoSkillTooltips1211.wrap(this.font, List.of(
                 Component.translatable(translationKey + ".name").withStyle(ChatFormatting.GOLD),
                 Component.translatable(translationKey + ".description").withStyle(ChatFormatting.GRAY),
                 state.copy().withStyle(ChatFormatting.DARK_GRAY)
-        ), mouseX, mouseY);
+        ), this.width), mouseX, mouseY);
     }
 
     private void renderSkillTooltip(GuiGraphics graphics, int mouseX, int mouseY, int skill) {
@@ -725,8 +737,10 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
         String key = "gui.echo_warrior.summoner.skill." + suffix;
         List<Component> lines = new ArrayList<>();
         lines.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
-        for (int line = 1; line <= SKILL_DESCRIPTION_LINES[hero][skill]; line++) {
-            lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
+        if (!EchoSkillTooltips1211.append(lines, key, this.menu.relicLevel(), this.menu.skillAttackDamage())) {
+            for (int line = 1; line <= SKILL_DESCRIPTION_LINES[hero][skill]; line++) {
+                lines.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.WHITE));
+            }
         }
         if (!(heroType() == EchoHeroType1211.EGYPTIAN_ARCHER && skill == 1)) {
             boolean enabled = (this.menu.enabledSkills() & 1 << skill) != 0;
@@ -734,7 +748,7 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
                     ? "gui.echo_warrior.summoner.skill.enabled"
                     : "gui.echo_warrior.summoner.skill.disabled").withStyle(ChatFormatting.GRAY));
         }
-        graphics.renderComponentTooltip(this.font, lines, mouseX, mouseY);
+        graphics.renderTooltip(this.font, EchoSkillTooltips1211.wrap(this.font, lines, this.width), mouseX, mouseY);
     }
 
     private static void blitScaled16(GuiGraphics graphics, ResourceLocation texture, int x, int y, int size) {
@@ -756,6 +770,10 @@ public final class SummonerScreen1211 extends AbstractContainerScreen<SummonerMe
                 }
                 if (this.isHovering(MODE_X + index * 19, ALERT_Y, MODE_SIZE, MODE_SIZE, mouseX, mouseY)) {
                     sendButton(SummonerMenu1211.BUTTON_ALERT_START + index);
+                    return true;
+                }
+            if (this.isHovering(MODE_X + index * 19, ASSIST_Y, MODE_SIZE, MODE_SIZE, mouseX, mouseY)) {
+                    sendButton(SummonerMenu1211.BUTTON_ASSIST_START + index);
                     return true;
                 }
             }

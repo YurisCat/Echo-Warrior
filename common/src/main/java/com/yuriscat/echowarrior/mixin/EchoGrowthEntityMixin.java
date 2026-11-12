@@ -17,7 +17,7 @@ public abstract class EchoGrowthEntityMixin {
     private void echoWarrior$initializeGrowthRange(EntityType<? extends LivingEntity> type, Level level, CallbackInfo callback) {
         if (!((Object)this instanceof EchoWarriorEntity)) return;
         LivingEntity self = (LivingEntity)(Object)this;
-        for (var attribute : java.util.List.of(Attributes.MAX_HEALTH, Attributes.ATTACK_DAMAGE)) {
+        for (var attribute : java.util.List.of(Attributes.MAX_HEALTH, Attributes.ATTACK_DAMAGE, Attributes.ARMOR)) {
             var instance = self.getAttribute(attribute);
             if (instance instanceof EchoGrowthAttribute growth) growth.echoWarrior$enableGrowthRange();
         }

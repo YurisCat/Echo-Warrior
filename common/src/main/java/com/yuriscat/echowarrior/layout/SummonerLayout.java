@@ -148,6 +148,7 @@ public final class SummonerLayout {
 		MODULES("饰品槽", 7, 93, 162, 18),
 		EXPERIENCE("经验条", 7, 113, 162, 4),
 		PLAYER_INVENTORY("玩家物品栏", 7, 119, 162, 75),
+		ASSIST("协助战斗", 178, 44, 56, 31),
 		ACTIVITY("行动模式", 178, 77, 56, 31),
 		ALERT("警戒状态", 178, 110, 56, 31),
 		SUMMON_BUTTON("召唤按钮", 178, 143, 56, 19),

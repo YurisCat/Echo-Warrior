@@ -10,8 +10,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 public final class SoldierFormationMobEffect extends MobEffect {
 	private static final AttributeModifier ATTACK_BONUS = new AttributeModifier(
 			EchoWarrior.id("soldier_formation_attack"),
-			2.0,
-			AttributeModifier.Operation.ADD_VALUE
+			0.30,
+			AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
 	);
 
 	public SoldierFormationMobEffect() {

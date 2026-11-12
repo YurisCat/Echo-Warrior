@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Single source of truth for fixed 1.21.1 accessory attributes and periodic effects. */
+/** Accessory percentages share the current base attribute; armor remains additive. */
 public final class EchoAccessorySystem1211 {
     private static final ResourceLocation ATTACK_ID = ModContent1211.id("accessory_attack");
     private static final ResourceLocation ARMOR_ID = ModContent1211.id("accessory_armor");
@@ -49,16 +49,20 @@ public final class EchoAccessorySystem1211 {
     public static void apply(EchoWarriorEntity1211 echo, List<ItemStack> accessories) {
         LivingEntity living = echo.livingEntity();
         float previousHealth = living.getHealth();
-        applyModifier(living.getAttribute(Attributes.ATTACK_DAMAGE), ATTACK_ID, attackBonus(accessories),
+        applyModifier(living.getAttribute(Attributes.ATTACK_DAMAGE), ATTACK_ID, attackBonus(accessories, living.getAttributeBaseValue(Attributes.ATTACK_DAMAGE)),
                 AttributeModifier.Operation.ADD_VALUE);
         applyModifier(living.getAttribute(Attributes.ARMOR), ARMOR_ID, armorBonus(accessories),
                 AttributeModifier.Operation.ADD_VALUE);
-        applyModifier(living.getAttribute(Attributes.MAX_HEALTH), HEALTH_ID, maximumHealthBonus(accessories),
+        applyModifier(living.getAttribute(Attributes.MAX_HEALTH), HEALTH_ID, maximumHealthBonus(accessories, living.getAttributeBaseValue(Attributes.MAX_HEALTH)),
                 AttributeModifier.Operation.ADD_VALUE);
         applyModifier(living.getAttribute(Attributes.MOVEMENT_SPEED), SPEED_ID, movementMultiplier(accessories) - 1.0,
                 AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         living.setHealth(Math.min(previousHealth, living.getMaxHealth()));
     }
+
+    public static float periodicHealAmount(float maximumHealth) { return 1.0F + maximumHealth * 0.01F; }
+
+    public static float bloodPactHealAmount(float maximumHealth) { return 2.0F + maximumHealth * 0.05F; }
 
     private static void applyModifier(AttributeInstance attribute, ResourceLocation id, double amount,
                                       AttributeModifier.Operation operation) {
@@ -78,13 +82,17 @@ public final class EchoAccessorySystem1211 {
             applyModifier(living.getAttribute(Attributes.MOVEMENT_SPEED), WATER_SPEED_ID,
                     contains(accessories, ModContent1211.TOMATO_FISH_ACCESSORY) && living.isInWater() ? 0.50 : 0.0,
                     AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
-            if (!level.dimensionType().hasSkyLight()) continue;
-            long dayTime = Math.floorMod(level.getDayTime(), 24000L);
-            boolean day = dayTime < 13000L;
-            boolean heal = day && contains(accessories, ModContent1211.SUNWHEEL_GARLAND_ACCESSORY)
-                    || !day && contains(accessories, ModContent1211.MOONDEW_BOTTLE_ACCESSORY);
-            if (heal) tryPeriodicHeal(level, living, now);
+            tickPeriodicHealing(level, living, accessories, now, level.getDayTime());
         }
+    }
+
+    static void tickPeriodicHealing(ServerLevel level, LivingEntity living, List<ItemStack> accessories,
+                                    long now, long dayTime) {
+        if (!level.dimensionType().hasSkyLight()) return;
+        boolean day = Math.floorMod(dayTime, 24000L) < 13000L;
+        boolean active = day && contains(accessories, ModContent1211.SUNWHEEL_GARLAND_ACCESSORY)
+                || !day && contains(accessories, ModContent1211.MOONDEW_BOTTLE_ACCESSORY);
+        if (active) tryPeriodicHeal(level, living, now);
     }
 
     private static void tryPeriodicHeal(ServerLevel level, LivingEntity living, long now) {
@@ -92,7 +100,7 @@ public final class EchoAccessorySystem1211 {
         if (Math.floorMod(now, (long)DAY_NIGHT_HEAL_INTERVAL_TICKS) != phase
                 || living.getHealth() >= living.getMaxHealth()) return;
         float before = living.getHealth();
-        living.heal(1.0F);
+        living.heal(periodicHealAmount(living.getMaxHealth()));
         if (living.getHealth() > before) level.sendParticles(ParticleTypes.HEART,
                 living.getX(), living.getY() + living.getBbHeight() * 0.75, living.getZ(),
                 2, 0.22, 0.15, 0.22, 0.01);
@@ -144,7 +152,7 @@ public final class EchoAccessorySystem1211 {
                 || !isDirectAttack(source, echo)) return;
         AttackWindow window = attackWindow(echo, source, echo.livingEntity().level().getGameTime());
         if (HEAL_WINDOWS.putIfAbsent(window, Boolean.TRUE) != null) return;
-        if (echo.livingEntity().getRandom().nextFloat() < 0.30F) echo.livingEntity().heal(4.0F);
+        if (echo.livingEntity().getRandom().nextFloat() < 0.30F) echo.livingEntity().heal(bloodPactHealAmount(echo.livingEntity().getMaxHealth()));
     }
 
     private static boolean isDirectAttack(DamageSource source, EchoWarriorEntity1211 echo) {
@@ -214,18 +222,18 @@ public final class EchoAccessorySystem1211 {
         return Math.min(adjusted, waiting ? 8.0 : 32.0);
     }
 
-    public static double attackBonus(SimpleContainer contents) { return attackBonus(contents.getItems()); }
-    public static double attackBonus(ItemStack summoner) { return attackBonus(EchoSummonerItem1211.accessoryStacks(summoner)); }
-    public static double attackBonus(List<ItemStack> accessories) {
+    public static double attackBonus(SimpleContainer contents, double baseValue) { return attackBonus(contents.getItems(), baseValue); }
+    public static double attackBonus(ItemStack summoner, double baseValue) { return attackBonus(EchoSummonerItem1211.accessoryStacks(summoner), baseValue); }
+    public static double attackBonus(List<ItemStack> accessories, double baseValue) {
         double value = 0.0;
-        if (contains(accessories, ModContent1211.BATTLE_WORN_WHETSTONE_ACCESSORY)) value += 2.0;
-        if (contains(accessories, ModContent1211.MOUNTAIN_BURDEN_BLADE_ACCESSORY)) value += 4.0;
-        if (contains(accessories, ModContent1211.FRACTURED_CRYSTAL_BLADE_ACCESSORY)) value += 4.0;
-        if (contains(accessories, ModContent1211.TWIN_OATH_BADGE_ACCESSORY)) value += 1.0;
-        if (contains(accessories, ModContent1211.BATTLE_BLINDFOLD_ACCESSORY)) value += 3.0;
-        if (contains(accessories, ModContent1211.MEMORY_RITUAL_KNIFE_ACCESSORY)) value += 2.0;
-        if (contains(accessories, ModContent1211.PEACEMAKER_ACCESSORY)) value -= 4.0;
-        return value;
+        if (contains(accessories, ModContent1211.BATTLE_WORN_WHETSTONE_ACCESSORY)) value += 0.2;
+        if (contains(accessories, ModContent1211.MOUNTAIN_BURDEN_BLADE_ACCESSORY)) value += 0.4;
+        if (contains(accessories, ModContent1211.FRACTURED_CRYSTAL_BLADE_ACCESSORY)) value += 0.4;
+        if (contains(accessories, ModContent1211.TWIN_OATH_BADGE_ACCESSORY)) value += 0.1;
+        if (contains(accessories, ModContent1211.BATTLE_BLINDFOLD_ACCESSORY)) value += 0.3;
+        if (contains(accessories, ModContent1211.MEMORY_RITUAL_KNIFE_ACCESSORY)) value += 0.2;
+        if (contains(accessories, ModContent1211.PEACEMAKER_ACCESSORY)) value -= 0.4;
+        return baseValue * value;
     }
 
     public static double armorBonus(SimpleContainer contents) { return armorBonus(contents.getItems()); }
@@ -240,15 +248,15 @@ public final class EchoAccessorySystem1211 {
         return value;
     }
 
-    public static double maximumHealthBonus(SimpleContainer contents) { return maximumHealthBonus(contents.getItems()); }
-    public static double maximumHealthBonus(ItemStack summoner) { return maximumHealthBonus(EchoSummonerItem1211.accessoryStacks(summoner)); }
-    public static double maximumHealthBonus(List<ItemStack> accessories) {
+    public static double maximumHealthBonus(SimpleContainer contents, double baseValue) { return maximumHealthBonus(contents.getItems(), baseValue); }
+    public static double maximumHealthBonus(ItemStack summoner, double baseValue) { return maximumHealthBonus(EchoSummonerItem1211.accessoryStacks(summoner), baseValue); }
+    public static double maximumHealthBonus(List<ItemStack> accessories, double baseValue) {
         double value = 0.0;
-        if (contains(accessories, ModContent1211.HEART_SPROUT_AMBER_ACCESSORY)) value += 6.0;
-        if (contains(accessories, ModContent1211.FEAST_HAM_ACCESSORY)) value += 12.0;
-        if (contains(accessories, ModContent1211.PEACEMAKER_ACCESSORY)) value += 20.0;
-        if (contains(accessories, ModContent1211.HOLLOW_BIRD_BONE_ACCESSORY)) value -= 8.0;
-        return value;
+        if (contains(accessories, ModContent1211.HEART_SPROUT_AMBER_ACCESSORY)) value += 0.2;
+        if (contains(accessories, ModContent1211.FEAST_HAM_ACCESSORY)) value += 0.35;
+        if (contains(accessories, ModContent1211.PEACEMAKER_ACCESSORY)) value += 0.6;
+        if (contains(accessories, ModContent1211.HOLLOW_BIRD_BONE_ACCESSORY)) value -= 0.25;
+        return baseValue * value;
     }
 
     public static double movementMultiplier(SimpleContainer contents) { return movementMultiplier(contents.getItems()); }

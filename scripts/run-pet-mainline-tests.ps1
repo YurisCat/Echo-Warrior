@@ -5,6 +5,7 @@ param(
     [ValidatePattern('^pet-main-[0-9]{8}T[0-9]{6}Z-[0-9]+$')][string]$RunId,
     [ValidateSet('both', 'fabric', 'neoforge')][string]$Loader = 'both',
     [switch]$Baseline,
+    [switch]$SkillUpdate,
     [string]$ControllerWorkspace = 'D:\AI-Workshop\60_Infrastructure\desktop-ms-xamanfjjoqzl'
 )
 $ErrorActionPreference = 'Stop'
@@ -41,6 +42,7 @@ if ($Action -eq 'Run') {
     [IO.Compression.ZipFile]::CreateFromDirectory($inputRoot, $package)
     $hash = (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant()
     $petFlag = if ($Baseline) { '' } else { ' --pet-collars' }
+    if ($SkillUpdate) { $petFlag += ' --skill-update' }
     $incoming = "D:\Download-Terminal\Incoming\EchoWarrior\$RunId.zip"
     Invoke-Node @"
 if (Test-Path -LiteralPath 'D:\Workspace-Terminal\EchoWarrior\active-test.lock') { throw 'Another test owns the node.' }
@@ -57,7 +59,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 if (`$created.ReturnValue -ne 0) { throw 'Hidden test worker creation failed.' }
 `$created | ConvertTo-Json
 "@
-    [pscustomobject]@{RunId=$RunId;PackageSha256=$hash;Source=$remoteSource;Reports=$remoteReports;Games=$remoteGames;Loader=$Loader;Baseline=[bool]$Baseline} |
+    [pscustomobject]@{RunId=$RunId;PackageSha256=$hash;Source=$remoteSource;Reports=$remoteReports;Games=$remoteGames;Loader=$Loader;Baseline=[bool]$Baseline;SkillUpdate=[bool]$SkillUpdate} |
         ConvertTo-Json | Set-Content -LiteralPath (Join-Path $local 'dispatch.json') -Encoding UTF8
     Write-Host "Dispatched $RunId"
 }

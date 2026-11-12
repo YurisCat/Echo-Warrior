@@ -18,7 +18,7 @@ public abstract class ApothicGrowthEntityMixin1201 {
     private void echoWarrior$initializeApothicGrowthRange(EntityType<? extends Mob> type, Level level, CallbackInfo callback) {
         if (!((Object)this instanceof EchoWarriorEntity1201)) return;
         Mob self = (Mob)(Object)this;
-        for (var attribute : java.util.List.of(Attributes.MAX_HEALTH, Attributes.ATTACK_DAMAGE)) {
+        for (var attribute : java.util.List.of(Attributes.MAX_HEALTH, Attributes.ATTACK_DAMAGE, Attributes.ARMOR)) {
             var instance = self.getAttribute(attribute);
             if (instance instanceof EchoGrowthAttribute1201 growth) growth.echoWarrior$enableGrowthRange();
         }

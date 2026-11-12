@@ -48,10 +48,30 @@ public final class HeroMenuClientSelfTest1201 {
                 if (menu != null && client.screen instanceof SummonerScreen1201 && menu.relicLevel() == 1 && menu.heroType() == round) {
                     check(menu.spiritHealth() == Math.round(fixture.hero.baseMaximumHealth()) && menu.spiritHealth() == menu.spiritMaximumHealth(), "initial full HP");
                     check(menu.skillCount() == fixture.hero.skillCount(), "skill count");
+                    SkillTooltipClientSelfTest1201.run();
+                    check(menu.assistMode() == 1, "new Assist default Protect");
                     checkRelicIcon(client);
                     if (fixture.hero == EchoHeroType1201.GUANDAO_WARRIOR) GuandaoPresentationClientSelfTest1201.run(client);
                     clockPreview = ((SummonerScreen1201)client.screen).previewForSelfTest();
                     check(clockPreview != null, "preview exists");
+                    previewAgeAtStart = clockPreview.tickCount;
+                    previewPlayerAgeAtStart = client.player.tickCount;
+                    button(client, menu, SummonerMenu1201.BUTTON_ASSIST_START);
+                    advance(31);
+                }
+            }
+            case 31 -> {
+                if (menu != null && menu.assistMode() == 0) {
+                    button(client, menu, SummonerMenu1201.BUTTON_ASSIST_START + 2); advance(32);
+                }
+            }
+            case 32 -> {
+                if (menu != null && menu.assistMode() == 2) {
+                    button(client, menu, SummonerMenu1201.BUTTON_ASSIST_START + 1); advance(33);
+                }
+            }
+            case 33 -> {
+                if (menu != null && menu.assistMode() == 1) {
                     previewAgeAtStart = clockPreview.tickCount;
                     previewPlayerAgeAtStart = client.player.tickCount;
                     advance(30);

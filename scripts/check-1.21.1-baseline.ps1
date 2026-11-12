@@ -1052,9 +1052,16 @@ function Assert-Archive {
                 $baseKey = "gui.echo_warrior.summoner.skill.$($skill.Key)"
                 Assert-Condition ($languageKeys -contains "$baseKey.name") `
                     "$Loader $languageEntry is missing $baseKey.name"
-                foreach ($line in 1..$skill.Value) {
-                    Assert-Condition ($languageKeys -contains "$baseKey.description.$line") `
-                        "$Loader $languageEntry is missing $baseKey.description.$line"
+                if ($languageKeys -contains "$baseKey.simple.1") {
+                    Assert-Condition ($languageKeys -contains "$baseKey.full.1") `
+                        "$Loader $languageEntry is missing $baseKey.full.1"
+                    Assert-Condition ($languageKeys -notcontains "$baseKey.description.1") `
+                        "$Loader $languageEntry retains a superseded static skill description."
+                } else {
+                    foreach ($line in 1..$skill.Value) {
+                        Assert-Condition ($languageKeys -contains "$baseKey.description.$line") `
+                            "$Loader $languageEntry is missing $baseKey.description.$line"
+                    }
                 }
             }
             $skillDescriptionText = @($language.PSObject.Properties | Where-Object {

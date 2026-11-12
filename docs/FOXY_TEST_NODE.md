@@ -130,3 +130,12 @@ FOXY Session 1 / Windows PowerShell 5.1 下，使用新的独立 CMD-CLEANUP-e85
 1.20.1 的首次暂停只是完整自测的起点，prepared 入口必须等内置控制器完成后自行退出，
 不能使用现代版本的外部 stop 队列提前关服；退出归属由 `test-client-console-cleanup.ps1`
 验证五种入口组合，缺少既有检查点仍然失败。
+
+## 技能候选验收（2026-11-12）
+
+- 同日饰品成长更新沿用这些入口：成长自测新增 `AccessoryGrowthSelfTest*`，兼容线生产专服及主线 `-Baseline -SkillUpdate` 还必须出现 `ACCESSORY GROWTH SELFTEST PASSED`。覆盖真实属性、重复换装、与军团阵列叠加、伤害触发治疗、昼夜与维度限制及未召唤菜单预览；结果见[饰品实施记录](research/accessory-update-implementation-2026-11-12.md)。不得用上一轮技能包的结果代替新饰品包验收。
+- `run-foxy-tests.ps1 -SkipBuild` 使用已构建的四个兼容包；源码守卫增加 `check-skill-copy.py`，正式专服必须出现 `SKILL UPDATE SELFTEST PASSED`。
+- 主线预备运行时继续逐文件核验 `inputs.json`，通过 `run-pet-mainline-tests.ps1 -InputDirectory <目录> -Baseline -SkillUpdate` 运行两个加载器；该选项不要求安装宠物模组。
+- `run-skill-update-clients.ps1` 只在节点交互会话执行，参数为新 `-RunId`、已通过的 `-CompatRunId` 和 `-MainRunId`；`-Cases` 可选择六个合法组合。输入快照必须包含候选JAR、源码哈希清单及公开的Python启动依赖，不复制用户认证目录。
+- 客户端复制已正常保存的隔离测试世界，仍通过 `run-test-client.ps1 -Production -PreparedProductionLaunch ... -StartupOnly` 串行运行并使用全局节点互斥锁；同时要求原有退出／清理检查点与 `SKILL TOOLTIP CLIENT SELFTEST PASSED`。客户端准备使用官方资源哈希，可复用校验通过的公开缓存。
+- 服务端结果不代替图形验收，自动字体／颜色断言不代替作者保留的浮空和攻击距离手感调整。精确候选与本轮证据见[实施记录](research/skill-update-implementation-2026-11-12.md)。

@@ -72,6 +72,7 @@ def run(args):
                 process = None
                 fixture_requested = False
                 collar_requested = False
+                skill_requested = False
                 next_probe = 0.0
                 try:
                     with log.open("w", encoding="utf-8") as output:
@@ -89,6 +90,10 @@ def run(args):
                                 raise RuntimeError(f"{loader}: runtime failure; inspect {log}")
                             if "[PetCollarJointSelfTest] FAIL" in text or "An unexpected error occurred trying to execute that command" in text:
                                 raise RuntimeError(f"{loader}: command self-test failure; inspect {log}")
+                            if args.skill_update and not skill_requested and re.search(r"Done \([0-9.]+s\)!", text):
+                                process.stdin.write("echo_warrior progression_selftest\n")
+                                process.stdin.flush()
+                                skill_requested = True
                             if args.pet_collars and not fixture_requested and re.search(r"Done \([0-9.]+s\)!", text):
                                 process.stdin.write('forceload add 32 32 47 47\n'
                                                     'summon minecraft:marker 40.5 96 40.5 {Tags:["echo_pet_fixture_ready"]}\n')
@@ -104,7 +109,9 @@ def run(args):
                                 collar_requested = True
                             if ((attempt > 1 or (MARKER in text and "BATTLEFIELD SPACING SELFTEST PASSED" in text
                                     and "RED SAND SELFTEST PASSED" in text))
-                                    and (not args.pet_collars or "[PetCollarJointSelfTest] PASS" in text)):
+                                    and (not args.pet_collars or "[PetCollarJointSelfTest] PASS" in text)
+                                    and (not args.skill_update or ("SKILL UPDATE SELFTEST PASSED" in text
+                                    and "ACCESSORY GROWTH SELFTEST PASSED" in text))):
                                 if args.pet_collars:
                                     process.stdin.write("forceload remove 32 32 47 47\n")
                                 process.stdin.write("stop\n")
@@ -129,6 +136,7 @@ def run(args):
                                     "seconds": round(time.monotonic() - started, 2),
                                     "normal_save": True, "exit_code": process.returncode,
                                     "pet_collar_test": args.pet_collars,
+                                    "skill_update_test": args.skill_update,
                                     "mods": {p.name: digest(p) for p in sorted((game / "mods").glob("*.jar"))},
                                 })
                                 break
@@ -177,6 +185,8 @@ if __name__ == "__main__":
     parser.add_argument("--lock", type=Path, required=True)
     parser.add_argument("--timeout", type=int, default=600)
     parser.add_argument("--loader", choices=("both", "fabric", "neoforge"), default="both")
+    parser.add_argument("--skill-update", action="store_true",
+                        help="Require the registered-entity skill/Assist/progression regression.")
     parser.add_argument("--pet-collars", action="store_true",
                         help="Require the installed Pet Home interaction/lifecycle suite in the isolated fixture")
     run(parser.parse_args())

@@ -587,17 +587,19 @@ public final class TutorialManualScreen extends AbstractContainerScreen<Tutorial
 		List<Component> tooltip = List.of(
 				Component.translatable(chapter.titleKey()).withStyle(ChatFormatting.GOLD),
 				Component.translatable(chapter.subtitleKey()).withStyle(ChatFormatting.GRAY));
-		graphics.setTooltipForNextFrame(this.font, tooltip, Optional.empty(), mouseX, mouseY);
+		graphics.setTooltipForNextFrame(this.font, EchoSkillTooltips.wrap(this.font, tooltip, this.width), mouseX, mouseY);
 	}
 
 	private void renderSkillTooltip(GuiGraphicsExtractor graphics, int hero, int skill, int mouseX, int mouseY) {
 		String key = HERO_SKILL_KEYS[hero][skill];
 		List<Component> tooltip = new ArrayList<>();
 		tooltip.add(Component.translatable(key + ".name").withStyle(ChatFormatting.GOLD));
-		for (int line = 1; line <= HERO_SKILL_LINES[hero][skill]; line++) {
-			tooltip.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.GRAY));
-		}
-		graphics.setTooltipForNextFrame(this.font, tooltip, Optional.empty(), mouseX, mouseY);
+		if (!EchoSkillTooltips.append(tooltip, key, 1, new double[] {6, 8, 5, 7, 6}[hero])) {
+            for (int line = 1; line <= HERO_SKILL_LINES[hero][skill]; line++) {
+                tooltip.add(Component.translatable(key + ".description." + line).withStyle(ChatFormatting.WHITE));
+            }
+        }
+		graphics.setTooltipForNextFrame(this.font, EchoSkillTooltips.wrap(this.font, tooltip, this.width), mouseX, mouseY);
 	}
 
 	@Override

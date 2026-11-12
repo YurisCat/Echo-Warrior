@@ -12,12 +12,12 @@ import net.minecraft.world.level.block.Blocks;
 public final class ObsidianWoundMobEffect1201 extends MobEffect {
     public ObsidianWoundMobEffect1201() { super(MobEffectCategory.HARMFUL, 0x5B1116); }
 
-    @Override public boolean isDurationEffectTick(int duration, int amplifier) { return duration % 20 == 0; }
+    @Override public boolean isDurationEffectTick(int duration, int amplifier) { return true; }
 
     @Override
     public void applyEffectTick(LivingEntity entity, int amplifier) {
         if (!(entity.level() instanceof ServerLevel level)) return;
-        boolean damaged = entity.hurt(ModDamageTypes1201.source(level, ModDamageTypes1201.OBSIDIAN_WOUND), 1.0F);
+        if (!com.yuriscat.echowarrior.compat.entity.EchoBleeding1201.tick(level, entity, true)) return;
         level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.REDSTONE_BLOCK.defaultBlockState()),
                 entity.getX(), entity.getY() + entity.getBbHeight() * 0.65, entity.getZ(),
                 2, entity.getBbWidth() * 0.2, entity.getBbHeight() * 0.12, entity.getBbWidth() * 0.2, 0.01);

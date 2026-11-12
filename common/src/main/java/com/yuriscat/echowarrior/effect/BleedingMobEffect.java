@@ -14,15 +14,15 @@ public final class BleedingMobEffect extends MobEffect {
 
 	@Override
 	public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-		return duration % 40 == 0;
+		return true;
 	}
 
 	@Override
 	public boolean applyEffectTick(ServerLevel level, LivingEntity entity, int amplifier) {
-		boolean damaged = entity.hurtServer(level, ModDamageTypes.source(level, ModDamageTypes.BLEEDING), 1.0F);
+		if (!com.yuriscat.echowarrior.entity.EchoBleeding.tick(level, entity, false)) return true;
 		level.sendParticles(new DustParticleOptions(0xA52222, 0.8F),
 				entity.getX(), entity.getY() + entity.getBbHeight() * 0.65, entity.getZ(),
 				4, entity.getBbWidth() * 0.25, entity.getBbHeight() * 0.18, entity.getBbWidth() * 0.25, 0.0);
-		return damaged;
+		return true;
 	}
 }

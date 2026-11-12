@@ -21,6 +21,8 @@ import com.yuriscat.echowarrior.compat.item.EchoTalentSystem1201;
 import com.yuriscat.echowarrior.compat.item.SummonerFuel1201;
 import com.yuriscat.echowarrior.compat.item.EchoSummonerItem1201;
 import com.yuriscat.echowarrior.compat.progress.EchoExperienceSystem1201;
+import com.yuriscat.echowarrior.compat.item.EchoSkillScaling1201;
+import com.yuriscat.echowarrior.compat.item.EchoRelicProgress1201;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -73,6 +75,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class EgyptianArcherEchoEntity1201 extends PathfinderMob implements EchoWarriorEntity1201, GeoEntity {
+    private EchoRelicState1201.AssistMode assistMode = EchoRelicState1201.AssistMode.SAFE;
 	private static final boolean RANGED_ANIMATION_DIAGNOSTICS =
 			Boolean.getBoolean("echo_warrior.egyptian_archer_diagnostics");
 	public static final byte VISUAL_NORMAL = 0;
@@ -673,7 +676,8 @@ public final class EgyptianArcherEchoEntity1201 extends PathfinderMob implements
 			boolean eligible = canLandCommittedMeleeHit(meleeTarget);
 			boolean damaged = false;
 			if (eligible) {
-				float damage = (meleeTarget.getMobType() == net.minecraft.world.entity.MobType.UNDEAD) ? 3.6F : 3.0F;
+				float damage = (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE) * 0.5F;
+                if (skillEnabled(SKILL_CAT_GOD) && (meleeTarget.getMobType() == net.minecraft.world.entity.MobType.UNDEAD)) damage *= 1.2F;
 				damaged = meleeTarget.hurt(level.damageSources().mobAttack(this), damage);
 				if (damaged) {
 					meleeTarget.knockback(MELEE_KNOCKBACK, this.getX() - meleeTarget.getX(), this.getZ() - meleeTarget.getZ());
@@ -815,7 +819,7 @@ public final class EgyptianArcherEchoEntity1201 extends PathfinderMob implements
 		EgyptianArcherArrowEntity1201 arrow = ModContent1201.EGYPTIAN_ARCHER_ARROW.create(level);
 		if (arrow == null) return null;
 		arrow.setPos(this.getX(), this.getEyeY() - 0.18, this.getZ());
-		boolean pierce = this.arrowMode == EchoRelicState1201.EgyptianArrowMode.CONE && this.random.nextFloat() < 0.25F;
+		boolean pierce = this.arrowMode == EchoRelicState1201.EgyptianArrowMode.CONE && this.random.nextFloat() < EchoSkillScaling1201.conePierceChance(EchoRelicProgress1201.level(activeRelic()));
 		arrow.configure(this, this.arrowMode, (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE), pierce);
 		double dx = aimTarget.getX() - arrow.getX();
 		double dz = aimTarget.getZ() - arrow.getZ();
@@ -3360,7 +3364,7 @@ public final class EgyptianArcherEchoEntity1201 extends PathfinderMob implements
 		LivingEntity ownerAttacker = owner.getLastHurtByMob();
 		if (isRecentWithin(owner, owner.getLastHurtByMobTimestamp(), EchoTargetVisibilityMemory1201.GRACE_TICKS)
 				&& canProtectAgainst(ownerAttacker)) return ownerAttacker;
-		LivingEntity ownerTarget = owner.getLastHurtMob();
+		LivingEntity ownerTarget = EchoAssistPolicy1201.followsOwner(this) ? owner.getLastHurtMob() : null;
 		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory1201.GRACE_TICKS)
 				&& canProtectAgainst(ownerTarget)) return ownerTarget;
 		if (this.alertMode != EchoRelicState1201.AlertMode.AGGRESSIVE) return null;
@@ -3388,7 +3392,7 @@ public final class EgyptianArcherEchoEntity1201 extends PathfinderMob implements
 			this.creeperTargeting.authorizeReactive(this, ownerAttacker, now);
 			return ownerAttacker;
 		}
-		LivingEntity ownerTarget = owner.getLastHurtMob();
+		LivingEntity ownerTarget = EchoAssistPolicy1201.followsOwner(this) ? owner.getLastHurtMob() : null;
 		if (ownerTarget != hiddenCurrent && isRecent(owner, owner.getLastHurtMobTimestamp())
 				&& canAcquireCombatTarget(ownerTarget)) {
 			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
@@ -3540,7 +3544,7 @@ public final class EgyptianArcherEchoEntity1201 extends PathfinderMob implements
 				&& canDefendAgainst(ownerAttacker)) {
 			this.creeperTargeting.authorizeReactive(this, ownerAttacker, now);
 		}
-		LivingEntity ownerTarget = owner.getLastHurtMob();
+		LivingEntity ownerTarget = EchoAssistPolicy1201.followsOwner(this) ? owner.getLastHurtMob() : null;
 		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory1201.GRACE_TICKS)
 				&& canDefendAgainst(ownerTarget)) {
 			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
@@ -3619,7 +3623,13 @@ public final class EgyptianArcherEchoEntity1201 extends PathfinderMob implements
 	}
 
 	@Override
-	public boolean canAttack(LivingEntity target) {
+	public EchoRelicState1201.AssistMode assistMode() { return this.assistMode; }
+
+    public boolean isCatGodDamageBonusActive() { return skillEnabled(SKILL_CAT_GOD); }
+
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        if (!EchoAssistPolicy1201.allowsTarget(this, target)) return false;
 		LivingEntity owner = this.getOwner();
 		if (target == this || target == owner || target.isAlliedTo(this) || owner != null && owner.isAlliedTo(target)) return false;
 		if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
@@ -3768,6 +3778,12 @@ public final class EgyptianArcherEchoEntity1201 extends PathfinderMob implements
 
 	@Override
 	public void applyRelicState(ItemStack relic, boolean resetAnchor) {
+        if (this.assistMode != EchoRelicState1201.assistMode(relic)) {
+            this.assistMode = EchoRelicState1201.assistMode(relic);
+            this.setTarget(null);
+            net.tslat.smartbrainlib.util.BrainUtils.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
+        }
+
 		if (relic.isEmpty()) return;
 		EchoRelicState1201.ActivityMode previousActivity = this.activityMode;
 		EchoRelicState1201.AlertMode previousAlert = this.alertMode;
@@ -3865,6 +3881,7 @@ public final class EgyptianArcherEchoEntity1201 extends PathfinderMob implements
 	@Override
 	public void addAdditionalSaveData(CompoundTag tag) {
 		super.addAdditionalSaveData(tag);
+        tag.putInt("AssistMode", this.assistMode.ordinal());
 		if (this.ownerUuid != null) tag.putUUID("EchoOwner", this.ownerUuid);
 		if (this.summonerUuid != null) tag.putUUID("SummonerUuid", this.summonerUuid);
 		tag.putLong("BindingGeneration", this.bindingGeneration);
@@ -3880,6 +3897,7 @@ public final class EgyptianArcherEchoEntity1201 extends PathfinderMob implements
 	@Override
 	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
+        this.assistMode = EchoRelicState1201.AssistMode.byOrdinal(tag.contains("AssistMode") ? tag.getInt("AssistMode") : 1);
 		this.ownerUuid = tag.hasUUID("EchoOwner") ? tag.getUUID("EchoOwner") : null;
 		this.summonerUuid = tag.hasUUID("SummonerUuid") ? tag.getUUID("SummonerUuid") : null;
 		this.bindingGeneration = tag.getLong("BindingGeneration");

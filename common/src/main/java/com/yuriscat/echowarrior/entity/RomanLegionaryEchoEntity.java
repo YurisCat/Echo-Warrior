@@ -24,6 +24,8 @@ import com.yuriscat.echowarrior.item.SummonerFuel;
 import com.yuriscat.echowarrior.item.TestEchoSummonerItem;
 import com.yuriscat.echowarrior.mixin.ShulkerBulletAccessor;
 import com.yuriscat.echowarrior.progress.EchoExperienceSystem;
+import com.yuriscat.echowarrior.item.EchoSkillScaling;
+import com.yuriscat.echowarrior.item.EchoRelicProgress;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -181,7 +183,6 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private static final float ATTACK_TRACKING_TOTAL_TURN = 45.0F;
 	private static final Identifier LEGION_ARMOR_ID = Identifier.fromNamespaceAndPath("echo_warrior", "legion_endures_armor");
 	private static final Identifier LEGION_KNOCKBACK_ID = Identifier.fromNamespaceAndPath("echo_warrior", "legion_endures_knockback");
-	private static final AttributeModifier LEGION_ARMOR = new AttributeModifier(LEGION_ARMOR_ID, 12.0, AttributeModifier.Operation.ADD_VALUE);
 	private static final AttributeModifier LEGION_KNOCKBACK = new AttributeModifier(LEGION_KNOCKBACK_ID, 1.0, AttributeModifier.Operation.ADD_VALUE);
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
@@ -265,6 +266,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	private boolean attackTrackingStopped = true;
 	private boolean attackTrackingMovedThisTick;
 	private EchoRelicState.ActivityMode activityMode = EchoRelicState.ActivityMode.FOLLOW;
+	private EchoRelicState.AssistMode assistMode = EchoRelicState.AssistMode.SAFE;
 	private EchoRelicState.AlertMode alertMode = EchoRelicState.AlertMode.DEFENSIVE;
 	private int enabledSkills = EchoHeroType.ROMAN_LEGIONARY.allSkillsEnabledMask();
 	private Vec3 activityAnchor = Vec3.ZERO;
@@ -965,12 +967,22 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 				echo -> echo != this && echo.getOwner() == owner && echo.isLegionEnduresActive()).isEmpty();
 	}
 
-	private void startLegionEndures(ServerLevel level, LivingEntity owner, ItemStack relic, long now) {
+
+    private void updateLegionArmor(ItemStack relic) {
+        var armor = this.getAttribute(Attributes.ARMOR);
+        if (armor == null) return;
+        double amount = EchoSkillScaling.legionArmor(EchoRelicProgress.level(relic));
+        var current = armor.getModifier(LEGION_ARMOR_ID);
+        if (current != null && current.amount() == amount) return;
+        armor.addOrUpdateTransientModifier(new AttributeModifier(LEGION_ARMOR_ID, amount, AttributeModifier.Operation.ADD_VALUE));
+    }
+
+    private void startLegionEndures(ServerLevel level, LivingEntity owner, ItemStack relic, long now) {
 		this.legionEnduresUntil = now + 100L;
 		this.legionAccumulatedDamage = 0.0F;
 		EchoRelicState.setLegionCooldownEnd(relic, now + 400L);
 		persistCurrentRelic(relic);
-		this.getAttribute(Attributes.ARMOR).addOrUpdateTransientModifier(LEGION_ARMOR);
+		updateLegionArmor(relic);
 		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).addOrUpdateTransientModifier(LEGION_KNOCKBACK);
 		this.getNavigation().stop();
 		this.setTarget(null);
@@ -1016,8 +1028,8 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.getAttribute(Attributes.ARMOR).removeModifier(LEGION_ARMOR_ID);
 		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).removeModifier(LEGION_KNOCKBACK_ID);
 		lowerShield();
-		float damage = this.legionAccumulatedDamage;
-		double scale = Math.max(1.0, Math.sqrt(Math.max(0.0, damage) / 20.0));
+		float damage = (float)(this.legionAccumulatedDamage * EchoSkillScaling.legionRelease(EchoRelicProgress.level(activeRelic())));
+		double scale = Math.max(1.0, Math.sqrt(Math.max(0.0, this.legionAccumulatedDamage) / 20.0));
 		for (LivingEntity enemy : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(6.0), this::canAttack)) {
 			if (damage > 0.0F) enemy.hurtServer(level, level.damageSources().mobAttack(this), damage);
 			double distance = Math.max(0.5, this.distanceTo(enemy));
@@ -2501,7 +2513,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			return ownerAttacker;
 		}
 
-		LivingEntity ownerTarget = owner.getLastHurtMob();
+		LivingEntity ownerTarget = EchoAssistPolicy.followsOwner(this) ? owner.getLastHurtMob() : null;
 		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
 				&& canProtectAgainst(ownerTarget)) {
 			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
@@ -2562,7 +2574,11 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 	}
 
 	@Override
+    public EchoRelicState.AssistMode assistMode() { return this.assistMode; }
+
+	@Override
 	public boolean canAttack(LivingEntity target) {
+        if (!EchoAssistPolicy.allowsTarget(this, target)) return false;
 		LivingEntity owner = this.getOwner();
 		if (target == this || target == owner || target.isAlliedTo(this) || owner != null && owner.isAlliedTo(target)) {
 			return false;
@@ -2689,13 +2705,15 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 			return;
 		}
 		EchoRelicState.ActivityMode previousActivity = this.activityMode;
+		EchoRelicState.AssistMode previousAssist = this.assistMode;
 		EchoRelicState.AlertMode previousAlert = this.alertMode;
 		this.activityMode = EchoRelicState.activityMode(relic);
 		this.alertMode = EchoRelicState.alertMode(relic);
+		this.assistMode = EchoRelicState.assistMode(relic);
 		this.enabledSkills = EchoRelicState.enabledSkills(relic);
 		this.formationActive = EchoRelicState.skillEnabled(relic, SKILL_FORMATION);
 		if (!this.formationActive) this.shieldBondActive = false;
-		if (previousAlert != this.alertMode || previousActivity != this.activityMode || resetAnchor) {
+		if (previousAlert != this.alertMode || previousActivity != this.activityMode || previousAssist != this.assistMode || resetAnchor) {
 			this.setTarget(null);
 			this.targetVisibility.clear();
 			BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
@@ -2714,6 +2732,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(EchoRelicState.maximumHealth(relic));
 		this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(EchoRelicState.attackDamage(relic));
 		this.getAttribute(Attributes.ARMOR).setBaseValue(EchoRelicState.armor(relic));
+        if (isLegionEnduresActive()) updateLegionArmor(relic);
 		this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(EchoRelicState.movementSpeed(relic));
 		this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(EchoRelicState.knockbackResistance(relic));
 		this.applyModuleState();
@@ -2863,6 +2882,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		}
 		output.putLong("BindingGeneration", this.bindingGeneration);
 		output.putInt("ActivityMode", this.activityMode.ordinal());
+		output.putInt("AssistMode", this.assistMode.ordinal());
 		output.putInt("AlertMode", this.alertMode.ordinal());
 		output.putInt("EnabledSkills", this.enabledSkills);
 		output.putDouble("ActivityAnchorX", this.activityAnchor.x);
@@ -2882,6 +2902,7 @@ public final class RomanLegionaryEchoEntity extends PathfinderMob
 		}
 		this.bindingGeneration = input.getLongOr("BindingGeneration", 0L);
 		this.activityMode = EchoRelicState.ActivityMode.byOrdinal(input.getIntOr("ActivityMode", 0));
+		this.assistMode = EchoRelicState.AssistMode.byOrdinal(input.getIntOr("AssistMode", 1));
 		this.alertMode = EchoRelicState.AlertMode.byOrdinal(input.getIntOr("AlertMode", 1));
 		this.enabledSkills = input.getIntOr("EnabledSkills", EchoHeroType.ROMAN_LEGIONARY.allSkillsEnabledMask());
 		this.activityAnchor = new Vec3(input.getDoubleOr("ActivityAnchorX", this.getX()),

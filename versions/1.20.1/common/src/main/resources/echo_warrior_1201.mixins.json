@@ -31,7 +31,10 @@
     "RecyclerExplosionMixin1201",
     "BrushableTypeMixin1201",
     "PlacedBlockTrackerMixin1201",
-    "GeneratedChunkMixin1201"
+    "GeneratedChunkMixin1201",
+    "EchoCombatStateMixin1201",
+    "EchoMeleeReachMixin1201",
+    "EchoMeleeGoalReachMixin1201"
   ],
   "client": [
     "MinecraftClientMixin1201",

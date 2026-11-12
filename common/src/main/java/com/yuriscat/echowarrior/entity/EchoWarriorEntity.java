@@ -16,6 +16,11 @@ import java.util.UUID;
 
 public interface EchoWarriorEntity extends OwnableEntity {
 	LivingEntity livingEntity();
+    default double skillTooltipAttackDamage() {
+        return livingEntity().getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+    }
+
+    com.yuriscat.echowarrior.item.EchoRelicState.AssistMode assistMode();
 
 	EchoHeroType heroType();
 

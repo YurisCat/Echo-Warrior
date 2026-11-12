@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Single source of truth for all fixed accessory bonuses and runtime effects. */
+/** Accessory percentages share the current base attribute; armor remains additive. */
 public final class EchoAccessorySystem {
 	private static final Identifier ATTACK_ID = EchoWarrior.id("accessory_attack");
 	private static final Identifier ARMOR_ID = EchoWarrior.id("accessory_armor");
@@ -37,7 +37,6 @@ public final class EchoAccessorySystem {
 	private static final Identifier SPEED_ID = EchoWarrior.id("accessory_speed");
 	private static final Identifier WATER_SPEED_ID = EchoWarrior.id("accessory_water_speed");
 	private static final int DAY_NIGHT_HEAL_INTERVAL_TICKS = 50;
-	private static final float DAY_NIGHT_HEAL_AMOUNT = 1.0F;
 	private static final Map<AttackWindow, Boolean> CRITICAL_WINDOWS = new HashMap<>();
 	private static final Map<AttackWindow, Boolean> HEAL_WINDOWS = new HashMap<>();
 
@@ -48,18 +47,26 @@ public final class EchoAccessorySystem {
 	}
 
 	public static void apply(EchoWarriorEntity echo) {
+		apply(echo, installedAccessories(echo));
+	}
+
+	public static void apply(EchoWarriorEntity echo, List<ItemStack> accessories) {
 		LivingEntity living = echo.livingEntity();
 		float previousHealth = living.getHealth();
-		applyModifier(living.getAttribute(Attributes.ATTACK_DAMAGE), ATTACK_ID, attackBonus(installedAccessories(echo)),
+		applyModifier(living.getAttribute(Attributes.ATTACK_DAMAGE), ATTACK_ID, attackBonus(accessories, living.getAttributeBaseValue(Attributes.ATTACK_DAMAGE)),
 				AttributeModifier.Operation.ADD_VALUE);
-		applyModifier(living.getAttribute(Attributes.ARMOR), ARMOR_ID, armorBonus(installedAccessories(echo)),
+		applyModifier(living.getAttribute(Attributes.ARMOR), ARMOR_ID, armorBonus(accessories),
 				AttributeModifier.Operation.ADD_VALUE);
-		applyModifier(living.getAttribute(Attributes.MAX_HEALTH), HEALTH_ID, maximumHealthBonus(installedAccessories(echo)),
+		applyModifier(living.getAttribute(Attributes.MAX_HEALTH), HEALTH_ID, maximumHealthBonus(accessories, living.getAttributeBaseValue(Attributes.MAX_HEALTH)),
 				AttributeModifier.Operation.ADD_VALUE);
 		applyModifier(living.getAttribute(Attributes.MOVEMENT_SPEED), SPEED_ID,
-				movementMultiplier(installedAccessories(echo)) - 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+				movementMultiplier(accessories) - 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 		living.setHealth(Math.min(previousHealth, living.getMaxHealth()));
 	}
+
+	public static float periodicHealAmount(float maximumHealth) { return 1.0F + maximumHealth * 0.01F; }
+
+	public static float bloodPactHealAmount(float maximumHealth) { return 2.0F + maximumHealth * 0.05F; }
 
 	private static void applyModifier(AttributeInstance attribute, Identifier id, double amount,
 			AttributeModifier.Operation operation) {
@@ -80,21 +87,25 @@ public final class EchoAccessorySystem {
 			boolean waterBoost = contains(accessories, ModItems.TOMATO_FISH_ACCESSORY) && living.isInWater();
 			applyModifier(speed, WATER_SPEED_ID, waterBoost ? 0.50 : 0.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 
-			if (!level.dimensionType().hasSkyLight()) continue;
-			long dayTime = Math.floorMod(level.getDefaultClockTime(), 24000L);
-			boolean day = dayTime < 13000L;
-			boolean periodicHealing = day && contains(accessories, ModItems.SUNWHEEL_GARLAND_ACCESSORY)
-					|| !day && contains(accessories, ModItems.MOONDEW_BOTTLE_ACCESSORY);
-			if (periodicHealing) tryApplyDayNightHealing(level, living, now);
+			tickPeriodicHealing(level, living, accessories, now, level.getDefaultClockTime());
 		}
 	}
 
-	private static void tryApplyDayNightHealing(ServerLevel level, LivingEntity living, long now) {
+	static void tickPeriodicHealing(ServerLevel level, LivingEntity living, List<ItemStack> accessories,
+                                    long now, long dayTime) {
+        if (!level.dimensionType().hasSkyLight()) return;
+        boolean day = Math.floorMod(dayTime, 24000L) < 13000L;
+        boolean active = day && contains(accessories, ModItems.SUNWHEEL_GARLAND_ACCESSORY)
+                || !day && contains(accessories, ModItems.MOONDEW_BOTTLE_ACCESSORY);
+        if (active) tryApplyDayNightHealing(level, living, now);
+    }
+
+    private static void tryApplyDayNightHealing(ServerLevel level, LivingEntity living, long now) {
 		long phase = Math.floorMod(living.getUUID().getLeastSignificantBits(), (long)DAY_NIGHT_HEAL_INTERVAL_TICKS);
 		if (Math.floorMod(now, (long)DAY_NIGHT_HEAL_INTERVAL_TICKS) != phase
 				|| living.getHealth() >= living.getMaxHealth()) return;
 		float previousHealth = living.getHealth();
-		living.heal(DAY_NIGHT_HEAL_AMOUNT);
+		living.heal(periodicHealAmount(living.getMaxHealth()));
 		if (living.getHealth() <= previousHealth) return;
 		level.sendParticles(ParticleTypes.HEART,
 				living.getX(), living.getY() + living.getBbHeight() * 0.75, living.getZ(),
@@ -134,11 +145,11 @@ public final class EchoAccessorySystem {
 		if (echo == null || !has(echo, ModItems.BLOOD_PACT_FANG_ACCESSORY) || !isDirectAttack(source, echo)) return;
 		AttackWindow window = attackWindow(echo, source, echo.livingEntity().level().getGameTime());
 		if (HEAL_WINDOWS.putIfAbsent(window, Boolean.TRUE) != null) return;
-		if (echo.livingEntity().getRandom().nextFloat() < 0.30F) echo.livingEntity().heal(4.0F);
+		if (echo.livingEntity().getRandom().nextFloat() < 0.30F) echo.livingEntity().heal(bloodPactHealAmount(echo.livingEntity().getMaxHealth()));
 	}
 
 	private static boolean isDirectAttack(DamageSource source, EchoWarriorEntity echo) {
-		if (source.is(ModDamageTypes.SPIKED_ARMOR_REFLECTION) || source.is(ModDamageTypes.BLEEDING)
+		if (source.is(ModDamageTypes.QUETZALCOATL_CURSE) || source.is(ModDamageTypes.SPIKED_ARMOR_REFLECTION) || source.is(ModDamageTypes.BLEEDING)
 				|| source.is(ModDamageTypes.OBSIDIAN_WOUND) || source.is(DamageTypeTags.IS_EXPLOSION)) return false;
 		Entity direct = source.getDirectEntity();
 		if (direct == echo.livingEntity()) return true;
@@ -214,18 +225,18 @@ public final class EchoAccessorySystem {
 		return EchoBindingSystem.accessories(level, echo.getSummonerUuid());
 	}
 
-	public static double attackBonus(SimpleContainer contents) { return attackBonus(contents.getItems()); }
-	public static double attackBonus(ItemStack summoner) { return attackBonus(TestEchoSummonerItem.accessoryStacks(summoner)); }
-	private static double attackBonus(List<ItemStack> a) {
+	public static double attackBonus(SimpleContainer contents, double baseValue) { return attackBonus(contents.getItems(), baseValue); }
+	public static double attackBonus(ItemStack summoner, double baseValue) { return attackBonus(TestEchoSummonerItem.accessoryStacks(summoner), baseValue); }
+	private static double attackBonus(List<ItemStack> a, double baseValue) {
 		double n = 0;
-		if (contains(a, ModItems.BATTLE_WORN_WHETSTONE_ACCESSORY)) n += 2;
-		if (contains(a, ModItems.MOUNTAIN_BURDEN_BLADE_ACCESSORY)) n += 4;
-		if (contains(a, ModItems.FRACTURED_CRYSTAL_BLADE_ACCESSORY)) n += 4;
-		if (contains(a, ModItems.TWIN_OATH_BADGE_ACCESSORY)) n += 1;
-		if (contains(a, ModItems.BATTLE_BLINDFOLD_ACCESSORY)) n += 3;
-		if (contains(a, ModItems.MEMORY_RITUAL_KNIFE_ACCESSORY)) n += 2;
-		if (contains(a, ModItems.PEACEMAKER_ACCESSORY)) n -= 4;
-		return n;
+		if (contains(a, ModItems.BATTLE_WORN_WHETSTONE_ACCESSORY)) n += 0.2;
+		if (contains(a, ModItems.MOUNTAIN_BURDEN_BLADE_ACCESSORY)) n += 0.4;
+		if (contains(a, ModItems.FRACTURED_CRYSTAL_BLADE_ACCESSORY)) n += 0.4;
+		if (contains(a, ModItems.TWIN_OATH_BADGE_ACCESSORY)) n += 0.1;
+		if (contains(a, ModItems.BATTLE_BLINDFOLD_ACCESSORY)) n += 0.3;
+		if (contains(a, ModItems.MEMORY_RITUAL_KNIFE_ACCESSORY)) n += 0.2;
+		if (contains(a, ModItems.PEACEMAKER_ACCESSORY)) n -= 0.4;
+		return baseValue * n;
 	}
 
 	public static double armorBonus(SimpleContainer contents) { return armorBonus(contents.getItems()); }
@@ -240,15 +251,15 @@ public final class EchoAccessorySystem {
 		return n;
 	}
 
-	public static double maximumHealthBonus(SimpleContainer contents) { return maximumHealthBonus(contents.getItems()); }
-	public static double maximumHealthBonus(ItemStack summoner) { return maximumHealthBonus(TestEchoSummonerItem.accessoryStacks(summoner)); }
-	private static double maximumHealthBonus(List<ItemStack> a) {
+	public static double maximumHealthBonus(SimpleContainer contents, double baseValue) { return maximumHealthBonus(contents.getItems(), baseValue); }
+	public static double maximumHealthBonus(ItemStack summoner, double baseValue) { return maximumHealthBonus(TestEchoSummonerItem.accessoryStacks(summoner), baseValue); }
+	private static double maximumHealthBonus(List<ItemStack> a, double baseValue) {
 		double n = 0;
-		if (contains(a, ModItems.HEART_SPROUT_AMBER_ACCESSORY)) n += 6;
-		if (contains(a, ModItems.FEAST_HAM_ACCESSORY)) n += 12;
-		if (contains(a, ModItems.PEACEMAKER_ACCESSORY)) n += 20;
-		if (contains(a, ModItems.HOLLOW_BIRD_BONE_ACCESSORY)) n -= 8;
-		return n;
+		if (contains(a, ModItems.HEART_SPROUT_AMBER_ACCESSORY)) n += 0.2;
+		if (contains(a, ModItems.FEAST_HAM_ACCESSORY)) n += 0.35;
+		if (contains(a, ModItems.PEACEMAKER_ACCESSORY)) n += 0.6;
+		if (contains(a, ModItems.HOLLOW_BIRD_BONE_ACCESSORY)) n -= 0.25;
+		return baseValue * n;
 	}
 
 	public static double movementMultiplier(SimpleContainer contents) { return movementMultiplier(contents.getItems()); }

@@ -16,6 +16,7 @@ public final class EchoRelicState {
 	private static final String BIOME_AFFINITY_KEY = "EchoWarriorBiomeAffinity";
 	private static final String WISE_GROWTH_REMAINDER_KEY = "EchoWarriorWiseGrowthRemainder";
 	private static final String ACTIVITY_MODE_KEY = "EchoWarriorActivityMode";
+	private static final String ASSIST_MODE_KEY = "EchoWarriorAssistMode";
 	private static final String ALERT_MODE_KEY = "EchoWarriorAlertMode";
 	private static final String ENABLED_SKILLS_KEY = "EchoWarriorEnabledSkills";
 	private static final String SKILL_LAYOUT_VERSION_KEY = "EchoWarriorSkillLayoutVersion";
@@ -159,7 +160,15 @@ public final class EchoRelicState {
 		CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> tag.putInt(ALERT_MODE_KEY, mode.ordinal()));
 	}
 
-	public static int enabledSkills(ItemStack relic) {
+	    public static AssistMode assistMode(ItemStack relic) {
+        return AssistMode.byOrdinal(intValue(relic, ASSIST_MODE_KEY, AssistMode.SAFE.ordinal()));
+    }
+
+    public static void setAssistMode(ItemStack relic, AssistMode mode) {
+        CustomData.update(DataComponents.CUSTOM_DATA, relic, tag -> tag.putInt(ASSIST_MODE_KEY, mode.ordinal()));
+    }
+
+    public static int enabledSkills(ItemStack relic) {
 		EchoHeroType heroType = EchoHeroType.fromRelic(relic);
 		int allowed = heroType.allSkillsEnabledMask();
 		int enabled = intValue(relic, ENABLED_SKILLS_KEY, heroType.defaultEnabledSkillsMask());
@@ -518,7 +527,14 @@ public final class EchoRelicState {
 		}
 	}
 
-	public enum AlertMode {
+	public enum AssistMode {
+        OFF, SAFE, ALL;
+        public static AssistMode byOrdinal(int value) {
+            return value >= 0 && value < values().length ? values()[value] : SAFE;
+        }
+    }
+
+    public enum AlertMode {
 		AGGRESSIVE, DEFENSIVE, PEACEFUL;
 
 		public static AlertMode byOrdinal(int value) {

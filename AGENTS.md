@@ -11,6 +11,12 @@
 - Keep `PROJECT.md` updated when scope, tooling, testing workflow, or core design changes materially.
 - Do not silently promote post-MVP ideas into required work.
 
+## Community feedback
+
+- When the user asks to check comments, community wishes, or outstanding promises, default to the three sources in `docs/COMMUNITY_FEEDBACK.md`: the Echo Warrior CurseForge comments, Bilibili video `BV1vEH16VEKf`, and MC百科 class `31400`.
+- Read all available pages and nested replies, including the author's replies. Compare with current code and release records; distinguish explicit commitments, conditional ideas, already delivered requests, and unverified reports.
+- Keep dated findings under `docs/research/` and update the feedback index. Reading comments does not authorize posting replies, changing public pages, or promoting suggestions into approved scope.
+
 ## Build and test workflow
 
 - Use the repository Gradle Wrapper (`gradlew.bat`) instead of a globally installed Gradle.

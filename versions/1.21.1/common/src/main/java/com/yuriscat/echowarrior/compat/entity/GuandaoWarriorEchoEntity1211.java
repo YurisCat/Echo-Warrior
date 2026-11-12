@@ -76,6 +76,8 @@ import java.util.UUID;
 public final class GuandaoWarriorEchoEntity1211 extends PathfinderMob
 		implements EchoWarriorEntity1211, SmartBrainOwner<GuandaoWarriorEchoEntity1211>, GeoEntity,
 		GuandaoVisualBehavior1211.Host {
+    private static final double COMBO_FLOAT_VERTICAL_SPEED = 0.22;
+    private EchoRelicState1211.AssistMode assistMode = EchoRelicState1211.AssistMode.SAFE;
 	public static final byte VISUAL_NORMAL = 0;
 	public static final byte VISUAL_ALERT = 1;
 	public static final byte VISUAL_STARTLED = 2;
@@ -500,7 +502,7 @@ public final class GuandaoWarriorEchoEntity1211 extends PathfinderMob
 					COMBO_YAW_OFFSET[phase],
 					COMBO_DAMAGE[phase] * this.comboPhaseValorMultiplier,
 					this.comboPhaseHits,
-					phase == 0
+					phase < 3
 			);
 			if (hits > 0 && !this.comboPhaseAwardedValor) {
 				this.comboPhaseAwardedValor = true;
@@ -874,7 +876,10 @@ public final class GuandaoWarriorEchoEntity1211 extends PathfinderMob
 			alreadyHit.add(target.getUUID());
 			hits++;
 			EchoExperienceSystem1211.markParticipation(this, target);
-			if (launch) launchTarget(target, origin, movementBeforeHit);
+			if (launch) {
+                launchTarget(target, origin, movementBeforeHit);
+                EchoCombatState1211.of(target).restrictReach(level.getGameTime());
+            }
 			level.sendParticles(ParticleTypes.SWEEP_ATTACK,
 					target.getX(), target.getY() + target.getBbHeight() * 0.55, target.getZ(),
 					1, 0.0, 0.0, 0.0, 0.0);
@@ -889,15 +894,14 @@ public final class GuandaoWarriorEchoEntity1211 extends PathfinderMob
 			target.setDeltaMovement(movementBeforeHit);
 			return;
 		}
-		Vec3 outward = target.position().subtract(origin).multiply(1.0, 0.0, 1.0);
-		if (outward.lengthSqr() < 1.0E-5) outward = facing(this.comboYaw);
-		else outward = outward.normalize();
-		double upward = Math.max(movementBeforeHit.y, 0.22 * strength);
-		// hurtServer has already applied vanilla's directional hurt knockback. Replace
-		// that result instead of adding another push, so phase one creates a short,
-		// nearly vertical float without throwing the target out of phase two's sector.
-		target.setDeltaMovement(outward.x * 0.04 * strength, upward, outward.z * 0.04 * strength);
+        double upward = Math.max(movementBeforeHit.y, COMBO_FLOAT_VERTICAL_SPEED * strength);
+        // Preserve natural horizontal motion, replacing only the hit's knockback.
+        target.setDeltaMovement(movementBeforeHit.x, upward, movementBeforeHit.z);
 	}
+
+    @Override public double skillTooltipAttackDamage() {
+        return this.getAttributeValue(Attributes.ATTACK_DAMAGE) * valorDamageMultiplier();
+    }
 
 	private void addValorStack(long now) {
 		if (!skillEnabled(SKILL_GROWING_VALOR)) return;
@@ -985,7 +989,7 @@ public final class GuandaoWarriorEchoEntity1211 extends PathfinderMob
 			this.targetVisibility.observe(this, ownerAttacker, now);
 			return ownerAttacker;
 		}
-		LivingEntity ownerTarget = owner.getLastHurtMob();
+		LivingEntity ownerTarget = EchoAssistPolicy1211.followsOwner(this) ? owner.getLastHurtMob() : null;
 		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory1211.GRACE_TICKS)
 				&& canProtectAgainst(ownerTarget)) {
 			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
@@ -1044,7 +1048,7 @@ public final class GuandaoWarriorEchoEntity1211 extends PathfinderMob
 		LivingEntity owner = this.getOwner();
 		return owner != null && (
 				target == owner.getLastHurtByMob() && isRecent(owner, owner.getLastHurtByMobTimestamp())
-						|| target == owner.getLastHurtMob() && isRecent(owner, owner.getLastHurtMobTimestamp())
+						|| EchoAssistPolicy1211.followsOwner(this) && target == owner.getLastHurtMob() && isRecent(owner, owner.getLastHurtMobTimestamp())
 		);
 	}
 
@@ -1060,7 +1064,11 @@ public final class GuandaoWarriorEchoEntity1211 extends PathfinderMob
 	}
 
 	@Override
-	public boolean canAttack(LivingEntity target) {
+	public EchoRelicState1211.AssistMode assistMode() { return this.assistMode; }
+
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        if (!EchoAssistPolicy1211.allowsTarget(this, target)) return false;
 		LivingEntity owner = this.getOwner();
 		if (target == this || target == owner || target.isAlliedTo(this) || owner != null && owner.isAlliedTo(target)) return false;
 		if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
@@ -1268,6 +1276,12 @@ public final class GuandaoWarriorEchoEntity1211 extends PathfinderMob
 
 	@Override
 	public void applyRelicState(ItemStack relic, boolean resetAnchor) {
+        if (this.assistMode != EchoRelicState1211.assistMode(relic)) {
+            this.assistMode = EchoRelicState1211.assistMode(relic);
+            this.setTarget(null);
+            net.tslat.smartbrainlib.util.BrainUtils.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
+        }
+
 		if (relic.isEmpty()) return;
 		EchoRelicState1211.ActivityMode previousActivity = this.activityMode;
 		EchoRelicState1211.AlertMode previousAlert = this.alertMode;
@@ -1389,6 +1403,7 @@ public final class GuandaoWarriorEchoEntity1211 extends PathfinderMob
 	@Override
 	public void addAdditionalSaveData(CompoundTag tag) {
 		super.addAdditionalSaveData(tag);
+        tag.putInt("AssistMode", this.assistMode.ordinal());
 		if (this.ownerUuid != null) tag.putUUID("EchoOwner", this.ownerUuid);
 		if (this.summonerUuid != null) tag.putUUID("SummonerUuid", this.summonerUuid);
 		tag.putLong("BindingGeneration", this.bindingGeneration);
@@ -1406,6 +1421,7 @@ public final class GuandaoWarriorEchoEntity1211 extends PathfinderMob
 	@Override
 	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
+        this.assistMode = EchoRelicState1211.AssistMode.byOrdinal(tag.contains("AssistMode") ? tag.getInt("AssistMode") : 1);
 		this.ownerUuid = tag.hasUUID("EchoOwner") ? tag.getUUID("EchoOwner") : null;
 		this.summonerUuid = tag.hasUUID("SummonerUuid") ? tag.getUUID("SummonerUuid") : null;
 		this.bindingGeneration = tag.getLong("BindingGeneration");

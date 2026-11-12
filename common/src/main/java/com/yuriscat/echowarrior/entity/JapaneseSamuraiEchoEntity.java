@@ -244,6 +244,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	private @Nullable UUID summonerUuid;
 	private long bindingGeneration;
 	private EchoRelicState.ActivityMode activityMode = EchoRelicState.ActivityMode.FOLLOW;
+	private EchoRelicState.AssistMode assistMode = EchoRelicState.AssistMode.SAFE;
 	private EchoRelicState.AlertMode alertMode = EchoRelicState.AlertMode.DEFENSIVE;
 	private int enabledSkills = EchoHeroType.JAPANESE_SAMURAI.allSkillsEnabledMask();
 	private Vec3 activityAnchor = Vec3.ZERO;
@@ -1185,7 +1186,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 			this.targetVisibility.observe(this, ownerAttacker, now);
 			return ownerAttacker;
 		}
-		LivingEntity ownerTarget = owner.getLastHurtMob();
+		LivingEntity ownerTarget = EchoAssistPolicy.followsOwner(this) ? owner.getLastHurtMob() : null;
 		if (isRecentWithin(owner, owner.getLastHurtMobTimestamp(), EchoTargetVisibilityMemory.GRACE_TICKS)
 				&& canProtectAgainst(ownerTarget)) {
 			this.creeperTargeting.authorizeReactive(this, ownerTarget, now);
@@ -1246,7 +1247,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		LivingEntity owner = this.getOwner();
 		return owner != null && (
 				target == owner.getLastHurtByMob() && isRecent(owner, owner.getLastHurtByMobTimestamp())
-						|| target == owner.getLastHurtMob() && isRecent(owner, owner.getLastHurtMobTimestamp())
+						|| EchoAssistPolicy.followsOwner(this) && target == owner.getLastHurtMob() && isRecent(owner, owner.getLastHurtMobTimestamp())
 		);
 	}
 
@@ -1262,7 +1263,11 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	}
 
 	@Override
+    public EchoRelicState.AssistMode assistMode() { return this.assistMode; }
+
+	@Override
 	public boolean canAttack(LivingEntity target) {
+        if (!EchoAssistPolicy.allowsTarget(this, target)) return false;
 		LivingEntity owner = this.getOwner();
 		if (target == this || target == owner || target.isAlliedTo(this) || owner != null && owner.isAlliedTo(target)) return false;
 		if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
@@ -1312,15 +1317,17 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 	public void applyRelicState(ItemStack relic, boolean resetAnchor) {
 		if (relic.isEmpty()) return;
 		EchoRelicState.ActivityMode previousActivity = this.activityMode;
+		EchoRelicState.AssistMode previousAssist = this.assistMode;
 		EchoRelicState.AlertMode previousAlert = this.alertMode;
 		int previousSkills = this.enabledSkills;
 		this.activityMode = EchoRelicState.activityMode(relic);
 		this.alertMode = EchoRelicState.alertMode(relic);
+		this.assistMode = EchoRelicState.assistMode(relic);
 		this.enabledSkills = EchoRelicState.enabledSkills(relic);
 		if ((previousSkills & 1 << SKILL_ZANSHIN) != 0 && !skillEnabled(SKILL_ZANSHIN)) {
 			this.zanshinBonusUntil = 0L;
 		}
-		if (previousActivity != this.activityMode || previousAlert != this.alertMode || resetAnchor) {
+		if (previousActivity != this.activityMode || previousAlert != this.alertMode || previousAssist != this.assistMode || resetAnchor) {
 			this.setTarget(null);
 			this.targetVisibility.clear();
 			BrainUtil.clearMemory(this, net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);
@@ -1481,6 +1488,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		if (this.summonerUuid != null) output.putString("SummonerUuid", this.summonerUuid.toString());
 		output.putLong("BindingGeneration", this.bindingGeneration);
 		output.putInt("ActivityMode", this.activityMode.ordinal());
+		output.putInt("AssistMode", this.assistMode.ordinal());
 		output.putInt("AlertMode", this.alertMode.ordinal());
 		output.putInt("EnabledSkills", this.enabledSkills);
 		output.putDouble("ActivityAnchorX", this.activityAnchor.x);
@@ -1498,6 +1506,7 @@ public final class JapaneseSamuraiEchoEntity extends PathfinderMob
 		catch (IllegalArgumentException ignored) { this.summonerUuid = null; }
 		this.bindingGeneration = input.getLongOr("BindingGeneration", 0L);
 		this.activityMode = EchoRelicState.ActivityMode.byOrdinal(input.getIntOr("ActivityMode", 0));
+		this.assistMode = EchoRelicState.AssistMode.byOrdinal(input.getIntOr("AssistMode", 1));
 		this.alertMode = EchoRelicState.AlertMode.byOrdinal(input.getIntOr("AlertMode", 1));
 		this.enabledSkills = input.getIntOr("EnabledSkills", EchoHeroType.JAPANESE_SAMURAI.allSkillsEnabledMask());
 		this.activityAnchor = new Vec3(input.getDoubleOr("ActivityAnchorX", this.getX()),

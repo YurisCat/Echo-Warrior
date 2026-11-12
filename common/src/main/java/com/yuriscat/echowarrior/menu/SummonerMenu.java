@@ -35,6 +35,7 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	public static final int BUTTON_SUMMON_OR_DISMISS = 0;
 	public static final int BUTTON_ACTIVITY_START = 10;
 	public static final int BUTTON_ALERT_START = 20;
+    public static final int BUTTON_ASSIST_START = 40;
 	public static final int BUTTON_SKILL_START = 30;
 	public static final int ACTION_NONE = 0;
 	public static final int ACTION_SUMMONED = 1;
@@ -83,6 +84,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	private final DataSlot relicSyncToken = DataSlot.standalone();
 	private final DataSlot activityMode = DataSlot.standalone();
 	private final DataSlot alertMode = DataSlot.standalone();
+    private final DataSlot assistMode = DataSlot.standalone();
+    private final WideDataSlot skillAttackSnapshot = new WideDataSlot();
 	private final DataSlot enabledSkills = DataSlot.standalone();
 	private final DataSlot heroType = DataSlot.standalone();
 	private final DataSlot skillCount = DataSlot.standalone();
@@ -152,6 +155,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		this.addDataSlot(this.relicSyncToken);
 		this.addDataSlot(this.activityMode);
 		this.addDataSlot(this.alertMode);
+        this.addDataSlot(this.assistMode);
+        this.skillAttackSnapshot.register(this::addDataSlot);
 		this.addDataSlot(this.enabledSkills);
 		this.addDataSlot(this.heroType);
 		this.addDataSlot(this.skillCount);
@@ -296,13 +301,13 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			EchoRelicState.ensureInitialized(relic, serverPlayer.getRandom(), serverPlayer.level().getGameTime());
 			int level = EchoRelicProgress.level(relic);
 			int maximumHealth = (int)Math.round(Math.max(1.0, EchoRelicState.maximumHealth(relic)
-					+ EchoAccessorySystem.maximumHealthBonus(this.summonerContainer)) * 10.0);
+					+ EchoAccessorySystem.maximumHealthBonus(this.summonerContainer, EchoRelicState.maximumHealth(relic))) * 10.0);
 			this.relicLevel.set(level);
 			this.relicExperience.set(EchoRelicProgress.experience(relic));
 			this.relicExperienceNeeded.set(EchoRelicProgress.experienceNeeded(level));
 			this.spiritMaximumHealth.set(maximumHealth);
 			this.spiritAttackDamage.set((int)Math.round(Math.max(0.0, EchoRelicState.attackDamage(relic)
-					+ EchoAccessorySystem.attackBonus(this.summonerContainer)) * 10.0));
+					+ EchoAccessorySystem.attackBonus(this.summonerContainer, EchoRelicState.attackDamage(relic))) * 10.0));
 			this.spiritHealth.set(spirit != null ? Math.round(spirit.livingEntity().getHealth() * 10.0F)
 					: binding != null && binding.active() && binding.snapshot().health() > 0.0F
 							? Math.round(Math.min(maximumHealth / 10.0F, binding.snapshot().health()) * 10.0F)
@@ -320,6 +325,9 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			this.relicSyncToken.set(relicSyncToken(relic));
 			this.activityMode.set(EchoRelicState.activityMode(relic).ordinal());
 			this.alertMode.set(EchoRelicState.alertMode(relic).ordinal());
+        this.assistMode.set(EchoRelicState.assistMode(relic).ordinal());
+        this.skillAttackSnapshot.set(Float.floatToIntBits((float)(spirit != null ? spirit.skillTooltipAttackDamage()
+                : Math.max(0.0, EchoRelicState.attackDamage(relic) + EchoAccessorySystem.attackBonus(this.summonerContainer, EchoRelicState.attackDamage(relic))))));
 			this.enabledSkills.set(EchoRelicState.enabledSkills(relic));
 			EchoHeroType currentHero = EchoHeroType.fromRelic(relic);
 			this.heroType.set(currentHero.ordinal());
@@ -355,6 +363,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 			this.relicSyncToken.set(0);
 			this.activityMode.set(0);
 			this.alertMode.set(1);
+            this.assistMode.set(1);
+            this.skillAttackSnapshot.set(0);
 			this.enabledSkills.set(EchoRelicState.ALL_SKILLS_ENABLED);
 			this.heroType.set(0);
 			this.skillCount.set(0);
@@ -431,6 +441,14 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		}
 		if (buttonId >= BUTTON_ALERT_START && buttonId < BUTTON_ALERT_START + 3) {
 			EchoRelicState.setAlertMode(relic, EchoRelicState.AlertMode.byOrdinal(buttonId - BUTTON_ALERT_START));
+			var spirit = TestEchoSummonerItem.findBoundSpirit(serverPlayer.level(), summoner);
+			if (spirit != null) spirit.applyRelicState(relic, false);
+			this.summonerContainer.setChanged();
+			reportAction(ACTION_MODE_CHANGED);
+			return true;
+		}
+		if (buttonId >= BUTTON_ASSIST_START && buttonId < BUTTON_ASSIST_START + 3) {
+			EchoRelicState.setAssistMode(relic, EchoRelicState.AssistMode.byOrdinal(buttonId - BUTTON_ASSIST_START));
 			var spirit = TestEchoSummonerItem.findBoundSpirit(serverPlayer.level(), summoner);
 			if (spirit != null) spirit.applyRelicState(relic, false);
 			this.summonerContainer.setChanged();
@@ -677,8 +695,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 		int base = baseAlertRange();
 		return (int)Math.round(EchoAccessorySystem.proactiveRange(this.summonerContainer, base, false));
 	}
-	public double accessoryMaximumHealthChange() { return EchoAccessorySystem.maximumHealthBonus(this.summonerContainer); }
-	public double accessoryAttackDamageChange() { return EchoAccessorySystem.attackBonus(this.summonerContainer); }
+	public double accessoryMaximumHealthChange() { return EchoAccessorySystem.maximumHealthBonus(this.summonerContainer, EchoRelicState.maximumHealth(this.summonerContainer.getItem(7))); }
+	public double accessoryAttackDamageChange() { return EchoAccessorySystem.attackBonus(this.summonerContainer, EchoRelicState.attackDamage(this.summonerContainer.getItem(7))); }
 	public double accessoryArmorChange() { return EchoAccessorySystem.armorBonus(this.summonerContainer); }
 	public double accessoryMovementChange() { return EchoAccessorySystem.movementMultiplier(this.summonerContainer) - 1.0; }
 	public double accessoryAlertRangeChange() { return spiritAlertRange() - baseAlertRange(); }
@@ -692,6 +710,8 @@ public final class SummonerMenu extends AbstractContainerMenu {
 	public int relicSyncToken() { return this.relicSyncToken.get(); }
 	public int activityMode() { return this.activityMode.get(); }
 	public int alertMode() { return this.alertMode.get(); }
+    public int assistMode() { return this.assistMode.get(); }
+    public double skillAttackDamage() { return Float.intBitsToFloat(this.skillAttackSnapshot.get()); }
 	public int enabledSkills() { return this.enabledSkills.get(); }
 	public int heroType() { return this.heroType.get(); }
 	public int skillCount() { return this.skillCount.get(); }

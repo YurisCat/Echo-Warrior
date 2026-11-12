@@ -77,7 +77,9 @@ def package(destination: Path, versions: list[str], tbf_forge: Path | None = Non
     prefixes = ("common/", "fabric/", "neoforge/", "versions/", "gradle/", "scripts/", "build-logic/")
     root_files = {"AGENTS.md", "PROJECT.md", "build.gradle", "settings.gradle", "gradle.properties",
                   "gradlew", "gradlew.bat", "LICENSE", "LICENSE-CODE", "LICENSE-ASSETS.md", "NOTICE",
-                  "docs/VERSION_PORTING_PLAYBOOK.md", "docs/FOXY_TEST_NODE.md"}
+                  "docs/VERSION_PORTING_PLAYBOOK.md", "docs/FOXY_TEST_NODE.md",
+                  "docs/localization/config.json", "docs/localization/state.json",
+                  "tools/update-workboard/skill-copy-draft.json", "tools/update-workboard/assist-copy.json"}
     tracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).decode("utf-8").split("\0")
     # Untracked new Java/source guards must travel too, otherwise a dirty fix
     # would accidentally be tested against a clean HEAD checkout.
@@ -85,7 +87,10 @@ def package(destination: Path, versions: list[str], tbf_forge: Path | None = Non
     selected = {name for name in tracked if name in root_files or name.startswith(prefixes)}
     selected.update(name for name in new_files if name.startswith(("common/src/", "versions/"))
                     and Path(name).suffix in (".java", ".json", ".png", ".gradle", ".properties"))
+    selected.update(name for name in new_files if name in root_files)
     selected.update(name for name in new_files if name in {
+        "scripts/check-skill-copy.py",
+        "scripts/run-skill-update-clients.ps1",
         "scripts/check-summoner-slot-layout.py",
         "scripts/check-archaeology.py",
         "scripts/prepared-client-pair.ps1", "scripts/test-prepared-client-pair.ps1",
@@ -182,7 +187,8 @@ def execute(report_root: Path, game_root: Path, tools_root: Path) -> int:
         env["ECHO_WARRIOR_LOADER_CACHE"] = str(tools_root / "loader-server-cache")
         env["ECHO_WARRIOR_TEST_ARTIFACT_ROOT"] = str(game_root)
         env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env["PATH"]
-        commands = [("performance-source-guard", [sys.executable, str(ROOT / "scripts/check-battlefield-performance.py")])]
+        commands = [("skill-copy-source-guard", [sys.executable, str(ROOT / "scripts/check-skill-copy.py")]),
+                    ("performance-source-guard", [sys.executable, str(ROOT / "scripts/check-battlefield-performance.py")])]
         if "1.21.1" in manifest["versions"] and not (manifest.get("tbf_only") or manifest.get("extra_mods_only")):
             commands.extend([
                 ("1.21.1-baseline", [r"C:\Program Files\PowerShell\7\pwsh.exe", "-NoLogo", "-NoProfile", "-File",

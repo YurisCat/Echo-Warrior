@@ -1,0 +1,26 @@
+{
+  "status": "author_accepted",
+  "date": "2026-11-12",
+  "section": {
+    "zh_cn": "协助战斗",
+    "en_us": "Assist"
+  },
+  "default": "safe",
+  "modes": [
+    {
+      "id": "off",
+      "name": "关闭",
+      "description": "不跟随主人的攻击目标"
+    },
+    {
+      "id": "safe",
+      "name": "保护",
+      "description": "跟随主人攻击，避开村民、铁傀儡和已驯服生物"
+    },
+    {
+      "id": "all",
+      "name": "全部",
+      "description": "跟随主人攻击所有允许攻击的目标"
+    }
+  ]
+}

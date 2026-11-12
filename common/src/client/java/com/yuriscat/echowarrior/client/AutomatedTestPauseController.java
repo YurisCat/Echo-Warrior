@@ -27,6 +27,7 @@ public final class AutomatedTestPauseController {
 			growthCheck.join();
 		}
 		GuandaoPresentationClientSelfTest.run(client);
+        SkillTooltipClientSelfTest.run();
 		client.setScreen(new PauseScreen(true));
 		opened = true;
 		EchoWarrior.LOGGER.info("Automated client smoke test opened the pause menu to release the mouse.");

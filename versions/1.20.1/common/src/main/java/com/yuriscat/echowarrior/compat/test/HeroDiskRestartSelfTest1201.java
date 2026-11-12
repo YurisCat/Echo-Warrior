@@ -47,8 +47,9 @@ public final class HeroDiskRestartSelfTest1201 {
                 EchoRelicState1201.setTraitsForSelfTest(relic, 0, EchoBiomeAffinity1201.OPENLAND);
                 // NoAI does not stop the server's sun aura. Keep this persistence
                 // fixture's HP constant without disabling real gameplay healing.
-                if (type == EchoHeroType1201.AZTEC_WARRIOR && EchoRelicState1201.skillEnabled(relic, 0)) {
-                    EchoRelicState1201.toggleSkill(relic, 0);
+                if (type == EchoHeroType1201.AZTEC_WARRIOR
+                        && EchoRelicState1201.skillEnabled(relic, AztecWarriorEchoEntity1201.SKILL_BLESSING)) {
+                    EchoRelicState1201.toggleSkill(relic, AztecWarriorEchoEntity1201.SKILL_BLESSING);
                 }
                 var contents = new ArrayList<>(binding.contents()); contents.set(7, relic);
                 check(binding.commitEquipment(binding.stateRevision(), contents), "install disk relic");

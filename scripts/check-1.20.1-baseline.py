@@ -244,7 +244,8 @@ def audit(loader: str, config: dict[str, str], jar_path: Path | None = None) -> 
                                     "LivingEntityAccessoryMixin1201", "LivingCombatEventsMixin1201", "MerchantTalentMixin1201",
                                     "PlayerTalentMixin1201", "ShulkerBulletAccessor1201", "ItemEntityLifetimeMixin1201",
                                     "RecyclerBreakMixin1201", "RecyclerExplosionMixin1201", "BrushableTypeMixin1201", "PlacedBlockTrackerMixin1201",
-                                    "GeneratedChunkMixin1201"], "Unexpected server Mixin list")
+                                    "GeneratedChunkMixin1201", "EchoCombatStateMixin1201",
+                                    "EchoMeleeReachMixin1201", "EchoMeleeGoalReachMixin1201"], "Unexpected server Mixin list")
         require(mixin["client"] == ["MinecraftClientMixin1201", "MouseHandlerMixin1201", "ClientMenuSyncMixin1201",
                                     "CreativeModeSlotWrapperAccessor1201", "CreativeModeInventoryScreenInvoker1201",
                                     "CreativeModeInventoryScreenMixin1201", "AbstractContainerScreenMixin1201", "ItemInHandRendererMixin1201", "RecyclerItemRendererMixin1201",
