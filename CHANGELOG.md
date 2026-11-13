@@ -4,6 +4,8 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+## 0.3.0 - 2026-11-13
+
 ### Added
 
 - Added Off, Protect and All modes to the Echo Summoner's Assist controls. Protect is the default and prevents Echoes from harming villagers, iron golems and tamed creatures, including retaliation and area damage.
