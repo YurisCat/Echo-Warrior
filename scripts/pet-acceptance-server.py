@@ -14,11 +14,24 @@ import threading
 import time
 import traceback
 import uuid
+from server_save_evidence import require_normal_save
 
 
 def digest(path):
     with Path(path).open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def read_control_json(path, attempts=40):
+    """Retry only a short Windows sharing conflict, before issuing any command."""
+    for attempt in range(attempts):
+        try:
+            return json.loads(path.read_text(encoding="utf-8-sig"))
+        except PermissionError:
+            if attempt + 1 == attempts:
+                raise
+            time.sleep(.05)
+    raise ValueError("At least one read attempt is required")
 
 
 def main():
@@ -28,7 +41,7 @@ def main():
     parser.add_argument("--echo-jar", type=Path, required=True)
     parser.add_argument("--world", type=Path)
     parser.add_argument("--java", type=Path, required=True)
-    parser.add_argument("--minecraft", choices=["1.20.1", "1.21.1", "26.1.2"], required=True)
+    parser.add_argument("--minecraft", choices=["1.20.1", "1.21.1", "26.1.2", "26.3"], required=True)
     parser.add_argument("--loader", choices=["fabric", "neoforge", "forge"], required=True)
     parser.add_argument("--port", type=int, default=25670)
     parser.add_argument("--proxy-port", type=int, default=25671)
@@ -97,6 +110,7 @@ def main():
             java_args += ["@" + str(args_files[0].relative_to(root)), "nogui"]
         state["command"] = java_args
         state["started_utc"] = datetime.now(timezone.utc).isoformat()
+        started_epoch = time.time()
         def save_state():
             path = root / "acceptance-server-state.json"
             temporary = path.with_suffix(".tmp")
@@ -125,7 +139,7 @@ def main():
                 async def pump(origin, destination, direction):
                     try:
                         while data := await origin.read(65536):
-                            delay = json.loads((control / "proxy-delay.json").read_text(encoding="utf-8-sig")).get("delay_ms", 0)
+                            delay = read_control_json(control / "proxy-delay.json").get("delay_ms", 0)
                             if not 0 <= delay <= 2000:
                                 raise ValueError("Proxy delay outside acceptance bounds")
                             if delay:
@@ -150,7 +164,7 @@ def main():
         while process.poll() is None:
             request = control / f"{next_command:05d}.json"
             if request.is_file():
-                data = json.loads(request.read_text(encoding="utf-8-sig"))
+                data = read_control_json(request)
                 commands = data["commands"]
                 if not isinstance(commands, list) or any("\n" in command or "\r" in command for command in commands):
                     raise ValueError("One console command per list element required")
@@ -166,7 +180,11 @@ def main():
         reader.join(timeout=10)
         state["exit_code"] = process.returncode
         state["state"] = "stopped" if process.returncode == 0 else "failed"
-        state["normal_save"] = "All dimensions are saved" in (root / "acceptance-console.log").read_text(encoding="utf-8")
+        state["normal_save"] = False
+        if process.returncode == 0:
+            require_normal_save((root / "acceptance-console.log").read_text(encoding="utf-8"),
+                                root / "acceptance-world", args.minecraft, started_epoch)
+            state["normal_save"] = True
         state["finished_utc"] = datetime.now(timezone.utc).isoformat()
         save_state()
     finally:

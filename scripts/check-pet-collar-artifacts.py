@@ -38,7 +38,7 @@ def class_references(data: bytes) -> list[str]:
 
 
 def audit(path: Path, version: str, loader: str) -> None:
-    suffix = {"26.1.2": "", "1.21.1": "_1211", "1.20.1": "_1201"}[version]
+    suffix = {"26.1.2": "", "26.3": "", "1.21.1": "_1211", "1.20.1": "_1201"}[version]
     number = suffix.removeprefix("_")
     config_name = f"echo_warrior_pet_collars{suffix}.mixins.json"
     with zipfile.ZipFile(path) as jar:
@@ -51,7 +51,7 @@ def audit(path: Path, version: str, loader: str) -> None:
         assert f"{client_package}/client/PetFeedbackLayout{number}.class" in names, "Missing wrapped feedback renderer"
         assert f'{client_config["package"].replace(".", "/")}/{feedback_mixin}.class' in names
         assert feedback_mixin not in client_config.get("mixins", []), "Client feedback must not load on servers"
-        tooltip_mixin = "GuiGraphicsExtractorMixin" if version == "26.1.2" else f"GuiGraphicsMixin{number}"
+        tooltip_mixin = "GuiGraphicsExtractorMixin" if version in ("26.1.2", "26.3") else f"GuiGraphicsMixin{number}"
         tooltip_hook = jar.read(f'{client_config["package"].replace(".", "/")}/{tooltip_mixin}.class')
         assert b";Ljava/util/List;Ljava/util/Optional;II" in tooltip_hook and b"wrapTooltipLines" in tooltip_hook, "Collar tooltips must hook the list overload used directly by container screens"
         if version == "1.21.1" and loader == "neoforge":
@@ -104,9 +104,9 @@ def audit(path: Path, version: str, loader: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--version", choices=("all", "26.1.2", "1.21.1", "1.20.1"), default="all")
+    parser.add_argument("--version", choices=("all", "26.1.2", "26.3", "1.21.1", "1.20.1"), default="all")
     args = parser.parse_args()
-    for version in (("26.1.2", "1.21.1", "1.20.1") if args.version == "all" else (args.version,)):
+    for version in (("26.1.2", "26.3", "1.21.1", "1.20.1") if args.version == "all" else (args.version,)):
         root = ROOT if version == "26.1.2" else ROOT / "versions" / version
         props = dict(line.split("=", 1) for line in (root / "gradle.properties").read_text().splitlines()
                      if "=" in line and not line.startswith("#"))

@@ -308,6 +308,7 @@ def run_once(java: str, arguments: list[str], run_dir: Path, attempt: int, timeo
                         and "DEPARTURE EFFECTS SELFTEST PASSED heroes=5 modes=item-id-destroy-death packets=24-soul once=true vanilla=unchanged combo=critical" in text
                         and "MELEE REACH SELFTEST PASSED hero=aztec start=4.4 delayed=4.4 reject=4.6 vertical=checked wall=checked" in text
                         and "SKILL UPDATE SELFTEST PASSED" in text
+                        and "FOLLOW SAFETY SELFTEST PASSED heroes=5" in text
                         and "ACCESSORY GROWTH SELFTEST PASSED" in text
                         and re.search(rf"HERO DISK SELFTEST PASSED boot={attempt} heroes=5 arrow=1 migration=", text)
                         and "[EchoExternalCompanionSelfTest] PASS" in text

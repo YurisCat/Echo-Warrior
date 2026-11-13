@@ -83,6 +83,7 @@ public final class EchoProgressionSelfTest1201 {
             ordinary.setBaseValue(10000);
             check(ordinary.getValue() == 1024, "ordinary mob range unchanged");
             verifyAttributeComposition();
+            com.yuriscat.echowarrior.compat.entity.behavior.EchoFollowSafetySelfTest1201.run(level);
             com.yuriscat.echowarrior.compat.entity.SkillUpdateSelfTest1201.run(level);
             AccessoryGrowthSelfTest1201.run(level);
             org.slf4j.LoggerFactory.getLogger("echo_warrior").info("[EchoProgressionSelfTest] PASS cap, save preservation, XP overflow, five hero curves and isolated attribute range");

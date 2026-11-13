@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare, check, and publish the verified Echo Warrior six-file release to Modrinth."""
+"""Prepare, check, and publish the verified Echo Warrior eight-file release to Modrinth."""
 
 from __future__ import annotations
 
@@ -80,8 +80,8 @@ def prepare_plan(
         raise ValueError("Public release requires a plain x.y.z version.")
     expected = {target: (minecraft, loader, path) for target, minecraft, loader, path in expected_targets(version)}
     artifacts = source["artifacts"]
-    if len(artifacts) != 6 or {a["target"] for a in artifacts} != set(expected):
-        raise ValueError("Source manifest must contain exactly the six release targets, without duplicates.")
+    if len(artifacts) != len(expected) or {a["target"] for a in artifacts} != set(expected):
+        raise ValueError("Source manifest must contain exactly the eight release targets, without duplicates.")
     result = {"version": version, "project_id": destination, "artifacts": []}
     for artifact in artifacts:
         target = artifact["target"]
@@ -145,8 +145,8 @@ def verify_local_plan(plan: dict, root: Path = Path(".")) -> None:
         raise ValueError("Invalid public release version.")
     expected = {target: (minecraft, loader, path) for target, minecraft, loader, path in expected_targets(version)}
     artifacts = plan["artifacts"]
-    if len(artifacts) != 6 or {a["target"] for a in artifacts} != set(expected):
-        raise ValueError("Expected all six unique release targets.")
+    if len(artifacts) != len(expected) or {a["target"] for a in artifacts} != set(expected):
+        raise ValueError("Expected all eight unique release targets.")
     for artifact in artifacts:
         target = artifact["target"]
         minecraft, loader, expected_path = expected[target]
@@ -321,14 +321,14 @@ def publish(plan: dict, api: Api, responses: Path, root: Path = Path("."), summa
         receipt(responses, artifact, "uploaded_and_verified", identifier)
         print(f"Verified {target}: https://modrinth.com/mod/echo-warrior/version/{identifier}")
     final = find_existing(plan, api.get(f"/project/{plan['project_id']}/version?include_changelog=true"))
-    if final != identifiers or len(final) != 6:
-        raise ValueError("Final remote verification did not confirm all six versions.")
+    if final != identifiers or len(final) != len(plan["artifacts"]):
+        raise ValueError("Final remote verification did not confirm all eight versions.")
     report = {"project_id": plan["project_id"], "version": plan["version"], "project_status": check["project_status"],
               "verified_versions": final, "uploaded": len(check["missing"]), "reused": len(check["existing"])}
     write_json(responses / "complete.json", report)
     if summary:
         with summary.open("a", encoding="utf-8") as stream:
-            stream.write(f"\n## Modrinth {plan['version']}\n\nSix versions confirmed; {report['uploaded']} uploaded, {report['reused']} reused. Project status: {check['project_status']} (approval is separate).\n\n")
+            stream.write(f"\n## Modrinth {plan['version']}\n\n{len(plan['artifacts'])} versions confirmed; {report['uploaded']} uploaded, {report['reused']} reused. Project status: {check['project_status']} (approval is separate).\n\n")
             for target, identifier in final.items():
                 stream.write(f"- {target}: https://modrinth.com/mod/echo-warrior/version/{identifier}\n")
     return report
@@ -362,7 +362,7 @@ def main() -> int:
         CF.validate_localization(args.allow_pending_localization)
         if args.mode == "prepare":
             plan = prepare_plan(args.source_manifest, args.output_directory, args.project_id)
-            print(f"Prepared six Modrinth {plan['version']} metadata files; no network requests or uploads.")
+            print(f"Prepared eight Modrinth {plan['version']} metadata files; no network requests or uploads.")
             if not plan["project_id"]:
                 print("Preview only: configure repository variable MODRINTH_PROJECT_ID before publishing.")
         else:
@@ -377,7 +377,7 @@ def main() -> int:
             else:
                 summary = os.environ.get("GITHUB_STEP_SUMMARY")
                 publish(plan, api, args.output_directory / "responses", summary=Path(summary) if summary else None)
-                print("All six Modrinth versions accepted and verified. Project review/public visibility is separate.")
+                print("All eight Modrinth versions accepted and verified. Project review/public visibility is separate.")
         return 0
     except (KeyError, TypeError, OSError, ValueError) as error:
         print(f"Modrinth release failed: {error}", file=sys.stderr)

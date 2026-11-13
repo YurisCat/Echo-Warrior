@@ -37,9 +37,10 @@ class ReleaseTests(unittest.TestCase):
                 archive.writestr(name, data)
         RELEASE.validate_loader_jar(jar, RELEASE.LOADERS[loader]["descriptor"], loader, "0.2.2", "1.20.1", self.locales)
 
-    def test_exact_six_target_matrix(self):
+    def test_exact_eight_target_matrix(self):
         self.assertEqual({(row[3], loader) for row in RELEASE.RELEASE_MATRIX for loader in row[4]}, {
             ("26.1.2", "fabric"), ("26.1.2", "neoforge"),
+            ("26.3", "fabric"), ("26.3", "neoforge"),
             ("1.21.1", "fabric"), ("1.21.1", "neoforge"),
             ("1.20.1", "fabric"), ("1.20.1", "forge"),
         })

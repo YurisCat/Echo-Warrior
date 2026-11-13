@@ -1,0 +1,22 @@
+pluginManagement {
+	repositories {
+		maven {
+			name = 'NeoForge'
+			url = 'https://maven.neoforged.net/releases/'
+			content { includeGroupByRegex 'net\\.neoforged.*' }
+		}
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+		}
+		gradlePluginPortal()
+		mavenCentral()
+	}
+}
+
+rootProject.name = 'echo-warrior-26.3'
+
+includeBuild('../../build-logic')
+include('common')
+include('fabric')
+include('neoforge')

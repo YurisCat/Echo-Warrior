@@ -133,9 +133,27 @@ FOXY Session 1 / Windows PowerShell 5.1 下，使用新的独立 CMD-CLEANUP-e85
 
 ## 技能候选验收（2026-11-12）
 
+- 2026-11-13 起，成长／技能自测还执行 `EchoFollowSafetySelfTest*`；兼容线生产专服和主线 `-Baseline -SkillUpdate` 必须出现 `FOLLOW SAFETY SELFTEST PASSED heroes=5`。它验证实际安装的跟随行为、军团兵活动边界、悬空地表落点、落下状态清理及活动模式；模拟 owner 查询不等于真实客户端或反馈者整合包验收。失败前后快照分别保留，见[空中跟随修复记录](research/airborne-follow-fix-2026-11-13.md)。
 - 同日饰品成长更新沿用这些入口：成长自测新增 `AccessoryGrowthSelfTest*`，兼容线生产专服及主线 `-Baseline -SkillUpdate` 还必须出现 `ACCESSORY GROWTH SELFTEST PASSED`。覆盖真实属性、重复换装、与军团阵列叠加、伤害触发治疗、昼夜与维度限制及未召唤菜单预览；结果见[饰品实施记录](research/accessory-update-implementation-2026-11-12.md)。不得用上一轮技能包的结果代替新饰品包验收。
 - `run-foxy-tests.ps1 -SkipBuild` 使用已构建的四个兼容包；源码守卫增加 `check-skill-copy.py`，正式专服必须出现 `SKILL UPDATE SELFTEST PASSED`。
 - 主线预备运行时继续逐文件核验 `inputs.json`，通过 `run-pet-mainline-tests.ps1 -InputDirectory <目录> -Baseline -SkillUpdate` 运行两个加载器；该选项不要求安装宠物模组。
 - `run-skill-update-clients.ps1` 只在节点交互会话执行，参数为新 `-RunId`、已通过的 `-CompatRunId` 和 `-MainRunId`；`-Cases` 可选择六个合法组合。输入快照必须包含候选JAR、源码哈希清单及公开的Python启动依赖，不复制用户认证目录。
 - 客户端复制已正常保存的隔离测试世界，仍通过 `run-test-client.ps1 -Production -PreparedProductionLaunch ... -StartupOnly` 串行运行并使用全局节点互斥锁；同时要求原有退出／清理检查点与 `SKILL TOOLTIP CLIENT SELFTEST PASSED`。客户端准备使用官方资源哈希，可复用校验通过的公开缓存。
 - 服务端结果不代替图形验收，自动字体／颜色断言不代替作者保留的浮空和攻击距离手感调整。精确候选与本轮证据见[实施记录](research/skill-update-implementation-2026-11-12.md)。
+
+## 26.3 兼容线（2026-11-13）
+
+- 先在主仓库用 `scripts/build-26.3.ps1 -Loader Dual` 构建，再运行 `python scripts/prepare-26.3-server-runtime.py --output build/<新目录> --loader both` 准备官方公开运行时。该脚本仅安装／校验依赖，不在主机开服。
+- 通过 `run-pet-mainline-tests.ps1 -InputDirectory <目录> -Baseline -SkillUpdate` 派发双专服；该历史入口也支持 26.3，具体版本由已哈希校验的 `runtime.json` 固定。删除 `-Baseline` 时要求已安装指定 Pet Home，执行两次独立 JVM 的真实项圈存盘／重载测试。
+- `run-skill-update-clients.ps1` 增加 `26.3-fabric` 和 `26.3-neoforge` 两个 case，继续使用专属快照、正式包、已正常保存的测试世界副本和全节点锁。内部调用 `run-test-client.ps1 -TargetVersion 26.3`，Java 25 不变。
+- 可以在输入清单中提供 `acceptance-runtime/` 的公开 Minecraft JAR／库，预备器还会与 Mojang/Maven SHA-1 比较；不传用户 Gradle 目录或认证文件。当前正式客户端按 26.3 属性选择 Fabric Loader 0.20.1。
+- 26.3 保存门禁验证正常退出、退出阶段各维度保存记录和当轮 `level.dat` 更新时间；旧版尾句不再适用。阴性测试及详细范围见 PORT-043，不能仅删除旧检查。
+
+### 26.3 双人联机与旧档升级
+
+- 节点入口为 `scripts/run-26.3-multiplayer-upgrade.ps1 -RunId pet-acceptance-<唯一编号>`，默认串行测试 Fabric、NeoForge。输入快照必须有逐文件 SHA-256 清单、正式 0.3.1 两包、公开客户端安装依赖及官方 NeoForge 安装器；节点已有官方运行时位置由脚本固定。仍通过已解锁的图形会话和 `run-test-client.ps1` 启动客户端，服务端持有全节点锁。
+- 先用已发布且哈希固定的 0.3.0 原包在 26.1.2 建立旧版测试存档，再复制给 26.3。五英雄、不同等级／经验／协助模式、饰品、知识页与书签、绑定、实际生成的遗迹分别读取原版 NBT 核对；不编辑 NBT 修复测试数据。`acceptance_nbt.py` 只读解析，损坏／截断／尾随数据有拒绝测试。
+- 两个正式客户端分别使用固定的不同测试身份，经回环代理实际连接。用例包括五英雄收回重召、双客户端属性、物理转交及 FOLLOW 接管、150 毫秒双向延迟下同时操作各自召唤器、跨维度、全新客户端进程重连、第二个服务端 JVM 重启。菜单发包成功不等于服务端接受：等待同一连接上的命令屏障，并读回服务端数据。
+- 转交使用生存模式的原版背包 THROW 操作，核对恰好一个掉落物、转交后双方物品数量与五个唯一遗物身份。两个独立实物召唤器用于同时开菜单；不能复制同一个 UUID 冒充共享物品，因为现代绑定系统会给物理副本重新分配身份。和平难度和抗性仅用于全新隔离测试世界，不改变玩家世界。
+- 可传 `-LegacyFixtureRunId <已有编号>` 复用已经通过、正常保存且原档哈希仍匹配的旧版夹具；不复用失败的升级世界。缺少某加载器夹具时仍新建该加载器旧档。每次复测使用新编号，失败记录不覆盖。
+- 完成后在主机运行 `scripts/collect-26.3-multiplayer-evidence.ps1 -RunId <编号>`，只接受最终状态及已退出的本轮游戏进程，取回并逐文件核验日志、客户端动作、代理流量、数据快照与产物哈希；不回传整个世界或认证目录。详细发行证据见 `docs/releases/0.3.1.md`。

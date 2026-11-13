@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: Release channel for the six-file matrix
+        description: Release channel for the eight-file matrix
         required: true
         default: release
         type: choice
@@ -15,7 +15,7 @@ on:
         default: false
         type: boolean
       publish:
-        description: Upload all six files to CurseForge (leave off for a dry run)
+        description: Upload all eight files to CurseForge (leave off for a dry run)
         required: true
         default: false
         type: boolean
@@ -41,7 +41,7 @@ concurrency:
 
 jobs:
   build-and-publish:
-    name: Build and publish the six-file matrix
+    name: Build and publish the eight-file matrix
     runs-on: ubuntu-latest
     env:
       PUBLISH_CURSEFORGE: ${{ github.event_name == 'push' || inputs.publish }}
@@ -88,7 +88,17 @@ jobs:
       - name: Build Minecraft 26.1.2 Fabric and NeoForge
         run: ./gradlew clean dualBuild --no-daemon --stacktrace
 
-      - name: Prepare and validate all six CurseForge uploads
+      - name: Build and audit Minecraft 26.3 Fabric and NeoForge
+        run: |
+          chmod +x versions/26.3/gradlew
+          versions/26.3/gradlew -p versions/26.3 clean dualBuild --no-daemon --stacktrace
+          python3 scripts/check-26.3-baseline.py
+          python3 scripts/test_compatibility_263_baseline.py
+          python3 scripts/test_modern_shutdown.py
+          python3 scripts/test_acceptance_nbt.py
+          python3 scripts/test_acceptance_control_io.py
+
+      - name: Prepare and validate all eight CurseForge uploads
         id: release
         env:
           RELEASE_TYPE: ${{ github.event_name == 'workflow_dispatch' && inputs.release_type || 'release' }}
@@ -112,10 +122,12 @@ jobs:
       - name: Archive verified JARs and metadata
         uses: actions/upload-artifact@v7
         with:
-          name: echo-warrior-${{ steps.release.outputs.version }}-six-file-matrix
+          name: echo-warrior-${{ steps.release.outputs.version }}-eight-file-matrix
           path: |
             ${{ steps.release.outputs.main_fabric_jar_path }}
             ${{ steps.release.outputs.main_neoforge_jar_path }}
+            ${{ steps.release.outputs.compat_263_fabric_jar_path }}
+            ${{ steps.release.outputs.compat_263_neoforge_jar_path }}
             ${{ steps.release.outputs.compat_1211_fabric_jar_path }}
             ${{ steps.release.outputs.compat_1211_neoforge_jar_path }}
             ${{ steps.release.outputs.compat_1201_fabric_jar_path }}
@@ -163,7 +175,7 @@ jobs:
             exit 1
           fi
           mkdir -p build/curseforge/responses
-          echo "## Echo Warrior uploads (verify all six before merging)" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Echo Warrior uploads (verify all eight before merging)" >> "$GITHUB_STEP_SUMMARY"
           python3 -c 'import json; m=json.load(open("build/curseforge/release-manifest.json")); [print(a["target"], a["jar_path"], a["metadata_path"], a["sha256"], sep="\t") for a in m["artifacts"]]' > build/curseforge/uploads.tsv
           while IFS=$'\t' read -r target jar_path metadata_path expected_sha; do
             actual_sha="$(sha256sum "$jar_path" | cut -d ' ' -f 1)"
@@ -186,7 +198,7 @@ jobs:
             echo "Uploaded $target: $file_id"
             echo "- $target: https://www.curseforge.com/minecraft/mc-mods/echo-warrior/files/$file_id" >> "$GITHUB_STEP_SUMMARY"
           done < build/curseforge/uploads.tsv
-          echo "All six uploads accepted by CurseForge." >> "$GITHUB_STEP_SUMMARY"
+          echo "All eight uploads accepted by CurseForge." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload missing Modrinth versions once and verify every accepted file
         if: env.PUBLISH_MODRINTH == 'true'

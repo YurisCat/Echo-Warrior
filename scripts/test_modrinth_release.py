@@ -1,4 +1,4 @@
-"""Offline regression guards for six-file Modrinth publishing and safe resumption."""
+"""Offline regression guards for eight-file Modrinth publishing and safe resumption."""
 
 import copy
 import contextlib
@@ -114,10 +114,10 @@ class ModrinthTests(unittest.TestCase):
     def publish(self):
         return RELEASE.publish(self.plan, self.api, self.responses, self.root)
 
-    def test_six_independent_payloads_and_fabric_only_api(self):
+    def test_eight_independent_payloads_and_fabric_only_api(self):
         RELEASE.verify_local_plan(self.plan, self.root)
         numbers = {a["metadata"]["version_number"] for a in self.plan["artifacts"]}
-        self.assertEqual(len(numbers), 6)
+        self.assertEqual(len(numbers), 8)
         for artifact in self.plan["artifacts"]:
             payload = artifact["metadata"]
             self.assertEqual(len(payload["loaders"]), 1)
@@ -136,7 +136,7 @@ class ModrinthTests(unittest.TestCase):
         source = RELEASE.read_json(self.source_manifest)
         source["artifacts"][-1] = source["artifacts"][0]
         RELEASE.write_json(self.source_manifest, source)
-        with self.assertRaisesRegex(ValueError, "six release targets"):
+        with self.assertRaisesRegex(ValueError, "eight release targets"):
             self.prepare()
 
     def test_modified_jar_rejected_before_network(self):
@@ -188,7 +188,7 @@ class ModrinthTests(unittest.TestCase):
 
     def test_preflight_never_posts(self):
         result = RELEASE.preflight(self.plan, self.api, self.root)
-        self.assertEqual(len(result["missing"]), 6)
+        self.assertEqual(len(result["missing"]), 8)
         self.assertEqual(self.api.posts, [])
 
     def test_wrong_remote_environment_is_not_reused(self):
@@ -196,7 +196,7 @@ class ModrinthTests(unittest.TestCase):
         self.api.versions[0]["environment"] = "unknown"
         with self.assertRaisesRegex(ValueError, "metadata differs"):
             self.publish()
-        self.assertEqual(len(self.api.posts), 6)
+        self.assertEqual(len(self.api.posts), 8)
 
     def test_unknown_environment_in_plan_stops_before_network(self):
         artifact=self.plan["artifacts"][0]
@@ -208,7 +208,7 @@ class ModrinthTests(unittest.TestCase):
 
     def test_empty_generic_draft_accepts_first_mod_versions(self):
         self.api.project.update(project_type="project", loaders=[], game_versions=[])
-        self.assertEqual(self.publish()["uploaded"], 6)
+        self.assertEqual(self.publish()["uploaded"], 8)
 
     def test_generic_nonempty_or_public_project_is_rejected(self):
         for update in ({"status":"approved"}, {"loaders":["fabric"]}, {"game_versions":["1.20.1"]}):
@@ -222,10 +222,10 @@ class ModrinthTests(unittest.TestCase):
     def test_complete_upload_then_rerun_does_not_duplicate(self):
         first = self.publish()
         second = self.publish()
-        self.assertEqual(first["uploaded"], 6)
+        self.assertEqual(first["uploaded"], 8)
         self.assertEqual(second["uploaded"], 0)
-        self.assertEqual(second["reused"], 6)
-        self.assertEqual(len(self.api.posts), 6)
+        self.assertEqual(second["reused"], 8)
+        self.assertEqual(len(self.api.posts), 8)
         self.assertEqual(RELEASE.read_json(self.responses / "complete.json")["verified_versions"], first["verified_versions"])
 
     def test_partial_failure_preserves_receipts_and_resume_only_missing(self):
@@ -238,7 +238,7 @@ class ModrinthTests(unittest.TestCase):
         self.assertFalse((self.responses / "complete.json").exists())
         self.api.fail_post = None
         report = self.publish()
-        self.assertEqual(report["uploaded"], 5)
+        self.assertEqual(report["uploaded"], len(self.plan["artifacts"]) - 1)
         self.assertEqual(report["reused"], 1)
         self.assertEqual(self.api.posts.count(self.plan["artifacts"][0]["metadata"]["version_number"]), 1)
 
@@ -252,7 +252,7 @@ class ModrinthTests(unittest.TestCase):
             self.publish()
         self.api.create_version = original
         self.assertEqual(self.publish()["reused"], 1)
-        self.assertEqual(len(self.api.posts), 6)
+        self.assertEqual(len(self.api.posts), 8)
 
     def test_conflict_detected_before_uploading_any_missing_file(self):
         last = self.plan["artifacts"][-1]

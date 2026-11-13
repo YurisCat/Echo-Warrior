@@ -4,6 +4,22 @@ All notable development changes to Echo Warrior are recorded here.
 
 ## Unreleased
 
+## 0.3.1 - 2026-11-13
+
+### Added
+
+- Added a Minecraft 26.3 Fabric/NeoForge compatibility line, including the current five heroes, skills, accessories, Assist controls and shared translations.
+
+### Fixed
+
+- Skill tooltips now expand each starred value into its adjacent formula and result, without stars in the full description. Guandao combo damage lines are clearer and show current attack damage before Growing Valor's separate combat bonus.
+- Fixed Roman Legionaries on Minecraft 1.20.1 and 1.21.1 teleporting directly to an airborne owner and falling. They now use the shared safe-ground follow logic and stay put when no safe destination is available.
+
+### Notes
+
+- Updated skill descriptions in all shipped languages. Existing combat damage and balance values are unchanged.
+- Restart the game and server after updating. Back up your world before upgrading Minecraft from 26.1.2 to 26.3.
+
 ## 0.3.0 - 2026-11-13
 
 ### Added

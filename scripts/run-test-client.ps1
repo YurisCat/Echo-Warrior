@@ -1,7 +1,7 @@
 ﻿[CmdletBinding()]
 param(
     [string]$TestWorldName = 'CATTEST',
-    [ValidateSet('Current', '1.21.1', '1.20.1')]
+    [ValidateSet('Current', '26.3', '1.21.1', '1.20.1')]
     [string]$TargetVersion = 'Current',
     [ValidateSet('Fabric', 'NeoForge', 'Forge')]
     [string]$Loader = 'Fabric',
@@ -113,23 +113,24 @@ if ($TargetVersion -in @('1.21.1', '1.20.1')) {
     }
 }
 else {
-    $buildRoot = $projectRoot
+    $buildRoot = if ($TargetVersion -eq '26.3') { Join-Path $projectRoot 'versions\26.3' } else { $projectRoot }
     $jdkRoot = Join-Path $projectRoot '.toolchains\jdk-25'
     if ($Loader -eq 'Fabric') {
-        $runDirectory = Join-Path $projectRoot 'run'
-        $clientProjectDirectory = Join-Path $projectRoot 'fabric'
+        $runDirectory = Join-Path $buildRoot 'run'
+        $clientProjectDirectory = Join-Path $buildRoot 'fabric'
         $task = ':fabric:runClient'
         $quickPlayProperty = 'quickPlayWorld'
         $clientUsername = 'EchoWarriorDev'
     } else {
-        $runDirectory = Join-Path $projectRoot 'run-neoforge'
-        $clientProjectDirectory = Join-Path $projectRoot 'neoforge'
+        $runDirectory = Join-Path $buildRoot 'run-neoforge'
+        $clientProjectDirectory = Join-Path $buildRoot 'neoforge'
         $task = ':neoforge:runClient'
         $quickPlayProperty = 'quickPlayWorldNeoForge'
         $clientUsername = 'EchoNeoForge'
     }
 }
 
+$wrapperRoot = if ($TargetVersion -eq '26.3') { $buildRoot } else { $projectRoot }
 $clientBuildPath = Join-Path $clientProjectDirectory 'build.gradle'
 $clientBuild = Get-Content -LiteralPath $clientBuildPath -Raw
 $configuredUsername = [regex]::Match($clientBuild, "--username=([^']+)'")
@@ -310,7 +311,7 @@ if (-not $StartupOnly) {
             Write-Host 'Opening the isolated production client for interactive acceptance; close it through the game when finished.'
             & $productionLaunch.java "@$($productionLaunch.argument_file)"
         } else {
-            & (Join-Path $projectRoot 'gradlew.bat') @gradleArguments
+            & (Join-Path $wrapperRoot 'gradlew.bat') @gradleArguments
         }
         exit $LASTEXITCODE
     } finally {
@@ -329,7 +330,7 @@ $logStartLength = 0L
 $gradleProcess = $null
 $clientAuditPassed = $false
 $launchedProcessIds = [System.Collections.Generic.HashSet[int]]::new()
-$launchExecutable = Join-Path $projectRoot 'gradlew.bat'
+$launchExecutable = Join-Path $wrapperRoot 'gradlew.bat'
 $launchArguments = $gradleArguments
 if ($Production) {
     $launchExecutable = $productionLaunch.java
@@ -441,16 +442,31 @@ try {
 
     $finalLog = Get-Content -LiteralPath $latestLog -Raw
     if ($null -eq $finalLog) { $finalLog = '' }
-    if ($Production -and $PreparedProductionLaunch -and $expectsQuickPlayWorld -and
-            $finalLog -notmatch 'All dimensions are saved') {
-        throw 'Prepared production client did not save its integrated world normally.'
+    if ($Production -and $PreparedProductionLaunch -and $expectsQuickPlayWorld) {
+        if ($TargetVersion -eq '26.3') {
+            $shutdown = ($finalLog -split 'Stopping server')[-1]
+            $savedWorld = Join-Path $worldPath 'level.dat'
+            if ($finalLog -notmatch 'Stopping server' -or
+                    @('Saving players', 'Saving worlds', '/minecraft:overworld',
+                      '/minecraft:the_nether', '/minecraft:the_end').Where({-not $shutdown.Contains($_)}).Count -gt 0 -or
+                    -not (Test-Path -LiteralPath $savedWorld) -or
+                    (Get-Item -LiteralPath $savedWorld).LastWriteTime -lt $startedAt) {
+                throw '26.3 client did not confirm dimension saves and a newly written level.dat.'
+            }
+        } elseif ($finalLog -notmatch 'All dimensions are saved') {
+            throw 'Prepared production client did not save its integrated world normally.'
+        }
     }
-    if ($expectsQuickPlayWorld -and $TargetVersion -in @('Current', '1.21.1') -and
+    if ($expectsQuickPlayWorld -and $TargetVersion -in @('Current', '26.3', '1.21.1') -and
         $finalLog -notmatch 'GUANDAO PRESENTATION SELFTEST PASSED processor=geckolib5? root=idle-walk packet-order=three') {
         throw "$TargetVersion Guandao animation handoff checkpoint is missing."
     }
-    if ($expectsQuickPlayWorld -and $TargetVersion -eq 'Current' -and $finalLog -notmatch '\[EchoProgressionSelfTest\] PASS') {
+    if ($expectsQuickPlayWorld -and $TargetVersion -in @('Current', '26.3') -and $finalLog -notmatch '\[EchoProgressionSelfTest\] PASS') {
         throw 'Mainline progression runtime checkpoint is missing.'
+    }
+    if ($expectsQuickPlayWorld -and $TargetVersion -eq '26.3' -and
+            $finalLog -notmatch 'ECHO PREVIEW CLIENT SELFTEST PASSED heroes=5 instances=10 detached=negative-ids renderer=actual') {
+        throw '26.3 detached hero preview regression checkpoint is missing.'
     }
     if ($TargetVersion -eq '1.20.1' -and $expectsQuickPlayWorld) {
         if ($finalLog -notmatch 'Client smoke test requesting normal shutdown' -or

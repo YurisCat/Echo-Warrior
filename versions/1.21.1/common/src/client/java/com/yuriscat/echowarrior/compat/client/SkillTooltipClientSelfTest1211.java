@@ -23,7 +23,8 @@ public final class SkillTooltipClientSelfTest1211 {
         }, Style.EMPTY);
         check(colors.contains(0xAAAAAA) && colors.contains(0x55FF55), "gray formula and green level");
         var wound = EchoSkillTooltips1211.descriptions(base + "aztec.obsidian_wound", 100, 35.3103448276, true);
-        check(text(wound).contains("4.53*"), "current attack snapshot rounds only for display");
+        check(text(wound).matches("(?s).*[)）]\\s*[=＝]\\s*4\\.53.*") && !text(wound).contains("*"),
+                "full formula immediately precedes rounded current value without a star");
         colors.clear();
         for (Component line : wound) line.visit((style, part) -> {
             if (style.getColor() != null) colors.add(style.getColor().getValue());
@@ -36,6 +37,7 @@ public final class SkillTooltipClientSelfTest1211 {
             for (boolean full : new boolean[]{false, true}) {
                 var lines = EchoSkillTooltips1211.descriptions(base + skill, 100, 35.3103448276, full);
                 String text = text(lines);
+                check(!full || !text.contains("*"), "expanded copy never retains stars: " + skill);
                 for (int width : new int[]{160, 240, 320, 480}) {
                     var font = net.minecraft.client.Minecraft.getInstance().font;
                     var wrapped = EchoSkillTooltips1211.wrap(font, lines, width);
@@ -46,10 +48,14 @@ public final class SkillTooltipClientSelfTest1211 {
                         "all copy resolves without placeholders: " + skill);
             }
         }
+        check(EchoSkillTooltips1211.descriptions(base + "guandao.combo", 100, 30.9, false).size() == 1,
+                "combo simple copy stays short");
+        check(EchoSkillTooltips1211.descriptions(base + "guandao.combo", 100, 30.9, true).size() == 6,
+                "combo has three damage lines plus two notes");
         checkTranslations(base);
         check(text(EchoSkillTooltips1211.descriptions(base + "egyptian.cone_arrow", 200, 1, false)).contains("135%*"),
                 "tooltip preserves penetration above 100%");
-        EchoWarrior1211.LOGGER.info("SKILL TOOLTIP CLIENT SELFTEST PASSED current-values=true styles=gray-red-green short-full=9 resource-locales=8 accessory-wrap=true locale={}",
+        EchoWarrior1211.LOGGER.info("SKILL TOOLTIP CLIENT SELFTEST PASSED current-values=true styles=gray-red-green short-full=9 inline-formulas=true resource-locales=8 accessory-wrap=true locale={}",
                 net.minecraft.client.Minecraft.getInstance().options.languageCode);
     }
     private static void checkTranslations(String base) {
@@ -67,6 +73,16 @@ public final class SkillTooltipClientSelfTest1211 {
                     }
                     if (!entry.getKey().startsWith(base)
                             || !(entry.getKey().contains(".simple.") || entry.getKey().contains(".full."))) continue;
+                    String raw = entry.getValue().getAsString();
+                    if (entry.getKey().contains(".full.")) {
+                        check(!raw.contains("*"), "no expanded stars: " + locale + " " + entry.getKey());
+                        String plain = raw.replaceAll("</?(gray|attack|level)>", "");
+                        var values = java.util.regex.Pattern.compile("\\{[a-z][a-z0-9_]*\\}").matcher(plain);
+                        while (values.find()) {
+                            check(plain.substring(0, values.start()).matches("(?s).*[)）]\\s*[=＝]\\s*"),
+                                    "each full result follows its own formula: " + locale + " " + entry.getKey());
+                        }
+                    }
                     // A deliberately wide current value exercises wrapping in every shipped base locale.
                     var line = EchoSkillTooltips1211.colored(entry.getValue().getAsString().replaceAll("\\{[a-z][a-z0-9_]*\\}", "123.45"));
                     for (int width : new int[]{160, 240, 320, 480}) {

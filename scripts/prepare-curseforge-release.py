@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare and validate the six CurseForge uploads for one Echo Warrior release."""
+"""Prepare and validate the eight CurseForge uploads for one Echo Warrior release."""
 
 from __future__ import annotations
 
@@ -46,6 +46,7 @@ LOADERS = {
 }
 RELEASE_MATRIX = (
     ("main", ".", "properties", "26.1.2", ("fabric", "neoforge")),
+    ("compat_263", "versions/26.3", "modern_properties", "26.3", ("fabric", "neoforge")),
     ("compat_1211", "versions/1.21.1", "compat_properties", "1.21.1", ("fabric", "neoforge")),
     ("compat_1201", "versions/1.20.1", "legacy_properties", "1.20.1", ("fabric", "forge")),
 )
@@ -229,6 +230,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--changelog", type=Path, default=Path("CHANGELOG.md"))
     parser.add_argument("--legacy-properties", type=Path, default=Path("versions/1.20.1/gradle.properties"))
+    parser.add_argument("--modern-properties", type=Path, default=Path("versions/26.3/gradle.properties"))
     parser.add_argument(
         "--output-directory",
         type=Path,
@@ -248,7 +250,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--require-jars",
         action="store_true",
-        help="Fail unless all six exact version- and loader-specific JARs exist and validate.",
+        help="Fail unless all eight exact version- and loader-specific JARs exist and validate.",
     )
     parser.add_argument(
         "--allow-pending-localization",

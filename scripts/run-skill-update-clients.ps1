@@ -11,7 +11,8 @@ foreach ($value in @($RunId, $CompatRunId, $MainRunId)) {
     if ($value -notmatch '^[A-Za-z0-9-]+$') { throw 'Invalid test run ID.' }
 }
 $Cases = @($Cases | ForEach-Object { $_ -split ',' })
-$valid = @('1.20.1-fabric', '1.20.1-forge', '1.21.1-fabric', '1.21.1-neoforge', '26.1.2-fabric', '26.1.2-neoforge')
+$valid = @('1.20.1-fabric', '1.20.1-forge', '1.21.1-fabric', '1.21.1-neoforge',
+           '26.1.2-fabric', '26.1.2-neoforge', '26.3-fabric', '26.3-neoforge')
 if (-not $Cases.Count -or @($Cases | Where-Object { $_ -notin $valid }).Count) { throw 'Unknown client case.' }
 $source = Split-Path -Parent $PSScriptRoot
 $games = "D:\Games-Terminal\EchoWarrior\$RunId"
@@ -47,9 +48,10 @@ try {
         $status.current = $case; $status.phase = 'prepare'; Save-Status
         $properties = if ($mc -eq '26.1.2') { "$source\gradle.properties" } else { "$source\versions\$mc\gradle.properties" }
         $version = ((Get-Content -LiteralPath $properties | Where-Object { $_ -match '^mod_version=' }) -split '=',2)[1].Trim()
-        if ($mc -eq '26.1.2') {
+        if ($mc -in @('26.1.2', '26.3')) {
             $world = "D:\Games-Terminal\EchoWarrior\$MainRunId\$loader\battlefield-generation-test"
-            $jar = "$source\$loader\build\libs\echo-warrior-$loader-$mc-$version.jar"
+            $buildLine = if ($mc -eq '26.3') { "$source\versions\26.3" } else { $source }
+            $jar = "$buildLine\$loader\build\libs\echo-warrior-$loader-$mc-$version.jar"
         } else {
             $suite = if ($mc -eq '1.20.1') { 'compatibility-1.20.1-smoke' } else { 'compatibility-1.21.1-production-smoke' }
             $worldName = if ($mc -eq '1.20.1') { 'bootstrap-test-world' } else { 'performance-test-world' }

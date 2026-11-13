@@ -61,6 +61,7 @@ public final class EchoProgressionSelfTest {
             var ordinary = new net.minecraft.world.entity.ai.attributes.AttributeInstance(Attributes.MAX_HEALTH, ignored -> {});
             ordinary.setBaseValue(10000);
             check(ordinary.getValue() == 1024, "ordinary mob range unchanged");
+            com.yuriscat.echowarrior.entity.behavior.EchoFollowSafetySelfTest.run(level);
             com.yuriscat.echowarrior.entity.SkillUpdateSelfTest.run(level);
             AccessoryGrowthSelfTest.run(level);
             org.slf4j.LoggerFactory.getLogger("echo_warrior").info("[EchoProgressionSelfTest] PASS cap, save preservation, XP overflow, five hero curves and isolated attribute range");

@@ -15,9 +15,16 @@ KEYS = {
 }
 EXAMPLE = {"armor": "22", "release": "200", "curse": "2", "bleed_aztec": "4.53",
            "bleed_egyptian": "3.21", "half": "17.66", "threequarters": "26.48",
-           "penetration": "85", "pierce": "75", "hit1": "21.63", "hit2": "30.90", "hit4": "55.61"}
+           "penetration": "85", "pierce": "75", "hit1": "21.63", "hit2": "30.9", "hit4": "55.61"}
 TAG = re.compile(r"<(/?)(gray|attack|level)>")
 PLACEHOLDER = re.compile(r"\{([a-z0-9_]+)\}")
+SIMPLE_STARS = {
+    "roman.endures.simple.1": ["armor", "release"],
+    "aztec.quetzalcoatls_curse.simple.2": ["curse"],
+    "aztec.obsidian_wound.simple.1": ["bleed"],
+    "egyptian.leaf_arrow.simple.1": ["bleed"],
+    "egyptian.cone_arrow.simple.1": ["penetration", "pierce"],
+}
 
 
 def plain(text):
@@ -31,6 +38,34 @@ def plain(text):
     result = TAG.sub("", text)
     assert "<" not in result and ">" not in result, f"Malformed markup: {text}"
     return result
+
+
+def check_formula_layout():
+    base = "gui.echo_warrior.summoner.skill."
+    directory = ROOT / "common/src/main/resources/assets/echo_warrior/lang"
+    for path in sorted(directory.glob("*.json")):
+        entries = json.loads(path.read_text(encoding="utf-8"))
+        mirror = ROOT / "versions/1.21.1/common/src/main/resources/assets/echo_warrior/lang" / path.name
+        assert path.read_bytes() == mirror.read_bytes(), f"Locale mirror drifted: {path.name}"
+        stars = 0
+        for key, raw in entries.items():
+            if not key.startswith(base) or not any(mode in key for mode in (".simple.", ".full.")):
+                continue
+            text = plain(raw)
+            if ".full." in key:
+                assert "*" not in text, f"Expanded star: {path.name} {key}"
+                for value in PLACEHOLDER.finditer(text):
+                    assert re.search(r"[)）]\s*[=＝]\s*$", text[:value.start()]), (
+                        f"Result detached from its formula: {path.name} {key} {value[0]}")
+            else:
+                expected = SIMPLE_STARS.get(key.removeprefix(base), [])
+                actual = re.findall(r"\{([a-z0-9_]+)\}\s*%?\*", text)
+                assert sorted(actual) == sorted(expected), f"Simple star contract: {path.name} {key}"
+                assert text.count("*") == len(expected), f"Fixed value starred: {path.name} {key}"
+                stars += len(actual)
+        assert stars == 7, f"Missing starred formulas: {path.name}"
+        assert all(base + f"guandao.combo.full.{i}" in entries for i in range(1, 7))
+        assert base + "guandao.combo.full.7" not in entries
 
 
 def main():
@@ -50,6 +85,7 @@ def main():
                     value = EXAMPLE["bleed_aztec" if skill["id"] == "aztec_wound" else "bleed_egyptian"] if name == "bleed" else EXAMPLE[name]
                     text = text.replace("{" + name + "}", value)
                 assert text == expected, f"Accepted Chinese copy drifted: {key}\n{text}\n{expected}"
+            assert f"{prefix}.{mode}.{len(skill[mode]) + 1}" not in zh, f"Unexpected extra copy: {prefix}.{mode}"
         assert prefix + ".description.1" not in zh, f"Old static copy remains: {prefix}"
     assist = json.loads((ROOT / "tools/update-workboard/assist-copy.json").read_text(encoding="utf-8"))
     assert zh["gui.echo_warrior.summoner.section.assist"] == assist["section"]["zh_cn"]
@@ -64,8 +100,10 @@ def main():
     audit.load_sources()
     audit.audit_localized_layout()
     assert not audit.hard_errors, "\n".join(audit.hard_errors)
+    check_formula_layout()
     print("PASS skill copy: accepted Chinese, nine short/full pairs, balanced colors, matching dynamic placeholders, Assist and source-locale parity")
-    print("Non-source translations remain a separate release gate; no waiver was applied.")
+    print("PASS all locale formula layout: seven simple stars, no expanded stars, every expanded result follows its formula.")
+    print("Translation review and visual acceptance remain separate gates; no waiver was applied.")
 
 
 if __name__ == "__main__":

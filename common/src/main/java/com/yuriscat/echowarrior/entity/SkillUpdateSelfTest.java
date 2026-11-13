@@ -84,6 +84,7 @@ public final class SkillUpdateSelfTest {
             zombie.getAttribute(Attributes.ARMOR).setBaseValue(0);
             testBleeding(level, now, zombie);
             testFormation(level, fixtures);
+            testGuandaoTooltipSnapshot(level, fixtures);
             testLiveLegionArmor(level, fixtures);
             testCurse(level, fixtures);
             testReach(level, zombie, cow);
@@ -98,7 +99,7 @@ public final class SkillUpdateSelfTest {
             check(close(EchoSkillScaling.remainingArmor(EchoSkillScaling.conePenetration(150)), 0)
                     && close(EchoSkillScaling.penetrationDamage(EchoSkillScaling.conePenetration(150)), 1.1), "overflow penetration");
             check(EchoSkillScaling.conePierceChance(200) > 1, "pierce chance has no artificial cap");
-            EchoWarrior.LOGGER.info("SKILL UPDATE SELFTEST PASSED heroes=5 assist=3 sources=independent curse=flat reach=contact armor=uncapped");
+            EchoWarrior.LOGGER.info("SKILL UPDATE SELFTEST PASSED heroes=5 assist=3 sources=independent curse=flat reach=contact armor=uncapped tooltip=attributes-only");
         } catch (ReflectiveOperationException failure) {
             throw new IllegalStateException("Skill update reflection fixture failed: " + failure + "; cause=" + failure.getCause(), failure);
         } finally {
@@ -136,6 +137,25 @@ public final class SkillUpdateSelfTest {
             check(state.strongest(wound, now) == null, "cleansing cannot resurrect old sources on reapplication");
             state.clear(wound);
         }
+    }
+
+
+    private static void testGuandaoTooltipSnapshot(ServerLevel level, List<LivingEntity> fixtures) throws ReflectiveOperationException {
+        var guandao = (GuandaoWarriorEchoEntity)create(level, "echo_warrior:guandao_warrior_echo", fixtures);
+        var stacks = GuandaoWarriorEchoEntity.class.getDeclaredMethod("setValorStacks", int.class);
+        var multiplier = GuandaoWarriorEchoEntity.class.getDeclaredMethod("valorDamageMultiplier");
+        stacks.setAccessible(true);
+        multiplier.setAccessible(true);
+        guandao.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(30);
+        check(close(guandao.skillTooltipAttackDamage(), 30), "tooltip uses current attack at zero Valor");
+        guandao.addEffect(new MobEffectInstance(ModEffects.WEAPONS_RAISED, 100));
+        check(close(guandao.skillTooltipAttackDamage(), 39), "tooltip includes effective attack attribute buffs");
+        stacks.invoke(guandao, 5);
+        check(guandao.getValorStacks() == 5 && close((Double)multiplier.invoke(guandao), 1.3),
+                "active Growing Valor retains its combat multiplier");
+        check(close(guandao.skillTooltipAttackDamage(), 39), "tooltip excludes separate final damage passives");
+        guandao.removeEffect(ModEffects.WEAPONS_RAISED);
+        check(close(guandao.skillTooltipAttackDamage(), 30), "tooltip updates when attack buff expires");
     }
 
     private static void testFormation(ServerLevel level, List<LivingEntity> fixtures) {

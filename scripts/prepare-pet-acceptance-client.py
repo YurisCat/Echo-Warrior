@@ -56,7 +56,7 @@ def install_fabric_libraries(profile: dict, runtime: Path, downloader, checksum_
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--minecraft", choices=["1.20.1", "1.21.1", "26.1.2"], required=True)
+    parser.add_argument("--minecraft", choices=["1.20.1", "1.21.1", "26.1.2", "26.3"], required=True)
     parser.add_argument("--loader", choices=["fabric", "neoforge", "forge"], required=True)
     parser.add_argument("--mode", choices=["smoke", "manual", "multiplayer"], required=True)
     parser.add_argument("--root", type=Path, required=True)
@@ -84,7 +84,7 @@ def main() -> None:
             raise ValueError("Only the isolated loopback server is allowed")
     elif args.username:
         raise ValueError("Distinct acceptance identities are limited to multiplayer fixtures")
-    jdk = {"1.20.1": 17, "1.21.1": 21, "26.1.2": 25}[args.minecraft]
+    jdk = {"1.20.1": 17, "1.21.1": 21, "26.1.2": 25, "26.3": 25}[args.minecraft]
     java = ROOT / f".toolchains/jdk-{jdk}/bin/java.exe"
     if not java.is_file():
         raise ValueError("Missing pinned project toolchain")
@@ -94,6 +94,11 @@ def main() -> None:
                   if "=" in line and not line.lstrip().startswith("#"))
     runtime = base / "runtime"
     runtime.mkdir(parents=True, exist_ok=True)
+    public_cache = ROOT / "acceptance-runtime"
+    # This optional public cache travels inside the SHA-256-verified source snapshot.
+    # Libraries/game JARs are additionally checked against Mojang/Maven SHA-1 below.
+    if (public_cache / "manifest.json").is_file() and not (runtime / "manifest.json").exists():
+        shutil.copy2(public_cache / "manifest.json", runtime / "manifest.json")
     instance = base / (args.label or f"{args.minecraft}-{args.loader}-{args.mode}")
     if instance.exists():
         raise ValueError(f"Fresh acceptance instance required: {instance}")
@@ -121,6 +126,10 @@ def main() -> None:
         if sha1:
             if target.is_relative_to(runtime):
                 relative = target.relative_to(runtime)
+                staged = public_cache / relative
+                if staged.is_file() and sha(staged, "sha1") == sha1:
+                    shutil.copy2(staged, target)
+                    return True
                 for previous_runtime in prior_runtimes:
                     cached_path = previous_runtime / relative
                     if cached_path.is_file() and sha(cached_path, "sha1") == sha1:
@@ -173,7 +182,7 @@ def main() -> None:
         install.install_assets(vanilla, str(runtime), callback, max_workers=4)
         assets = runtime / "assets"
     if args.loader == "fabric":
-        loader_version = "0.19.5"
+        loader_version = values["loader_version"] if args.minecraft == "26.3" else "0.19.5"
         profile_id = f"fabric-loader-{loader_version}-{args.minecraft}"
         profile_path = runtime / f"versions/{profile_id}/{profile_id}.json"
         download(f"https://meta.fabricmc.net/v2/versions/loader/{args.minecraft}/{loader_version}/profile/json", profile_path)
@@ -259,6 +268,7 @@ def main() -> None:
         ("1.20.1", "fabric"): "Echo1201Fabric", ("1.20.1", "forge"): "Echo1201Forge",
         ("1.21.1", "fabric"): "Echo1211Fabric", ("1.21.1", "neoforge"): "Echo1211Neo",
         ("26.1.2", "fabric"): "EchoWarriorDev", ("26.1.2", "neoforge"): "EchoNeoForge",
+        ("26.3", "fabric"): "EchoWarriorDev", ("26.3", "neoforge"): "EchoNeoForge",
     }[(args.minecraft, args.loader)]
     if args.username:
         username = args.username

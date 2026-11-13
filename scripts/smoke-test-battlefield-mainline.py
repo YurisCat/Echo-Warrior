@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import time
 import zipfile
+from server_save_evidence import require_normal_save
 
 MARKER = "BATTLEFIELD GENERATION SELFTEST PASSED replacement=actual distance=preserved unload=actual crowded=backoff"
 NO_WINDOW = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
@@ -24,7 +25,6 @@ NO_WINDOW = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
 def digest(path):
     with path.open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
-
 
 def run(args):
     if platform.node().upper() != "FOXY-NODE":
@@ -40,7 +40,13 @@ def run(args):
             raise RuntimeError(f"Unsafe runtime input: {name}")
         if digest(args.input / relative) != expected:
             raise RuntimeError(f"Runtime input changed: {name}")
-    report = {"state": "running", "inputs": manifest, "results": []}
+    runtime = {"minecraft_version": "26.1.2", "neoforge_version": "26.1.2.100"}
+    if "runtime.json" in manifest:
+        runtime = json.loads((args.input / "runtime.json").read_text(encoding="utf-8"))
+    if runtime not in ({"minecraft_version": "26.1.2", "neoforge_version": "26.1.2.100"},
+                       {"minecraft_version": "26.3", "neoforge_version": "26.3.0.103"}):
+        raise ValueError("Unrecognized pinned modern test runtime")
+    report = {"state": "running", "runtime": runtime, "inputs": manifest, "results": []}
     args.reports.mkdir(parents=True, exist_ok=False)
     args.games.mkdir(parents=True, exist_ok=False)
     lease = args.lock.open("x", encoding="utf-8")
@@ -67,8 +73,9 @@ def run(args):
             for attempt in range(1, 3 if args.pet_collars else 2):
                 log = args.reports / f"{loader}-boot-{attempt}-console.log"
                 arguments = (["-jar", "fabric-server-launch.jar", "nogui"] if loader == "fabric"
-                             else ["@libraries/net/neoforged/neoforge/26.1.2.100/win_args.txt", "nogui"])
+                             else [f"@libraries/net/neoforged/neoforge/{runtime['neoforge_version']}/win_args.txt", "nogui"])
                 started = time.monotonic()
+                started_epoch = time.time()
                 process = None
                 fixture_requested = False
                 collar_requested = False
@@ -110,7 +117,8 @@ def run(args):
                             if ((attempt > 1 or (MARKER in text and "BATTLEFIELD SPACING SELFTEST PASSED" in text
                                     and "RED SAND SELFTEST PASSED" in text))
                                     and (not args.pet_collars or "[PetCollarJointSelfTest] PASS" in text)
-                                    and (not args.skill_update or ("SKILL UPDATE SELFTEST PASSED" in text
+                                    and (not args.skill_update or ("FOLLOW SAFETY SELFTEST PASSED heroes=5" in text
+                                                                 and "SKILL UPDATE SELFTEST PASSED" in text
                                     and "ACCESSORY GROWTH SELFTEST PASSED" in text))):
                                 if args.pet_collars:
                                     process.stdin.write("forceload remove 32 32 47 47\n")
@@ -119,12 +127,14 @@ def run(args):
                                 if process.wait(timeout=60) != 0:
                                     raise RuntimeError(f"{loader}: abnormal shutdown")
                                 final = log.read_text(encoding="utf-8", errors="replace")
+                                if f"Starting minecraft server version {runtime['minecraft_version']}" not in final:
+                                    raise RuntimeError(f"{loader}: wrong Minecraft runtime")
                                 if args.pet_collars:
                                     mode = "written" if attempt == 1 else "reloaded"
                                     if f"[PetCollarDiskSelfTest] PASS mode={mode}" not in final:
                                         raise RuntimeError(f"{loader}: missing collar disk {mode} evidence")
-                                if "All dimensions are saved" not in final:
-                                    raise RuntimeError(f"{loader}: missing normal-save evidence")
+                                require_normal_save(final, game / "battlefield-generation-test",
+                                                    runtime["minecraft_version"], started_epoch)
                                 unexpected = [line for line in final.splitlines()
                                               if re.search(r"\[(?:[^\]\r\n]+/)?(?:ERROR|FATAL)\]", line)
                                               and "No data fixer registered for echo_warrior:" not in line

@@ -882,7 +882,8 @@ public final class GuandaoWarriorEchoEntity extends PathfinderMob
 	}
 
     @Override public double skillTooltipAttackDamage() {
-        return this.getAttributeValue(Attributes.ATTACK_DAMAGE) * valorDamageMultiplier();
+        // Skill formulas use current attributes; Growing Valor is applied only when dealing damage.
+        return this.getAttributeValue(Attributes.ATTACK_DAMAGE);
     }
 
 	private void addValorStack(long now) {

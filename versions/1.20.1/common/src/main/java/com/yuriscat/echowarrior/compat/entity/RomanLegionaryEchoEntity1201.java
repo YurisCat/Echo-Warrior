@@ -62,7 +62,7 @@ import net.tslat.smartbrainlib.api.core.BrainActivityGroup;
 import net.tslat.smartbrainlib.api.core.SmartBrainProvider;
 import net.tslat.smartbrainlib.api.core.behaviour.OneRandomBehaviour;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.misc.Idle;
-import net.tslat.smartbrainlib.api.core.behaviour.custom.move.FollowOwner;
+import com.yuriscat.echowarrior.compat.entity.behavior.EchoFollowOwner1201;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.move.MoveToWalkTarget;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.path.SetRandomWalkTarget;
 import net.tslat.smartbrainlib.api.core.behaviour.custom.path.SetWalkTargetToAttackTarget;
@@ -369,9 +369,7 @@ public final class RomanLegionaryEchoEntity1201 extends TamableAnimal
     @Override
     public BrainActivityGroup<? extends RomanLegionaryEchoEntity1201> getIdleTasks() {
         return BrainActivityGroup.idleTasks(
-                new FollowOwner<RomanLegionaryEchoEntity1201>()
-                        .startCondition(entity -> entity.activityMode == ACTIVITY_FOLLOW && entity.canAct()
-                                && !entity.isSocialMovementOwned()),
+                new EchoFollowOwner1201<RomanLegionaryEchoEntity1201>(),
                 new OneRandomBehaviour<RomanLegionaryEchoEntity1201>(
                         new SetRandomWalkTarget<RomanLegionaryEchoEntity1201>()
                                 .speedModifier(0.8F)
@@ -400,6 +398,16 @@ public final class RomanLegionaryEchoEntity1201 extends TamableAnimal
 
     private boolean isSocialMovementOwned() {
         return this.mutualGazePlayerId != null || this.caughtExitMode != CaughtExitMode.NONE;
+    }
+
+    @Override
+    public boolean shouldFollowOwner() {
+        return this.activityMode == ACTIVITY_FOLLOW;
+    }
+
+    @Override
+    public boolean isFollowMovementSuppressed() {
+        return !canAct() || isSocialMovementOwned();
     }
 
     public void bindTo(Player owner, UUID summonerId) {
@@ -1447,9 +1455,6 @@ public final class RomanLegionaryEchoEntity1201 extends TamableAnimal
         if (target != null && !canProtectAgainst(target)) clearCombatAndMovement();
         if (this.activityMode != ACTIVITY_FOLLOW && this.position().distanceToSqr(this.activityAnchor) > 24.0 * 24.0) {
             clearCombatAndMovement();
-        }
-        if (this.activityMode == ACTIVITY_FOLLOW && owner != this && this.distanceToSqr(owner) > 24.0 * 24.0) {
-            this.teleportTo(owner.getX(), owner.getY(), owner.getZ());
         }
     }
 

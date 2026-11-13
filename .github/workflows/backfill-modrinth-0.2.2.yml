@@ -18,6 +18,9 @@ jobs:
       MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          # The historical release has six targets. Do not expand it to new MC lines.
+          ref: 59485e1a8ae2fd90cf884823d84514881d301604
       - name: Check localization and publishing guards
         run: |
           python3 scripts/check-localization.py --release-gate

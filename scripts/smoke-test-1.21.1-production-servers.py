@@ -127,6 +127,8 @@ def run_once(java: str, arguments: list[str], run_dir: Path, timeout: int, attem
                         raise RuntimeError(f"Accessory regression guard missing: {log}")
                     if "SKILL UPDATE SELFTEST PASSED" not in text:
                         raise RuntimeError(f"Skill/Assist regression guard missing: {log}")
+                    if "FOLLOW SAFETY SELFTEST PASSED heroes=5" not in text:
+                        raise RuntimeError(f"Airborne follow regression guard missing: {log}")
                     if any(run_dir.glob("mods/lootr-*.jar")) and "LOOTR ARCHAEOLOGY SELFTEST PASSED" not in text:
                         raise RuntimeError(f"Installed Lootr archaeology acceptance missing: {log}")
                     process.stdin.write("forceload remove 32 32 47 47\nstop\n")

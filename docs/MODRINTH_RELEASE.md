@@ -1,6 +1,8 @@
-# Modrinth 六文件自动发布
+# Modrinth 八文件自动发布
 
-Modrinth 与 CurseForge 共用 `.github/workflows/publish-curseforge.yml` 的一次六文件构建，避免分别构建出不同的包。Modrinth 元数据由 `scripts/modrinth-release.py` 从已校验的 CF 清单转换，并再次检查精确文件路径、哈希、加载器描述、许可、署名和打包译文。
+Modrinth 与 CurseForge 共用 `.github/workflows/publish-curseforge.yml` 的一次八文件构建，避免分别构建出不同的包。Modrinth 元数据由 `scripts/modrinth-release.py` 从已校验的 CF 清单转换，并再次检查精确文件路径、哈希、加载器描述、许可、署名和打包译文。
+
+2026-11-13 起，后续发布增加 26.3 Fabric／NeoForge，共四线八包。以下首次六包发布的历史事实仍保留；专用 0.2.2 补发工作流固定检出 `59485e1a8ae2fd90cf884823d84514881d301604` 的六包工具，避免补发时误加入新版本线。
 
 ## 一次性设置
 
@@ -40,16 +42,16 @@ python scripts/prepare-curseforge-release.py --require-jars
 python scripts/modrinth-release.py prepare
 ```
 
-不填 ID 时可以生成六份本地预览元数据，不能上传。已有正式包可用于元数据验证，但不得从有未提交代码修改的工作区重建同名正式版本。正式 CI 沿用 CF 的 Java 25 / 21 / 17 工具链和提交约束。
+不填 ID 时可以生成八份本地预览元数据，不能上传。已有正式包可用于元数据验证，但不得从有未提交代码修改的工作区重建同名正式版本。正式 CI 沿用 CF 的 Java 25 / 21 / 17 工具链和提交约束。
 
 ## 上传与恢复
 
-- 六个独立版本号形如 `0.2.2+mc1.20.1-forge`，JAR 内仍是 `0.2.2`；每个版本只有一个准确加载器与 Minecraft 版本的主文件。
+- 八个独立版本号形如 `0.2.2+mc1.20.1-forge`，JAR 内仍是 `0.2.2`；每个版本只有一个准确加载器与 Minecraft 版本的主文件。
 - 每个版本登记 GeckoLib、SmartBrainLib 为必需依赖；Fabric 另登记 Fabric API。上传前查询 Modrinth，确认每个组合有对应依赖文件；不捆绑前置、不承诺任意新版依赖都兼容。
 - 第一次 POST 前检查两平台需要的 Secret/变量，并完成 Modrinth 项目身份、源码网址、自定义许可、依赖可用性和已有版本检查。随后先 CF、再 Modrinth；任一步失败，整个发布任务失败。
 - 已有相同版本号必须具有完全相同的版本元数据、必需依赖及主文件名、大小、SHA-512，才复用已有版本 ID。发现差异或同 JAR 使用其他版本号时停止，不覆盖、不删除、不重复创建。
 - 每个 POST 只执行一次。发起请求前保存“不确定远端结果”的记录，收到版本 ID 后立即保存，再校验响应和读取远端版本。网络超时不代表没有上传成功。
-- `build/modrinth/responses/` 在失败后也保存为 Actions Artifact。六个版本最后再次查询全部确认，才写 `complete.json` 和完整发布 Summary。审核状态独立说明。
+- `build/modrinth/responses/` 在失败后也保存为 Actions Artifact。八个版本最后再次查询全部确认，才写 `complete.json` 和完整发布 Summary。审核状态独立说明。
 - Modrinth 部分失败后的恢复应手动选择 **CF 不上传、MR 上传**，脚本只补缺失项；不要重新跑 CF POST。CF 的部分失败继续遵循 `docs/CURSEFORGE_RELEASE.md`。
 - 两平台不提供共同原子事务；不能因一平台成功就声称两平台完成发布。初次配置不改变游戏行为、控制或平衡，因此无需修改回声档案馆。
 
