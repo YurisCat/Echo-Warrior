@@ -232,4 +232,4 @@ jobs:
 
       - name: Record dry run
         if: github.event_name == 'workflow_dispatch' && !inputs.publish && !inputs.publish_modrinth
-        run: echo "Six release JARs and both platforms' metadata verified. Dry run only; nothing uploaded." >> "$GITHUB_STEP_SUMMARY"
+        run: echo "Eight release JARs and both platforms' metadata verified. Dry run only; nothing uploaded." >> "$GITHUB_STEP_SUMMARY"
